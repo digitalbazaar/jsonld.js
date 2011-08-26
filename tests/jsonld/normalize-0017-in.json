@@ -3,7 +3,7 @@
       "@subject": "http://example.org/test",
       "@context": {
          "@coerce": {
-            "xsd:anyURI": "e:B"
+            "@iri": "e:B"
          },
          "e": "http://example.org/vocab#",
          "xsd": "http://www.w3.org/2001/XMLSchema#"

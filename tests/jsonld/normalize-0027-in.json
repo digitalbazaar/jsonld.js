@@ -18,7 +18,7 @@
    ],
    "@context": {
       "@coerce": {
-         "xsd:anyURI": [
+         "@iri": [
             "e:next",
             "e:prev"
          ]

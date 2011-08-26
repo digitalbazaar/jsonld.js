@@ -1,6 +1,6 @@
 {
    "@coerce": {
-      "xsd:anyURI": "ex:parent",
+      "@iri": "ex:parent",
       "xsd:dateTime": "ex:date"
    },
    "ex": "http://example.org/vocab#",

@@ -3,10 +3,9 @@
     "homepage": "http://john.doe.org/",
     "@context": {
         "@coerce": {
-            "xsd:anyURI": "homepage"
+            "@iri": "homepage"
         },
         "name": "http://xmlns.com/foaf/0.1/name",
-        "homepage": "http://xmlns.com/foaf/0.1/homepage",
-        "xsd": "http://www.w3.org/2001/XMLSchema#"
+        "homepage": "http://xmlns.com/foaf/0.1/homepage"
     }
 }, {}]

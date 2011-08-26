@@ -26,7 +26,7 @@
    ],
    "@context": {
       "@coerce": {
-         "xsd:anyURI": [
+         "@iri": [
             "ex:authored",
             "ex:contains"
          ]

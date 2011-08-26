@@ -2,7 +2,7 @@
    "@subject": "http://example.org/test#example1",
    "@context": {
       "@coerce": {
-         "xsd:anyURI": "ex:parent",
+         "@iri": "ex:parent",
          "xsd:dateTime": "ex:date"
       },
       "ex": "http://example.org/vocab#",

@@ -27,7 +27,7 @@
    ],
    "@context": {
       "@coerce": {
-         "xsd:anyURI": "eg:p"
+         "@iri": "eg:p"
       },
       "eg": "http://example.org/vocab#",
       "xsd": "http://www.w3.org/2001/XMLSchema#"

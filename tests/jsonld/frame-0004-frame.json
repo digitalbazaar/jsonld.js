@@ -2,9 +2,8 @@
    "@context": {
       "dc": "http://purl.org/dc/elements/1.1/",
       "ex": "http://example.org/vocab#",
-      "xsd": "http://www.w3.org/2001/XMLSchema#",
       "@coerce": {
-         "xsd:anyURI": "ex:contains"
+         "@iri": "ex:contains"
       }
    },
    "@type": "ex:Library"

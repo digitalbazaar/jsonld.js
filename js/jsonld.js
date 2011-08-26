@@ -50,11 +50,9 @@ var ns =
 
 var xsd =
 {
-   anyType: ns.xsd + 'anyType',
    boolean: ns.xsd + 'boolean',
    double: ns.xsd + 'double',
-   integer: ns.xsd + 'integer',
-   anyURI: ns.xsd + 'anyURI'
+   integer: ns.xsd + 'integer'
 };
 
 /**
@@ -744,7 +742,7 @@ Processor.prototype.compact = function(ctx, property, value, usedCtx)
             // datatype is IRI
             else if('@iri' in value)
             {
-               type = xsd.anyURI;
+               type = '@iri';
             }
             // can be coerced to any type
             else
@@ -837,7 +835,7 @@ Processor.prototype.compact = function(ctx, property, value, usedCtx)
       }
 
       // compact IRI
-      if(type === xsd.anyURI)
+      if(type === '@iri')
       {
          if(rval.constructor === Object)
          {
@@ -979,7 +977,7 @@ Processor.prototype.expand = function(ctx, property, value, expandSubjects)
          rval = {};
          
          // expand IRI
-         if(coerce === xsd.anyURI)
+         if(coerce === '@iri')
          {
             rval['@iri'] = _expandTerm(ctx, value, null);
          }
@@ -1084,7 +1082,7 @@ Processor.prototype.getCoerceType = function(ctx, property, usedCtx)
    // built-in type coercion JSON-LD-isms
    if(p === '@subject' || p === ns.rdf + 'type')
    {
-      rval = xsd.anyURI;
+      rval = '@iri';
    }
    // check type coercion for property
    else if('@coerce' in ctx)
@@ -1108,13 +1106,6 @@ Processor.prototype.getCoerceType = function(ctx, property, usedCtx)
             if(props[i] === p)
             {
                rval = _expandTerm(ctx, type, usedCtx);
-               
-               // '@iri' is shortcut for xsd.anyURI
-               if(rval === '@iri')
-               {
-                  rval = xsd.anyURI;
-               }
-               
                if(usedCtx !== null)
                {
                   if(!('@coerce' in usedCtx))
