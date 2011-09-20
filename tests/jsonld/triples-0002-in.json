@@ -1,0 +1,7 @@
+{
+   "@context": {
+      "ex": "http://example.org/test#"
+   },
+   "@subject": "ex:example",
+   "ex:property": "test"
+}

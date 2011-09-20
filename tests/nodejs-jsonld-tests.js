@@ -237,7 +237,7 @@ TestRunner.prototype.run = function(tests, filepath)
       else
       {
          this.test(test.name);
-         
+
          // use parent test filepath as necessary
          if(typeof(test.filepath) === 'undefined') 
          {
@@ -245,8 +245,23 @@ TestRunner.prototype.run = function(tests, filepath)
          }
          
          // read test files
+         var type = test.type;
+         if(type == 'triples')
+         {
+            sys.log('Skipping triples test: ' + test.name);
+            continue;
+         }
+
          var input = _readTestJson(test.input, test.filepath);
-         test.expect = _readTestJson(test.expect, test.filepath);
+         if(type == 'triples')
+         {
+            // FIXME: support n-triples
+            sys.log('FIXME: support n-triples');
+         }
+         else
+         {
+            test.expect = _readTestJson(test.expect, test.filepath);
+         }
          if(test.context)
          {
             test.context = _readTestJson(test.context, test.filepath);
@@ -257,7 +272,6 @@ TestRunner.prototype.run = function(tests, filepath)
          }
          
          // perform test
-         var type = test.type;
          if(type === 'normalize')
          {
             input = jsonld.normalize(input);
@@ -273,6 +287,11 @@ TestRunner.prototype.run = function(tests, filepath)
          else if(type === 'frame')
          {
             input = jsonld.frame(input, test.frame);
+         }
+         else if(type === 'triples')
+         {
+            // FIXME: support n-triples
+            sys.log('FIXME: support n-triples');
          }
          else
          {

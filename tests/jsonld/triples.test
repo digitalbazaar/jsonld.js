@@ -1,0 +1,21 @@
+{
+   "group": "triples",
+   "tests": [{
+      "name": "subject only",
+      "type": "triples",
+      "input": "triples-0001-in.json",
+      "expect": "triples-0001-out.nt"
+   },
+   {
+      "name": "simple property",
+      "type": "triples",
+      "input": "triples-0002-in.json",
+      "expect": "triples-0002-out.nt"
+   },
+   {
+      "name": "many properties",
+      "type": "triples",
+      "input": "triples-0003-in.json",
+      "expect": "triples-0003-out.nt"
+   }]
+}
