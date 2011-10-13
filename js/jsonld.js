@@ -2590,17 +2590,175 @@ var _isDuckType = function(input, frame)
 };
 
 /**
+ * Subframes a value.
+ * 
+ * @param subjects a map of subjects in the graph.
+ * @param value the value to subframe.
+ * @param frame the frame to use.
+ * @param embeds a map of previously embedded subjects, used to prevent cycles.
+ * @param autoembed true if auto-embed is on, false if not.
+ * @param parent the parent object.
+ * @param parentKey the parent object.
+ * @param options the framing options.
+ * 
+ * @return the framed input.
+ */
+var _subframe = function(
+   subjects, value, frame, embeds, autoembed, parent, parentKey, options)
+{
+   // get existing embed entry
+   var iri = value['@subject']['@iri'];
+   var embed = (iri in embeds) ? embeds[iri] : null;
+   
+   // determine if value should be embedded or referenced,
+   // embed is ON if:
+   // 1. The frame OR default option specifies @embed as ON, AND
+   // 2. There is no existing non-automatic embed, AND
+   // 3. Autoembed mode is off.
+   var embedOn =
+      (frame['@embed'] === true || options.defaults.embedOn) &&
+      (embed === null || embed.autoembed) &&
+      !autoembed;
+   
+   if(!embedOn)
+   {
+      // not embedding, so only use subject IRI as reference
+      value = value['@subject'];
+   }
+   else
+   {
+      // create new embed entry
+      if(embed === null)
+      {
+         embed = {};
+         embeds[iri] = embed;
+      }
+      else
+      {
+         // replace the existing embed with a reference and update embed info
+         embed.parent[entry.key] = value['@subject'];
+      }
+      
+      // update embed entry
+      embed.autoembed = autoembed;
+      embed.parent = parent;
+      embed.key = parentKey;
+      
+      // check explicit flag
+      var explicitOn =
+         frame['@explicit'] === true || options.defaults.explicitOn;
+      if(explicitOn)
+      {
+         // remove keys from the value that aren't in the frame
+         for(key in value)
+         {
+            // do not remove @subject or any frame key
+            if(key !== '@subject' && !(key in frame))
+            {
+               delete value[key];
+            }
+         }
+      }
+      
+      // iterate over keys in value
+      for(key in value)
+      {
+         // skip keywords and type
+         if(key.indexOf('@') !== 0 && key !== ns.rdf + 'type')
+         {
+            // get the subframe if available
+            if(key in frame)
+            {
+               var f = frame[key];
+               var _autoembed = false;
+            }
+            // use a catch-all subframe to preserve data from graph
+            else
+            {
+               var f = (value[key].constructor === Array) ? [] : {};
+               var _autoembed = true;
+            }
+            
+            // build input and do recursion
+            var v = value[key];
+            var input = (v.constructor === Array) ? v : [v];
+            for(var n in input)
+            {
+               // replace reference to subject w/subject
+               if(input[n].constructor === Object &&
+                  '@iri' in input[n] &&
+                  input[n]['@iri'] in subjects)
+               {
+                  input[n] = subjects[input[n]['@iri']];
+               }
+            }
+            value[key] = _frame(
+               subjects, input, f, embeds, _autoembed, value, key, options);
+         }
+      }
+      
+      // iterate over frame keys to add any missing values
+      for(key in frame)
+      {
+         // skip keywords, type query, and keys in value
+         if(key.indexOf('@') !== 0 && key !== ns.rdf + 'type' &&
+            !(key in value))
+         {
+            var f = frame[key];
+            
+            // add empty array/default property to value
+            if(f.constructor === Array)
+            {
+               value[key] = [];
+            }
+            else
+            {
+               // use first subframe if frame is an array
+               if(f.constructor === Array)
+               {
+                  f = (f.length > 0) ? f[0] : {};
+               }
+               
+               // determine if omit default is on
+               var omitOn =
+                  f['@omitDefault'] === true || options.defaults.omitDefaultOn;
+               if(!omitOn)
+               {
+                  if('@default' in f)
+                  {
+                     // use specified default value
+                     value[key] = f['@default'];
+                  }
+                  else
+                  {
+                     // build-in default value is: null
+                     value[key] = null;
+                  }
+               }
+            }
+         }
+      }
+   }
+   
+   return value;
+}
+
+/**
  * Recursively frames the given input according to the given frame.
  * 
  * @param subjects a map of subjects in the graph.
  * @param input the input to frame.
  * @param frame the frame to use.
  * @param embeds a map of previously embedded subjects, used to prevent cycles.
+ * @param autoembed true if auto-embed is on, false if not.
+ * @param parent the parent object (for subframing), null for none.
+ * @param parentKey the parent key (for subframing), null for none.
  * @param options the framing options.
  * 
  * @return the framed input.
  */
-var _frame = function(subjects, input, frame, embeds, options)
+var _frame = function(
+   subjects, input, frame, embeds, autoembed, parent, parentKey, options)
 {
    var rval = null;
    
@@ -2632,7 +2790,8 @@ var _frame = function(subjects, input, frame, embeds, options)
       {
          throw {
             message: 'Invalid JSON-LD frame. ' +
-               'Frame must be an object or an array.'
+               'Frame must be an object or an array.',
+            frame: frame
          };
       }
       
@@ -2658,101 +2817,12 @@ var _frame = function(subjects, input, frame, embeds, options)
          frame = frames[i1];
          var value = values[i1][i2];
          
-         // determine if value should be embedded or referenced
-         var embedOn = ('@embed' in frame) ?
-            frame['@embed'] : options.defaults.embedOn;
-         if(!embedOn)
+         // if value is a subject, do subframing
+         if(value.constructor === Object && '@subject' in value)
          {
-            // if value is a subject, only use subject IRI as reference 
-            if(value.constructor === Object && '@subject' in value)
-            {
-               value = value['@subject'];
-            }
-         }
-         else if(
-            value.constructor === Object &&
-            '@subject' in value && value['@subject']['@iri'] in embeds)
-         {
-            // TODO: possibly support multiple embeds in the future ... and
-            // instead only prevent cycles?
-            throw {
-               message: 'More than one embed of the same subject is not ' +
-                  'supported.',
-               subject: value['@subject']['@iri']
-            };
-         }
-         // if value is a subject, do embedding and subframing
-         else if(value.constructor === Object && '@subject' in value)
-         {
-            embeds[value['@subject']['@iri']] = true;
-            
-            // if explicit is on, remove keys from value that aren't in frame
-            var explicitOn = ('@explicit' in frame) ?
-               frame['@explicit'] : options.defaults.explicitOn;
-            if(explicitOn)
-            {
-               for(key in value)
-               {
-                  // do not remove subject or any key in the frame
-                  if(key !== '@subject' && !(key in frame))
-                  {
-                     delete value[key];
-                  }
-               }
-            }
-            
-            // iterate over frame keys to do subframing
-            for(key in frame)
-            {
-               // skip keywords and type query
-               if(key.indexOf('@') !== 0 && key !== ns.rdf + 'type')
-               {
-                  var f = frame[key];
-                  if(key in value)
-                  {
-                     // build input and do recursion
-                     var v = value[key];
-                     input = (v.constructor === Array) ? v : [v];
-                     for(var n in input)
-                     {
-                        // replace reference to subject w/subject
-                        if(input[n].constructor === Object &&
-                           '@iri' in input[n] && input[n]['@iri'] in subjects)
-                        {
-                           input[n] = subjects[input[n]['@iri']];
-                        }
-                     }
-                     value[key] = _frame(subjects, input, f, embeds, options);
-                  }
-                  else
-                  {
-                     // add empty array/null property to value
-                     value[key] = (f.constructor === Array) ? [] : null;
-                  }
-                  
-                  // handle setting default value
-                  if(value[key] === null)
-                  {
-                     // use first subframe if frame is an array
-                     if(f.constructor === Array)
-                     {
-                        f = (f.length > 0) ? f[0] : {};
-                     }
-                     
-                     // determine if omit default is on
-                     var omitOn = ('@omitDefault' in f) ?
-                        f['@omitDefault'] : options.defaults.omitDefaultOn;
-                     if(omitOn)
-                     {
-                        delete value[key];
-                     }
-                     else if('@default' in f)
-                     {
-                        value[key] = f['@default'];
-                     }
-                  }
-               }
-            }
+            value = _subframe(
+               subjects, value, frame, embeds, autoembed,
+               parent, parentKey, options);
          }
          
          // add value to output
@@ -2816,7 +2886,7 @@ Processor.prototype.frame = function(input, frame, options)
    }
    
    // frame input
-   rval = _frame(subjects, input, frame, {}, options);
+   rval = _frame(subjects, input, frame, {}, false, null, null, options);
    
    // apply context
    if(ctx !== null && rval !== null)
