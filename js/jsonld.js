@@ -717,6 +717,8 @@ Processor.prototype.compact = function(ctx, property, value, usedCtx)
             var p = _compactIri(ctx, key, usedCtx);
             if(p !== key || !(p in rval))
             {
+               // FIXME: clean old values from the usedCtx here ... or just
+               // change usedCtx to be built at the end of processing? 
                rval[p] = this.compact(ctx, key, value[key], usedCtx);
             }
          }
@@ -2613,12 +2615,11 @@ var _subframe = function(
    // determine if value should be embedded or referenced,
    // embed is ON if:
    // 1. The frame OR default option specifies @embed as ON, AND
-   // 2. There is no existing non-automatic embed, AND
-   // 3. Autoembed mode is off.
+   // 2. There is no existing embed OR it is an autoembed, AND
+   //    autoembed mode is off.
    var embedOn =
       (frame['@embed'] === true || options.defaults.embedOn) &&
-      (embed === null || embed.autoembed) &&
-      !autoembed;
+      (embed === null || (embed.autoembed && !autoembed));
    
    if(!embedOn)
    {
@@ -2706,11 +2707,12 @@ var _subframe = function(
          {
             var f = frame[key];
             
-            // add empty array/default property to value
+            // add empty array to value
             if(f.constructor === Array)
             {
                value[key] = [];
             }
+            // add default value to value
             else
             {
                // use first subframe if frame is an array

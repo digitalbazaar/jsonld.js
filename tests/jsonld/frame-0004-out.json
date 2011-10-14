@@ -2,10 +2,19 @@
    "@subject": "http://example.org/test/#library",
    "@context": {
       "ex": "http://example.org/vocab#",
-      "@coerce": {
-         "@iri": "ex:contains"
-      }
+      "dc": "http://purl.org/dc/elements/1.1/"
    },
    "@type": "ex:Library",
-   "ex:contains": "http://example.org/test#book"
+   "ex:contains": {
+      "@subject": "http://example.org/test#book",
+      "@type": "ex:Book",
+      "dc:contributor": "Writer",
+      "dc:title": "My Book",
+      "ex:contains": {
+         "@subject": "http://example.org/test#chapter",
+         "@type": "ex:Chapter",
+         "dc:description": "Fun",
+         "dc:title": "Chapter One"
+      }
+   }
 }
