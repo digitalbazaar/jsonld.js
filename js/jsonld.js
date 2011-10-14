@@ -2600,7 +2600,7 @@ var _isDuckType = function(input, frame)
  * @param embeds a map of previously embedded subjects, used to prevent cycles.
  * @param autoembed true if auto-embed is on, false if not.
  * @param parent the parent object.
- * @param parentKey the parent object.
+ * @param parentKey the parent key.
  * @param options the framing options.
  * 
  * @return the framed input.
@@ -2634,10 +2634,10 @@ var _subframe = function(
          embed = {};
          embeds[iri] = embed;
       }
-      else
+      // replace the existing embed with a reference
+      else if(embed.parent !== null)
       {
-         // replace the existing embed with a reference and update embed info
-         embed.parent[entry.key] = value['@subject'];
+         embed.parent[embed.key] = value['@subject'];
       }
       
       // update embed entry
@@ -2733,7 +2733,7 @@ var _subframe = function(
                   }
                   else
                   {
-                     // build-in default value is: null
+                     // built-in default value is: null
                      value[key] = null;
                   }
                }
