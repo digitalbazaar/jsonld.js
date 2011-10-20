@@ -1,9 +1,7 @@
 {
    "@coerce": {
-      "@iri": [
-         "ex:authored",
-         "ex:contains"
-      ]
+      "ex:authored": "@iri",
+      "ex:contains": "@iri"
    },
    "dc": "http://purl.org/dc/elements/1.1/",
    "ex": "http://example.org/vocab#",

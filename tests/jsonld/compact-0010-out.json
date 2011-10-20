@@ -3,10 +3,8 @@
       "uri": "@subject",
       "rel": "@iri",
       "@coerce": {
-         "rel": [
-            "http://example.org/test#property2",
-            "http://example.org/test#property3"
-         ]
+         "http://example.org/test#property2": "rel",
+         "http://example.org/test#property3": "rel"
       }
    },
    "uri": "http://example.org/test#example1",

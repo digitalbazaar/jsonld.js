@@ -1,7 +1,7 @@
 {
    "@coerce": {
-      "@iri": "ex:parent",
-      "xsd:dateTime": "ex:date"
+      "ex:parent": "@iri",
+      "ex:date": "xsd:dateTime"
    },
    "ex": "http://example.org/vocab#",
    "xsd": "http://www.w3.org/2001/XMLSchema#"

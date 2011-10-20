@@ -3,7 +3,7 @@
     "homepage": "http://john.doe.org/",
     "@context": {
         "@coerce": {
-            "@iri": "homepage"
+            "homepage": "@iri"
         },
         "name": "http://xmlns.com/foaf/0.1/name",
         "homepage": "http://xmlns.com/foaf/0.1/homepage"

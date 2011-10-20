@@ -3,7 +3,7 @@
       "dc": "http://purl.org/dc/elements/1.1/",
       "ex": "http://example.org/vocab#",
       "@coerce": {
-         "@iri": "ex:contains"
+         "ex:contains": "@iri" 
       }
    },
    "@type": "ex:Library"

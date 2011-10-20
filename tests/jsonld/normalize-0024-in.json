@@ -18,10 +18,8 @@
    ],
    "@context": {
       "@coerce": {
-         "@iri": [
-            "e:next",
-            "e:prev"
-         ]
+         "e:next": "@iri",
+         "e:prev": "@iri"
       },
       "e": "http://example.org/vocab#",
       "xsd": "http://www.w3.org/2001/XMLSchema#"

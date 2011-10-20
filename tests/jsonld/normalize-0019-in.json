@@ -11,7 +11,7 @@
    ],
    "@context": {
       "@coerce": {
-         "@iri": "e:self"
+         "e:self": "@iri"
       },
       "e": "http://example.org/vocab#",
       "xsd": "http://www.w3.org/2001/XMLSchema#"

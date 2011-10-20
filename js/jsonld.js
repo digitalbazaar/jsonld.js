@@ -416,21 +416,21 @@ jsonld.compact = function(ctx, input)
  */
 jsonld.mergeContexts = function(ctx1, ctx2)
 {
-   // copy contexts
+   // copy context to merged output
    var merged = _clone(ctx1);
-   var copy = _clone(ctx2);
 
    // if the new context contains any IRIs that are in the merged context,
    // remove them from the merged context, they will be overwritten
-   for(var key in copy)
+   for(var key in ctx2)
    {
       // ignore special keys starting with '@'
       if(key.indexOf('@') !== 0)
       {
          for(var mkey in merged)
          {
-            if(merged[mkey] === copy[key])
+            if(merged[mkey] === ctx2[key])
             {
+               // FIXME: update related @coerce rules
                delete merged[mkey];
                break;
             }
@@ -438,101 +438,30 @@ jsonld.mergeContexts = function(ctx1, ctx2)
       }
    }
 
-   // @coerce must be specially-merged, remove from contexts
-   var coerceExists = ('@coerce' in merged) || ('@coerce' in copy);
-   if(coerceExists)
-   {
-      var c1 = ('@coerce' in merged) ? merged['@coerce'] : {};
-      var c2 = ('@coerce' in copy) ? copy['@coerce'] : {};
-      delete merged['@coerce'];
-      delete copy['@coerce'];
-   }
-
    // merge contexts
-   for(var key in copy)
+   for(var key in ctx2)
    {
-      merged[key] = copy[key];
+      // skip @coerce, to be merged below
+      if(key !== '@coerce')
+      {
+         merged[key] = _clone(ctx2[key]);
+      }
    }
    
-   // special-merge @coerce
-   if(coerceExists)
+   // merge @coerce
+   if('@coerce' in ctx2)
    {
-      for(var type in c1)
+      if(!('@coerce' in merged))
       {
-         // append existing-type properties that don't already exist
-         if(type in c2)
+         merged['@coerce'] = _clone(ctx2['@coerce']);
+      }
+      else
+      {
+         for(var key in ctx2['@coerce'])
          {
-            var p1 = c1[type];
-            var p2 = c2[type];
-            
-            // normalize props in c2 to array for single-code-path iterating
-            if(p2.constructor !== Array)
-            {
-               p2 = [p2];
-            }
-            
-            // add unique properties from p2 to p1
-            for(var i in p2)
-            {
-               var p = p2[i];
-               if((p1.constructor !== Array && p1 !== p) ||
-                  (p1.constructor === Array && p1.indexOf(p) == -1))
-               {
-                  if(p1.constructor === Array)
-                  {
-                     p1.push(p);
-                  }
-                  else
-                  {
-                     p1 = c1[type] = [p1, p];
-                  }
-               }
-            }
+            merged['@coerce'][key] = ctx2['@coerce'][key];
          }
       }
-      
-      // add new types from new @coerce
-      for(var type in c2)
-      {
-         if(!(type in c1))
-         {
-            c1[type] = c2[type]; 
-         }
-      }
-      
-      // ensure there are no property duplicates in @coerce
-      var unique = {};
-      var dups = [];
-      for(var type in c1)
-      {
-         var p = c1[type];
-         if(p.constructor === String)
-         {
-            p = [p];
-         }
-         for(var i in p)
-         {
-            if(!(p[i] in unique))
-            {
-               unique[p[i]] = true;
-            }
-            else if(dups.indexOf(p[i]) == -1)
-            {
-               dups.push(p[i]);
-            }
-         }
-      }
-
-      if(dups.length > 0)
-      {
-         throw {
-            message: 'Invalid type coercion specification. More than one ' +
-               'type specified for at least one property.',
-            duplicates: dups
-         };
-      }
-      
-      merged['@coerce'] = c1;
    }
 
    return merged;
@@ -1089,48 +1018,20 @@ Processor.prototype.getCoerceType = function(ctx, property, usedCtx)
    // check type coercion for property
    else if('@coerce' in ctx)
    {
-      // force compacted property
+      // look up compacted property in coercion map
       p = _compactIri(ctx, p, null);
-      
-      for(var type in ctx['@coerce'])
+      if(p in ctx['@coerce'])
       {
-         // get coerced properties (normalize to an array)
-         var props = ctx['@coerce'][type];
-         if(props.constructor !== Array)
+         // property found, return expanded type
+         var type = ctx['@coerce'][p];
+         rval = _expandTerm(ctx, type, usedCtx);
+         if(usedCtx !== null)
          {
-            props = [props];
-         }
-         
-         // look for the property in the array
-         for(var i in props)
-         {
-            // property found
-            if(props[i] === p)
+            if(!('@coerce' in usedCtx))
             {
-               rval = _expandTerm(ctx, type, usedCtx);
-               if(usedCtx !== null)
-               {
-                  if(!('@coerce' in usedCtx))
-                  {
-                     usedCtx['@coerce'] = {};
-                  }
-                  
-                  if(!(type in usedCtx['@coerce']))
-                  {
-                     usedCtx['@coerce'][type] = p;
-                  }
-                  else
-                  {
-                     var c = usedCtx['@coerce'][type];
-                     if((c.constructor === Array && c.indexOf(p) == -1) ||
-                        (c.constructor === String && c !== p))
-                     {
-                        _setProperty(usedCtx['@coerce'], type, p);
-                     }
-                  }
-               }
-               break;
+               usedCtx['@coerce'] = {};
             }
+            usedCtx['@coerce'][p] = type;
          }
       }
    }
@@ -2701,9 +2602,9 @@ var _subframe = function(
       // iterate over frame keys to add any missing values
       for(key in frame)
       {
-         // skip keywords, type query, and keys in value
+         // skip keywords, type query, and non-null keys in value
          if(key.indexOf('@') !== 0 && key !== ns.rdf + 'type' &&
-            !(key in value))
+            (!(key in value) || value[key] === null))
          {
             var f = frame[key];
             

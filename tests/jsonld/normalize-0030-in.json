@@ -21,12 +21,10 @@
    ],
    "@context": {
       "@coerce": {
-         "@iri": [
-            "e:A",
-            "e:B",
-            "e:C",
-            "e:next"
-         ]
+         "e:A": "@iri",
+         "e:B": "@iri",
+         "e:C": "@iri",
+         "e:next": "@iri"
       },
       "e": "http://example.org/vocab#",
       "xsd": "http://www.w3.org/2001/XMLSchema#"

@@ -2,7 +2,7 @@
    "@subject": "http://example.org/test",
    "@context": {
       "@coerce": {
-         "xsd:double": "e:double-zero"
+         "e:double-zero": "xsd:double"
       },
       "d": "http://purl.org/dc/elements/1.1/",
       "e": "http://example.org/vocab#",

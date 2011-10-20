@@ -1,6 +1,6 @@
 {
    "@coerce": {
-      "@iri": "ex:contains"
+      "ex:contains": "@iri"
    },
    "dc": "http://purl.org/dc/elements/1.1/",
    "ex": "http://example.org/vocab#"

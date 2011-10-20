@@ -1,7 +1,7 @@
 {
    "@context": {
       "@coerce": {
-         "@iri": ["dc:creator"]
+         "dc:creator": "@iri"
       },
       "dc": "http://purl.org/dc/terms/",
       "foaf": "http://xmlns.com/foaf/0.1/",
