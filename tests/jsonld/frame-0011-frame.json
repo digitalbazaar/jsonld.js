@@ -6,7 +6,7 @@
    "ex:embed": {
       "@embed": true
    },
-   "ex:embed": {
+   "ex:noembed": {
       "@embed": false
    }
 }
