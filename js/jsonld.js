@@ -2519,7 +2519,8 @@ var _subframe = function(
    // 2. There is no existing embed OR it is an autoembed, AND
    //    autoembed mode is off.
    var embedOn =
-      (frame['@embed'] === true || options.defaults.embedOn) &&
+      (('@embed' in frame && frame['@embed']) ||
+      (!('@embed' in frame) && options.defaults.embedOn)) &&
       (embed === null || (embed.autoembed && !autoembed));
    
    if(!embedOn)

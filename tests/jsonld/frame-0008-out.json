@@ -21,7 +21,6 @@
    },
    "literal2",
    {
-      "@subject": "http://example.org/test#subject2",
-      "ex:prop": "property"
+      "@iri": "http://example.org/test#subject2"
    }]
 }
