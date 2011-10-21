@@ -1,0 +1,14 @@
+{
+   "@context": {
+      "ex": "http://www.example.com/#"
+   },
+   "@subject": "ex:subject",
+   "@type": "ex:Thing",
+   "ex:embed": {
+      "@subject": "ex:embedded",
+      "ex:title": "Embedded"
+   },
+   "ex:noembed": {
+      "@iri": "ex:notembedded"
+   }
+}
