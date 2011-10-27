@@ -378,6 +378,12 @@ jsonld.compact = function(ctx, input)
          tmp = [input];
       }
       
+      // merge context if it is an array
+      if(ctx.constructor === Array)
+      {
+         ctx = jsonld.mergeContexts({}, ctx);
+      }
+      
       for(var i in tmp)
       {
          // setup output context
@@ -416,50 +422,67 @@ jsonld.compact = function(ctx, input)
  */
 jsonld.mergeContexts = function(ctx1, ctx2)
 {
+   // merge first context if it is an array
+   if(ctx1.constructor === Array)
+   {
+      ctx1 = jsonld.mergeContexts({}, ctx1);
+   }
+   
    // copy context to merged output
    var merged = _clone(ctx1);
-
-   // if the new context contains any IRIs that are in the merged context,
-   // remove them from the merged context, they will be overwritten
-   for(var key in ctx2)
+   
+   if(ctx2.constructor === Array)
    {
-      // ignore special keys starting with '@'
-      if(key.indexOf('@') !== 0)
+      // merge array of contexts in order
+      for(var i in ctx2)
       {
-         for(var mkey in merged)
+         merged = jsonld.mergeContexts(merged, ctx2[i]);
+      }
+   }
+   else
+   {
+      // if the new context contains any IRIs that are in the merged context,
+      // remove them from the merged context, they will be overwritten
+      for(var key in ctx2)
+      {
+         // ignore special keys starting with '@'
+         if(key.indexOf('@') !== 0)
          {
-            if(merged[mkey] === ctx2[key])
+            for(var mkey in merged)
             {
-               // FIXME: update related @coerce rules
-               delete merged[mkey];
-               break;
+               if(merged[mkey] === ctx2[key])
+               {
+                  // FIXME: update related @coerce rules
+                  delete merged[mkey];
+                  break;
+               }
             }
          }
       }
-   }
-
-   // merge contexts
-   for(var key in ctx2)
-   {
-      // skip @coerce, to be merged below
-      if(key !== '@coerce')
-      {
-         merged[key] = _clone(ctx2[key]);
-      }
-   }
    
-   // merge @coerce
-   if('@coerce' in ctx2)
-   {
-      if(!('@coerce' in merged))
+      // merge contexts
+      for(var key in ctx2)
       {
-         merged['@coerce'] = _clone(ctx2['@coerce']);
-      }
-      else
-      {
-         for(var key in ctx2['@coerce'])
+         // skip @coerce, to be merged below
+         if(key !== '@coerce')
          {
-            merged['@coerce'][key] = ctx2['@coerce'][key];
+            merged[key] = _clone(ctx2[key]);
+         }
+      }
+      
+      // merge @coerce
+      if('@coerce' in ctx2)
+      {
+         if(!('@coerce' in merged))
+         {
+            merged['@coerce'] = _clone(ctx2['@coerce']);
+         }
+         else
+         {
+            for(var key in ctx2['@coerce'])
+            {
+               merged['@coerce'][key] = ctx2['@coerce'][key];
+            }
          }
       }
    }
@@ -569,7 +592,7 @@ jsonld.toTriples = function(input, callback)
                break;
             }
          }
-      }
+      }m
       if(quit)
       {
          break;
@@ -577,6 +600,130 @@ jsonld.toTriples = function(input, callback)
    }
    
    return rval;
+};
+
+/**
+ * Resolves external @context URLs. Every @context URL in the given JSON-LD
+ * object is resolved using the given URL-resolver function. Once all of
+ * the @contexts have been resolved, the given result callback is invoked.
+ * 
+ * @param input the JSON-LD input object (or array).
+ * @param resolver the resolver method that takes a URL and a callback that
+ *           receives a JSON-LD serialized @context or null on error (with
+ *           optional an error object as the second parameter).
+ * @param callback the callback to be invoked with the fully-resolved
+ *           JSON-LD output (object or array) or null on error (with an
+ *           optional error array as the second parameter).
+ */
+jsonld.resolve = function(input, resolver, callback)
+{
+   // find all @context URLs
+   var urls = {};
+   var findUrls = function(input, replace)
+   {
+      if(input.constructor === Array)
+      {
+         for(var i in input)
+         {
+            findUrls(input[i]);
+         }
+      }
+      else if(input.constructor === Object)
+      {
+         for(var key in input)
+         {
+            if(key === '@context')
+            {
+               // @context is an array that might contain URLs
+               if(input[key].constructor === Array)
+               {
+                  var list = input[key];
+                  for(var i in list)
+                  {
+                     if(list[i].constructor === String)
+                     {
+                        // replace w/resolved @context if appropriate
+                        if(replace)
+                        {
+                           list[i] = urls[list[i]];
+                        }
+                        // unresolved @context found
+                        else
+                        {
+                           urls[list[i]] = {};
+                        }
+                     }
+                  }
+               }
+               else if(input[key].constructor === String)
+               {
+                  // replace w/resolved @context if appropriate
+                  if(replace)
+                  {
+                     input[key] = urls[input[key]];
+                  }
+                  // unresolved @context found
+                  else
+                  {
+                     urls[input[key]] = {};
+                  }
+               }
+            }
+         }
+      }
+   };
+   findUrls(input, false);
+   
+   // state for resolving URLs
+   var count = Object.keys(urls).length;
+   var errors = null;
+   
+   if(count === 0)
+   {
+      callback(input, errors);
+   }
+   else
+   {
+      // resolve all URLs
+      for(var url in urls)
+      {
+         resolver(url, function(result, error)
+         {
+            --count;
+            
+            if(result === null)
+            {
+               errors = errors || [];
+               errors.push({ url: url, error: error });
+            }
+            else if(result.constructor === String)
+            {
+               try
+               {
+                  urls[url] = JSON.parse(result);
+               }
+               catch(ex)
+               {
+                  errors = errors || [];
+                  errors.push({ url: url, error: ex });
+               }
+            }
+            else
+            {
+               urls[url] = result;
+            }
+            
+            if(count === 0)
+            {
+               if(errors === null)
+               {
+                  findUrls(input, true);
+               }
+               callback(input, errors);
+            }
+         });
+      }
+   }
 };
 
 // TODO: organizational rewrite
