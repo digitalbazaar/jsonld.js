@@ -696,21 +696,24 @@ jsonld.resolve = function(input, resolver, callback)
                errors = errors || [];
                errors.push({ url: url, error: error });
             }
-            else if(result.constructor === String)
+            else
             {
                try
                {
-                  urls[url] = JSON.parse(result);
+                  if(result.constructor === String)
+                  {
+                     urls[url] = JSON.parse(result)['@context'];
+                  }
+                  else
+                  {
+                     urls[url] = result['@context'];
+                  }
                }
                catch(ex)
                {
                   errors = errors || [];
                   errors.push({ url: url, error: ex });
                }
-            }
-            else
-            {
-               urls[url] = result;
             }
             
             if(count === 0)
