@@ -318,6 +318,41 @@ var _expandTerm = function(ctx, term, usedCtx)
    return rval;
 };
 
+/**
+ * Sorts the keys in a context.
+ * 
+ * @param ctx the context to sort.
+ * 
+ * @return the sorted context.
+ */
+var _sortContextKeys = function(ctx)
+{
+   var rval = {};
+   
+   // sort keys
+   var keys = Object.keys(ctx).sort();
+   for(var k in keys)
+   {
+      var key = keys[k];
+      if(key !== '@coerce')
+      {
+         rval[key] = ctx[key];
+      }
+   }
+   if('@coerce' in ctx)
+   {
+      rval['@coerce'] = {};
+      keys = Object.keys(ctx['@coerce']).sort();
+      for(var k in keys)
+      {
+         var key = keys[k];
+         rval['@coerce'][key] = ctx['@coerce'][key];
+      }
+   }
+   
+   return rval;
+};
+
 /*
  * JSON-LD API.
  */
@@ -395,7 +430,25 @@ jsonld.compact = function(ctx, input)
          // add context if used
          if(Object.keys(ctxOut).length > 0)
          {
+            // sort context keys
+            ctxOut = _sortContextKeys(ctxOut);
+            
+            // sort keys
+            var keys = Object.keys(out);
+            keys.sort();
+            
+            // put @context first
+            keys.unshift('@context');
             out['@context'] = ctxOut;
+            
+            // order keys in output
+            var ordered = {};
+            for(var k in keys)
+            {
+               var key = keys[k];
+               ordered[key] = out[key];
+            }
+            out = ordered;
          }
          
          if(rval === null)
