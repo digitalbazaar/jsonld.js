@@ -2968,10 +2968,26 @@ Processor.prototype.frame = function(input, frame, options)
    if('@context' in frame)
    {
       ctx = _clone(frame['@context']);
+      
+      // remove context from frame
+      frame = jsonld.expand(frame);
    }
-   
-   // remove context from frame
-   frame = jsonld.expand(frame);
+   else if(frame.constructor === Array)
+   {
+      // save first context
+      if(frame.length > 0 && '@context' in frame[0])
+      {
+         ctx = _clone(frame[0]['@context']);
+         
+         // expand all elements in the array
+         var tmp = [];
+         for(var i in frame)
+         {
+            tmp.push(jsonld.expand(frame[i]));
+         }
+         frame = tmp;
+      }
+   }
    
    // create framing options
    // TODO: merge in options from function parameter
