@@ -645,7 +645,7 @@ jsonld.toTriples = function(input, callback)
                break;
             }
          }
-      }m
+      }
       if(quit)
       {
          break;
