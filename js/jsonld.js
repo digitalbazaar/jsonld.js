@@ -1850,17 +1850,23 @@ Processor.prototype.canonicalizeBlankNodes = function(input)
    }
    
    // keep sorting and naming blank nodes until they are all named
+   var resort = true;
    var self = this;
    while(bnodes.length > 0)
    {
-      bnodes.sort(function(a, b)
+      if(resort)
       {
-         return self.deepCompareBlankNodes(a, b);
-      });
+         bnodes.sort(function(a, b)
+         {
+            return self.deepCompareBlankNodes(a, b);
+         });
+      }
       
       // name all bnodes according to the first bnode's relation mappings
+      // (if it has mappings then a resort will be necessary)
       var bnode = bnodes.shift();
       var iri = bnode['@subject']['@iri'];
+      resort = (this.serializations[iri]['props'] !== null);
       var dirs = ['props', 'refs'];
       for(var d in dirs)
       {
@@ -1896,21 +1902,25 @@ Processor.prototype.canonicalizeBlankNodes = function(input)
             }
          }
          
-         // only keep non-canonically named bnodes
-         var tmp = bnodes;
-         bnodes = [];
-         for(var i in tmp)
+         // only clear serializations if resorting is necessary
+         if(resort)
          {
-            var b = tmp[i];
-            var iriB = b['@subject']['@iri'];
-            if(!c14n.inNamespace(iriB))
+            // only keep non-canonically named bnodes
+            var tmp = bnodes;
+            bnodes = [];
+            for(var i in tmp)
             {
-               // mark serializations related to the named bnodes as dirty
-               for(var i2 in renamed)
+               var b = tmp[i];
+               var iriB = b['@subject']['@iri'];
+               if(!c14n.inNamespace(iriB))
                {
-                  this.markSerializationDirty(iriB, renamed[i2], dir);
+                  // mark serializations related to the named bnodes as dirty
+                  for(var i2 in renamed)
+                  {
+                     this.markSerializationDirty(iriB, renamed[i2], dir);
+                  }
+                  bnodes.push(b);
                }
-               bnodes.push(b);
             }
          }
       }
@@ -2974,19 +2984,19 @@ Processor.prototype.frame = function(input, frame, options)
    }
    else if(frame.constructor === Array)
    {
-      // save first context
+      // save first context in the array
       if(frame.length > 0 && '@context' in frame[0])
       {
          ctx = _clone(frame[0]['@context']);
-         
-         // expand all elements in the array
-         var tmp = [];
-         for(var i in frame)
-         {
-            tmp.push(jsonld.expand(frame[i]));
-         }
-         frame = tmp;
       }
+      
+      // expand all elements in the array
+      var tmp = [];
+      for(var i in frame)
+      {
+         tmp.push(jsonld.expand(frame[i]));
+      }
+      frame = tmp;
    }
    
    // create framing options
