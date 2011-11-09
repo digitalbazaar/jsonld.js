@@ -1856,6 +1856,7 @@ Processor.prototype.canonicalizeBlankNodes = function(input)
    {
       if(resort)
       {
+         resort = false;
          bnodes.sort(function(a, b)
          {
             return self.deepCompareBlankNodes(a, b);
@@ -1863,10 +1864,8 @@ Processor.prototype.canonicalizeBlankNodes = function(input)
       }
       
       // name all bnodes according to the first bnode's relation mappings
-      // (if it has mappings then a resort will be necessary)
       var bnode = bnodes.shift();
       var iri = bnode['@subject']['@iri'];
-      resort = (this.serializations[iri]['props'] !== null);
       var dirs = ['props', 'refs'];
       for(var d in dirs)
       {
@@ -1902,25 +1901,25 @@ Processor.prototype.canonicalizeBlankNodes = function(input)
             }
          }
          
-         // only clear serializations if resorting is necessary
-         if(resort)
+         // only keep non-canonically named bnodes
+         var tmp = bnodes;
+         bnodes = [];
+         for(var i in tmp)
          {
-            // only keep non-canonically named bnodes
-            var tmp = bnodes;
-            bnodes = [];
-            for(var i in tmp)
+            var b = tmp[i];
+            var iriB = b['@subject']['@iri'];
+            if(!c14n.inNamespace(iriB))
             {
-               var b = tmp[i];
-               var iriB = b['@subject']['@iri'];
-               if(!c14n.inNamespace(iriB))
+               // mark serializations related to the named bnodes as dirty
+               for(var i2 in renamed)
                {
-                  // mark serializations related to the named bnodes as dirty
-                  for(var i2 in renamed)
+                  if(this.markSerializationDirty(iriB, renamed[i2], dir))
                   {
-                     this.markSerializationDirty(iriB, renamed[i2], dir);
+                     // resort if a serialization was marked dirty
+                     resort = true;
                   }
-                  bnodes.push(b);
                }
+               bnodes.push(b);
             }
          }
       }
@@ -2157,14 +2156,21 @@ MappingBuilder.prototype.serialize = function(subjects, edges)
  * @param iri the IRI of the bnode to check.
  * @param changed the old IRI of the bnode that changed.
  * @param dir the direction to check ('props' or 'refs').
+ * 
+ * @return true if marked dirty, false if not.
  */
 Processor.prototype.markSerializationDirty = function(iri, changed, dir)
 {
+   var rval = false;
+   
    var s = this.serializations[iri];
    if(s[dir] !== null && changed in s[dir].m)
    {
       s[dir] = null;
+      rval = true;
    }
+   
+   return rval;
 };
 
 /**
