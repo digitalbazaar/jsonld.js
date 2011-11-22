@@ -60,11 +60,17 @@
       "input": "frame-0010-in.json",
       "frame": "frame-0010-frame.json",
       "expect": "frame-0010-out.json"
-   }, {
+   }, {  
       "name": "@embed",
       "type": "frame",
       "input": "frame-0011-in.json",
       "frame": "frame-0011-frame.json",
       "expect": "frame-0011-out.json"
+   }, {
+      "name": "Array frame",
+      "type": "frame",
+      "input": "frame-0012-in.json",
+      "frame": "frame-0012-frame.json",
+      "expect": "frame-0012-out.json"
    }]
 }
