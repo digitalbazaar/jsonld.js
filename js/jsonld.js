@@ -21,17 +21,17 @@ var _setMembers = function(self, obj)
 // define jsonld
 if(typeof(window) !== 'undefined')
 {
-   var jsonld = window.jsonld = window.jsonld || {};
+   var jsonld = window['jsonld'] = window.jsonld || {};
    Exception = function(obj)
    {
       _setMembers(this, obj);
-   }
+   };
 }
 // define node.js module
-else if(typeof(module) !== 'undefined' && module.exports)
+else if(typeof(module) !== 'undefined' && module['exports'])
 {
    var jsonld = {};
-   module.exports = jsonld;
+   module['exports'] = jsonld;
    Exception = function(obj)
    {
       _setMembers(this, obj);
@@ -50,9 +50,9 @@ var ns =
 
 var xsd =
 {
-   boolean: ns.xsd + 'boolean',
-   double: ns.xsd + 'double',
-   integer: ns.xsd + 'integer'
+   'boolean': ns.xsd + 'boolean',
+   'double': ns.xsd + 'double',
+   'integer': ns.xsd + 'integer'
 };
 
 /**
@@ -604,7 +604,7 @@ jsonld.toTriples = function(input, callback)
    var rval = null;
    
    // normalize input
-   normalized = jsonld.normalize(input);
+   var normalized = jsonld.normalize(input);
    
    // setup default callback
    callback = callback || null;
@@ -893,7 +893,7 @@ Processor.prototype.compact = function(ctx, property, value, usedCtx)
 
       // types that can be auto-coerced from a JSON-builtin
       if(coerce === null &&
-         (type === xsd.boolean || type === xsd.integer || type === xsd.double))
+         (type === xsd['boolean'] || type === xsd['integer'] || type === xsd['double']))
       {
          coerce = type;
       }
@@ -940,15 +940,15 @@ Processor.prototype.compact = function(ctx, property, value, usedCtx)
             }
 
             // do basic JSON types conversion
-            if(coerce === xsd.boolean)
+            if(coerce === xsd['boolean'])
             {
                rval = (rval === 'true' || rval != 0);
             }
-            else if(coerce === xsd.double)
+            else if(coerce === xsd['double'])
             {
                rval = parseFloat(rval);
             }
-            else if(coerce === xsd.integer)
+            else if(coerce === xsd['integer'])
             {
                rval = parseInt(rval);
             }
@@ -1092,15 +1092,15 @@ Processor.prototype.expand = function(ctx, property, value, expandSubjects)
       {
          if(value.constructor === Boolean)
          {
-            coerce = xsd.boolean;
+            coerce = xsd['boolean'];
          }
          else if(('' + value).indexOf('.') == -1)
          {
-            coerce = xsd.integer;
+            coerce = xsd['integer'];
          }
          else
          {
-            coerce = xsd.double;
+            coerce = xsd['double'];
          }
       }
 
@@ -1119,7 +1119,7 @@ Processor.prototype.expand = function(ctx, property, value, expandSubjects)
          else
          {
             rval['@datatype'] = coerce;
-            if(coerce === xsd.double)
+            if(coerce === xsd['double'])
             {
                // do special JSON-LD double format
                value = value.toExponential(6).replace(
@@ -1698,7 +1698,7 @@ Processor.prototype.nameBlankNodes = function(input)
       if(!('@subject' in bnode))
       {
          // generate names until one is unique
-         while(ng.next() in subjects);
+         while(ng.next() in subjects){};
          bnode['@subject'] =
          {
             '@iri': ng.current()
@@ -1728,13 +1728,13 @@ Processor.prototype.renameBlankNode = function(b, id)
    delete subjects[old];
    
    // update reference and property lists
-   this.edges.refs[id] = this.edges.refs[old];
-   this.edges.props[id] = this.edges.props[old];
-   delete this.edges.refs[old];
-   delete this.edges.props[old];
+   this.edges['refs'][id] = this.edges['refs'][old];
+   this.edges['props'][id] = this.edges['props'][old];
+   delete this.edges['refs'][old];
+   delete this.edges['props'][old];
    
    // update references to this bnode
-   var refs = this.edges.refs[id].all;
+   var refs = this.edges['refs'][id].all;
    for(var i in refs)
    {
       var iri = refs[i].s;
@@ -1743,7 +1743,7 @@ Processor.prototype.renameBlankNode = function(b, id)
          iri = id;
       }
       var ref = subjects[iri];
-      var props = this.edges.props[iri].all;
+      var props = this.edges['props'][iri].all;
       for(var i2 in props)
       {
          if(props[i2].s === old)
@@ -1767,11 +1767,11 @@ Processor.prototype.renameBlankNode = function(b, id)
    }
    
    // update references from this bnode 
-   var props = this.edges.props[id].all;
+   var props = this.edges['props'][id].all;
    for(var i in props)
    {
       var iri = props[i].s;
-      refs = this.edges.refs[iri].all;
+      refs = this.edges['refs'][iri].all;
       for(var r in refs)
       {
          if(refs[r].s === old)
@@ -1797,8 +1797,8 @@ Processor.prototype.canonicalizeBlankNodes = function(input)
    // collect subjects and bnodes from flat input graph
    var edges = this.edges =
    {
-      refs: {},
-      props: {}
+      'refs': {},
+      'props': {}
    };
    var subjects = this.subjects = {};
    var bnodes = [];
@@ -1806,12 +1806,12 @@ Processor.prototype.canonicalizeBlankNodes = function(input)
    {
       var iri = input[i]['@subject']['@iri'];
       subjects[iri] = input[i];
-      edges.refs[iri] =
+      edges['refs'][iri] =
       {
          all: [],
          bnodes: []
       };
-      edges.props[iri] =
+      edges['props'][iri] =
       {
          all: [],
          bnodes: []
@@ -1838,7 +1838,7 @@ Processor.prototype.canonicalizeBlankNodes = function(input)
       if(c14n.inNamespace(iri))
       {
          // generate names until one is unique
-         while(ngTmp.next() in subjects);
+         while(ngTmp.next() in subjects){};
          this.renameBlankNode(bnode, ngTmp.current());
          iri = bnode['@subject']['@iri'];
       }
@@ -1926,9 +1926,9 @@ Processor.prototype.canonicalizeBlankNodes = function(input)
    }
    
    // sort property lists that now have canonically-named bnodes
-   for(var key in edges.props)
+   for(var key in edges['props'])
    {
-      if(edges.props[key].bnodes.length > 0)
+      if(edges['props'][key].bnodes.length > 0)
       {
          var bnode = subjects[key];
          for(var p in bnode)
@@ -2122,7 +2122,7 @@ MappingBuilder.prototype.serialize = function(subjects, edges)
                // serialize references
                var first = true;
                s += '[';
-               var refs = edges.refs[iri].all;
+               var refs = edges['refs'][iri].all;
                for(var r in refs)
                {
                   if(first)
@@ -2495,8 +2495,8 @@ Processor.prototype.shallowCompareBlankNodes = function(a, b)
    // step #4
    if(rval === 0)
    {
-      var edgesA = this.edges.refs[a['@subject']['@iri']].all;
-      var edgesB = this.edges.refs[b['@subject']['@iri']].all;
+      var edgesA = this.edges['refs'][a['@subject']['@iri']].all;
+      var edgesB = this.edges['refs'][b['@subject']['@iri']].all;
       rval = _compare(edgesA.length, edgesB.length);
    }
    
@@ -2576,8 +2576,8 @@ Processor.prototype.compareEdges = function(a, b)
  */
 Processor.prototype.collectEdges = function()
 {
-   var refs = this.edges.refs;
-   var props = this.edges.props;
+   var refs = this.edges['refs'];
+   var props = this.edges['props'];
    
    // collect all references and properties
    for(var iri in this.subjects)
@@ -2615,7 +2615,7 @@ Processor.prototype.collectEdges = function()
    {
       refs[iri].all.sort(function(a, b) { return self.compareEdges(a, b); });
       refs[iri].bnodes = refs[iri].all.filter(function(edge) {
-         return _isBlankNodeIri(edge.s)
+         return _isBlankNodeIri(edge.s);
       });
    }
    for(var iri in props)
@@ -2882,7 +2882,7 @@ var _subframe = function(
    }
    
    return value;
-}
+};
 
 /**
  * Recursively frames the given input according to the given frame.
