@@ -2758,7 +2758,23 @@ var _subframe = function(
       // replace the existing embed with a reference
       else if(embed.parent !== null)
       {
-         embed.parent[embed.key] = value['@subject'];
+         if(embed.parent[embed.key].constructor === Array)
+         {
+            var objs = embed.parent[embed.key];
+            for(var i in objs)
+            {
+               if(objs[i].constructor === Object && '@subject' in objs[i] &&
+                  objs[i]['@subject']['@iri'] === iri)
+               {
+                  objs[i] = value['@subject'];
+                  break;
+               }
+            }
+         }
+         else
+         {
+            embed.parent[embed.key] = value['@subject'];
+         }
       }
       
       // update embed entry
@@ -2783,9 +2799,11 @@ var _subframe = function(
       }
       
       // iterate over keys in value
-      for(key in value)
+      var keys = Object.keys(value);
+      for(i in keys)
       {
          // skip keywords and type
+         var key = keys[i];
          if(key.indexOf('@') !== 0 && key !== ns.rdf + 'type')
          {
             // get the subframe if available
@@ -2955,7 +2973,15 @@ var _frame = function(
          }
          else
          {
-            rval.push(value);
+            // determine if value is a reference
+            var isRef = (value !== null && value.constructor === Object &&
+               '@iri' in value && value['@iri'] in embeds);
+            
+            // push any value that isn't a parentless reference
+            if(!(parent === null && isRef))
+            {
+               rval.push(value);
+            }
          }
       }
    }

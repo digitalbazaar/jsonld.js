@@ -1,0 +1,14 @@
+[{
+    "@subject": {
+        "@iri": "looker"
+    },
+    "canSee": [{
+        "@iri": "forgotten"
+    }, {
+        "@iri": "spotted"
+    }]
+}, {
+    "@subject": {
+        "@iri": "spotted"
+    }
+}]

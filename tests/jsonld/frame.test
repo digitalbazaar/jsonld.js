@@ -72,5 +72,11 @@
       "input": "frame-0012-in.json",
       "frame": "frame-0012-frame.json",
       "expect": "frame-0012-out.json"
+   }, {
+      "name": "Replace existing embed",
+      "type": "frame",
+      "input": "frame-0012-in.json",
+      "frame": "frame-0012-frame.json",
+      "expect": "frame-0012-out.json"
    }]
 }
