@@ -2775,6 +2775,14 @@ var _subframe = function(
          {
             embed.parent[embed.key] = value['@subject'];
          }
+
+	 // Clear out any old embeds that relied on this one.
+         // (See: JSON-LD/frame 0014/Replace existing embed on 2nd pass)
+	 // TODO:  consider indexing by parent IRI for performance...
+         for(e in embeds) {
+	     if (embeds[e]['parent'] && embeds[e]['parent']['@subject']['@iri'] === iri)
+                 delete embeds[e];
+	 }
       }
       
       // update embed entry
