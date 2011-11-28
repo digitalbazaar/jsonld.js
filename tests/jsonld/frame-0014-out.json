@@ -1,0 +1,24 @@
+[{
+    "@subject": {
+        "@iri": "a"
+    },
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#type": {
+        "@iri": "Node"
+    },
+    "sees": {
+        "@iri": "b"
+    }
+}, {
+    "@subject": {
+        "@iri": "b"
+    },
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#type": {
+        "@iri": "Node"
+    },
+    "sees": {
+        "@subject": {
+            "@iri": "_:c14n0"
+        },
+        "remember_me": "This value should not disappear."
+    }
+}]

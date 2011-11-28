@@ -75,8 +75,14 @@
    }, {
       "name": "Replace existing embed",
       "type": "frame",
-      "input": "frame-0012-in.json",
-      "frame": "frame-0012-frame.json",
-      "expect": "frame-0012-out.json"
+      "input": "frame-0013-in.json",
+      "frame": "frame-0013-frame.json",
+      "expect": "frame-0013-out.json"
+   }, {
+      "name": "Replace existing embed on 2nd pass",
+      "type": "frame",
+      "input": "frame-0014-in.json",
+      "frame": "frame-0014-frame.json",
+      "expect": "frame-0014-out.json"
    }]
 }

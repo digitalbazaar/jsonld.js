@@ -1,0 +1,11 @@
+{
+  "@type": "Node",
+  "@subject": "a", 
+  "sees": {
+    "@type": "Node",
+    "@subject": "b", 
+    "sees": { 
+      "remember_me": "This value should not disappear."
+    }
+  }
+}
