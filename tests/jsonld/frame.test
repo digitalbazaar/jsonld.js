@@ -84,5 +84,11 @@
       "input": "frame-0014-in.json",
       "frame": "frame-0014-frame.json",
       "expect": "frame-0014-out.json"
+   }, {
+      "name": "Replace deeply-nested embed",
+      "type": "frame",
+      "input": "frame-0015-in.json",
+      "frame": "frame-0015-frame.json",
+      "expect": "frame-0015-out.json"
    }]
 }
