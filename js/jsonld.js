@@ -28,18 +28,25 @@ if(typeof(window) !== 'undefined')
    }
 
    // define js 1.8.5 Object.keys method unless present
-   if(!Object.keys) 
-       Object.keys = function(o){  
-           if (o !== Object(o))  
-               throw new TypeError('Object.keys called on non-object');  
-           var ret=[],p;  
-           for(p in o) {
-               if(Object.prototype.hasOwnProperty.call(o,p)) 
-                   ret.push(p); 
-           }
-           return ret;
-       }
-
+   if(!Object.keys)
+   {
+      Object.keys = function(o)
+      {  
+         if(o !== Object(o))
+         {
+            throw new TypeError('Object.keys called on non-object');
+         }
+         var rval = [];
+         for(var p in o)
+         {
+            if(Object.prototype.hasOwnProperty.call(o, p))
+            {
+               rval.push(p);
+            }
+         }
+         return rval;
+      }
+   }
 }
 // define node.js module
 else if(typeof(module) !== 'undefined' && module.exports)
