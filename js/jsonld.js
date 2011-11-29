@@ -200,8 +200,8 @@ var _compactIri = function(ctx, iri, usedCtx)
       }
    }
    
-   // term not found, if term is rdf type, use @type keyword
-   if(rval === null && iri === ns.rdf + 'type')
+   // term not found, if term is @type, use keyword
+   if(rval === null && iri === '@type')
    {
       rval = _getKeywords(ctx)['@type'];
    }
@@ -291,15 +291,15 @@ var _expandTerm = function(ctx, term, usedCtx)
          usedCtx[term] = rval;
       }
    }
-   // 3. The property is the special-case subject.
+   // 3. The property is the special-case @subject.
    else if(term === keywords['@subject'])
    {
-      rval = keywords['@subject'];
+      rval = '@subject';
    }
-   // 4. The property is the special-case rdf type.
+   // 4. The property is the special-case @type.
    else if(term === keywords['@type'])
    {
-      rval = ns.rdf + 'type';
+      rval = '@type';
    }
    // 5. The property is a relative IRI, prepend the default vocab.
    else
@@ -1214,7 +1214,7 @@ Processor.prototype.getCoerceType = function(ctx, property, usedCtx)
    var p = _expandTerm(ctx, property, null);
    
    // built-in type coercion JSON-LD-isms
-   if(p === '@subject' || p === ns.rdf + 'type')
+   if(p === '@subject' || p === '@type')
    {
       rval = '@iri';
    }
@@ -2641,8 +2641,8 @@ var _isType = function(input, frame)
    var rval = false;
    
    // check if type(s) are specified in frame and input
-   var type = ns.rdf + 'type';
-   if(type in frame &&
+   var type = '@type';
+   if('@type' in frame &&
       input.constructor === Object && '@subject' in input && type in input)
    {
       var tmp = (input[type].constructor === Array) ?
@@ -2679,7 +2679,7 @@ var _isDuckType = function(input, frame)
    var rval = false;
    
    // frame must not have a specific type
-   var type = ns.rdf + 'type';
+   var type = '@type';
    if(!(type in frame))
    {
       // get frame properties that must exist on input
@@ -2822,7 +2822,7 @@ var _subframe = function(
       {
          // skip keywords and type
          var key = keys[i];
-         if(key.indexOf('@') !== 0 && key !== ns.rdf + 'type')
+         if(key.indexOf('@') !== 0 && key !== '@type')
          {
             // get the subframe if available
             if(key in frame)
@@ -2859,7 +2859,7 @@ var _subframe = function(
       for(key in frame)
       {
          // skip keywords, type query, and non-null keys in value
-         if(key.indexOf('@') !== 0 && key !== ns.rdf + 'type' &&
+         if(key.indexOf('@') !== 0 && key !== '@type' &&
             (!(key in value) || value[key] === null))
          {
             var f = frame[key];

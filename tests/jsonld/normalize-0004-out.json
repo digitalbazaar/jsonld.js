@@ -6,7 +6,7 @@
       "http://example.org/vocab#embed": {
          "@iri": "http://example.org/test#example"
       },
-      "http://www.w3.org/1999/02/22-rdf-syntax-ns#type": {
+      "@type": {
          "@iri": "http://example.org/vocab#Foo"
       }
    },

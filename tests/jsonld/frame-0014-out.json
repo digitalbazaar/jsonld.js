@@ -2,7 +2,7 @@
     "@subject": {
         "@iri": "a"
     },
-    "http://www.w3.org/1999/02/22-rdf-syntax-ns#type": {
+    "@type": {
         "@iri": "Node"
     },
     "sees": {
@@ -12,7 +12,7 @@
     "@subject": {
         "@iri": "b"
     },
-    "http://www.w3.org/1999/02/22-rdf-syntax-ns#type": {
+    "@type": {
         "@iri": "Node"
     },
     "sees": {

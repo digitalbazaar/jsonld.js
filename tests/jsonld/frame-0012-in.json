@@ -3,7 +3,7 @@
         "@subject": {
             "@iri": "http://example.org/med-1"
         },
-        "http://www.w3.org/1999/02/22-rdf-syntax-ns#type": {
+        "@type": {
             "@iri": "http://smartplatforms.org/terms#Medication"
         },
         "http://smartplatforms.org/terms#label": "Lisinopril",
@@ -14,7 +14,7 @@
         "@subject": {
             "@iri": "http://example.org/fill-1"
         },
-        "http://www.w3.org/1999/02/22-rdf-syntax-ns#type": {
+        "@type": {
             "@iri": "http://smartplatforms.org/terms#Fulfillment"
         },
         "http://smartplatforms.org/terms#label": "30 pills on 2/2/2011",
