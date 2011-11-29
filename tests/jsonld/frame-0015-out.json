@@ -1,0 +1,39 @@
+[{
+    "@context": {
+        "sp": "http://smartplatforms.org/terms#",
+        "@coerce": {
+            "sp:hasStatement": "@iri"
+        }
+    },
+    "@subject": "http://localhost:7000/records/999888",
+    "@type": "sp:MedicalRecord",
+    "sp:hasStatement": "http://localhost:7000/records/999888/vital_signs/c9ddca3e-3df8-4f13-9a16-eecd80aa8ff6"
+}, {
+    "@context": {
+        "dcterms": "http://purl.org/dc/terms/",
+        "sp": "http://smartplatforms.org/terms#",
+        "@coerce": {
+            "sp:belongsTo": "@iri",
+            "sp:code": "@iri"
+        }
+    },
+    "@subject": "http://localhost:7000/records/999888/vital_signs/c9ddca3e-3df8-4f13-9a16-eecd80aa8ff6",
+    "@type": "sp:VitalSigns",
+    "sp:belongsTo": "http://localhost:7000/records/999888",
+    "sp:bloodPressure": {
+        "@subject": "_:c14n0",
+        "sp:systolic": {
+            "@subject": "_:c14n2",
+            "sp:unit": "mm[Hg]",
+            "sp:value": "111.226458141",
+            "sp:vitalName": {
+                "@subject": "_:c14n1",
+                "dcterms:title": "Systolic blood pressure",
+                "sp:code": "http://loinc.org/codes/8480-6",
+                "@type": "sp:CodedValue"
+            },
+            "@type": "sp:VitalSign"
+        },
+        "@type": "sp:BloodPressure"
+    }
+}]

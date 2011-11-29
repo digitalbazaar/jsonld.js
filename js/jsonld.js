@@ -2775,8 +2775,19 @@ var _subframe = function(
          {
             embed.parent[embed.key] = value['@subject'];
          }
+
+	  // Recursively clear out old embeds that relied on this one.
+          // (See: JSON-LD/frame 0014/Replace existing embed on 2nd pass)
+	  var clear_dependents = function(iri) {
+	      for(e in embeds) {
+		  if (embeds[e]['parent'] && embeds[e]['parent']['@subject']['@iri'] === iri) {
+                      delete embeds[e];
+		      clear_dependents(e)
+		  }
+	      }
+	  };
+	  clear_dependents(iri);
       }
-      
       // update embed entry
       embed.autoembed = autoembed;
       embed.parent = parent;
