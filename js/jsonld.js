@@ -2760,6 +2760,7 @@ var _subframe = function(
       {
          if(embed.parent[embed.key].constructor === Array)
          {
+            // find and replace embed in array
             var objs = embed.parent[embed.key];
             for(var i in objs)
             {
@@ -2775,19 +2776,25 @@ var _subframe = function(
          {
             embed.parent[embed.key] = value['@subject'];
          }
-
-	  // Recursively clear out old embeds that relied on this one.
-          // (See: JSON-LD/frame 0014/Replace existing embed on 2nd pass)
-	  var clear_dependents = function(iri) {
-	      for(e in embeds) {
-		  if (embeds[e]['parent'] && embeds[e]['parent']['@subject']['@iri'] === iri) {
-                      delete embeds[e];
-		      clear_dependents(e)
-		  }
-	      }
-	  };
-	  clear_dependents(iri);
+         
+         // recursively remove any dependent dangling embeds
+         var removeDependents = function(iri)
+         {
+            var iris = Object.keys(embeds);
+            for(var i in iris)
+            {
+               i = iris[i];
+               if(i in embeds && embeds[i].parent !== null &&
+                  embeds[i].parent['@subject']['@iri'] === iri)
+               {
+                  delete embeds[i];
+                  removeDependents(i);
+               }
+            }
+         };
+         removeDependents(iri);
       }
+      
       // update embed entry
       embed.autoembed = autoembed;
       embed.parent = parent;
