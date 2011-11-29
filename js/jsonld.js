@@ -25,7 +25,7 @@ if(typeof(window) !== 'undefined')
    Exception = function(obj)
    {
       _setMembers(this, obj);
-   }
+   };
 
    // define js 1.8.5 Object.keys method unless present
    if(!Object.keys)
@@ -70,9 +70,9 @@ var ns =
 
 var xsd =
 {
-   boolean: ns.xsd + 'boolean',
-   double: ns.xsd + 'double',
-   integer: ns.xsd + 'integer'
+   'boolean': ns.xsd + 'boolean',
+   'double': ns.xsd + 'double',
+   'integer': ns.xsd + 'integer'
 };
 
 /**
@@ -624,7 +624,7 @@ jsonld.toTriples = function(input, callback)
    var rval = null;
    
    // normalize input
-   normalized = jsonld.normalize(input);
+   var normalized = jsonld.normalize(input);
    
    // setup default callback
    callback = callback || null;
@@ -913,7 +913,8 @@ Processor.prototype.compact = function(ctx, property, value, usedCtx)
 
       // types that can be auto-coerced from a JSON-builtin
       if(coerce === null &&
-         (type === xsd.boolean || type === xsd.integer || type === xsd.double))
+         (type === xsd['boolean'] || type === xsd['integer'] ||
+         type === xsd['double']))
       {
          coerce = type;
       }
@@ -960,15 +961,15 @@ Processor.prototype.compact = function(ctx, property, value, usedCtx)
             }
 
             // do basic JSON types conversion
-            if(coerce === xsd.boolean)
+            if(coerce === xsd['boolean'])
             {
                rval = (rval === 'true' || rval != 0);
             }
-            else if(coerce === xsd.double)
+            else if(coerce === xsd['double'])
             {
                rval = parseFloat(rval);
             }
-            else if(coerce === xsd.integer)
+            else if(coerce === xsd['integer'])
             {
                rval = parseInt(rval);
             }
@@ -1112,15 +1113,15 @@ Processor.prototype.expand = function(ctx, property, value, expandSubjects)
       {
          if(value.constructor === Boolean)
          {
-            coerce = xsd.boolean;
+            coerce = xsd['boolean'];
          }
          else if(('' + value).indexOf('.') == -1)
          {
-            coerce = xsd.integer;
+            coerce = xsd['integer'];
          }
          else
          {
-            coerce = xsd.double;
+            coerce = xsd['double'];
          }
       }
 
@@ -1139,7 +1140,7 @@ Processor.prototype.expand = function(ctx, property, value, expandSubjects)
          else
          {
             rval['@datatype'] = coerce;
-            if(coerce === xsd.double)
+            if(coerce === xsd['double'])
             {
                // do special JSON-LD double format
                value = value.toExponential(6).replace(
@@ -1718,7 +1719,7 @@ Processor.prototype.nameBlankNodes = function(input)
       if(!('@subject' in bnode))
       {
          // generate names until one is unique
-         while(ng.next() in subjects);
+         while(ng.next() in subjects){}
          bnode['@subject'] =
          {
             '@iri': ng.current()
@@ -1858,7 +1859,7 @@ Processor.prototype.canonicalizeBlankNodes = function(input)
       if(c14n.inNamespace(iri))
       {
          // generate names until one is unique
-         while(ngTmp.next() in subjects);
+         while(ngTmp.next() in subjects){};
          this.renameBlankNode(bnode, ngTmp.current());
          iri = bnode['@subject']['@iri'];
       }
@@ -2635,7 +2636,7 @@ Processor.prototype.collectEdges = function()
    {
       refs[iri].all.sort(function(a, b) { return self.compareEdges(a, b); });
       refs[iri].bnodes = refs[iri].all.filter(function(edge) {
-         return _isBlankNodeIri(edge.s)
+         return _isBlankNodeIri(edge.s);
       });
    }
    for(var iri in props)
@@ -2920,7 +2921,7 @@ var _subframe = function(
    }
    
    return value;
-}
+};
 
 /**
  * Recursively frames the given input according to the given frame.
