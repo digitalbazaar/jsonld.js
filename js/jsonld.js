@@ -256,7 +256,7 @@ var _compactIri = function(ctx, iri, usedCtx)
                  rval = key + ':' + iri.substr(ctxIri.length);
                  if(usedCtx !== null)
                  {
-                    usedCtx[key] = ctxIri;
+                    usedCtx[key] = _clone(ctx[key]);
                  }
                  break;
               }
