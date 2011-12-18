@@ -154,7 +154,6 @@ var _getKeywords = function(ctx)
    
    var rval =
    {
-      '@datatype': '@datatype',
       '@iri': '@iri',
       '@language': '@language',
       '@literal': '@literal',
@@ -888,12 +887,12 @@ Processor.prototype.compact = function(ctx, property, value, usedCtx)
          // type coercion can only occur if language is not specified
          if(!('@language' in value))
          {
-            // datatype must match coerce type if specified
-            if('@datatype' in value)
+            // type must match coerce type if specified
+            if('@type' in value)
             {
-               type = value['@datatype'];
+               type = value['@type'];
             }
-            // datatype is IRI
+            // type is IRI
             else if('@iri' in value)
             {
                type = '@iri';
@@ -935,7 +934,7 @@ Processor.prototype.compact = function(ctx, property, value, usedCtx)
          else if(type !== coerce)
          {
             throw new Exception({
-               message: 'Cannot coerce type because the datatype does ' +
+               message: 'Cannot coerce type because the type does ' +
                   'not match.',
                type: type,
                expected: coerce
@@ -1092,9 +1091,9 @@ Processor.prototype.expand = function(ctx, property, value, expandSubjects)
             {
                rval['@language'] = value[keywords['@language']];
             }
-            else if(keywords['@datatype'] in value)
+            else if(keywords['@type'] in value)
             {
-               rval['@datatype'] = value[keywords['@datatype']];
+               rval['@type'] = value[keywords['@type']];
             }
          }
       }
@@ -1125,7 +1124,7 @@ Processor.prototype.expand = function(ctx, property, value, expandSubjects)
          }
       }
 
-      // coerce to appropriate datatype, only expand subjects if requested
+      // coerce to appropriate type, only expand subjects if requested
       if(coerce !== null &&
          (property !== keywords['@subject'] || expandSubjects))
       {
@@ -1136,10 +1135,10 @@ Processor.prototype.expand = function(ctx, property, value, expandSubjects)
          {
             rval['@iri'] = _expandTerm(ctx, value, null);
          }
-         // other datatype
+         // other type
          else
          {
-            rval['@datatype'] = coerce;
+            rval['@type'] = coerce;
             if(coerce === xsd['double'])
             {
                // do special JSON-LD double format
@@ -1378,7 +1377,7 @@ var _compareObjects = function(o1, o2)
       {
          if('@literal' in o1)
          {
-            rval = _compareObjectKeys(o1, o2, '@datatype');
+            rval = _compareObjectKeys(o1, o2, '@type');
             if(rval === 0)
             {
                rval = _compareObjectKeys(o1, o2, '@language');
@@ -1416,7 +1415,7 @@ var _compareBlankNodeObjects = function(a, b)
    3.2.3. The bnode with the alphabetically-first string is first.
    3.2.4. The bnode with a @literal is first.
    3.2.5. The bnode with the alphabetically-first @literal is first.
-   3.2.6. The bnode with the alphabetically-first @datatype is first.
+   3.2.6. The bnode with the alphabetically-first @type is first.
    3.2.7. The bnode with a @language is first.
    3.2.8. The bnode with the alphabetically-first @language is first.
    3.2.9. The bnode with the alphabetically-first @iri is first.
@@ -2074,10 +2073,10 @@ var _serializeProperties = function(b)
                {
                   rval += '"' + o['@literal'] + '"';
                   
-                  // datatype literal
-                  if('@datatype' in o)
+                  // type literal
+                  if('@type' in o)
                   {
-                     rval += '^^<' + o['@datatype'] + '>';
+                     rval += '^^<' + o['@type'] + '>';
                   }
                   // language literal
                   else if('@language' in o)

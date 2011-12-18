@@ -46,22 +46,22 @@
       "input": "normalize-0009-in.json",
       "expect": "normalize-0009-out.json"
    }, {
-      "name": "datatype",
+      "name": "type",
       "type": "normalize",
       "input": "normalize-0010-in.json",
       "expect": "normalize-0010-out.json"
    }, {
-      "name": "type-coerced datatype",
+      "name": "type-coerced type",
       "type": "normalize",
       "input": "normalize-0011-in.json",
       "expect": "normalize-0011-out.json"
    }, {
-      "name": "type-coerced datatype, double reference",
+      "name": "type-coerced type, double reference",
       "type": "normalize",
       "input": "normalize-0012-in.json",
       "expect": "normalize-0012-out.json"
    }, {
-      "name": "type-coerced datatype, cycle",
+      "name": "type-coerced type, cycle",
       "type": "normalize",
       "input": "normalize-0013-in.json",
       "expect": "normalize-0013-out.json"
