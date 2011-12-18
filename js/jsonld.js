@@ -261,18 +261,18 @@ var _compactIri = function(ctx, iri, usedCtx)
             var ctxIri = _getTermIri(ctx, key);
             if(ctxIri !== null)
             {
-              var idx = iri.indexOf(ctxIri);
-              
-              // compact to a prefix
-              if(idx === 0 && iri.length > ctxIri.length)
-              {
-                 rval = key + ':' + iri.substr(ctxIri.length);
-                 if(usedCtx !== null)
-                 {
-                    usedCtx[key] = _clone(ctx[key]);
-                 }
-                 break;
-              }
+               var idx = iri.indexOf(ctxIri);
+               
+               // compact to a prefix
+               if(idx === 0 && iri.length > ctxIri.length)
+               {
+                  rval = key + ':' + iri.substr(ctxIri.length);
+                  if(usedCtx !== null)
+                  {
+                     usedCtx[key] = _clone(ctx[key]);
+                  }
+                  break;
+               }
             }
          }
       }
