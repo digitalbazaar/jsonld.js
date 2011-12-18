@@ -1,1 +1,227 @@
-[{"@context": {"foaf": "http://xmlns.com/foaf/0.1/", "owl": "http://www.w3.org/2002/07/owl#", "sp": "http://smartplatforms.org/terms#", "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rdfs": "http://www.w3.org/2000/01/rdf-schema#", "@coerce": {"sp:allergicReaction": "@iri", "sp:drugClassAllergen": "@iri", "sp:labSpecimenCollected": "@iri", "sp:ordinalResult": "@iri", "sp:hasStatement": "@iri", "sp:normalRange": "@iri", "sp:category": "@iri", "sp:labStatus": "@iri", "sp:respiratoryRate": "@iri", "sp:height": "@iri", "sp:valueAndUnit": "@iri", "sp:alertLevel": "@iri", "sp:facility": "@iri", "sp:translationFidelity": "@iri", "sp:organization": "@iri", "sp:drugName": "@iri", "sp:labName": "@iri", "sp:weight": "@iri", "sp:problemName": "@iri", "sp:method": "@iri", "sp:diastolic": "@iri", "sp:systolic": "@iri", "sp:medicalRecordNumber": "@iri", "sp:drugClass": "@iri", "sp:fulfillment": "@iri", "sp:denominator": "@iri", "sp:minimum": "@iri", "sp:vitalName": "@iri", "sp:bodySite": "@iri", "sp:maximum": "@iri", "sp:heartRate": "@iri", "sp:specimenCollected": "@iri", "sp:bodyMassIndex": "@iri", "sp:person": "@iri", "sp:bodyPosition": "@iri", "sp:belongsTo": "@iri", "sp:quantityDispensed": "@iri", "sp:allergyExclusionName": "@iri", "sp:foodAllergen": "@iri", "sp:provider": "@iri", "sp:numerator": "@iri", "sp:encounterType": "@iri", "vcard:adr": "@iri", "sp:encounter": "@iri", "sp:frequency": "@iri", "sp:temperature": "@iri", "sp:drugAllergen": "@iri", "sp:created": "@iri", "sp:address": "@iri", "sp:nominalResult": "@iri", "sp:pharmacy": "@iri", "sp:abnormalInterpretation": "@iri", "sp:severity": "@iri", "vcard:tel": "@iri", "sp:quantity": "@iri", "sp:quantitativeResult": "@iri", "sp:provenance": "@iri", "sp:medication": "@iri", "sp:participant": "@iri", "sp:labResult": "@iri", "sp:oxygenSaturation": "@iri", "sp:narrativeResult": "@iri", "sp:code": "@iri", "sp:nonCriticalRange": "@iri", "sp:bloodPressure": "@iri", "vcard:n": "@iri"}, "spcode": "http://smartplatforms.org/terms/codes/", "api": "http://smartplatforms.org/terms/api#", "dcterms": "http://purl.org/dc/terms/", "vcard": "http://www.w3.org/2006/vcard/ns#"}, "@type": ["http://smartplatforms.org/terms#Statement", "http://smartplatforms.org/terms#Fulfillment", "http://smartplatforms.org/terms#Alert", "http://smartplatforms.org/terms#AllergyExclusion", "http://smartplatforms.org/terms#Demographics", "http://smartplatforms.org/terms#Problem", "http://smartplatforms.org/terms#Medication", "http://smartplatforms.org/terms#VitalSigns", "http://smartplatforms.org/terms#MedicalRecord", "http://smartplatforms.org/terms#LabResult", "http://smartplatforms.org/terms#Allergy", "http://smartplatforms.org/terms#Encounter"]}]
+[
+  {
+    "@context": {
+      "foaf": "http://xmlns.com/foaf/0.1/",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "sp": "http://smartplatforms.org/terms#",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "spcode": "http://smartplatforms.org/terms/codes/",
+      "api": "http://smartplatforms.org/terms/api#",
+      "dcterms": "http://purl.org/dc/terms/",
+      "vcard": "http://www.w3.org/2006/vcard/ns#",
+      "sp:allergicReaction": {
+        "@type": "@iri"
+      },
+      "sp:drugClassAllergen": {
+        "@type": "@iri"
+      },
+      "sp:labSpecimenCollected": {
+        "@type": "@iri"
+      },
+      "sp:ordinalResult": {
+        "@type": "@iri"
+      },
+      "sp:hasStatement": {
+        "@type": "@iri"
+      },
+      "sp:normalRange": {
+        "@type": "@iri"
+      },
+      "sp:category": {
+        "@type": "@iri"
+      },
+      "sp:labStatus": {
+        "@type": "@iri"
+      },
+      "sp:respiratoryRate": {
+        "@type": "@iri"
+      },
+      "sp:height": {
+        "@type": "@iri"
+      },
+      "sp:valueAndUnit": {
+        "@type": "@iri"
+      },
+      "sp:alertLevel": {
+        "@type": "@iri"
+      },
+      "sp:facility": {
+        "@type": "@iri"
+      },
+      "sp:translationFidelity": {
+        "@type": "@iri"
+      },
+      "sp:organization": {
+        "@type": "@iri"
+      },
+      "sp:drugName": {
+        "@type": "@iri"
+      },
+      "sp:labName": {
+        "@type": "@iri"
+      },
+      "sp:weight": {
+        "@type": "@iri"
+      },
+      "sp:problemName": {
+        "@type": "@iri"
+      },
+      "sp:method": {
+        "@type": "@iri"
+      },
+      "sp:diastolic": {
+        "@type": "@iri"
+      },
+      "sp:systolic": {
+        "@type": "@iri"
+      },
+      "sp:medicalRecordNumber": {
+        "@type": "@iri"
+      },
+      "sp:drugClass": {
+        "@type": "@iri"
+      },
+      "sp:fulfillment": {
+        "@type": "@iri"
+      },
+      "sp:denominator": {
+        "@type": "@iri"
+      },
+      "sp:minimum": {
+        "@type": "@iri"
+      },
+      "sp:vitalName": {
+        "@type": "@iri"
+      },
+      "sp:bodySite": {
+        "@type": "@iri"
+      },
+      "sp:maximum": {
+        "@type": "@iri"
+      },
+      "sp:heartRate": {
+        "@type": "@iri"
+      },
+      "sp:specimenCollected": {
+        "@type": "@iri"
+      },
+      "sp:bodyMassIndex": {
+        "@type": "@iri"
+      },
+      "sp:person": {
+        "@type": "@iri"
+      },
+      "sp:bodyPosition": {
+        "@type": "@iri"
+      },
+      "sp:belongsTo": {
+        "@type": "@iri"
+      },
+      "sp:quantityDispensed": {
+        "@type": "@iri"
+      },
+      "sp:allergyExclusionName": {
+        "@type": "@iri"
+      },
+      "sp:foodAllergen": {
+        "@type": "@iri"
+      },
+      "sp:provider": {
+        "@type": "@iri"
+      },
+      "sp:numerator": {
+        "@type": "@iri"
+      },
+      "sp:encounterType": {
+        "@type": "@iri"
+      },
+      "vcard:adr": {
+        "@type": "@iri"
+      },
+      "sp:encounter": {
+        "@type": "@iri"
+      },
+      "sp:frequency": {
+        "@type": "@iri"
+      },
+      "sp:temperature": {
+        "@type": "@iri"
+      },
+      "sp:drugAllergen": {
+        "@type": "@iri"
+      },
+      "sp:created": {
+        "@type": "@iri"
+      },
+      "sp:address": {
+        "@type": "@iri"
+      },
+      "sp:nominalResult": {
+        "@type": "@iri"
+      },
+      "sp:pharmacy": {
+        "@type": "@iri"
+      },
+      "sp:abnormalInterpretation": {
+        "@type": "@iri"
+      },
+      "sp:severity": {
+        "@type": "@iri"
+      },
+      "vcard:tel": {
+        "@type": "@iri"
+      },
+      "sp:quantity": {
+        "@type": "@iri"
+      },
+      "sp:quantitativeResult": {
+        "@type": "@iri"
+      },
+      "sp:provenance": {
+        "@type": "@iri"
+      },
+      "sp:medication": {
+        "@type": "@iri"
+      },
+      "sp:participant": {
+        "@type": "@iri"
+      },
+      "sp:labResult": {
+        "@type": "@iri"
+      },
+      "sp:oxygenSaturation": {
+        "@type": "@iri"
+      },
+      "sp:narrativeResult": {
+        "@type": "@iri"
+      },
+      "sp:code": {
+        "@type": "@iri"
+      },
+      "sp:nonCriticalRange": {
+        "@type": "@iri"
+      },
+      "sp:bloodPressure": {
+        "@type": "@iri"
+      },
+      "vcard:n": {
+        "@type": "@iri"
+      }
+    },
+    "@type": [
+      "http://smartplatforms.org/terms#Statement",
+      "http://smartplatforms.org/terms#Fulfillment",
+      "http://smartplatforms.org/terms#Alert",
+      "http://smartplatforms.org/terms#AllergyExclusion",
+      "http://smartplatforms.org/terms#Demographics",
+      "http://smartplatforms.org/terms#Problem",
+      "http://smartplatforms.org/terms#Medication",
+      "http://smartplatforms.org/terms#VitalSigns",
+      "http://smartplatforms.org/terms#MedicalRecord",
+      "http://smartplatforms.org/terms#LabResult",
+      "http://smartplatforms.org/terms#Allergy",
+      "http://smartplatforms.org/terms#Encounter"
+    ]
+  }
+]

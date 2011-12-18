@@ -1,16 +1,20 @@
 {
-   "@subject": "http://example.org/test",
-   "@context": {
-      "@coerce": {
-         "ex:bool": "xsd:boolean",
-         "ex:double": "xsd:double",
-         "ex:int": "xsd:integer"
-      },
-      "ex": "http://example.org/vocab#",
-      "xsd": "http://www.w3.org/2001/XMLSchema#"
-   },
-   "ex:bool": true,
-   "ex:double": 1.23,
-   "ex:double-zero": 0,
-   "ex:int": 123
+  "@subject": "http://example.org/test",
+  "@context": {
+    "ex": "http://example.org/vocab#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "ex:bool": {
+      "@type": "xsd:boolean"
+    },
+    "ex:double": {
+      "@type": "xsd:double"
+    },
+    "ex:int": {
+      "@type": "xsd:integer"
+    }
+  },
+  "ex:bool": true,
+  "ex:double": 1.23,
+  "ex:double-zero": 0,
+  "ex:int": 123
 }

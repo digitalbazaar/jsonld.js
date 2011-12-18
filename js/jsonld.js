@@ -207,12 +207,14 @@ var _compactIri = function(ctx, iri, usedCtx)
       if(key.length > 0 && key[0] !== '@')
       {
          // compact to a term
-         if(iri === ctx[key])
+         if((ctx[key].constructor === String && iri === ctx[key]) ||
+            (ctx[key].constructor === Object && '@iri' in ctx[key] &&
+            iri === ctx[key]['@iri']))
          {
             rval = key;
             if(usedCtx !== null)
             {
-               usedCtx[key] = ctx[key];
+               usedCtx[key] = _clone(ctx[key]);
             }
             break;
          }
@@ -234,18 +236,30 @@ var _compactIri = function(ctx, iri, usedCtx)
          if(key.length > 0 && key[0] !== '@')
          {
             // see if IRI begins with the next IRI from the context
-            var ctxIri = ctx[key];
-            var idx = iri.indexOf(ctxIri);
-            
-            // compact to a CURIE
-            if(idx === 0 && iri.length > ctxIri.length)
+            var ctxIri = null;
+            if(ctx[key].constructor === String)
             {
-               rval = key + ':' + iri.substr(ctxIri.length);
-               if(usedCtx !== null)
-               {
-                  usedCtx[key] = ctxIri;
-               }
-               break;
+               ctxIri = ctx[key];
+            }
+            else if(ctx[key].constructor === Object && '@iri' in ctx[key])
+            {
+              ctxIri = ctx[key]['@iri'];
+            }
+            
+            if(ctxIri !== null)
+            {
+              var idx = iri.indexOf(ctxIri);
+              
+              // compact to a CURIE
+              if(idx === 0 && iri.length > ctxIri.length)
+              {
+                 rval = key + ':' + iri.substr(ctxIri.length);
+                 if(usedCtx !== null)
+                 {
+                    usedCtx[key] = ctxIri;
+                 }
+                 break;
+              }
             }
          }
       }
@@ -346,29 +360,14 @@ var _expandTerm = function(ctx, term, usedCtx)
  */
 var _sortContextKeys = function(ctx)
 {
-   var rval = {};
-   
    // sort keys
+   var rval = {};
    var keys = Object.keys(ctx).sort();
    for(var k in keys)
    {
       var key = keys[k];
-      if(key !== '@coerce')
-      {
-         rval[key] = ctx[key];
-      }
+      rval[key] = ctx[key];
    }
-   if('@coerce' in ctx)
-   {
-      rval['@coerce'] = {};
-      keys = Object.keys(ctx['@coerce']).sort();
-      for(var k in keys)
-      {
-         var key = keys[k];
-         rval['@coerce'][key] = ctx['@coerce'][key];
-      }
-   }
-   
    return rval;
 };
 
@@ -524,7 +523,7 @@ jsonld.mergeContexts = function(ctx1, ctx2)
             {
                if(merged[mkey] === ctx2[key])
                {
-                  // FIXME: update related @coerce rules
+                  // FIXME: update related coerce rules
                   delete merged[mkey];
                   break;
                }
@@ -535,27 +534,7 @@ jsonld.mergeContexts = function(ctx1, ctx2)
       // merge contexts
       for(var key in ctx2)
       {
-         // skip @coerce, to be merged below
-         if(key !== '@coerce')
-         {
-            merged[key] = _clone(ctx2[key]);
-         }
-      }
-      
-      // merge @coerce
-      if('@coerce' in ctx2)
-      {
-         if(!('@coerce' in merged))
-         {
-            merged['@coerce'] = _clone(ctx2['@coerce']);
-         }
-         else
-         {
-            for(var key in ctx2['@coerce'])
-            {
-               merged['@coerce'][key] = ctx2['@coerce'][key];
-            }
-         }
+         merged[key] = _clone(ctx2[key]);
       }
    }
 
@@ -1238,23 +1217,18 @@ Processor.prototype.getCoerceType = function(ctx, property, usedCtx)
    {
       rval = '@iri';
    }
-   // check type coercion for property
-   else if('@coerce' in ctx)
+   else
    {
-      // look up compacted property in coercion map
+      // look up compacted property for a coercion type
       p = _compactIri(ctx, p, null);
-      if(p in ctx['@coerce'])
+      if(p in ctx && ctx[p].constructor === Object && '@type' in ctx[p])
       {
          // property found, return expanded type
-         var type = ctx['@coerce'][p];
+         var type = ctx[p]['@type'];
          rval = _expandTerm(ctx, type, usedCtx);
          if(usedCtx !== null)
          {
-            if(!('@coerce' in usedCtx))
-            {
-               usedCtx['@coerce'] = {};
-            }
-            usedCtx['@coerce'][p] = type;
+            usedCtx[p] = _clone(ctx[p]);
          }
       }
    }

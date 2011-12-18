@@ -1,32 +1,38 @@
 {
-   "@subject": [
-      {
-         "@subject": "e:test",
-         "e:A": "_:b1",
-         "e:B": "_:b2",
-         "e:C": "_:b3"
-      },
-      {
-         "@subject": "_:b1",
-         "e:next": "_:b2"
-      },
-      {
-         "@subject": "_:b2",
-         "e:next": "_:b3"
-      },
-      {
-         "@subject": "_:b3",
-         "e:next": "_:b1"
-      }
-   ],
-   "@context": {
-      "@coerce": {
-         "e:A": "@iri",
-         "e:B": "@iri",
-         "e:C": "@iri",
-         "e:next": "@iri"
-      },
-      "e": "http://example.org/vocab#",
-      "xsd": "http://www.w3.org/2001/XMLSchema#"
-   }
+  "@subject": [
+    {
+      "@subject": "e:test",
+      "e:A": "_:b1",
+      "e:B": "_:b2",
+      "e:C": "_:b3"
+    },
+    {
+      "@subject": "_:b1",
+      "e:next": "_:b2"
+    },
+    {
+      "@subject": "_:b2",
+      "e:next": "_:b3"
+    },
+    {
+      "@subject": "_:b3",
+      "e:next": "_:b1"
+    }
+  ],
+  "@context": {
+    "e": "http://example.org/vocab#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "e:A": {
+      "@type": "@iri"
+    },
+    "e:B": {
+      "@type": "@iri"
+    },
+    "e:C": {
+      "@type": "@iri"
+    },
+    "e:next": {
+      "@type": "@iri"
+    }
+  }
 }

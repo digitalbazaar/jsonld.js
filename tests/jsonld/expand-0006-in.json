@@ -1,7 +1,7 @@
 {
-   "@subject": "http://example.org/test",
-   "http://example.org/test#int": {
-      "@type": "http://www.w3.org/2001/XMLSchema#integer",
-      "@literal": "123"
-   }
+  "@subject": "http://example.org/test",
+  "http://example.org/test#int": {
+    "@type": "http://www.w3.org/2001/XMLSchema#integer",
+    "@literal": "123"
+  }
 }

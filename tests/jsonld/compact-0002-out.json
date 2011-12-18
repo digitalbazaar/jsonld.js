@@ -1,8 +1,8 @@
 {
-   "@subject": "ex:thing",
-   "@context": {
-      "dc": "http://purl.org/dc/terms/",
-      "ex": "http://example.org/test#"
-   },
-   "dc:title": "Title"
+  "@subject": "ex:thing",
+  "@context": {
+    "dc": "http://purl.org/dc/terms/",
+    "ex": "http://example.org/test#"
+  },
+  "dc:title": "Title"
 }

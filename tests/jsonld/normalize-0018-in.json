@@ -1,11 +1,11 @@
 {
-   "@subject": "_:b0",
-   "@context": {
-      "@coerce": {
-         "e:self": "@iri"
-      },
-      "e": "http://example.org/vocab#",
-      "xsd": "http://www.w3.org/2001/XMLSchema#"
-   },
-   "e:self": "_:b0"
+  "@subject": "_:b0",
+  "@context": {
+    "e": "http://example.org/vocab#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "e:self": {
+      "@type": "@iri"
+    }
+  },
+  "e:self": "_:b0"
 }

@@ -1,24 +1,27 @@
-[{
+[
+  {
     "@subject": {
-        "@iri": "a"
+      "@iri": "a"
     },
     "@type": {
-        "@iri": "Node"
+      "@iri": "Node"
     },
     "sees": {
-        "@iri": "b"
+      "@iri": "b"
     }
-}, {
+  },
+  {
     "@subject": {
-        "@iri": "b"
+      "@iri": "b"
     },
     "@type": {
-        "@iri": "Node"
+      "@iri": "Node"
     },
     "sees": {
-        "@subject": {
-            "@iri": "_:c14n0"
-        },
-        "remember_me": "This value should not disappear."
+      "@subject": {
+        "@iri": "_:c14n0"
+      },
+      "remember_me": "This value should not disappear."
     }
-}]
+  }
+]

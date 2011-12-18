@@ -1,9 +1,11 @@
 [
-{   
-"@context": {
+  {
+    "@context": {
       "sp": "http://smartplatforms.org/terms#"
-   },
-   "@type": "http://smartplatforms.org/terms#Medication"
-}, {
-   "@type": "http://smartplatforms.org/terms#Fulfillment"
-}]
+    },
+    "@type": "http://smartplatforms.org/terms#Medication"
+  },
+  {
+    "@type": "http://smartplatforms.org/terms#Fulfillment"
+  }
+]

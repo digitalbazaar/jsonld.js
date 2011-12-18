@@ -1,6 +1,6 @@
 {
-   "@context": {
-      "ex": "http://example.org/vocab#"
-   },
-   "@type": "ex:Foo"
+  "@context": {
+    "ex": "http://example.org/vocab#"
+  },
+  "@type": "ex:Foo"
 }

@@ -1,9 +1,13 @@
 {
-   "uri": "@subject",
-   "rel": "@iri",
-   "@coerce": {
-      "http://example.org/test#property1": "rel",
-      "http://example.org/test#property2": "rel",
-      "http://example.org/test#property3": "rel"
-   }
+  "uri": "@subject",
+  "rel": "@iri",
+  "http://example.org/test#property1": {
+    "@type": "rel"
+  },
+  "http://example.org/test#property2": {
+    "@type": "rel"
+  },
+  "http://example.org/test#property3": {
+    "@type": "rel"
+  }
 }

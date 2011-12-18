@@ -1,12 +1,12 @@
 {
-   "@subject": "http://example.org/test#example",
-   "@context": {
-      "@coerce": {
-         "ex:foo": "@iri" 
-      },
-      "ex": "http://example.org/vocab#",
-      "xsd": "http://www.w3.org/2001/XMLSchema#"
-   },
-   "@type": "ex:Foo",
-   "ex:foo": "ex:Bar"
+  "@subject": "http://example.org/test#example",
+  "@context": {
+    "ex": "http://example.org/vocab#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "ex:foo": {
+      "@type": "@iri"
+    }
+  },
+  "@type": "ex:Foo",
+  "ex:foo": "ex:Bar"
 }

@@ -1,21 +1,24 @@
-[{
+[
+  {
     "@context": {
-        "sp": "http://smartplatforms.org/terms#"
+      "sp": "http://smartplatforms.org/terms#"
     },
     "@subject": "http://example.org/med-1",
     "@type": "sp:Medication",
     "sp:hasFulfillment": {
-        "@iri": "http://example.org/fill-1"
+      "@iri": "http://example.org/fill-1"
     },
     "sp:label": "Lisinopril"
-}, {
+  },
+  {
     "@context": {
-        "sp": "http://smartplatforms.org/terms#"
+      "sp": "http://smartplatforms.org/terms#"
     },
     "@subject": "http://example.org/fill-1",
     "@type": "sp:Fulfillment",
     "sp:hasMedication": {
-        "@iri": "http://example.org/med-1"
+      "@iri": "http://example.org/med-1"
     },
     "sp:label": "30 pills on 2/2/2011"
-}]
+  }
+]

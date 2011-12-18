@@ -1,19 +1,19 @@
 {
-   "@subject": "http://example.org/test",
-   "http://example.org/vocab#bool": {
-      "@type": "http://www.w3.org/2001/XMLSchema#boolean",
-      "@literal": "true"
-   },
-   "http://example.org/vocab#double": {
-      "@type": "http://www.w3.org/2001/XMLSchema#double",
-      "@literal": "1.230000e+00"
-   },
-   "http://example.org/vocab#double-zero": {
-      "@type": "http://www.w3.org/2001/XMLSchema#double",
-      "@literal": "0.000000e+00"
-   },
-   "http://example.org/vocab#int": {
-      "@type": "http://www.w3.org/2001/XMLSchema#integer",
-      "@literal": "123"
-   }
+  "@subject": "http://example.org/test",
+  "http://example.org/vocab#bool": {
+    "@type": "http://www.w3.org/2001/XMLSchema#boolean",
+    "@literal": "true"
+  },
+  "http://example.org/vocab#double": {
+    "@type": "http://www.w3.org/2001/XMLSchema#double",
+    "@literal": "1.230000e+00"
+  },
+  "http://example.org/vocab#double-zero": {
+    "@type": "http://www.w3.org/2001/XMLSchema#double",
+    "@literal": "0.000000e+00"
+  },
+  "http://example.org/vocab#int": {
+    "@type": "http://www.w3.org/2001/XMLSchema#integer",
+    "@literal": "123"
+  }
 }

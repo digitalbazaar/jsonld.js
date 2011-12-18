@@ -305,14 +305,14 @@ TestRunner.prototype.run = function(tests, filepath)
 };
 
 // load and run tests
-try
-{
+/*try
+{*/
    var tr = new TestRunner();
    tr.group('JSON-LD');
    tr.run(tr.load('jsonld'));
    tr.ungroup();
    sys.log('All tests complete.');
-}
+/*}
 catch(e)
 {
    if(e.constructor === Exception && 'stack' in e)
@@ -321,4 +321,4 @@ catch(e)
       delete e.stack;
    }
    sys.puts('Exception: ' + JSON.stringify(e, null, 2));
-}
+}*/

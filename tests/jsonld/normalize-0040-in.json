@@ -1,33 +1,33 @@
 {
-   "@subject": [
-      {
-         "@subject": "_:b1",
-         "ex:p1": "_:b2"
-      },
-      {
-         "@subject": "_:b2",
-         "ex:p1": "_:b3"
-      },
-      {
-         "@subject": "_:b3"
-      },
-      {
-         "@subject": "_:c1",
-         "ex:p1": "_:c2"
-      },
-      {
-         "@subject": "_:c2",
-         "ex:p1": "_:c3"
-      },
-      {
-         "@subject": "_:c3"
-      }
-   ],
-   "@context": {
-      "@coerce": {
-         "ex:p1": "@iri" 
-      },
-      "ex": "http://example.org/vocab#",
-      "xsd": "http://www.w3.org/2001/XMLSchema#"
-   }
+  "@subject": [
+    {
+      "@subject": "_:b1",
+      "ex:p1": "_:b2"
+    },
+    {
+      "@subject": "_:b2",
+      "ex:p1": "_:b3"
+    },
+    {
+      "@subject": "_:b3"
+    },
+    {
+      "@subject": "_:c1",
+      "ex:p1": "_:c2"
+    },
+    {
+      "@subject": "_:c2",
+      "ex:p1": "_:c3"
+    },
+    {
+      "@subject": "_:c3"
+    }
+  ],
+  "@context": {
+    "ex": "http://example.org/vocab#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "ex:p1": {
+      "@type": "@iri"
+    }
+  }
 }

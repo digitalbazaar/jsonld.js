@@ -1,20 +1,20 @@
 {
-   "@context": {
-      "ex": "http://example.org/test#"
-   },
-   "@subject": "ex:example",
-   "ex:property-1": [
-      {
-         "@iri": "ex:iri-1"
-      },
-      {
-         "@iri": "ex:iri-2"
-      }
-   ],
-   "ex:property-2": [
-      123,
-      true,
-      "test-1",
-      "test-2"
-   ]
+  "@context": {
+    "ex": "http://example.org/test#"
+  },
+  "@subject": "ex:example",
+  "ex:property-1": [
+    {
+      "@iri": "ex:iri-1"
+    },
+    {
+      "@iri": "ex:iri-2"
+    }
+  ],
+  "ex:property-2": [
+    123,
+    true,
+    "test-1",
+    "test-2"
+  ]
 }

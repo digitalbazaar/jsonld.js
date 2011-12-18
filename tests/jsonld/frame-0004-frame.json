@@ -1,10 +1,10 @@
 {
-   "@context": {
-      "dc": "http://purl.org/dc/elements/1.1/",
-      "ex": "http://example.org/vocab#",
-      "@coerce": {
-         "ex:contains": "@iri" 
-      }
-   },
-   "@type": "ex:Library"
+  "@context": {
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "ex": "http://example.org/vocab#",
+    "ex:contains": {
+      "@type": "@iri"
+    }
+  },
+  "@type": "ex:Library"
 }

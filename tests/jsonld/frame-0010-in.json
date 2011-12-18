@@ -1,15 +1,15 @@
 {
-   "@context": {
-      "@coerce": {
-         "dc:creator": "@iri"
-      },
-      "dc0": "http://purl.org/dc/terms/",
-      "foaf": "http://xmlns.com/foaf/0.1/",
-      "ps": "http://purl.org/payswarm#"
-   },
-   "@subject": "http://example.com/asset",
-   "@type": "ps:Asset",
-   "dc:creator": {
-      "foaf:name": "John Doe"
-   }
+  "@context": {
+    "dc0": "http://purl.org/dc/terms/",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "ps": "http://purl.org/payswarm#",
+    "dc:creator": {
+      "@type": "@iri"
+    }
+  },
+  "@subject": "http://example.com/asset",
+  "@type": "ps:Asset",
+  "dc:creator": {
+    "foaf:name": "John Doe"
+  }
 }
