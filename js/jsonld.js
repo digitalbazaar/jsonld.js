@@ -167,8 +167,7 @@ var _getKeywords = function(ctx)
       var keywords = {};
       for(var key in ctx)
       {
-         if(ctx[key].constructor === String &&
-            ctx[key] in rval)
+         if(ctx[key].constructor === String && ctx[key] in rval)
          {
             keywords[ctx[key]] = key;
          }
@@ -185,7 +184,32 @@ var _getKeywords = function(ctx)
 };
 
 /**
- * Compacts an IRI into a term or CURIE if it can be. IRIs will not be
+ * Gets the iri associated with a term.
+ * 
+ * @param ctx the context.
+ * @param term the term.
+ * 
+ * @return the iri or NULL.
+ */
+var _getTermIri = function(ctx, term)
+{
+   var rval = null;
+   if(term in ctx)
+   {
+      if(ctx[term].constructor === String)
+      {
+         rval = ctx[term];
+      }
+      else if(ctx[term].constructor === Object && '@iri' in ctx[term])
+      {
+         rval = ctx[term]['@iri'];
+      }
+   }
+   return rval;
+};
+
+/**
+ * Compacts an IRI into a term or prefix if it can be. IRIs will not be
  * compacted to relative IRIs if they match the given context's default
  * vocabulary.
  *
@@ -193,23 +217,21 @@ var _getKeywords = function(ctx)
  * @param iri the IRI to compact.
  * @param usedCtx a context to update if a value was used from "ctx".
  *
- * @return the compacted IRI as a term or CURIE or the original IRI.
+ * @return the compacted IRI as a term or prefix or the original IRI.
  */
 var _compactIri = function(ctx, iri, usedCtx)
 {
    var rval = null;
    
    // check the context for a term that could shorten the IRI
-   // (give preference to terms over CURIEs)
+   // (give preference to terms over prefixes)
    for(var key in ctx)
    {
       // skip special context keys (start with '@')
       if(key.length > 0 && key[0] !== '@')
       {
          // compact to a term
-         if((ctx[key].constructor === String && iri === ctx[key]) ||
-            (ctx[key].constructor === Object && '@iri' in ctx[key] &&
-            iri === ctx[key]['@iri']))
+         if(iri === _getTermIri(ctx, key))
          {
             rval = key;
             if(usedCtx !== null)
@@ -227,7 +249,7 @@ var _compactIri = function(ctx, iri, usedCtx)
       rval = _getKeywords(ctx)['@type'];
    }
    
-   // term not found, check the context for a CURIE prefix
+   // term not found, check the context for a prefix
    if(rval === null)
    {
       for(var key in ctx)
@@ -236,21 +258,12 @@ var _compactIri = function(ctx, iri, usedCtx)
          if(key.length > 0 && key[0] !== '@')
          {
             // see if IRI begins with the next IRI from the context
-            var ctxIri = null;
-            if(ctx[key].constructor === String)
-            {
-               ctxIri = ctx[key];
-            }
-            else if(ctx[key].constructor === Object && '@iri' in ctx[key])
-            {
-              ctxIri = ctx[key]['@iri'];
-            }
-            
+            var ctxIri = _getTermIri(ctx, key);
             if(ctxIri !== null)
             {
               var idx = iri.indexOf(ctxIri);
               
-              // compact to a CURIE
+              // compact to a prefix
               if(idx === 0 && iri.length > ctxIri.length)
               {
                  rval = key + ':' + iri.substr(ctxIri.length);
@@ -276,7 +289,7 @@ var _compactIri = function(ctx, iri, usedCtx)
 
 /**
  * Expands a term into an absolute IRI. The term may be a regular term, a
- * CURIE, a relative IRI, or an absolute IRI. In any case, the associated
+ * prefix, a relative IRI, or an absolute IRI. In any case, the associated
  * absolute IRI will be returned.
  *
  * @param ctx the context to use.
@@ -292,21 +305,22 @@ var _expandTerm = function(ctx, term, usedCtx)
    // get JSON-LD keywords
    var keywords = _getKeywords(ctx);
    
-   // 1. If the property has a colon, then it is a CURIE or an absolute IRI:
+   // 1. If the property has a colon, it is a prefix or an absolute IRI:
    var idx = term.indexOf(':');
-   if(idx != -1)
+   if(idx !== -1)
    {
-      // get the potential CURIE prefix
+      // get the potential prefix
       var prefix = term.substr(0, idx);
 
       // 1.1. See if the prefix is in the context:
       if(prefix in ctx)
       {
          // prefix found, expand property to absolute IRI
-         rval = ctx[prefix] + term.substr(idx + 1);
+         var iri = _getTermIri(ctx, prefix);
+         rval = iri + term.substr(idx + 1);
          if(usedCtx !== null)
          {
-            usedCtx[prefix] = ctx[prefix];
+            usedCtx[prefix] = _clone(ctx[prefix]);
          }
       }
       // 1.2. Prefix is not in context, property is already an absolute IRI:
@@ -318,10 +332,10 @@ var _expandTerm = function(ctx, term, usedCtx)
    // 2. If the property is in the context, then it's a term.
    else if(term in ctx)
    {
-      rval = ctx[term];
+      rval = _getTermIri(ctx, term);
       if(usedCtx !== null)
       {
-         usedCtx[term] = rval;
+         usedCtx[term] = _clone(ctx[term]);
       }
    }
    // 3. The property is the special-case @subject.
@@ -543,7 +557,7 @@ jsonld.mergeContexts = function(ctx1, ctx2)
 
 /**
  * Expands a term into an absolute IRI. The term may be a regular term, a
- * CURIE, a relative IRI, or an absolute IRI. In any case, the associated
+ * prefix, a relative IRI, or an absolute IRI. In any case, the associated
  * absolute IRI will be returned.
  *
  * @param ctx the context to use.
@@ -554,14 +568,14 @@ jsonld.mergeContexts = function(ctx1, ctx2)
 jsonld.expandTerm = _expandTerm;
 
 /**
- * Compacts an IRI into a term or CURIE if it can be. IRIs will not be
+ * Compacts an IRI into a term or prefix if it can be. IRIs will not be
  * compacted to relative IRIs if they match the given context's default
  * vocabulary.
  *
  * @param ctx the context to use.
  * @param iri the IRI to compact.
  *
- * @return the compacted IRI as a term or CURIE or the original IRI.
+ * @return the compacted IRI as a term or prefix or the original IRI.
  */
 jsonld.compactIri = function(ctx, iri)
 {
@@ -790,7 +804,7 @@ var Processor = function()
 };
 
 /**
- * Recursively compacts a value. This method will compact IRIs to CURIEs or
+ * Recursively compacts a value. This method will compact IRIs to prefixes or
  * terms and do reverse type coercion to compact a value.
  *
  * @param ctx the context to use.

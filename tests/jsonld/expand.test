@@ -40,5 +40,10 @@
       "type": "expand",
       "input": "expand-0008-in.json",
       "expect": "expand-0008-out.json"
+   }, {
+      "name": "terms",
+      "type": "expand",
+      "input": "expand-0009-in.json",
+      "expect": "expand-0009-out.json"
    }]
 }
