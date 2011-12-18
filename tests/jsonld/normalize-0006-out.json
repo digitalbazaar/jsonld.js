@@ -1,15 +1,1 @@
-[
-   {
-      "@subject": {
-         "@iri": "http://example.org/test#example"
-      },
-      "@type": [
-         {
-            "@iri": "http://example.org/vocab#Foo"
-         },
-         {
-            "@iri": "http://example.org/vocab#Bar"
-         }
-      ]
-   }
-]
+[{"@id":"http://example.org/test#example","@type":[{"@iri":"http://example.org/vocab#Foo"},{"@iri":"http://example.org/vocab#Bar"}]}]

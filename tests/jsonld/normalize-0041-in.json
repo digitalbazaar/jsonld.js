@@ -1,33 +1,33 @@
 {
-  "@subject": [
+  "@context": {
+    "ex": "http://example.org/vocab#",
+    "ex:p1": {
+      "@type": "@iri"
+    },
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@id": [
     {
-      "@subject": "_:b1",
+      "@id": "_:b1",
       "ex:p1": "_:b2"
     },
     {
-      "@subject": "_:b2",
+      "@id": "_:b2",
       "ex:p1": "_:b3"
     },
     {
-      "@subject": "_:b3"
+      "@id": "_:b3"
     },
     {
-      "@subject": "_:b4",
+      "@id": "_:b4",
       "ex:p1": "_:b5"
     },
     {
-      "@subject": "_:b5",
+      "@id": "_:b5",
       "ex:p1": "_:b6"
     },
     {
-      "@subject": "_:b6"
+      "@id": "_:b6"
     }
-  ],
-  "@context": {
-    "ex": "http://example.org/vocab#",
-    "xsd": "http://www.w3.org/2001/XMLSchema#",
-    "ex:p1": {
-      "@type": "@iri"
-    }
-  }
+  ]
 }

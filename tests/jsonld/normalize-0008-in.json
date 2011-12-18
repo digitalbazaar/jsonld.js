@@ -1,5 +1,4 @@
 {
-  "@subject": "http://example.org/test#library",
   "@context": {
     "dc": "http://purl.org/dc/elements/1.1/",
     "ex": "http://example.org/vocab#",
@@ -7,12 +6,13 @@
       "@type": "@iri"
     }
   },
+  "@id": "http://example.org/test#library",
   "ex:contains": {
-    "@subject": "http://example.org/test#book",
+    "@id": "http://example.org/test#book",
     "dc:contributor": "Writer",
     "dc:title": "My Book",
     "ex:contains": {
-      "@subject": "http://example.org/test#chapter",
+      "@id": "http://example.org/test#chapter",
       "dc:description": "Fun",
       "dc:title": "Chapter One"
     }

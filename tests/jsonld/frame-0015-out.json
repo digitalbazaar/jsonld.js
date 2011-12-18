@@ -6,7 +6,7 @@
         "@type": "@iri"
       }
     },
-    "@subject": "http://localhost:7000/records/999888",
+    "@id": "http://localhost:7000/records/999888",
     "@type": "sp:MedicalRecord",
     "sp:hasStatement": "http://localhost:7000/records/999888/vital_signs/c9ddca3e-3df8-4f13-9a16-eecd80aa8ff6"
   },
@@ -21,24 +21,24 @@
         "@type": "@iri"
       }
     },
-    "@subject": "http://localhost:7000/records/999888/vital_signs/c9ddca3e-3df8-4f13-9a16-eecd80aa8ff6",
+    "@id": "http://localhost:7000/records/999888/vital_signs/c9ddca3e-3df8-4f13-9a16-eecd80aa8ff6",
     "@type": "sp:VitalSigns",
     "sp:belongsTo": "http://localhost:7000/records/999888",
     "sp:bloodPressure": {
-      "@subject": "_:c14n0",
+      "@id": "_:c14n0",
+      "@type": "sp:BloodPressure",
       "sp:systolic": {
-        "@subject": "_:c14n2",
+        "@id": "_:c14n2",
+        "@type": "sp:VitalSign",
         "sp:unit": "mm[Hg]",
         "sp:value": "111.226458141",
         "sp:vitalName": {
-          "@subject": "_:c14n1",
+          "@id": "_:c14n1",
+          "@type": "sp:CodedValue",
           "dcterms:title": "Systolic blood pressure",
-          "sp:code": "http://loinc.org/codes/8480-6",
-          "@type": "sp:CodedValue"
-        },
-        "@type": "sp:VitalSign"
-      },
-      "@type": "sp:BloodPressure"
+          "sp:code": "http://loinc.org/codes/8480-6"
+        }
+      }
     }
   }
 ]

@@ -1,39 +1,39 @@
 {
-  "@subject": [
-    {
-      "@subject": "http://example.org/test#chapter",
-      "dc:description": "Fun",
-      "dc:title": "Chapter One"
-    },
-    {
-      "@subject": "http://example.org/test#jane",
-      "ex:authored": "http://example.org/test#chapter",
-      "foaf:name": "Jane"
-    },
-    {
-      "@subject": "http://example.org/test#john",
-      "foaf:name": "John"
-    },
-    {
-      "@subject": "http://example.org/test#library",
-      "ex:contains": {
-        "@subject": "http://example.org/test#book",
-        "dc:contributor": "Writer",
-        "dc:title": "My Book",
-        "ex:contains": "http://example.org/test#chapter"
-      }
-    }
-  ],
   "@context": {
-    "foaf": "http://xmlns.com/foaf/0.1/",
     "dc": "http://purl.org/dc/elements/1.1/",
     "ex": "http://example.org/vocab#",
-    "xsd": "http://www.w3.org/2001/XMLSchema#",
     "ex:authored": {
       "@type": "@iri"
     },
     "ex:contains": {
       "@type": "@iri"
+    },
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@id": [
+    {
+      "@id": "http://example.org/test#chapter",
+      "dc:description": "Fun",
+      "dc:title": "Chapter One"
+    },
+    {
+      "@id": "http://example.org/test#jane",
+      "ex:authored": "http://example.org/test#chapter",
+      "foaf:name": "Jane"
+    },
+    {
+      "@id": "http://example.org/test#john",
+      "foaf:name": "John"
+    },
+    {
+      "@id": "http://example.org/test#library",
+      "ex:contains": {
+        "@id": "http://example.org/test#book",
+        "dc:contributor": "Writer",
+        "dc:title": "My Book",
+        "ex:contains": "http://example.org/test#chapter"
+      }
     }
-  }
+  ]
 }

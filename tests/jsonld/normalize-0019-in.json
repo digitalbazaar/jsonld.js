@@ -1,19 +1,19 @@
 {
-  "@subject": [
+  "@context": {
+    "e": "http://example.org/vocab#",
+    "e:self": {
+      "@type": "@iri"
+    },
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@id": [
     {
-      "@subject": "_:b0",
+      "@id": "_:b0",
       "e:self": "_:b0"
     },
     {
-      "@subject": "_:b1",
+      "@id": "_:b1",
       "e:self": "_:b1"
     }
-  ],
-  "@context": {
-    "e": "http://example.org/vocab#",
-    "xsd": "http://www.w3.org/2001/XMLSchema#",
-    "e:self": {
-      "@type": "@iri"
-    }
-  }
+  ]
 }

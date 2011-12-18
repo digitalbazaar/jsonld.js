@@ -1,27 +1,27 @@
 {
-  "@subject": [
+  "@context": {
+    "ex": "http://example.org/vocab#",
+    "ex:p1": {
+      "@type": "@iri"
+    },
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@id": [
     {
-      "@subject": "_:a1",
+      "@id": "_:a1",
       "ex:p1": "_:a4"
     },
     {
-      "@subject": "_:a2",
+      "@id": "_:a2",
       "ex:p1": "_:a3"
     },
     {
-      "@subject": "_:a3",
+      "@id": "_:a3",
       "ex:p2": "Foo"
     },
     {
-      "@subject": "_:a4",
+      "@id": "_:a4",
       "ex:p2": "Foo"
     }
-  ],
-  "@context": {
-    "ex": "http://example.org/vocab#",
-    "xsd": "http://www.w3.org/2001/XMLSchema#",
-    "ex:p1": {
-      "@type": "@iri"
-    }
-  }
+  ]
 }

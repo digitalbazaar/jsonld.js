@@ -2,6 +2,6 @@
   "@context": {
     "ex": "http://example.org/test#"
   },
-  "@subject": "ex:example",
+  "@id": "ex:example",
   "ex:property": "test"
 }

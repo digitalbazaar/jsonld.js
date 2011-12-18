@@ -1,6 +1,5 @@
 {
   "ex": "http://example.org/vocab#",
-  "xsd": "http://www.w3.org/2001/XMLSchema#",
   "ex:bool": {
     "@type": "xsd:boolean"
   },
@@ -9,5 +8,6 @@
   },
   "ex:int": {
     "@type": "xsd:integer"
-  }
+  },
+  "xsd": "http://www.w3.org/2001/XMLSchema#"
 }

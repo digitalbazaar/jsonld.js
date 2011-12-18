@@ -1,8 +1,8 @@
 {
-  "@subject": "http://example.org/test#example",
   "@context": {
     "ex": "http://example.org/vocab#"
   },
+  "@id": "http://example.org/test#example",
   "@type": "ex:Foo",
   "ex:embed": {
     "@type": "ex:Bar"

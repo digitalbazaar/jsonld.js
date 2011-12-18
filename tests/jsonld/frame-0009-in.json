@@ -1,7 +1,10 @@
 {
-  "@subject": [
+  "@context": {
+    "ex": "http://example.org/vocab#"
+  },
+  "@id": [
     {
-      "@subject": "http://example.org/test/#example1",
+      "@id": "http://example.org/test/#example1",
       "@type": "ex:Example1",
       "ex:p1": "non-default",
       "ex:p6": {
@@ -9,11 +12,8 @@
       }
     },
     {
-      "@subject": "http://example.org/test/#example2",
+      "@id": "http://example.org/test/#example2",
       "@type": "ex:Example2"
     }
-  ],
-  "@context": {
-    "ex": "http://example.org/vocab#"
-  }
+  ]
 }

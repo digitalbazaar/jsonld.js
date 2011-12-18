@@ -1,19 +1,19 @@
 {
-  "@subject": [
+  "@context": {
+    "ex": "http://example.org/vocab#"
+  },
+  "@id": [
     {
-      "@subject": "_:b0",
+      "@id": "_:b0",
       "ex:prop": {
-        "@subject": "_:b1"
+        "@id": "_:b1"
       }
     },
     {
-      "@subject": "_:a0",
+      "@id": "_:a0",
       "ex:prop": {
-        "@subject": "_:a1"
+        "@id": "_:a1"
       }
     }
-  ],
-  "@context": {
-    "ex": "http://example.org/vocab#"
-  }
+  ]
 }

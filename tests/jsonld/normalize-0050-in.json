@@ -1,18 +1,18 @@
 {
   "@context": {
     "eg": "http://example.org/vocab#",
-    "xsd": "http://www.w3.org/2001/XMLSchema#",
     "eg:p": {
       "@type": "@iri"
-    }
+    },
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
   },
-  "@subject": "_:c1",
-  "eg:doc": "Test 'null' in various locations",
-  "eg:null": null,
+  "@id": "_:c1",
   "eg:array": [
     "value",
     null
   ],
+  "eg:doc": "Test 'null' in various locations",
+  "eg:null": null,
   "eg:object": {
     "prop1": "value1",
     "prop2": null

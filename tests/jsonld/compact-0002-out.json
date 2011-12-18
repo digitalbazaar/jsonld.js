@@ -1,8 +1,8 @@
 {
-  "@subject": "ex:thing",
   "@context": {
     "dc": "http://purl.org/dc/terms/",
     "ex": "http://example.org/test#"
   },
+  "@id": "ex:thing",
   "dc:title": "Title"
 }

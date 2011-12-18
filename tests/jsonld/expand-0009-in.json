@@ -1,36 +1,5 @@
 {
-  "@subject": [
-    {
-      "@subject": "http://example.org/test#chapter",
-      "description": "Fun",
-      "title": "Chapter One"
-    },
-    {
-      "@subject": "http://example.org/test#jane",
-      "authored": "http://example.org/test#chapter",
-      "name": "Jane"
-    },
-    {
-      "@subject": "http://example.org/test#john",
-      "name": "John"
-    },
-    {
-      "@subject": "http://example.org/test#library",
-      "contains": {
-        "@subject": "http://example.org/test#book",
-        "contributor": "Writer",
-        "title": "My Book",
-        "contains": "http://example.org/test#chapter"
-      }
-    }
-  ],
   "@context": {
-    "name": "http://xmlns.com/foaf/0.1/name",
-    "contributor": "http://purl.org/dc/elements/1.1/contributor",
-    "description": "http://purl.org/dc/elements/1.1/description",
-    "title": {
-       "@iri": "http://purl.org/dc/elements/1.1/title"
-    },
     "authored": {
       "@iri": "http://example.org/vocab#authored",
       "@type": "@iri"
@@ -38,6 +7,37 @@
     "contains": {
       "@iri": "http://example.org/vocab#contains",
       "@type": "@iri"
+    },
+    "contributor": "http://purl.org/dc/elements/1.1/contributor",
+    "description": "http://purl.org/dc/elements/1.1/description",
+    "name": "http://xmlns.com/foaf/0.1/name",
+    "title": {
+      "@iri": "http://purl.org/dc/elements/1.1/title"
     }
-  }
+  },
+  "@id": [
+    {
+      "@id": "http://example.org/test#chapter",
+      "description": "Fun",
+      "title": "Chapter One"
+    },
+    {
+      "@id": "http://example.org/test#jane",
+      "authored": "http://example.org/test#chapter",
+      "name": "Jane"
+    },
+    {
+      "@id": "http://example.org/test#john",
+      "name": "John"
+    },
+    {
+      "@id": "http://example.org/test#library",
+      "contains": {
+        "@id": "http://example.org/test#book",
+        "contains": "http://example.org/test#chapter",
+        "contributor": "Writer",
+        "title": "My Book"
+      }
+    }
+  ]
 }

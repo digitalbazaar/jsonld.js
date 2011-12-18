@@ -1,12 +1,12 @@
 {
-  "@subject": "http://example.org/test#example",
   "@context": {
     "ex": "http://example.org/vocab#",
-    "xsd": "http://www.w3.org/2001/XMLSchema#",
     "ex:foo": {
       "@type": "@iri"
-    }
+    },
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
   },
+  "@id": "http://example.org/test#example",
   "@type": "ex:Foo",
   "ex:foo": "ex:Bar"
 }

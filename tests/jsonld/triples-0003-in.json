@@ -2,7 +2,7 @@
   "@context": {
     "ex": "http://example.org/test#"
   },
-  "@subject": "ex:example",
+  "@id": "ex:example",
   "ex:property-1": [
     {
       "@iri": "ex:iri-1"

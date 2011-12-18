@@ -1,23 +1,23 @@
 {
-  "@subject": [
+  "@context": {
+    "e": "http://example.org/vocab#",
+    "e:next": {
+      "@type": "@iri"
+    },
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@id": [
     {
-      "@subject": "_:b1",
+      "@id": "_:b1",
       "e:next": "_:b2"
     },
     {
-      "@subject": "_:b2",
+      "@id": "_:b2",
       "e:next": "_:b3"
     },
     {
-      "@subject": "_:b3",
+      "@id": "_:b3",
       "e:next": "_:b1"
     }
-  ],
-  "@context": {
-    "e": "http://example.org/vocab#",
-    "xsd": "http://www.w3.org/2001/XMLSchema#",
-    "e:next": {
-      "@type": "@iri"
-    }
-  }
+  ]
 }

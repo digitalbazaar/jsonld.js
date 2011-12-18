@@ -3,7 +3,7 @@
     "@context": {
       "sp": "http://smartplatforms.org/terms#"
     },
-    "@subject": "http://example.org/med-1",
+    "@id": "http://example.org/med-1",
     "@type": "sp:Medication",
     "sp:hasFulfillment": {
       "@iri": "http://example.org/fill-1"
@@ -14,7 +14,7 @@
     "@context": {
       "sp": "http://smartplatforms.org/terms#"
     },
-    "@subject": "http://example.org/fill-1",
+    "@id": "http://example.org/fill-1",
     "@type": "sp:Fulfillment",
     "sp:hasMedication": {
       "@iri": "http://example.org/med-1"

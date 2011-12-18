@@ -1,19 +1,19 @@
 {
   "@context": {
-    "uri": "@subject",
-    "rel": "@iri",
     "http://example.org/test#property2": {
       "@type": "rel"
     },
     "http://example.org/test#property3": {
       "@type": "rel"
-    }
+    },
+    "rel": "@iri",
+    "uri": "@subject"
   },
-  "uri": "http://example.org/test#example1",
   "http://example.org/test#property1": {
-    "uri": "http://example.org/test#example2",
-    "http://example.org/test#property4": "foo"
+    "http://example.org/test#property4": "foo",
+    "uri": "http://example.org/test#example2"
   },
   "http://example.org/test#property2": "http://example.org/test#example3",
-  "http://example.org/test#property3": "http://example.org/test#example4"
+  "http://example.org/test#property3": "http://example.org/test#example4",
+  "uri": "http://example.org/test#example1"
 }

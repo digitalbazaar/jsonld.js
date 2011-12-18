@@ -1,13 +1,13 @@
 {
-  "@subject": [
-    {
-      "@subject": "e:A"
-    },
-    {
-      "@subject": "e:B"
-    }
-  ],
   "@context": {
     "e": "http://example.org/vocab#"
-  }
+  },
+  "@id": [
+    {
+      "@id": "e:A"
+    },
+    {
+      "@id": "e:B"
+    }
+  ]
 }

@@ -1,8 +1,6 @@
 [
   {
-    "@subject": {
-      "@iri": "a"
-    },
+    "@id": "a",
     "@type": {
       "@iri": "Node"
     },
@@ -11,16 +9,12 @@
     }
   },
   {
-    "@subject": {
-      "@iri": "b"
-    },
+    "@id": "b",
     "@type": {
       "@iri": "Node"
     },
     "sees": {
-      "@subject": {
-        "@iri": "_:c14n0"
-      },
+      "@id": "_:c14n0",
       "remember_me": "This value should not disappear."
     }
   }

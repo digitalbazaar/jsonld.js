@@ -1,14 +1,14 @@
 [
   {
-    "name": "John Doe",
-    "homepage": "http://john.doe.org/",
     "@context": {
-      "name": "http://xmlns.com/foaf/0.1/name",
       "homepage": {
         "@iri": "http://xmlns.com/foaf/0.1/homepage",
         "@type": "@iri"
-      }
-    }
+      },
+      "name": "http://xmlns.com/foaf/0.1/name"
+    },
+    "homepage": "http://john.doe.org/",
+    "name": "John Doe"
   },
   {}
 ]

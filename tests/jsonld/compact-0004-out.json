@@ -1,11 +1,11 @@
 {
-  "@subject": "http://example.org/test",
   "@context": {
     "ex": "http://example.org/test#",
-    "xsd": "http://www.w3.org/2001/XMLSchema#",
     "ex:int": {
       "@type": "xsd:integer"
-    }
+    },
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
   },
+  "@id": "http://example.org/test",
   "ex:int": 123
 }

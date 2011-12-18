@@ -1,25 +1,6 @@
 {
-  "@subject": [
-    {
-      "@subject": "e:test",
-      "e:A": "_:b1",
-      "e:B": "_:b2"
-    },
-    {
-      "@subject": "_:b1",
-      "e:next": "_:b3"
-    },
-    {
-      "@subject": "_:b2",
-      "e:next": "_:b3"
-    },
-    {
-      "@subject": "_:b3"
-    }
-  ],
   "@context": {
     "e": "http://example.org/vocab#",
-    "xsd": "http://www.w3.org/2001/XMLSchema#",
     "e:A": {
       "@type": "@iri"
     },
@@ -28,6 +9,25 @@
     },
     "e:next": {
       "@type": "@iri"
+    },
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@id": [
+    {
+      "@id": "e:test",
+      "e:A": "_:b1",
+      "e:B": "_:b2"
+    },
+    {
+      "@id": "_:b1",
+      "e:next": "_:b3"
+    },
+    {
+      "@id": "_:b2",
+      "e:next": "_:b3"
+    },
+    {
+      "@id": "_:b3"
     }
-  }
+  ]
 }

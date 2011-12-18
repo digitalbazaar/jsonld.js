@@ -1,10 +1,10 @@
 {
   "ex": "http://example.org/vocab#",
-  "xsd": "http://www.w3.org/2001/XMLSchema#",
+  "ex:date": {
+    "@type": "xsd:dateTime"
+  },
   "ex:parent": {
     "@type": "@iri"
   },
-  "ex:date": {
-    "@type": "xsd:dateTime"
-  }
+  "xsd": "http://www.w3.org/2001/XMLSchema#"
 }

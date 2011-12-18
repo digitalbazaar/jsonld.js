@@ -1,11 +1,1 @@
-[
-   {
-      "@subject": {
-         "@iri": "http://example.org/test#example"
-      },
-      "http://example.org/vocab#validFrom": {
-         "@type": "http://www.w3.org/2001/XMLSchema#dateTime",
-         "@literal": "2011-01-25T00:00:00Z"
-      }
-   }
-]
+[{"@id":"http://example.org/test#example","http://example.org/vocab#validFrom":{"@literal":"2011-01-25T00:00:00Z","@type":"http://www.w3.org/2001/XMLSchema#dateTime"}}]

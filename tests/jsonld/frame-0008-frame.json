@@ -3,12 +3,12 @@
     "ex": "http://example.org/vocab#"
   },
   "@type": "ex:Example",
-  "ex:literal": [],
   "ex:embedded": [],
-  "ex:single": [],
+  "ex:literal": [],
   "ex:mixed": [
     {
       "@embed": false
     }
-  ]
+  ],
+  "ex:single": []
 }

@@ -1,6 +1,4 @@
 {
-  "uri": "@subject",
-  "rel": "@iri",
   "http://example.org/test#property1": {
     "@type": "rel"
   },
@@ -9,5 +7,7 @@
   },
   "http://example.org/test#property3": {
     "@type": "rel"
-  }
+  },
+  "rel": "@iri",
+  "uri": "@subject"
 }

@@ -4,6 +4,6 @@
   },
   "@type": "ex:Foo",
   "ex:embed": {
-    "@subject": "http://example.org/test#example"
+    "@id": "http://example.org/test#example"
   }
 }

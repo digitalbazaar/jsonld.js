@@ -1006,11 +1006,10 @@ Processor.prototype.compact = function(ctx, property, value, usedCtx)
  * @param ctx the context.
  * @param property the property that points to the value, NULL for none.
  * @param value the value to expand.
- * @param expandSubjects true to expand subjects (normalize), false not to.
  *
  * @return the expanded value.
  */
-Processor.prototype.expand = function(ctx, property, value, expandSubjects)
+Processor.prototype.expand = function(ctx, property, value)
 {
    var rval;
    
@@ -1033,7 +1032,7 @@ Processor.prototype.expand = function(ctx, property, value, expandSubjects)
       rval = [];
       for(var i in value)
       {
-         rval.push(this.expand(ctx, property, value[i], expandSubjects));
+         rval.push(this.expand(ctx, property, value[i]));
       }
    }
    else if(value.constructor === Object)
@@ -1065,7 +1064,7 @@ Processor.prototype.expand = function(ctx, property, value, expandSubjects)
                // set object to expanded property
                _setProperty(
                   rval, _expandTerm(ctx, key, null),
-                  this.expand(ctx, key, value[key], expandSubjects));
+                  this.expand(ctx, key, value[key]));
             }
          }
       }
@@ -1117,9 +1116,8 @@ Processor.prototype.expand = function(ctx, property, value, expandSubjects)
          }
       }
 
-      // coerce to appropriate type, only expand subjects if requested
-      if(coerce !== null &&
-         (property !== keywords['@subject'] || expandSubjects))
+      // coerce to appropriate type (do not expand subjects)
+      if(coerce !== null && property !== keywords['@subject'])
       {
          rval = {};
          

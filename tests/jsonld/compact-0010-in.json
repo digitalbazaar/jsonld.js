@@ -1,7 +1,7 @@
 {
-  "@subject": "http://example.org/test#example1",
+  "@id": "http://example.org/test#example1",
   "http://example.org/test#property1": {
-    "@subject": "http://example.org/test#example2",
+    "@id": "http://example.org/test#example2",
     "http://example.org/test#property4": "foo"
   },
   "http://example.org/test#property2": {
