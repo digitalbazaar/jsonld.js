@@ -2841,9 +2841,9 @@ var _subframe = function(
       var keys = Object.keys(value);
       for(i in keys)
       {
-         // skip keywords and type
+         // skip keywords
          var key = keys[i];
-         if(key.indexOf('@') !== 0 && key !== '@type')
+         if(key.indexOf('@') !== 0)
          {
             // get the subframe if available
             if(key in frame)
@@ -2879,9 +2879,8 @@ var _subframe = function(
       // iterate over frame keys to add any missing values
       for(key in frame)
       {
-         // skip keywords, type query, and non-null keys in value
-         if(key.indexOf('@') !== 0 && key !== '@type' &&
-            (!(key in value) || value[key] === null))
+         // skip keywords and non-null keys in value
+         if(key.indexOf('@') !== 0 && (!(key in value) || value[key] === null))
          {
             var f = frame[key];
             
