@@ -1,9 +1,7 @@
 [
   {
     "@id": "http://localhost:7000/records/999888",
-    "@type": {
-      "@id": "http://smartplatforms.org/terms#MedicalRecord"
-    }
+    "@type": "http://smartplatforms.org/terms#MedicalRecord"
   },
   {
     "@id": "http://localhost:7000/records/999888",
@@ -13,9 +11,7 @@
   },
   {
     "@id": "_:uDkkVEva509",
-    "@type": {
-      "@id": "http://smartplatforms.org/terms#VitalSign"
-    }
+    "@type": "http://smartplatforms.org/terms#VitalSign"
   },
   {
     "@id": "_:uDkkVEva509",
@@ -33,9 +29,7 @@
   },
   {
     "@id": "_:uDkkVEva508",
-    "@type": {
-      "@id": "http://smartplatforms.org/terms#BloodPressure"
-    }
+    "@type": "http://smartplatforms.org/terms#BloodPressure"
   },
   {
     "@id": "_:uDkkVEva508",
@@ -51,9 +45,7 @@
   },
   {
     "@id": "http://localhost:7000/records/999888/vital_signs/c9ddca3e-3df8-4f13-9a16-eecd80aa8ff6",
-    "@type": {
-      "@id": "http://smartplatforms.org/terms#VitalSigns"
-    }
+    "@type": "http://smartplatforms.org/terms#VitalSigns"
   },
   {
     "@id": "http://localhost:7000/records/999888/vital_signs/c9ddca3e-3df8-4f13-9a16-eecd80aa8ff6",
@@ -67,9 +59,7 @@
   },
   {
     "@id": "_:uDkkVEva510",
-    "@type": {
-      "@id": "http://smartplatforms.org/terms#CodedValue"
-    }
+    "@type": "http://smartplatforms.org/terms#CodedValue"
   },
   {
     "@id": "_:uDkkVEva510",

@@ -1,13 +1,12 @@
 {
   "@context": {
     "http://example.org/test#property2": {
-      "@type": "rel"
+      "@type": "uri"
     },
     "http://example.org/test#property3": {
-      "@type": "rel"
+      "@type": "uri"
     },
-    "rel": "@id",
-    "uri": "@subject"
+    "uri": "@id"
   },
   "http://example.org/test#property1": {
     "http://example.org/test#property4": "foo",

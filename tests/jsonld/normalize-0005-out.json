@@ -1,1 +1,1 @@
-[{"@id":"_:c14n0","@type":{"@id":"http://example.org/vocab#Bar"}},{"@id":"http://example.org/test#example","@type":{"@id":"http://example.org/vocab#Foo"},"http://example.org/vocab#embed":{"@id":"_:c14n0"}}]
+[{"@id":"_:c14n0","@type":"http://example.org/vocab#Bar"},{"@id":"http://example.org/test#example","@type":"http://example.org/vocab#Foo","http://example.org/vocab#embed":{"@id":"_:c14n0"}}]

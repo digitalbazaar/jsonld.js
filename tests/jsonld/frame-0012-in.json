@@ -2,9 +2,7 @@
   "@id": [
     {
       "@id": "http://example.org/med-1",
-      "@type": {
-        "@id": "http://smartplatforms.org/terms#Medication"
-      },
+      "@type": "http://smartplatforms.org/terms#Medication",
       "http://smartplatforms.org/terms#hasFulfillment": {
         "@id": "http://example.org/fill-1"
       },
@@ -12,9 +10,7 @@
     },
     {
       "@id": "http://example.org/fill-1",
-      "@type": {
-        "@id": "http://smartplatforms.org/terms#Fulfillment"
-      },
+      "@type": "http://smartplatforms.org/terms#Fulfillment",
       "http://smartplatforms.org/terms#hasMedication": {
         "@id": "http://example.org/med-1"
       },
