@@ -6,7 +6,7 @@
     "http://example.org/test#property2": {
       "@type": "rel"
     },
-    "rel": "@iri",
+    "rel": "@id",
     "uri": "@subject"
   },
   "http://example.org/test#property1": {

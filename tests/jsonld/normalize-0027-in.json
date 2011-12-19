@@ -2,10 +2,10 @@
   "@context": {
     "e": "http://example.org/vocab#",
     "e:next": {
-      "@type": "@iri"
+      "@type": "@id"
     },
     "e:prev": {
-      "@type": "@iri"
+      "@type": "@id"
     },
     "xsd": "http://www.w3.org/2001/XMLSchema#"
   },

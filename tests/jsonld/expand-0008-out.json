@@ -5,9 +5,9 @@
     "http://example.org/test#property4": "foo"
   },
   "http://example.org/test#property2": {
-    "@iri": "http://example.org/test#example3"
+    "@id": "http://example.org/test#example3"
   },
   "http://example.org/test#property3": {
-    "@iri": "http://example.org/test#example4"
+    "@id": "http://example.org/test#example4"
   }
 }

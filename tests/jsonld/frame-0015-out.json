@@ -3,7 +3,7 @@
     "@context": {
       "sp": "http://smartplatforms.org/terms#",
       "sp:hasStatement": {
-        "@type": "@iri"
+        "@type": "@id"
       }
     },
     "@id": "http://localhost:7000/records/999888",
@@ -15,10 +15,10 @@
       "dcterms": "http://purl.org/dc/terms/",
       "sp": "http://smartplatforms.org/terms#",
       "sp:belongsTo": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:code": {
-        "@type": "@iri"
+        "@type": "@id"
       }
     },
     "@id": "http://localhost:7000/records/999888/vital_signs/c9ddca3e-3df8-4f13-9a16-eecd80aa8ff6",

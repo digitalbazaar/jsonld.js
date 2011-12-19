@@ -1,1 +1,1 @@
-[{"@id":"_:c14n0","@type":{"@iri":"http://example.org/vocab#Foo"}}]
+[{"@id":"_:c14n0","@type":{"@id":"http://example.org/vocab#Foo"}}]

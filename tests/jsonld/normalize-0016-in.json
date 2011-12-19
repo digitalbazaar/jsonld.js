@@ -2,13 +2,13 @@
   "@context": {
     "e": "http://example.org/vocab#",
     "e:B": {
-      "@type": "@iri"
+      "@type": "@id"
     },
     "xsd": "http://www.w3.org/2001/XMLSchema#"
   },
   "@id": "http://example.org/test",
   "e:A": {
-    "@iri": "_:b1"
+    "@id": "_:b1"
   },
   "e:B": "_:b1",
   "e:embed": {

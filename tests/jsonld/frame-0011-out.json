@@ -9,6 +9,6 @@
     "ex:title": "Embedded"
   },
   "ex:noembed": {
-    "@iri": "ex:notembedded"
+    "@id": "ex:notembedded"
   }
 }

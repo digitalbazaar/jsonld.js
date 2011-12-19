@@ -2,7 +2,7 @@
   "@context": {
     "ex": "http://example.org/vocab#",
     "ex:foo": {
-      "@type": "@iri"
+      "@type": "@id"
     },
     "xsd": "http://www.w3.org/2001/XMLSchema#"
   },

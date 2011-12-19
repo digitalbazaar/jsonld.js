@@ -2,16 +2,16 @@
   {
     "@id": "a",
     "@type": {
-      "@iri": "Node"
+      "@id": "Node"
     },
     "sees": {
-      "@iri": "b"
+      "@id": "b"
     }
   },
   {
     "@id": "b",
     "@type": {
-      "@iri": "Node"
+      "@id": "Node"
     },
     "sees": {
       "@id": "_:c14n0",

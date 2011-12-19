@@ -1,7 +1,7 @@
 {
   "homepage": {
-    "@iri": "http://xmlns.com/foaf/0.1/homepage",
-    "@type": "@iri"
+    "@id": "http://xmlns.com/foaf/0.1/homepage",
+    "@type": "@id"
   },
   "name": "http://xmlns.com/foaf/0.1/name"
 }

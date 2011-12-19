@@ -5,10 +5,10 @@
   "@id": "ex:example",
   "ex:property-1": [
     {
-      "@iri": "ex:iri-1"
+      "@id": "ex:iri-1"
     },
     {
-      "@iri": "ex:iri-2"
+      "@id": "ex:iri-2"
     }
   ],
   "ex:property-2": [

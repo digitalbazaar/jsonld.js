@@ -9,204 +9,204 @@
       "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
       "sp": "http://smartplatforms.org/terms#",
       "sp:abnormalInterpretation": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:address": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:alertLevel": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:allergicReaction": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:allergyExclusionName": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:belongsTo": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:bloodPressure": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:bodyMassIndex": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:bodyPosition": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:bodySite": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:category": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:code": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:created": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:denominator": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:diastolic": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:drugAllergen": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:drugClass": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:drugClassAllergen": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:drugName": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:encounter": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:encounterType": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:facility": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:foodAllergen": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:frequency": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:fulfillment": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:hasStatement": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:heartRate": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:height": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:labName": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:labResult": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:labSpecimenCollected": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:labStatus": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:maximum": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:medicalRecordNumber": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:medication": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:method": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:minimum": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:narrativeResult": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:nominalResult": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:nonCriticalRange": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:normalRange": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:numerator": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:ordinalResult": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:organization": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:oxygenSaturation": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:participant": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:person": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:pharmacy": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:problemName": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:provenance": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:provider": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:quantitativeResult": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:quantity": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:quantityDispensed": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:respiratoryRate": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:severity": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:specimenCollected": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:systolic": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:temperature": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:translationFidelity": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:valueAndUnit": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:vitalName": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "sp:weight": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "spcode": "http://smartplatforms.org/terms/codes/",
       "vcard": "http://www.w3.org/2006/vcard/ns#",
       "vcard:adr": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "vcard:n": {
-        "@type": "@iri"
+        "@type": "@id"
       },
       "vcard:tel": {
-        "@type": "@iri"
+        "@type": "@id"
       }
     },
     "@type": [

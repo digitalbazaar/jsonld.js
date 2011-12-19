@@ -4,10 +4,10 @@
       "@id": "looker",
       "canSee": [
         {
-          "@iri": "forgotten"
+          "@id": "forgotten"
         },
         {
-          "@iri": "spotted"
+          "@id": "spotted"
         }
       ]
     },

@@ -2,25 +2,25 @@
   {
     "@id": "http://localhost:7000/records/999888",
     "@type": {
-      "@iri": "http://smartplatforms.org/terms#MedicalRecord"
+      "@id": "http://smartplatforms.org/terms#MedicalRecord"
     }
   },
   {
     "@id": "http://localhost:7000/records/999888",
     "http://smartplatforms.org/terms#hasStatement": {
-      "@iri": "http://localhost:7000/records/999888/vital_signs/c9ddca3e-3df8-4f13-9a16-eecd80aa8ff6"
+      "@id": "http://localhost:7000/records/999888/vital_signs/c9ddca3e-3df8-4f13-9a16-eecd80aa8ff6"
     }
   },
   {
     "@id": "_:uDkkVEva509",
     "@type": {
-      "@iri": "http://smartplatforms.org/terms#VitalSign"
+      "@id": "http://smartplatforms.org/terms#VitalSign"
     }
   },
   {
     "@id": "_:uDkkVEva509",
     "http://smartplatforms.org/terms#vitalName": {
-      "@iri": "_:uDkkVEva510"
+      "@id": "_:uDkkVEva510"
     }
   },
   {
@@ -34,31 +34,31 @@
   {
     "@id": "_:uDkkVEva508",
     "@type": {
-      "@iri": "http://smartplatforms.org/terms#BloodPressure"
+      "@id": "http://smartplatforms.org/terms#BloodPressure"
     }
   },
   {
     "@id": "_:uDkkVEva508",
     "http://smartplatforms.org/terms#systolic": {
-      "@iri": "_:uDkkVEva509"
+      "@id": "_:uDkkVEva509"
     }
   },
   {
     "@id": "http://localhost:7000/records/999888/vital_signs/c9ddca3e-3df8-4f13-9a16-eecd80aa8ff6",
     "http://smartplatforms.org/terms#bloodPressure": {
-      "@iri": "_:uDkkVEva508"
+      "@id": "_:uDkkVEva508"
     }
   },
   {
     "@id": "http://localhost:7000/records/999888/vital_signs/c9ddca3e-3df8-4f13-9a16-eecd80aa8ff6",
     "@type": {
-      "@iri": "http://smartplatforms.org/terms#VitalSigns"
+      "@id": "http://smartplatforms.org/terms#VitalSigns"
     }
   },
   {
     "@id": "http://localhost:7000/records/999888/vital_signs/c9ddca3e-3df8-4f13-9a16-eecd80aa8ff6",
     "http://smartplatforms.org/terms#belongsTo": {
-      "@iri": "http://localhost:7000/records/999888"
+      "@id": "http://localhost:7000/records/999888"
     }
   },
   {
@@ -68,13 +68,13 @@
   {
     "@id": "_:uDkkVEva510",
     "@type": {
-      "@iri": "http://smartplatforms.org/terms#CodedValue"
+      "@id": "http://smartplatforms.org/terms#CodedValue"
     }
   },
   {
     "@id": "_:uDkkVEva510",
     "http://smartplatforms.org/terms#code": {
-      "@iri": "http://loinc.org/codes/8480-6"
+      "@id": "http://loinc.org/codes/8480-6"
     }
   }
 ]

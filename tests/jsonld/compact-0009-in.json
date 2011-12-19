@@ -1,7 +1,7 @@
 [
   {
     "http://xmlns.com/foaf/0.1/homepage": {
-      "@iri": "http://john.doe.org/"
+      "@id": "http://john.doe.org/"
     },
     "http://xmlns.com/foaf/0.1/name": "John Doe"
   },

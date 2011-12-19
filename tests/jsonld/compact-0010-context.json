@@ -8,6 +8,6 @@
   "http://example.org/test#property3": {
     "@type": "rel"
   },
-  "rel": "@iri",
+  "rel": "@id",
   "uri": "@subject"
 }

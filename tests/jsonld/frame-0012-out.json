@@ -6,7 +6,7 @@
     "@id": "http://example.org/med-1",
     "@type": "sp:Medication",
     "sp:hasFulfillment": {
-      "@iri": "http://example.org/fill-1"
+      "@id": "http://example.org/fill-1"
     },
     "sp:label": "Lisinopril"
   },
@@ -17,7 +17,7 @@
     "@id": "http://example.org/fill-1",
     "@type": "sp:Fulfillment",
     "sp:hasMedication": {
-      "@iri": "http://example.org/med-1"
+      "@id": "http://example.org/med-1"
     },
     "sp:label": "30 pills on 2/2/2011"
   }

@@ -7,7 +7,7 @@
   "http://example.org/vocab#embed": {
     "@id": "http://example.org/test#example2",
     "http://example.org/vocab#parent": {
-      "@iri": "http://example.org/test#example1"
+      "@id": "http://example.org/test#example1"
     }
   }
 }

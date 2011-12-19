@@ -1,1 +1,1 @@
-[{"@id":"http://example.org/test#example1","http://example.org/vocab#p":{"@iri":"http://example.org/test#example2"}}]
+[{"@id":"http://example.org/test#example1","http://example.org/vocab#p":{"@id":"http://example.org/test#example2"}},{"@id":"http://example.org/test#example2"}]

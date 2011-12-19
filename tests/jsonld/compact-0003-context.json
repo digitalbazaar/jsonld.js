@@ -2,6 +2,6 @@
   "dc": "http://purl.org/dc/elements/1.1/",
   "ex": "http://example.org/vocab#",
   "ex:contains": {
-    "@type": "@iri"
+    "@type": "@id"
   }
 }

@@ -7,7 +7,7 @@
       "@id": "http://example.org/test/#example",
       "@type": "ex:Example",
       "ex:embedded": {
-        "@iri": "http://example.org/test#subject1"
+        "@id": "http://example.org/test#subject1"
       },
       "ex:literal": [
         "str1",
@@ -16,11 +16,11 @@
       ],
       "ex:mixed": [
         {
-          "@iri": "http://example.org/test#iri1"
+          "@id": "http://example.org/test#iri1"
         },
         "literal1",
         {
-          "@iri": "http://example.org/test#iri2"
+          "@id": "http://example.org/test#iri2"
         },
         "literal2",
         {

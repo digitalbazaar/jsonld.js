@@ -2,16 +2,16 @@
   "@context": {
     "e": "http://example.org/vocab#",
     "e:A": {
-      "@type": "@iri"
+      "@type": "@id"
     },
     "e:B": {
-      "@type": "@iri"
+      "@type": "@id"
     },
     "e:C": {
-      "@type": "@iri"
+      "@type": "@id"
     },
     "e:next": {
-      "@type": "@iri"
+      "@type": "@id"
     },
     "xsd": "http://www.w3.org/2001/XMLSchema#"
   },

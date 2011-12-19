@@ -5,10 +5,10 @@
   "@id": "http://example.org/test#example1",
   "ex:p": [
     {
-      "@iri": "http://example.org/test#example2"
+      "@id": "http://example.org/test#example2"
     },
     {
-      "@iri": "http://example.org/test#example2"
+      "@id": "http://example.org/test#example2"
     }
   ]
 }

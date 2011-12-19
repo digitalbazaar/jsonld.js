@@ -1,18 +1,18 @@
 {
   "@context": {
     "authored": {
-      "@iri": "http://example.org/vocab#authored",
-      "@type": "@iri"
+      "@id": "http://example.org/vocab#authored",
+      "@type": "@id"
     },
     "contains": {
-      "@iri": "http://example.org/vocab#contains",
-      "@type": "@iri"
+      "@id": "http://example.org/vocab#contains",
+      "@type": "@id"
     },
     "contributor": "http://purl.org/dc/elements/1.1/contributor",
     "description": "http://purl.org/dc/elements/1.1/description",
     "name": "http://xmlns.com/foaf/0.1/name",
     "title": {
-      "@iri": "http://purl.org/dc/elements/1.1/title"
+      "@id": "http://purl.org/dc/elements/1.1/title"
     }
   },
   "@id": [
