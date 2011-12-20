@@ -1508,7 +1508,7 @@ var _collectSubjects = function(input, subjects, bnodes)
    {
       if('@id' in input)
       {
-         // graph literal
+         // graph literal/disjoint graph
          if(input['@id'].constructor == Array)
          {
             _collectSubjects(input['@id'], subjects, bnodes);
