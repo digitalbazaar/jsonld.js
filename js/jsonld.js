@@ -340,6 +340,7 @@ var _expandTerm = function(ctx, term, usedCtx)
          if(term === keywords[key])
          {
             rval = key;
+            break;
          }
       }
    }
@@ -1560,8 +1561,13 @@ var _flatten = function(parent, parentProperty, value, subjects)
    }
    else if(value.constructor === Object)
    {
+      // already-expanded value or special-case reference-only @type
+      if('@literal' in value || parentProperty === '@type')
+      {
+         flattened = _clone(value);
+      }
       // graph literal/disjoint graph
-      if('@id' in value && value['@id'].constructor === Array)
+      else if(value['@id'].constructor === Array)
       {
          // cannot flatten embedded graph literals
          if(parent !== null)
@@ -1577,12 +1583,7 @@ var _flatten = function(parent, parentProperty, value, subjects)
             _flatten(parent, parentProperty, value['@id'][idx], subjects);
          }
       }
-      // already-expanded value or special-case reference-only @type
-      else if('@literal' in value || parentProperty === '@type')
-      {
-         flattened = _clone(value);
-      }
-      // subject
+      // regular subject
       else
       {
          // create or fetch existing subject
@@ -1605,7 +1606,7 @@ var _flatten = function(parent, parentProperty, value, subjects)
          {
             var v = value[key];
             
-            // drop null values, skip @id
+            // drop null values, skip @id (it is already set above)
             if(v !== null && key !== '@id')
             {
                if(key in subject)
