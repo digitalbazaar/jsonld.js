@@ -1506,7 +1506,7 @@ var _collectSubjects = function(input, subjects, bnodes)
    }
    else if(input.constructor === Object)
    {
-      if(_isSubject(input) && '@id' in input)
+      if('@id' in input)
       {
          // graph literal
          if(input['@id'].constructor == Array)
@@ -1514,7 +1514,7 @@ var _collectSubjects = function(input, subjects, bnodes)
             _collectSubjects(input['@id'], subjects, bnodes);
          }
          // named subject
-         else
+         else if(_isSubject(input))
          {
             subjects[input['@id']] = input;
          }
