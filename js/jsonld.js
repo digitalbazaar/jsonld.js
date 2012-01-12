@@ -242,10 +242,18 @@ var _compactIri = function(ctx, iri, usedCtx)
       }
    }
    
-   // term not found, if term is @type, use keyword
-   if(rval === null && iri === '@type')
+   // term not found, if term is keyword, use alias
+   if(rval === null)
    {
-      rval = _getKeywords(ctx)['@type'];
+      var keywords = _getKeywords(ctx);
+      if(iri in keywords)
+      {
+         rval = keywords[iri];
+         if(rval !== iri && usedCtx !== null)
+         {
+            usedCtx[rval] = iri;
+         }
+      }
    }
    
    // term not found, check the context for a prefix
