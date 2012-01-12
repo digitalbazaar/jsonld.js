@@ -3,7 +3,7 @@
  *
  * @author Dave Longley
  *
- * Copyright (c) 2011 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2011-2012 Digital Bazaar, Inc. All rights reserved.
  */
 (function()
 {
@@ -1114,7 +1114,8 @@ Processor.prototype.expand = function(ctx, property, value)
       }
       
       // special-case expand @id and @type (skips '@id' expansion)
-      if(property === keywords['@id'] || property === keywords['@type'])
+      if(property === '@id' || property === keywords['@id'] ||
+         property === '@type' || property === keywords['@type'])
       {
          rval = _expandTerm(ctx, value, null);
       }
