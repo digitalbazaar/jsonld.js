@@ -500,7 +500,7 @@ jsonld.compact = function(ctx, input)
          rval = {'@context': ctxOut};
          if(out.constructor === Array)
          {
-            rval['@id'] = out;
+            rval[_getKeywords(ctxOut)['@id']] = out;
          }
          else
          {
@@ -3066,36 +3066,6 @@ Processor.prototype.frame = function(input, frame, options)
       {
          rval = jsonld.compact(ctx, rval);
       }
-/*      
-      // preserve top-level array
-      if(isArray && rval.constructor !== Array)
-      {
-         ctx = rval['@context'];
-         var idKeyword = '@id';
-         for(var key in ctx)
-         {
-            if(ctx[key] === '@id')
-            {
-               idKeyword = key;
-            }
-         }
-         var arr = rval['@id'];
-         rval = [];
-         for(var i in arr)
-         {
-            // make '@context' first key
-            var value = {
-               '@context': ctx,
-            };
-            var keys = Object.keys(arr[i]);
-            for(var k in keys)
-            {
-               var key = keys[k];
-               value[key] = arr[i][key];
-            }
-            rval.push(value);
-         }
-      }*/
    }
    
    return rval;
