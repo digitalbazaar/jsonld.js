@@ -1,9 +1,0 @@
-{
-  "@context": {
-    "ex": "http://example.org/vocab#"
-  },
-  "@type": "ex:Foo",
-  "ex:embed": {
-    "@id": "http://example.org/test#example"
-  }
-}

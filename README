@@ -20,6 +20,7 @@ Getting Started
 
 ### Testing
 
+Run: node tests/nodejs-jsonld.tests.js <json-ld.org/test-suite/tests>
 
 Library Details
 ---------------

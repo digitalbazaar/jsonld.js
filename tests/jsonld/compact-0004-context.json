@@ -1,7 +1,0 @@
-{
-  "ex": "http://example.org/test#",
-  "ex:int": {
-    "@type": "xsd:integer"
-  },
-  "xsd": "http://www.w3.org/2001/XMLSchema#"
-}

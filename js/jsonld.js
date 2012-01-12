@@ -156,7 +156,7 @@ var _getKeywords = function(ctx)
    {
       '@id': '@id',
       '@language': '@language',
-      '@literal': '@literal',
+      '@value': '@value',
       '@type': '@type'
    };
    
@@ -349,21 +349,35 @@ var _expandTerm = function(ctx, term, usedCtx)
 };
 
 /**
- * Sorts the keys in a context.
+ * Sorts the keys in a object.
  * 
- * @param ctx the context to sort.
+ * @param obj the object to sort.
  * 
- * @return the sorted context.
+ * @return the sorted object.
  */
-var _sortContextKeys = function(ctx)
+var _sortKeys = function(obj)
 {
-   // sort keys
-   var rval = {};
-   var keys = Object.keys(ctx).sort();
-   for(var k in keys)
+   var rval = obj;
+   if(obj !== null)
    {
-      var key = keys[k];
-      rval[key] = ctx[key];
+     if(obj.constructor === Array)
+     {
+        rval = [];
+        for(var i in obj)
+        {
+           rval.push(_sortKeys(obj[i]));
+        }
+     }
+     else if(obj.constructor === Object)
+     {
+        rval = {};
+        var keys = Object.keys(obj).sort();
+        for(var k in keys)
+        {
+           var key = keys[k];
+           rval[key] = _sortKeys(obj[key]);
+        }
+     }
    }
    return rval;
 };
@@ -401,9 +415,9 @@ var _isSubject = function(value)
    
    // Note: A value is a subject if all of these hold true:
    // 1. It is an Object.
-   // 2. It is not a literal.
+   // 2. It is not a literal (@value).
    // 3. It has more than 1 key OR any existing key is not '@id'.
-   if(value !== null && value.constructor === Object && !('@literal' in value))
+   if(value !== null && value.constructor === Object && !('@value' in value))
    {
       var keyCount = Object.keys(value).length;
       rval = (keyCount > 1 || !('@id' in value));
@@ -411,6 +425,8 @@ var _isSubject = function(value)
    
    return rval;
 };
+
+var _orderKeys = 
 
 /*
  * JSON-LD API.
@@ -461,62 +477,39 @@ jsonld.compact = function(ctx, input)
       // fully expand input
       input = jsonld.expand(input);
       
-      var tmp;
-      if(input.constructor === Array)
-      {
-         rval = [];
-         tmp = input;
-      }
-      else
-      {
-         tmp = [input];
-      }
-      
       // merge context if it is an array
       if(ctx.constructor === Array)
       {
          ctx = jsonld.mergeContexts({}, ctx);
       }
       
-      for(var i in tmp)
+      // setup output context
+      var ctxOut = {};
+      
+      // compact and sort keys
+      var out = new Processor().compact(_clone(ctx), null, input, ctxOut);
+      rval = out = _sortKeys(out);
+      
+      // add context if used
+      if(Object.keys(ctxOut).length > 0)
       {
-         // setup output context
-         var ctxOut = {};
+         // sort context keys
+         ctxOut = _sortKeys(ctxOut);
          
-         // compact
-         var out = new Processor().compact(_clone(ctx), null, tmp[i], ctxOut);
-         
-         // add context if used
-         if(Object.keys(ctxOut).length > 0)
+         // put @context first
+         rval = {'@context': ctxOut};
+         if(out.constructor === Array)
          {
-            // sort context keys
-            ctxOut = _sortContextKeys(ctxOut);
-            
-            // sort keys
-            var keys = Object.keys(out);
-            keys.sort();
-            
-            // put @context first
-            keys.unshift('@context');
-            out['@context'] = ctxOut;
-            
-            // order keys in output
-            var ordered = {};
-            for(var k in keys)
-            {
-               var key = keys[k];
-               ordered[key] = out[key];
-            }
-            out = ordered;
-         }
-         
-         if(rval === null)
-         {
-            rval = out;
+            rval['@id'] = out;
          }
          else
          {
-            rval.push(out);
+            var keys = Object.keys(out);
+            for(var i in keys)
+            {
+               var key = keys[i];
+               rval[key] = out[key];
+            }
          }
       }
    }
@@ -967,9 +960,9 @@ Processor.prototype.compact = function(ctx, property, value, usedCtx)
                {
                   rval = value['@id'];
                }
-               else if('@literal' in value)
+               else if('@value' in value)
                {
-                  rval = value['@literal'];
+                  rval = value['@value'];
                }
             }
             else
@@ -1139,7 +1132,7 @@ Processor.prototype.expand = function(ctx, property, value)
                value = value.toExponential(6).replace(
                   /(e(?:\+|-))([0-9])$/, '$10$2');
             }
-            rval['@literal'] = '' + value;
+            rval['@value'] = '' + value;
          }
       }
       // nothing to coerce
@@ -1357,10 +1350,10 @@ var _compareObjects = function(o1, o2)
    }
    else
    {
-      rval = _compareObjectKeys(o1, o2, '@literal');
+      rval = _compareObjectKeys(o1, o2, '@value');
       if(rval === 0)
       {
-         if('@literal' in o1)
+         if('@value' in o1)
          {
             rval = _compareObjectKeys(o1, o2, '@type');
             if(rval === 0)
@@ -1394,12 +1387,12 @@ var _compareBlankNodeObjects = function(a, b)
    /*
    3. For each property, compare sorted object values.
    3.1. The bnode with fewer objects is first.
-   3.2. For each object value, compare only literals and non-bnodes.
+   3.2. For each object value, compare only literals (@value) and non-bnodes.
    3.2.1. The bnode with fewer non-bnodes is first.
    3.2.2. The bnode with a string object is first.
    3.2.3. The bnode with the alphabetically-first string is first.
-   3.2.4. The bnode with a @literal is first.
-   3.2.5. The bnode with the alphabetically-first @literal is first.
+   3.2.4. The bnode with a @value is first.
+   3.2.5. The bnode with the alphabetically-first @value is first.
    3.2.6. The bnode with the alphabetically-first @type is first.
    3.2.7. The bnode with a @language is first.
    3.2.8. The bnode with the alphabetically-first @language is first.
@@ -1563,7 +1556,7 @@ var _flatten = function(parent, parentProperty, value, subjects)
    else if(value.constructor === Object)
    {
       // already-expanded value or special-case reference-only @type
-      if('@literal' in value || parentProperty === '@type')
+      if('@value' in value || parentProperty === '@type')
       {
          flattened = _clone(value);
       }
@@ -2038,9 +2031,9 @@ var _serializeProperties = function(b)
                // literal
                else
                {
-                  rval += '"' + o['@literal'] + '"';
+                  rval += '"' + o['@value'] + '"';
                   
-                  // type literal
+                  // typed literal
                   if('@type' in o)
                   {
                      rval += '^^<' + o['@type'] + '>';
@@ -3059,7 +3052,50 @@ Processor.prototype.frame = function(input, frame, options)
    // apply context
    if(ctx !== null && rval !== null)
    {
-      rval = jsonld.compact(ctx, rval);
+      // preserve top-level array by compacting individual entries
+      if(rval.constructor === Array)
+      {
+         var arr = rval;
+         rval = [];
+         for(var i in arr)
+         {
+            rval.push(jsonld.compact(ctx, arr[i]));
+         }
+      }
+      else
+      {
+         rval = jsonld.compact(ctx, rval);
+      }
+/*      
+      // preserve top-level array
+      if(isArray && rval.constructor !== Array)
+      {
+         ctx = rval['@context'];
+         var idKeyword = '@id';
+         for(var key in ctx)
+         {
+            if(ctx[key] === '@id')
+            {
+               idKeyword = key;
+            }
+         }
+         var arr = rval['@id'];
+         rval = [];
+         for(var i in arr)
+         {
+            // make '@context' first key
+            var value = {
+               '@context': ctx,
+            };
+            var keys = Object.keys(arr[i]);
+            for(var k in keys)
+            {
+               var key = keys[k];
+               value[key] = arr[i][key];
+            }
+            rval.push(value);
+         }
+      }*/
    }
    
    return rval;

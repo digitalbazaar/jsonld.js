@@ -3,7 +3,7 @@
  *
  * @author Dave Longley
  *
- * Copyright (c) 2011 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2011-2012 Digital Bazaar, Inc. All rights reserved.
  */
 var sys = require('sys');
 var fs = require('fs');
@@ -78,7 +78,7 @@ TestRunner.prototype.test = function(name)
 
 TestRunner.prototype.check = function(expect, result, indent)
 {
-   if(typeof(indent) === 'undefined')
+   if(indent === undefined)
    {
       indent = 0;
    }
@@ -138,7 +138,7 @@ TestRunner.prototype.check = function(expect, result, indent)
 
 TestRunner.prototype.load = function(filepath)
 {
-   var tests = [];
+   var manifests = [];
    
    // get full path
    filepath = fs.realpathSync(filepath);
@@ -148,14 +148,15 @@ TestRunner.prototype.load = function(filepath)
    var files = fs.readdirSync(filepath);
    for(var i in files)
    {
+      // TODO: read manifests as JSON-LD, process cleanly, this is hacked
       var file = path.join(filepath, files[i]);
-      if(path.extname(file) == '.test')
+      if(file.indexOf('manifest') !== -1 && path.extname(file) == '.jsonld')
       {
          sys.log('Reading test file: "' + file + '"');
          
          try
          {
-            var test = JSON.parse(fs.readFileSync(file, 'utf8'));
+            var manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
          }
          catch(e)
          {
@@ -163,17 +164,14 @@ TestRunner.prototype.load = function(filepath)
             throw e;
          }
          
-         if(typeof(test.filepath) === 'undefined')
-         {
-            test.filepath = filepath;
-         }
-         tests.push(test);
+         manifest.filepath = filepath;
+         manifests.push(manifest);
       }
    }
    
-   sys.log(tests.length + ' test file(s) read');
+   sys.log(manifests.length + ' manifest file(s) read');
    
-   return tests;
+   return manifests;
 };
 
 /**
@@ -202,105 +200,78 @@ var _readTestJson = function(file, filepath)
    return rval;
 };
 
-TestRunner.prototype.run = function(tests, filepath)
+TestRunner.prototype.run = function(manifests)
 {
-   /* Test format:
+   /* Manifest format:
       {
-         group: <optional group name>,
-         tests: [{
+         name: <optional manifest name>,
+         sequence: [{
             'name': <test name>,
-            'type': <type of test>,
+            '@type': ["test:TestCase", "jld:<type of test>"],
             'input': <input file for test>,
             'context': <context file for add context test type>,
             'frame': <frame file for frame test type>,
             'expect': <expected result file>,
          }]
       }
-      
-      If 'group' is present, then 'tests' must be present and list all of the
-      tests in the group. If 'group' is not present then 'name' must be present
-      as well as 'input' and 'expect'. Groups may be embedded.
     */
-   for(var i in tests)
+   for(var i in manifests)
    {
-      var test = tests[i];
-      if('group' in test)
+      var manifest = manifests[i];
+      var filepath = manifest.filepath;
+      if('name' in manifest)
       {
-         this.group(test.group);
-         this.run(test.tests, test.filepath);
-         this.ungroup();
+         this.group(manifest.name);
       }
-      else if(!('name' in test))
+      
+      for(var ii in manifest.sequence)
       {
-         throw '"group" or "name" must be specified in test file.';
-      }
-      else
-      {
-         this.test(test.name);
-
-         // use parent test filepath as necessary
-         if(typeof(test.filepath) === 'undefined') 
-         {
-            test.filepath = filepath;
-         }
+         var test = manifest.sequence[ii];
          
-         // read test files
-         var type = test.type;
-         if(type == 'triples')
+         // read test input files
+         var result;
+         var indent = 2;
+         var type = test['@type'];
+         if(type.indexOf('jld:NormalizeTest') !== -1)
          {
-            sys.log('Skipping triples test: ' + test.name);
+            indent = 0;
+            input = _readTestJson(test.input, filepath);
+            test.expect = _readTestJson(test.expect, filepath);
+            result = jsonld.normalize(input);
+         }
+         else if(type.indexOf('jld:ExpandTest') !== -1)
+         {
+            input = _readTestJson(test.input, filepath);
+            test.expect = _readTestJson(test.expect, filepath);
+            result = jsonld.expand(input);
+         }
+         else if(type.indexOf('jld:CompactTest') !== -1)
+         {
+            input = _readTestJson(test.input, filepath);
+            test.context = _readTestJson(test.context, filepath);
+            test.expect = _readTestJson(test.expect, filepath);
+            result = jsonld.compact(test.context['@context'], input);
+         }
+         else if(type.indexOf('jld:FrameTest') !== -1)
+         {
+            input = _readTestJson(test.input, filepath);
+            test.frame = _readTestJson(test.frame, filepath);
+            test.expect = _readTestJson(test.expect, filepath);
+            result = jsonld.frame(input, test.frame);
+         }
+         else
+         {
+            sys.log('Skipping test "' + test.name + '" of type: ' +
+               JSON.stringify(type));
             continue;
-         }
-
-         var input = _readTestJson(test.input, test.filepath);
-         if(type == 'triples')
-         {
-            // FIXME: support n-triples
-            sys.log('FIXME: support n-triples');
-         }
-         else
-         {
-            test.expect = _readTestJson(test.expect, test.filepath);
-         }
-         if(test.context)
-         {
-            test.context = _readTestJson(test.context, test.filepath);
-         }
-         if(test.frame)
-         {
-            test.frame = _readTestJson(test.frame, test.filepath);
-         }
-         
-         // perform test
-         if(type === 'normalize')
-         {
-            input = jsonld.normalize(input);
-         }
-         else if(type === 'expand')
-         {
-            input = jsonld.expand(input);
-         }
-         else if(type === 'compact')
-         {
-            input = jsonld.compact(test.context, input);
-         }
-         else if(type === 'frame')
-         {
-            input = jsonld.frame(input, test.frame);
-         }
-         else if(type === 'triples')
-         {
-            // FIXME: support n-triples
-            sys.log('FIXME: support n-triples');
-         }
-         else
-         {
-            throw 'Unknown test type: ' + type;
          }
          
          // check results (only indent output on non-normalize tests)
-         this.check(test.expect, input, (test.type === 'normalize') ? 0 : 3);
-      }
+         this.test(test.name);
+         this.check(test.expect, result, indent);
+      }      
+      
+      this.ungroup();
    }
 };
 
@@ -309,7 +280,13 @@ TestRunner.prototype.run = function(tests, filepath)
 {*/
    var tr = new TestRunner();
    tr.group('JSON-LD');
-   tr.run(tr.load('jsonld'));
+   // FIXME: handle command line option cleaner
+   if(process.argv.length < 2)
+   {
+      throw 'Usage: node nodejs-jsonld-tests <test directory>';
+   }
+   var dir = process.argv[2];
+   tr.run(tr.load(dir));
    tr.ungroup();
    sys.log('All tests complete.');
 /*}

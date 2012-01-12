@@ -1,7 +1,0 @@
-{
-  "@context": {
-    "ex": "http://example.org/test#"
-  },
-  "@id": "ex:example",
-  "ex:property": "test"
-}
