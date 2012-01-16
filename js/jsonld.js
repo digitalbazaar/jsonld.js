@@ -1644,16 +1644,11 @@ var _flatten = function(parent, parentProperty, value, subjects)
    {
       if(parent.constructor === Array)
       {
-         // do not add duplicate IRIs for the same property
-         var duplicate = false;
-         if(flattened.constructor === Object && '@id' in flattened)
+         // do not add duplicates for the same property
+         var duplicate = (parent.filter(function(e)
          {
-            duplicate = (parent.filter(function(e)
-            {
-               return (e.constructor === Object && '@id' in e &&
-                  e['@id'] === flattened['@id']);
-            }).length > 0);
-         }
+            return (_compareObjects(e, flattened) === 0);
+         }).length > 0);
          if(!duplicate)
          {
             parent.push(flattened);
