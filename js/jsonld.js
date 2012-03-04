@@ -1911,15 +1911,12 @@ Processor.prototype.canonicalizeBlankNodes = function(input)
    // sort property lists that now have canonically-named bnodes
    for(var key in edges.props)
    {
-      if(edges.props[key].bnodes.length > 0)
+      var subject = subjects[key];
+      for(var p in subject)
       {
-         var bnode = subjects[key];
-         for(var p in bnode)
+         if(p !== '@id' && subject[p].constructor === Array)
          {
-            if(p.indexOf('@') !== 0 && bnode[p].constructor === Array)
-            {
-               bnode[p].sort(_compareObjects);
-            }
+           subject[p].sort(_compareObjects);
          }
       }
    }
