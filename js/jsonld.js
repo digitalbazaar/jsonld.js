@@ -47,6 +47,9 @@ jsonld.compact = function(input, ctx) {
   }
   var callback = arguments[callbackArg];
 
+  // default to empty context if not given
+  ctx = ctx || {};
+
   // expand input then do compaction
   jsonld.expand(input, function(err, expanded) {
     if(err) {
@@ -64,9 +67,15 @@ jsonld.compact = function(input, ctx) {
       }
 
       try {
+        // create optimize context
+        if(optimize) {
+          var optimizeCtx = {};
+        }
+
         // do compaction
-        var compacted = new Processor().compact(ctx, null, input, optimize);
-        cleanup(null, compacted, ctx);
+        input = expanded;
+        var compacted = new Processor().compact(ctx, null, input, optimizeCtx);
+        cleanup(null, compacted, optimizeCtx);
       }
       catch(ex) {
         cleanup(ex);
@@ -75,7 +84,7 @@ jsonld.compact = function(input, ctx) {
   });
 
   // performs clean up after compaction
-  function cleanup(err, compacted, mergedCtx) {
+  function cleanup(err, compacted, optimizeCtx) {
     if(err) {
       return callback(err);
     }
@@ -85,29 +94,45 @@ jsonld.compact = function(input, ctx) {
       compacted = compacted[0];
     }
 
-    // determine if the original context uses URLs or not
-    var usesUrls = _isString(ctx);
-    if(!usesUrls && _isArray(ctx)) {
-      for(var i in ctx) {
-        if(_isString(ctx[i])) {
-          usesUrls = true;
-          break;
-        }
+    // build output context
+    ctx = _clone(ctx);
+    if(!_isArray(ctx)) {
+      ctx = [ctx];
+    }
+    // add optimize context
+    if(optimizeCtx) {
+      ctx.push(optimizeCtx);
+    }
+    // remove empty contexts
+    var tmp = ctx;
+    ctx = [];
+    for(var i in tmp) {
+      if(!_isObject(tmp[i]) || Object.keys(tmp[i]).length > 0) {
+        ctx[i] = tmp[i];
       }
     }
 
-    // if ctx uses URLs, consider it already optimized
-    if(!optimize || usesUrls) {
-      if(!_isObject(ctx) || Object.keys(ctx).length > 0) {
-        compacted['@context'] = ctx;
+    // add context
+    if(ctx.length > 0) {
+      // remove array if only one context
+      if(ctx.length === 1) {
+        ctx = ctx[0];
       }
-    }
-    // optimize context
-    else {
-      // only include terms used in the output in the context
-      ctx = _optimizeContext(compacted, mergedCtx);
-      if(Object.keys(ctx).length > 0) {
-        compacted['@context'] = ctx;
+
+      if(_isArray(compacted)) {
+        // use '@graph' keyword
+        var kwgraph = _getKeywords(ctx)['@graph'];
+        var graph = compacted;
+        compacted = {'@context': ctx};
+        compacted[kwgraph] = graph;
+      }
+      else if(_isObject(compacted)) {
+        // reorder keys so @context is first
+        var graph = compacted;
+        compacted = {'@context': ctx};
+        for(var key in graph) {
+          compacted[key] = graph[key];
+        }
       }
     }
 
@@ -562,6 +587,55 @@ jsonld.getContextValue = function(ctx, key, type, expand) {
   return rval;
 };
 
+/**
+ * Sets a value for the given @context key and type.
+ *
+ * @param ctx the context.
+ * @param key the context key.
+ * @param type the type of value to set (eg: '@id', '@type').
+ * @param value the value to use.
+ */
+jsonld.setContextValue = function(ctx, key, type, value) {
+  // compact key
+  key = _compactIri(ctx, key);
+
+  // get keyword for type
+  var kwtype = _getKeywords(ctx, type);
+
+  // add new key to @context
+  if(!(key in ctx)) {
+    if(type === '@id') {
+      ctx[key] = value;
+    }
+    else {
+      ctx[key] = {};
+      ctx[key][kwtype] = value;
+    }
+  }
+  // update existing key w/string value
+  else if(_isString(ctx[key])) {
+    // overwrite @id
+    if(type === '@id') {
+      ctx[key] = value;
+    }
+    // expand to an object
+    else {
+      ctx[key] = {};
+      ctx[key][kwtype] = value;
+    }
+  }
+  // update existing key w/object value
+  else if(_isObject(ctx[key])) {
+    ctx[key][kwtype] = value;
+  }
+  else {
+    throw new JsonLdError(
+      'Invalid @context value for key "' + key + '".',
+      'jsonld.InvalidContext',
+      {context: ctx, key: key});
+  }
+};
+
 // determine if in-browser or using node.js
 var _nodejs = !(_isUndefined(module) || _isUndefined(module.exports));
 var _browser = !_nodejs;
@@ -618,11 +692,11 @@ var Processor = function() {};
  * @param ctx the context to use.
  * @param property the property that points to the value, null for none.
  * @param value the value to compact.
- * @param optimize true to optimize the compaction.
+ * @param [optimizeCtx] the context to populate with optimizations.
  *
  * @return the compacted value.
  */
-Processor.prototype.compact = function(ctx, property, value, optimize) {
+Processor.prototype.compact = function(ctx, property, value, optimizeCtx) {
   // null is already compact
   if(value === null) {
     return null;
@@ -650,36 +724,78 @@ Processor.prototype.compact = function(ctx, property, value, optimize) {
     // recurse through array
     var rval = [];
     for(var i in value) {
-      var val = value[i];
-      if(_isArray(val)) {
-        throw new JsonLdError(
-          'Invalid JSON-LD syntax; arrays of arrays are not permitted.',
-          'jsonld.SyntaxError');
+      // compact value and add if non-null
+      var val = this.compact(ctx, property, value[i], optimizeCtx);
+      if(val !== null) {
+        rval.push(val);
       }
-      rval.push(this.compact(ctx, property, val));
     }
 
     // use @list if previously used unless @context specifies container @list
-    var container = jsonld.getContextValue(ctx, property, '@container');
-    var useList = isList && (container !== '@list');
-    if(useList) {
-      rval = {'@list': rval};
+    if(isList) {
+      var prop = _compactIri(ctx, property);
+      var container = jsonld.getContextValue(ctx, prop, '@container');
+      var useList = (container !== '@list');
+      if(useList) {
+        // if optimizing, add @container entry
+        if(optimizeCtx && container === null) {
+          jsonld.setContextValue(optimizeCtx, prop, '@container', '@list');
+        }
+        else {
+          rval = {'@list': rval};
+        }
+      }
     }
     return rval;
   }
 
   // replace '@graph' keyword and recurse
   if(_isObject(value) && '@graph' in value) {
-    var graph = _getKeywords(ctx)['@graph'];
+    var kwgraph = _getKeywords(ctx)['@graph'];
     var rval = {};
-    rval[graph] = this.compact(ctx, property, value['@graph'], optimize);
+    rval[kwgraph] = this.compact(ctx, property, value['@graph'], optimizeCtx);
     return rval;
   }
 
-  // recursively compact subject
-  if(_isSubject(value) || (property === null && _isObject(value))) {
+  // optimize away use of @set
+  if(_isSetValue(value)) {
+    return this.compact(ctx, property, value['@set'], optimizeCtx);
+  }
+
+  // try to compact @value using @type definition
+  if(_isValue(value)) {
+    // compact property to look for its @type definition in the context
+    var prop = _compactIri(ctx, property);
+    var type = jsonld.getContextValue(ctx, prop, '@type');
+    if(type === null && optimizeCtx && '@type' in value) {
+      // add @type to context when optimizing
+      type = _clone(value['@type']);
+      jsonld.setContextValue(optimizeCtx, prop, '@type', type);
+    }
+
+    if(type !== null) {
+      // can't type-coerce when a language is present
+      if('@language' in value) {
+        throw new JsonLdError(
+          'Cannot compact a typed value when a language is specified ' +
+          'because the language information would be lost.',
+          'jsonld.CompactError', {context: ctx, value: value});
+      }
+      // compact IRI
+      else if(type === '@id') {
+        return _compactIri(ctx, value['@value']);
+      }
+      // other type, return string value
+      else {
+        return value['@value'];
+      }
+    }
+  }
+
+  // recursively compact object
+  if(_isObject(value)) {
     var keywords = _getKeywords(ctx);
-    rval = {};
+    var rval = {};
     for(var key in value) {
       // compact non-context
       if(key !== '@context') {
@@ -690,27 +806,38 @@ Processor.prototype.compact = function(ctx, property, value, optimize) {
         }
 
         // compact property and value
-        var p = _compactIri(ctx, key);
-        var val = this.compact(ctx, key, value[key]);
+        var prop = _compactIri(ctx, key);
+        var val = this.compact(ctx, key, value[key], optimizeCtx);
 
-        // determine if an array should be used by @container specification
-        var container = jsonld.getContextValue(ctx, p, '@container');
-        var isArray = (container === '@set' || container === '@list');
+        // preserve empty arrays
+        if(_isArray(val) && val.length === 0 && !(prop in rval)) {
+          rval[prop] = [];
+        }
 
-        // add compacted value
-        jsonld.addValue(rval, p, val, isArray);
+        // add non-null value
+        if(val !== null) {
+          // determine if an array should be used by @container specification
+          var container = jsonld.getContextValue(ctx, prop, '@container');
+          var isArray = (container === '@set' || container === '@list');
+          jsonld.addValue(rval, prop, val, isArray);
+        }
       }
+    }
+    // drop empty objects
+    if(Object.keys(rval).length === 0) {
+      rval = null;
     }
     return rval;
   }
 
-  // optimize away use of @set
-  if(_isSetValue(value)) {
-    return this.compact(ctx, property, value['@set']);
+  // compact @id or @type string
+  var prop = _expandTerm(ctx, property);
+  if(prop === '@id' || prop === '@type') {
+    return _compactIri(ctx, value);
   }
 
-  // compact value
-  return this.compactValue(ctx, property, value);
+  // only primitives remain which are already compact
+  return value;
 };
 
 /**
@@ -762,14 +889,21 @@ Processor.prototype.expand = function(ctx, property, value) {
           'Invalid JSON-LD syntax; arrays of arrays are not permitted.',
           'jsonld.SyntaxError');
       }
-      rval.push(this.expand(ctx, property, val));
+      // expand value and add if non-null
+      val = this.expand(ctx, property, val);
+      if(val !== null) {
+        rval.push(val);
+      }
     }
 
     // use @list if previously used or if @context indicates it is one
-    var container = jsonld.getContextValue(ctx, property, '@container');
-    isList = isList || (container === '@list');
-    if(isList) {
-      rval = {'@list': rval};
+    if(property !== null) {
+      var prop = _compactIri(ctx, property);
+      var container = jsonld.getContextValue(ctx, prop, '@container');
+      isList = isList || (container === '@list');
+      if(isList) {
+        rval = {'@list': rval};
+      }
     }
     return rval;
   }
@@ -812,10 +946,15 @@ Processor.prototype.expand = function(ctx, property, value) {
         var prop = _expandTerm(ctx, key);
         var val = this.expand(ctx, key, value[key]);
 
+        // preserve empty arrays
+        if(_isArray(val) && val.length === 0 && !(prop in rval)) {
+          rval[prop] = [];
+        }
+
         // add non-null expanded value
         if(val !== null) {
-          // always use array for subjects except for @id key
-          var useArray = isSubject && (key !== '@id');
+          // always use array for subjects except for @id key and @list
+          var useArray = isSubject && (key !== '@id') && !_isListValue(val);
           jsonld.addValue(rval, prop, val, useArray);
         }
       }
@@ -955,71 +1094,6 @@ Processor.prototype.expandValue = function(ctx, property, value) {
     // other type
     else if(type !== null) {
       rval = {'@type': type, '@value': '' + value};
-    }
-  }
-
-  return rval;
-};
-
-/**
- * Compacts an expanded value by using the coercion and keyword rules in the
- * given context.
- *
- * @param ctx the context to use.
- * @param property the property the value is associated with.
- * @param value the value to compact.
- *
- * @return the compacted value.
- */
-Processor.prototype.compactValue = function(ctx, property, value) {
-  // default to no compaction
-  var rval = value;
-
-  // get the type specified by the context
-  var type = null;
-
-  // expand property
-  var prop = _expandTerm(ctx, property);
-
-  // compact @id or @type string
-  if(_isString(value)) {
-    if(prop === '@id' || prop === '@type') {
-      rval = _compactIri(ctx, value);
-    }
-  }
-  // compact object
-  else if(_isObject(value)) {
-    // compact property to look for its type definition in the context
-    prop = _compactIri(ctx, prop);
-    type = jsonld.getContextValue(ctx, prop, '@type');
-
-    // no type, do keyword replacement
-    if(type === null) {
-      var keywords = _getKeywords(ctx);
-      rval = {};
-      for(var key in value) {
-        // compact @id and @type IRIs
-        var val = value[key];
-        if(key === '@id' || key === '@type') {
-          val = _compactIri(ctx, value[key]);
-        }
-        rval[keywords[key]] = val;
-      }
-    }
-    // can't type-coerce when a language is present
-    else if('@language' in value) {
-      throw new JsonLdError(
-        'Cannot compact a typed value when a language is specified because ' +
-        'the language information would be lost.',
-        'jsonld.CompactError', {context: ctx, value: value});
-    }
-    // compact IRI
-    else if(type === '@id') {
-      rval = _compactIri(ctx, value['@value']);
-    }
-    // other type
-    else {
-      rval = value['@value'];
     }
   }
 
@@ -1293,6 +1367,20 @@ function _isSubject(value) {
 }
 
 /**
+ * Returns true if the given value is a @value.
+ *
+ * @param value the value to check.
+ *
+ * @return true if the value is a @value, false if not.
+ */
+function _isValue(value) {
+  // Note: A value is a @value if all of these hold true:
+  // 1. It is an Object.
+  // 2. It has the @value property.
+  return _isObject(value) && ('@value' in value);
+}
+
+/**
  * Returns true if the given value is a @set.
  *
  * @param value the value to check.
@@ -1300,16 +1388,10 @@ function _isSubject(value) {
  * @return true if the value is a @set, false if not.
  */
 function _isSetValue(value) {
-  var rval = false;
-
   // Note: A value is a @set if all of these hold true:
   // 1. It is an Object.
   // 2. It has the @set property.
-  if(_isObject(value) && ('@set' in value)) {
-    rval = true;
-  }
-
-  return rval;
+  return _isObject(value) && ('@set' in value);
 }
 
 /**
@@ -1320,16 +1402,10 @@ function _isSetValue(value) {
  * @return true if the value is a @list, false if not.
  */
 function _isListValue(value) {
-  var rval = false;
-
   // Note: A value is a @list if all of these hold true:
   // 1. It is an Object.
   // 2. It has the @list property.
-  if(_isObject(value) && ('@list' in value)) {
-    rval = true;
-  }
-
-  return rval;
+  return _isObject(value) && ('@list' in value);
 }
 
 /**
@@ -1344,8 +1420,7 @@ function _isAbsoluteIri(value) {
 }
 
 /**
- * Clones an object, array, or string/number. If cloning an object, the keys
- * will be sorted.
+ * Clones an object, array, or string/number.
  *
  * @param value the value to clone.
  *
@@ -1356,9 +1431,7 @@ function _clone(value) {
 
   if(_isObject(value)) {
     rval = {};
-    var keys = Object.keys(value).sort();
-    for(var i in keys) {
-      var key = keys[i];
+    for(var key in value) {
       rval[key] = _clone(value[key]);
     }
   }
@@ -1371,30 +1444,6 @@ function _clone(value) {
   else {
     rval = value;
   }
-
-  return rval;
-}
-
-/**
- * Optimizes a context. The output context will only contain entries that
- * are used in the given input.
- *
- * @param input the JSON-LD input object.
- * @param ctx the context to optimize.
- * @param rval the optimized context.
- *
- * @return the optimized context.
- */
-function _optimizeContext(input, ctx, rval) {
-  rval = rval || {};
-
-  // FIXME: implement me
-  /*if(_isArray(input)) {
-    for(var i in input) {
-      //_optimizeContext(input
-    }
-  }*/
-  rval = ctx;
 
   return rval;
 }
