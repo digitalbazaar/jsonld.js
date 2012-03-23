@@ -703,8 +703,8 @@ Processor.prototype.expand = function(ctx, property, value) {
     return this.expand(ctx, property, value['@set']);
   }
 
-  // coerce primitive value to a typed value
-  return this.coerceValue(ctx, property, value);
+  // expand value
+  return this.expandValue(ctx, property, value);
 };
 
 /**
@@ -796,17 +796,16 @@ Processor.prototype.mergeContexts = function(ctx1, ctx2) {
 };
 
 /**
- * Coerces the given value to a particular type. Given a string value, the
- * resulting output will be the value in expanded form with the appropriate
- * type, based on the given context.
+ * Expands the given value by using the coercion and keyword rules in the
+ * given context.
  *
  * @param ctx the context to use.
  * @param property the property the value is associated with.
- * @param value the value to coerce to a type.
+ * @param value the value to expand.
  *
- * @return the coerced value.
+ * @return the expanded value.
  */
-Processor.prototype.coerceValue = function(ctx, property, value) {
+Processor.prototype.expandValue = function(ctx, property, value) {
   // default to simple string return value
   var rval = value;
 
@@ -822,23 +821,11 @@ Processor.prototype.coerceValue = function(ctx, property, value) {
     prop = _compactIri(ctx, prop);
     var type = jsonld.getContextValue(ctx, prop, '@type');
 
-    // no type found in context, do automatic typing for native JSON primitives
-    if(type === null) {
-      if(_isNumber(value)) {
-        if(('' + value).indexOf('.') === -1) {
-          type = XSD['integer'];
-        }
-        else {
-          type = XSD['double'];
-
-          // do special JSON-LD double format
-          value = value.toExponential(6).replace(
-             /(e(?:\+|-))([0-9])$/, '$10$2');
-        }
-      }
-      else if(_isBoolean(value)) {
-        type = XSD['boolean'];
-      }
+    // no type found in context, handle special double-case
+    if(type === null && _isDouble(value)) {
+      // do special JSON-LD double format, printf('%1.16e') JS equivalent
+      value = value.toExponential(16).replace(
+        /(e(?:\+|-))([0-9])$/, '$10$2');
     }
 
     // do @id expansion
@@ -889,30 +876,17 @@ Processor.prototype.compactValue = function(ctx, property, value) {
     type = jsonld.getContextValue(ctx, prop, '@type');
   }
 
-  // do automatic type compaction for native JSON primitives
+  // no type, do keyword replacement
   if(type === null) {
-    if(value['@type'] === XSD['boolean']) {
-      rval = (value['@value'] === 'true' || value['@value'] != 0);
-    }
-    else if(value['@type'] === XSD['integer']) {
-      rval = parseInt(value['@value']);
-    }
-    else if(value['@type'] === XSD['double']) {
-      rval = parseFloat(value['@value']);
-    }
-    // no automatic type conversion
-    else {
-      // do keyword replacement
-      var keywords = _getKeywords(ctx);
-      rval = {};
-      for(var key in value) {
-        // compact @id and @type IRIs
-        var val = value[key];
-        if(key === '@id' || key === '@type') {
-          val = _compactIri(ctx, value[key]);
-        }
-        rval[keywords[key]] = val;
+    var keywords = _getKeywords(ctx);
+    rval = {};
+    for(var key in value) {
+      // compact @id and @type IRIs
+      var val = value[key];
+      if(key === '@id' || key === '@type') {
+        val = _compactIri(ctx, value[key]);
       }
+      rval[keywords[key]] = val;
     }
   }
   // can't type-coerce when a language is present
@@ -1141,6 +1115,17 @@ function _isString(input) {
  */
 function _isNumber(input) {
   return (input && input.constructor === Number);
+}
+
+/**
+ * Returns true if the given input is a double.
+ *
+ * @param input the input to check.
+ *
+ * @return true if the input is a double, false if not.
+ */
+function _isDouble(input) {
+  return _isNumber(input) && ('' + input).indexOf('.') !== -1;
 }
 
 /**
