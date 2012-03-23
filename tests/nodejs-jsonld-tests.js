@@ -133,7 +133,7 @@ var _readTestJson = function(file, filepath) {
   return rval;
 };
 
-TestRunner.prototype.run = function(manifests) {
+TestRunner.prototype.run = function(manifests, callback) {
   /* Manifest format: {
        name: <optional manifest name>,
        sequence: [{
@@ -192,13 +192,19 @@ TestRunner.prototype.run = function(manifests) {
         }
         self.test(test.name);
         self.check(test.expect, result);
-        callback();
+        callback(null);
       }
-    }, callback);
-
-    self.ungroup();
+    }, function(err) {
+      if(err) {
+        return callback(err);
+      }
+      if('name' in manifest) {
+        self.ungroup();
+      }
+      callback();
+    });
   }, function(err) {
-    throw err;
+    callback(err);
   });
 };
 
@@ -211,9 +217,13 @@ try {
     throw 'Usage: node nodejs-jsonld-tests <test directory>';
   }
   var dir = process.argv[2];
-  tr.run(tr.load(dir));
-  tr.ungroup();
-  util.log('All tests complete.');
+  tr.run(tr.load(dir), function(err) {
+    if(err) {
+      throw err;
+    }
+    tr.ungroup();
+    util.log('All tests complete.');
+  });
 }
 catch(e) {
   util.puts(e.stack);

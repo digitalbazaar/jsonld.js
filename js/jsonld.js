@@ -406,7 +406,7 @@ jsonld.hasValue = function(subject, property, value) {
   if(jsonld.hasProperty(subject, property)) {
     var val = subject[property];
     if(_isArray(val)) {
-      rval = (indexOf(val, value) !== -1);
+      rval = (val.indexOf(value) !== -1);
     }
     // avoid matching the set of values with an array value parameter
     else if(!_isArray(value)) {
@@ -418,7 +418,8 @@ jsonld.hasValue = function(subject, property, value) {
 
 /**
  * Adds a value to a subject. If the subject already has the value, it will
- * not be added.
+ * not be added. If the value is an array, all values in the array will be
+ * added.
  *
  * @param subject the subject to add the value to.
  * @param property the property that relates the value to the subject.
@@ -429,8 +430,13 @@ jsonld.hasValue = function(subject, property, value) {
 jsonld.addValue = function(subject, property, value, propertyIsArray) {
   propertyIsArray = _isUndefined(propertyIsArray) ? false : propertyIsArray;
 
-  if(property in subject) {
-    var hasValue = !jsonld.hasValue(subject, property, value);
+  if(_isArray(value)) {
+    for(var i in value) {
+      jsonld.addValue(subject, property, value[i], propertyIsArray);
+    }
+  }
+  else if(property in subject) {
+    var hasValue = jsonld.hasValue(subject, property, value);
 
     // make property an array if value not present or always a set
     if(!_isArray(subject[property]) && (!hasValue || propertyIsArray)) {
@@ -763,13 +769,22 @@ Processor.prototype.expand = function(ctx, property, value) {
     return rval;
   }
 
-  // recursively expand subject
-  if(_isSubject(value) || (property === null && _isObject(value))) {
+  // optimize away use of @set
+  if(_isSetValue(value)) {
+    return this.expand(ctx, property, value['@set']);
+  }
+
+  // recursively expand object
+  if(_isObject(value)) {
+    // determine if value is a subject
+    var isSubject = _isSubject(value) || (property === null);
+
     // if value has a context, merge it in
     if('@context' in value) {
       ctx = this.mergeContexts(ctx, value['@context']);
     }
 
+    // recurse into object
     var keywords = _getKeywords(ctx);
     var rval = {};
     for(var key in value) {
@@ -789,18 +804,15 @@ Processor.prototype.expand = function(ctx, property, value) {
         var prop = _expandTerm(ctx, key);
         var val = this.expand(ctx, key, value[key]);
 
-        // add non-null expanded value, always use array except for @id key
+        // add non-null expanded value
         if(val !== null) {
-          jsonld.addValue(rval, prop, val, (key !== '@id'));
+          // always use array for subjects except for @id key
+          var useArray = isSubject && (key !== '@id');
+          jsonld.addValue(rval, prop, val, useArray);
         }
       }
     }
     return rval;
-  }
-
-  // optimize away use of @set
-  if(_isSetValue(value)) {
-    return this.expand(ctx, property, value['@set']);
   }
 
   // expand value
