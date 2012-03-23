@@ -762,8 +762,8 @@ Processor.prototype.compact = function(ctx, property, value, optimizeCtx) {
     return this.compact(ctx, property, value['@set'], optimizeCtx);
   }
 
-  // try to compact @value using @type definition
-  if(_isValue(value)) {
+  // try to compact @value or subject reference using @type definition
+  if(_isObject(value) && (_isValue(value) || _isSubjectReference(value))) {
     // compact property to look for its @type definition in the context
     var prop = _compactIri(ctx, property);
     var type = jsonld.getContextValue(ctx, prop, '@type');
@@ -774,6 +774,8 @@ Processor.prototype.compact = function(ctx, property, value, optimizeCtx) {
     }
 
     if(type !== null) {
+      var key = _isValue(value) ? '@value' : '@id';
+
       // can't type-coerce when a language is present
       if('@language' in value) {
         throw new JsonLdError(
@@ -783,11 +785,11 @@ Processor.prototype.compact = function(ctx, property, value, optimizeCtx) {
       }
       // compact IRI
       else if(type === '@id') {
-        return _compactIri(ctx, value['@value']);
+        return _compactIri(ctx, value[key]);
       }
       // other type, return string value
       else {
-        return value['@value'];
+        return value[key];
       }
     }
   }
@@ -1356,7 +1358,7 @@ function _isSubject(value) {
   // Note: A value is a subject if all of these hold true:
   // 1. It is an Object.
   // 2. It is not a literal, set, or list (no @value, @set, or @list).
-  // 3. It has more than 1 key OR any existing key is not '@id'.
+  // 3. It has more than 1 key OR any existing key is not @id.
   if(_isObject(value) &&
     !(('@value' in value) || ('@set' in value) || ('@list' in value))) {
     var keyCount = Object.keys(value).length;
@@ -1364,6 +1366,20 @@ function _isSubject(value) {
   }
 
   return rval;
+}
+
+/**
+ * Returns true if the given value is a subject reference.
+ *
+ * @param value the value to check.
+ *
+ * @return true if the value is a subject reference, false if not.
+ */
+function _isSubjectReference(value) {
+  // Note: A value is a subject reference if all of these hold true:
+  // 1. It is an Object.
+  // 2. It has a single key: @id.
+  return _isObject(value) && Object.keys(value).length === 1 && '@id' in value;
 }
 
 /**
