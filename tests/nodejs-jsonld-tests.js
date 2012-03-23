@@ -5,297 +5,217 @@
  *
  * Copyright (c) 2011-2012 Digital Bazaar, Inc. All rights reserved.
  */
-var sys = require('sys');
+var assert = require('assert');
+var async = require('async');
 var fs = require('fs');
 var path = require('path');
+var util = require('util');
 var jsonld = require('../js/jsonld');
 
-var _sortKeys = function(obj)
-{
-   var rval;
-   
-   if(obj === null)
-   {
-      rval = null;
-   }
-   else if(obj.constructor === Array)
-   {
-      rval = [];
-      for(var i in obj)
-      {
-         rval[i] = _sortKeys(obj[i]);
-      }
-   }
-   else if(obj.constructor === Object)
-   {
-      rval = {};
-      var keys = Object.keys(obj);
-      keys.sort();
-      for(var i in keys)
-      {
-         rval[keys[i]] = _sortKeys(obj[keys[i]]);
-      }
-   }
-   else
-   {
-      rval = obj;
-   }
-   
-   return rval;
+function TestRunner() {
+  // set up groups, add root group
+  this.groups = [];
+  this.group('');
 };
 
-var _stringifySorted = function(obj, indent)
-{
-   return JSON.stringify(_sortKeys(obj), null, indent);
+TestRunner.prototype.group = function(name) {
+  this.groups.push( {
+    name: name,
+    tests: [],
+    count: 1
+  });
 };
 
-function TestRunner()
-{
-   // set up groups, add root group
-   this.groups = [];
-   this.group('');
+TestRunner.prototype.ungroup = function() {
+  this.groups.pop();
 };
 
-TestRunner.prototype.group = function(name)
-{
-   this.groups.push(
-   {
-      name: name,
-      tests: [],
-      count: 1
-   });
+TestRunner.prototype.test = function(name) {
+  this.groups[this.groups.length - 1].tests.push(name);
 };
 
-TestRunner.prototype.ungroup = function()
-{
-   this.groups.pop();
-};
+TestRunner.prototype.check = function(expect, result) {
+  var line = '';
+  for(var i in this.groups) {
+    var g = this.groups[i];
+    line += (line === '') ? g.name : ('/' + g.name);
+  }
 
-TestRunner.prototype.test = function(name)
-{
-   this.groups[this.groups.length - 1].tests.push(name);
-};
+  var g = this.groups[this.groups.length - 1];
+  if(g.name !== '') {
+    var count = '' + g.count;
+    var end = 4 - count.length;
+    for(var i = 0; i < end; ++i) {
+      count = '0' + count;
+    }
+    line += ' ' + count;
+    ++g.count;
+  }
+  line += '/' + g.tests.pop();
 
-TestRunner.prototype.check = function(expect, result, indent)
-{
-   if(indent === undefined)
-   {
-      indent = 0;
-   }
-   
-   // sort and use given indent level
-   expect = _stringifySorted(expect, indent);
-   result = _stringifySorted(result, indent);
-   
-   var line = '';
-   for(var i in this.groups)
-   {
-      var g = this.groups[i];
-      line += (line === '') ? g.name : ('/' + g.name);
-   }
-   
-   var g = this.groups[this.groups.length - 1];
-   if(g.name !== '')
-   {
-      var count = '' + g.count;
-      var end = 4 - count.length;
-      for(var i = 0; i < end; ++i)
-      {
-         count = '0' + count;
-      }
-      line += ' ' + count;
-      ++g.count;
-   }
-   line += '/' + g.tests.pop();
-   
-   var fail = false;
-   if(expect === result)
-   {
-      line += '... PASS';
-   }
-   else
-   {
-      line += '... FAIL';
-      fail = true;
-   }
-   
-   sys.puts(line);
-   if(fail)
-   {
-      sys.puts('Expect: ' + expect);
-      sys.puts('Result: ' + result);
-      
-      /*
-      sys.puts('Legible Expect: ' +
-         JSON.stringify(JSON.parse(expect), null, 2));
-      sys.puts('Legible Result: ' +
-         JSON.stringify(JSON.parse(result), null, 2));*/
-      
-      // FIXME: remove me
-      throw 'FAIL';
-   }
+  try {
+    assert.deepEqual(expect, result);
+    line += '... PASS';
+  }
+  catch(ex) {
+    line += '... FAIL';
+    var fail = true;
+  }
+
+  util.puts(line);
+  if(fail) {
+    util.puts('Expect: ' + util.inspect(expect, false, 10));
+    util.puts('Result: ' + util.inspect(result, false, 10));
+
+    // FIXME: remove me
+    throw 'FAIL';
+  }
 }
 
-TestRunner.prototype.load = function(filepath)
-{
-   var manifests = [];
-   
-   // get full path
-   filepath = fs.realpathSync(filepath);
-   sys.log('Reading test files from: "' + filepath + '"');
-   
-   // read each test file from the directory
-   var files = fs.readdirSync(filepath);
-   for(var i in files)
-   {
-      // TODO: read manifests as JSON-LD, process cleanly, this is hacked
-      var file = path.join(filepath, files[i]);
-      if(file.indexOf('manifest') !== -1 && path.extname(file) == '.jsonld')
-      {
-         sys.log('Reading test file: "' + file + '"');
-         
-         try
-         {
-            var manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
-         }
-         catch(e)
-         {
-            sys.log('Exception while parsing file: ' + file);
-            throw e;
-         }
-         
-         manifest.filepath = filepath;
-         manifests.push(manifest);
+TestRunner.prototype.load = function(filepath) {
+  var manifests = [];
+
+  // get full path
+  filepath = fs.realpathSync(filepath);
+  util.log('Reading test files from: "' + filepath + '"');
+
+  // read each test file from the directory
+  var files = fs.readdirSync(filepath);
+  for(var i in files) {
+    // TODO: read manifests as JSON-LD, process cleanly, this is hacked
+    var file = path.join(filepath, files[i]);
+    if(file.indexOf('manifest') !== -1 && path.extname(file) == '.jsonld') {
+      // FIXME: remove me, only do expand tests
+      if(file.indexOf('expand') === -1) {
+        util.log('Skipping manifest: "' + file + '"');
+        continue;
       }
-   }
-   
-   sys.log(manifests.length + ' manifest file(s) read');
-   
-   return manifests;
+      util.log('Reading test file: "' + file + '"');
+
+      try {
+        var manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
+      }
+      catch(e) {
+        util.log('Exception while parsing file: ' + file);
+        throw e;
+      }
+
+      manifest.filepath = filepath;
+      manifests.push(manifest);
+    }
+  }
+
+  util.log(manifests.length + ' manifest file(s) read');
+
+  return manifests;
 };
 
 /**
  * Reads test JSON files.
- * 
+ *
  * @param file the file to read.
  * @param filepath the test filepath.
- * 
+ *
  * @return the read JSON.
  */
-var _readTestJson = function(file, filepath)
-{
-   var rval;
-   
-   try
-   {
-      file = path.join(filepath, file);
-      rval = JSON.parse(fs.readFileSync(file, 'utf8'));
-   }
-   catch(e)
-   {
-      sys.log('Exception while parsing file: ' + file);
-      throw e;
-   }
-   
-   return rval;
+var _readTestJson = function(file, filepath) {
+  var rval;
+
+  try {
+    file = path.join(filepath, file);
+    rval = JSON.parse(fs.readFileSync(file, 'utf8'));
+  }
+  catch(e) {
+    util.log('Exception while parsing file: ' + file);
+    throw e;
+  }
+
+  return rval;
 };
 
-TestRunner.prototype.run = function(manifests)
-{
-   /* Manifest format:
-      {
-         name: <optional manifest name>,
-         sequence: [{
-            'name': <test name>,
-            '@type': ["test:TestCase", "jld:<type of test>"],
-            'input': <input file for test>,
-            'context': <context file for add context test type>,
-            'frame': <frame file for frame test type>,
-            'expect': <expected result file>,
-         }]
+TestRunner.prototype.run = function(manifests) {
+  /* Manifest format: {
+       name: <optional manifest name>,
+       sequence: [{
+         'name': <test name>,
+         '@type': ["test:TestCase", "jld:<type of test>"],
+         'input': <input file for test>,
+         'context': <context file for add context test type>,
+         'frame': <frame file for frame test type>,
+         'expect': <expected result file>,
+       }]
+     }
+   */
+  var self = this;
+  async.forEachSeries(manifests, function(manifest, callback) {
+    var filepath = manifest.filepath;
+    if('name' in manifest) {
+      self.group(manifest.name);
+    }
+
+    async.forEachSeries(manifest.sequence, function(test, callback) {
+      // read test input files
+      var result;
+      var type = test['@type'];
+      if(type.indexOf('jld:NormalizeTest') !== -1) {
+        input = _readTestJson(test.input, filepath);
+        test.expect = _readTestJson(test.expect, filepath);
+        jsonld.normalize(input, checkResult);
       }
-    */
-   for(var i in manifests)
-   {
-      var manifest = manifests[i];
-      var filepath = manifest.filepath;
-      if('name' in manifest)
-      {
-         this.group(manifest.name);
+      else if(type.indexOf('jld:ExpandTest') !== -1) {
+        input = _readTestJson(test.input, filepath);
+        test.expect = _readTestJson(test.expect, filepath);
+        jsonld.expand(input, checkResult);
       }
-      
-      for(var ii in manifest.sequence)
-      {
-         var test = manifest.sequence[ii];
-         
-         // read test input files
-         var result;
-         var indent = 2;
-         var type = test['@type'];
-         if(type.indexOf('jld:NormalizeTest') !== -1)
-         {
-            indent = 0;
-            input = _readTestJson(test.input, filepath);
-            test.expect = _readTestJson(test.expect, filepath);
-            result = jsonld.normalize(input);
-         }
-         else if(type.indexOf('jld:ExpandTest') !== -1)
-         {
-            input = _readTestJson(test.input, filepath);
-            test.expect = _readTestJson(test.expect, filepath);
-            result = jsonld.expand(input);
-         }
-         else if(type.indexOf('jld:CompactTest') !== -1)
-         {
-            input = _readTestJson(test.input, filepath);
-            test.context = _readTestJson(test.context, filepath);
-            test.expect = _readTestJson(test.expect, filepath);
-            result = jsonld.compact(test.context['@context'], input);
-         }
-         else if(type.indexOf('jld:FrameTest') !== -1)
-         {
-            input = _readTestJson(test.input, filepath);
-            test.frame = _readTestJson(test.frame, filepath);
-            test.expect = _readTestJson(test.expect, filepath);
-            result = jsonld.frame(input, test.frame);
-         }
-         else
-         {
-            sys.log('Skipping test "' + test.name + '" of type: ' +
-               JSON.stringify(type));
-            continue;
-         }
-         
-         // check results (only indent output on non-normalize tests)
-         this.test(test.name);
-         this.check(test.expect, result, indent);
-      }      
-      
-      this.ungroup();
-   }
+      else if(type.indexOf('jld:CompactTest') !== -1) {
+        input = _readTestJson(test.input, filepath);
+        test.context = _readTestJson(test.context, filepath);
+        test.expect = _readTestJson(test.expect, filepath);
+        jsonld.compact(test.context['@context'], input, checkResult);
+      }
+      else if(type.indexOf('jld:FrameTest') !== -1) {
+        input = _readTestJson(test.input, filepath);
+        test.frame = _readTestJson(test.frame, filepath);
+        test.expect = _readTestJson(test.expect, filepath);
+        jsonld.frame(input, test.frame, checkResult);
+      }
+      else {
+        util.log('Skipping test "' + test.name + '" of type: ' +
+          JSON.stringify(type));
+        return callback();
+      }
+
+      // check results
+      function checkResult(err, result) {
+        if(err) {
+          throw err;
+        }
+        self.test(test.name);
+        self.check(test.expect, result);
+        callback();
+      }
+    }, callback);
+
+    self.ungroup();
+  }, function(err) {
+    throw err;
+  });
 };
 
 // load and run tests
-/*try
-{*/
-   var tr = new TestRunner();
-   tr.group('JSON-LD');
-   // FIXME: handle command line option cleaner
-   if(process.argv.length < 2)
-   {
-      throw 'Usage: node nodejs-jsonld-tests <test directory>';
-   }
-   var dir = process.argv[2];
-   tr.run(tr.load(dir));
-   tr.ungroup();
-   sys.log('All tests complete.');
-/*}
-catch(e)
-{
-   if(e.constructor === Exception && 'stack' in e)
-   {
-      sys.puts(e.stack);
-      delete e.stack;
-   }
-   sys.puts('Exception: ' + JSON.stringify(e, null, 2));
-}*/
+try {
+  var tr = new TestRunner();
+  tr.group('JSON-LD');
+  // FIXME: use commander module
+  if(process.argv.length < 2) {
+    throw 'Usage: node nodejs-jsonld-tests <test directory>';
+  }
+  var dir = process.argv[2];
+  tr.run(tr.load(dir));
+  tr.ungroup();
+  util.log('All tests complete.');
+}
+catch(e) {
+  util.puts(e.stack);
+  util.puts(util.inspect(e));
+}

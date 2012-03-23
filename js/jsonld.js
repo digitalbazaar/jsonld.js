@@ -18,6 +18,7 @@ var jsonld = {};
  * @param input the JSON-LD object to compact.
  * @param ctx the context to compact with.
  * @param [optimize] true to optimize the compaction (default: false).
+ * @param [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, compacted) called once the operation completes.
  */
 jsonld.compact = function(input, ctx) {
@@ -28,9 +29,20 @@ jsonld.compact = function(input, ctx) {
 
   // get arguments
   var optimize = false;
+  var resolver = jsonld.urlResolver;
   var callbackArg = 2;
-  if(arguments.length > 3) {
+  if(arguments.length > 4) {
     optimize = arguments[2];
+    resolver = arguments[3];
+    callbackArg += 2;
+  }
+  else if(arguments.length > 3) {
+    if(_isBoolean(arguments[2])) {
+      optimize = arguments[2];
+    }
+    else {
+      resolver = arguments[2];
+    }
     callbackArg += 1;
   }
   var callback = arguments[callbackArg];
@@ -102,17 +114,37 @@ jsonld.compact = function(input, ctx) {
  * Performs JSON-LD expansion.
  *
  * @param input the JSON-LD object to expand.
+ * @param [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, expanded) called once the operation completes.
  */
-jsonld.expand = function(input, callback) {
+jsonld.expand = function(input) {
+  // get arguments
+  var resolver = jsonld.urlResolver;
+  var callback;
+  var callbackArg = 1;
+  if(arguments.length > 2) {
+    resolver = arguments[1];
+    callbackArg += 1;
+  }
+  callback = arguments[callbackArg];
+
   // resolve all @context URLs in the input
   input = _clone(input);
-  _resolveUrls(input, function(err, input) {
+  _resolveUrls(input, resolver, function(err, input) {
     if(err) {
       return callback(err);
     }
-    // do expansion
-    new Processor().expand({}, null, input, callback);
+    try {
+      // do expansion
+      var expanded = new Processor().expand({}, null, input);
+      if(!_isArray(expanded)) {
+        expanded = [expanded];
+      }
+      callback(null, expanded);
+    }
+    catch(ex) {
+      callback(ex);
+    }
   });
 };
 
@@ -122,14 +154,26 @@ jsonld.expand = function(input, callback) {
  * @param input the JSON-LD object to frame.
  * @param frame the JSON-LD frame to use.
  * @param [options] the framing options.
+ * @param [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, framed) called once the operation completes.
  */
 jsonld.frame = function(input, frame) {
   // get arguments
+  var resolver = jsonld.urlResolver;
   var options = {};
   var callbackArg = 2;
-  if(arguments.length > 3) {
+  if(arguments.length > 4) {
     options = arguments[2];
+    resolver = arguments[3];
+    callbackArg += 2;
+  }
+  else if(arguments.length > 3) {
+    if(_isObject(arguments[2])) {
+      options = arguments[2];
+    }
+    else {
+      resolver = arguments[2];
+    }
     callbackArg += 1;
   }
   var callback = arguments[callbackArg];
@@ -137,12 +181,12 @@ jsonld.frame = function(input, frame) {
   // resolve all @context URLs in the input
   input = _clone(input);
   frame = _clone(frame);
-  _resolveUrls(input, function(err, input) {
+  _resolveUrls(input, resolver, function(err, input) {
     if(err) {
       return callback(err);
     }
     // resolve all @context URLs in the frame
-    _resolveUrls(input, function(err, input) {
+    _resolveUrls(input, resolver, function(err, input) {
       if(err) {
         return callback(err);
       }
@@ -159,12 +203,23 @@ jsonld.frame = function(input, frame) {
  * Performs JSON-LD normalization.
  *
  * @param input the JSON-LD object to normalize.
+ * @param [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, normalized) called once the operation completes.
  */
 jsonld.normalize = function(input, callback) {
+  // get arguments
+  var resolver = jsonld.urlResolver;
+  var callback;
+  var callbackArg = 1;
+  if(arguments.length > 2) {
+    resolver = arguments[1];
+    callbackArg += 1;
+  }
+  callback = arguments[callbackArg];
+
   // resolve all @context URLs in the input
   input = _clone(input);
-  _resolveUrls(input, function(err, input) {
+  _resolveUrls(input, resolver, function(err, input) {
     if(err) {
       return callback(err);
     }
@@ -177,13 +232,24 @@ jsonld.normalize = function(input, callback) {
  * Outputs the triples found in the given JSON-LD object.
  *
  * @param input the JSON-LD object.
+ * @param [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, triple) called when a triple is output, with the last
  *          triple as null.
  */
 jsonld.triples = function(input, callback) {
+  // get arguments
+  var resolver = jsonld.urlResolver;
+  var callback;
+  var callbackArg = 1;
+  if(arguments.length > 2) {
+    resolver = arguments[1];
+    callbackArg += 1;
+  }
+  callback = arguments[callbackArg];
+
   // resolve all @context URLs in the input
   input = _clone(input);
-  _resolveUrls(input, function(err, input) {
+  _resolveUrls(input, resolver, function(err, input) {
     if(err) {
       return callback(err);
     }
@@ -214,7 +280,7 @@ jsonld.urlResolvers = {};
  * The built-in jquery URL resolver.
  */
 jsonld.urlResolvers['jquery'] = function($) {
-  jsonld.urlResolver = function(url, callback) {
+  return function(url, callback) {
     $.ajax({
       url: url,
       dataType: 'json',
@@ -225,6 +291,18 @@ jsonld.urlResolvers['jquery'] = function($) {
       error: function(jqXHR, textStatus, errorThrown) {
         callback(errorThrown);
       }
+    });
+  };
+};
+
+/**
+ * The built-in node URL resolver.
+ */
+jsonld.urlResolvers['node'] = function() {
+  var request = require('request');
+  return function(url, callback) {
+    request(url, function(err, res, body) {
+      callback(err, body);
     });
   };
 };
@@ -248,7 +326,8 @@ jsonld.useUrlResolver = function(type) {
   }
 
   // set URL resolver
-  jsonld.urlResolvers[type].apply(arguments.slice(1));
+  jsonld.urlResolver = jsonld.urlResolvers[type].apply(
+    Array.prototype.slice(arguments, 1));
 };
 
 /**
@@ -256,20 +335,30 @@ jsonld.useUrlResolver = function(type) {
  *
  * @param ctx1 the context to overwrite/append to.
  * @param ctx2 the new context to merge onto ctx1.
+ * @param [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, ctx) called once the operation completes.
  */
-jsonld.mergeContexts = function(ctx1, ctx2, callback) {
+jsonld.mergeContexts = function(ctx1, ctx2) {
+  // get arguments
+  var resolver = jsonld.urlResolver;
+  var callbackArg = 2;
+  if(arguments.length > 3) {
+    resolver = arguments[2];
+    callbackArg += 1;
+  }
+  var callback = arguments[callbackArg];
+
   // default to empty contexts
   ctx1 = _clone(ctx1 || {});
   ctx2 = _clone(ctx2 || {});
 
   // resolve URLs in ctx1
-  _resolveUrls({'@context': ctx1}, function(err, ctx1) {
+  _resolveUrls({'@context': ctx1}, resolver, function(err, ctx1) {
     if(err) {
       return callback(err);
     }
     // resolve URLs in ctx2
-    _resolveUrls({'@context': ctx2}, function(err, ctx2) {
+    _resolveUrls({'@context': ctx2}, resolver, function(err, ctx2) {
       if(err) {
         return callback(err);
       }
@@ -432,25 +521,30 @@ jsonld.getContextValue = function(ctx, key, type, expand) {
     rval = ctx[key] || null;
   }
   else if(key in ctx) {
-    if(_isObject(ctx[key])) {
-      if(type in ctx[key]) {
-        rval = ctx[key][type];
+    var entry = ctx[key];
+    if(_isObject(entry)) {
+      if(type in entry) {
+        rval = entry[type];
       }
     }
-    else if(type === '@id' && _isString(ctx[key])) {
-      rval = ctx[key];
+    else if(_isString(entry)) {
+      if(type === '@id') {
+        rval = entry;
+      }
     }
     else {
       throw new JsonLdError(
-        'Invalid @context value.',
+        'Invalid @context value for key "' + key + '".',
         'jsonld.InvalidContext',
-        {context: ctx2, key: key});
+        {context: ctx, key: key});
     }
 
-    // expand term if requested
-    expand = _isUndefined(expand) ? true : expand;
-    if(expand) {
-      rval = _expandTerm(ctx, rval);
+    if(rval !== null) {
+      // expand term if requested
+      expand = _isUndefined(expand) ? true : expand;
+      if(expand) {
+        rval = _expandTerm(ctx, rval);
+      }
     }
   }
 
@@ -458,13 +552,14 @@ jsonld.getContextValue = function(ctx, key, type, expand) {
 };
 
 // determine if in-browser or using node.js
-var _nodejs = (!_isUndefined(module) && module.exports);
+var _nodejs = !(_isUndefined(module) || _isUndefined(module.exports));
 var _browser = !_nodejs;
 
 // export nodejs API
 if(_nodejs) {
   module.exports = jsonld;
-  var crypto = require('crypto');
+  // use node URL resolver by default
+  jsonld.useUrlResolver('node');
 }
 
 // export browser API
@@ -488,10 +583,11 @@ var XSD = {
  */
 var JsonLdError = function(msg, type, details) {
   if(_nodejs) {
-    Error.call(this, msg);
+    Error.call(this);
+    Error.captureStackTrace(this, this.constructor);
   }
-  this.msg = msg;
-  this.type = type;
+  this.name = type;
+  this.message = msg;
   this.details = details;
 };
 if(_nodejs) {
@@ -570,13 +666,15 @@ Processor.prototype.compact = function(ctx, property, value, optimize) {
   }
 
   // recursively compact subject
-  if(_isSubject(value)) {
+  if(_isSubject(value) || (property === null && _isObject(value))) {
+    var keywords = _getKeywords(ctx);
     rval = {};
     for(var key in value) {
       // compact non-context
       if(key !== '@context') {
-        // drop unmapped and non-absolute IRI keys
-        if(!jsonld.getContextValue(key) && !_isAbsoluteIri(key)) {
+        // drop unmapped and non-absolute IRI keys that aren't keywords
+        if(!jsonld.getContextValue(ctx, key) && !_isAbsoluteIri(key) &&
+          !(key in keywords)) {
           continue;
         }
 
@@ -626,7 +724,7 @@ Processor.prototype.expand = function(ctx, property, value) {
   }
 
   // recursively expand array and @list
-  var isList = value;
+  var isList = _isListValue(value);
   if(_isArray(value) || isList) {
     // get array from @list
     if(isList) {
@@ -666,12 +764,13 @@ Processor.prototype.expand = function(ctx, property, value) {
   }
 
   // recursively expand subject
-  if(_isSubject(value)) {
+  if(_isSubject(value) || (property === null && _isObject(value))) {
     // if value has a context, merge it in
     if('@context' in value) {
-      ctx = this.merge(ctx, value['@context']);
+      ctx = this.mergeContexts(ctx, value['@context']);
     }
 
+    var keywords = _getKeywords(ctx);
     var rval = {};
     for(var key in value) {
       // preserve frame keywords
@@ -680,8 +779,9 @@ Processor.prototype.expand = function(ctx, property, value) {
       }
       // expand non-context
       else if(key !== '@context') {
-        // drop unmapped and non-absolute IRI keys
-        if(!jsonld.getContextValue(key) && !_isAbsoluteIri(key)) {
+        // drop unmapped and non-absolute IRI keys that aren't keywords
+        if(!jsonld.getContextValue(ctx, key) && !_isAbsoluteIri(key) &&
+          !(key in keywords)) {
           continue;
         }
 
@@ -689,9 +789,9 @@ Processor.prototype.expand = function(ctx, property, value) {
         var prop = _expandTerm(ctx, key);
         var val = this.expand(ctx, key, value[key]);
 
-        // add non-null expanded value
+        // add non-null expanded value, always use array except for @id key
         if(val !== null) {
-          jsonld.addValue(rval, prop, val, true);
+          jsonld.addValue(rval, prop, val, (key !== '@id'));
         }
       }
     }
@@ -1221,8 +1321,7 @@ function _isListValue(value) {
  * @return true if the value is an absolute IRI, false if not.
  */
 function _isAbsoluteIri(value) {
-  var regex = /(\w+):\/\/(.+)/;
-  return regex.test(value);
+  return /(\w+):\/\/(.+)/.test(value);
 }
 
 /**
@@ -1441,6 +1540,7 @@ var sha1 = jsonld.sha1 = {};
  * @return the hexadecimal SHA-1 message digest.
  */
 if(_nodejs) {
+  var crypto = require('crypto');
   sha1.hash = function(str) {
     var md = crypto.createHash('sha1');
     md.update(str, 'utf8');
