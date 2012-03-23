@@ -47,10 +47,42 @@ jsonld.compact = function(input, ctx) {
   }
   var callback = arguments[callbackArg];
 
+  // expand input then do compaction
+  jsonld.expand(input, function(err, expanded) {
+    if(err) {
+      return callback(new JsonLdError(
+        'Could not expand input before compaction.',
+        'jsonld.CompactError', {cause: err}));
+    }
+
+    // merge and resolve contexts
+    jsonld.mergeContexts({}, ctx, function(err, ctx) {
+      if(err) {
+        return callback(new JsonLdError(
+          'Could not merge context before compaction.',
+          'jsonld.CompactError', {cause: err}));
+      }
+
+      try {
+        // do compaction
+        var compacted = new Processor().compact(ctx, null, input, optimize);
+        cleanup(null, compacted, ctx);
+      }
+      catch(ex) {
+        cleanup(ex);
+      }
+    });
+  });
+
   // performs clean up after compaction
-  var cleanup = function(err, compacted, mergedCtx) {
+  function cleanup(err, compacted, mergedCtx) {
     if(err) {
       return callback(err);
+    }
+
+    // if compacted is an array with 1 entry, remove array
+    if(_isArray(compacted) && compacted.length === 1) {
+      compacted = compacted[0];
     }
 
     // determine if the original context uses URLs or not
@@ -79,35 +111,8 @@ jsonld.compact = function(input, ctx) {
       }
     }
 
-    callback(err);
+    callback(null, compacted);
   };
-
-  // expand input then do compaction
-  jsonld.expand(input, function(err, expanded) {
-    if(err) {
-      return callback(new JsonLdError(
-        'Could not expand input before compaction.',
-        'jsonld.CompactError', {cause: err}));
-    }
-
-    // merge and resolve contexts
-    jsonld.mergeContexts({}, ctx, function(err, ctx) {
-      if(err) {
-        return callback(new JsonLdError(
-          'Could not merge context before compaction.',
-          'jsonld.CompactError', {cause: err}));
-      }
-
-      try {
-        // do compaction
-        var compacted = new Processor().compact(ctx, null, input, optimize);
-        cleanup(null, compacted, ctx);
-      }
-      catch(ex) {
-        cleanup(err);
-      }
-    });
-  });
 };
 
 /**
@@ -788,12 +793,15 @@ Processor.prototype.expand = function(ctx, property, value) {
     var keywords = _getKeywords(ctx);
     var rval = {};
     for(var key in value) {
-      // preserve frame keywords
-      if(_isFrameKeyword(key)) {
-        jsonld.addValue(rval, key, value[key], true);
+      // syntax error if @id is not a string
+      if(key === '@id' && !_isString(value[key])) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; "@id" value must a string.',
+          'jsonld.SyntaxError');
       }
+
       // expand non-context
-      else if(key !== '@context') {
+      if(key !== '@context') {
         // drop unmapped and non-absolute IRI keys that aren't keywords
         if(!jsonld.getContextValue(ctx, key) && !_isAbsoluteIri(key) &&
           !(key in keywords)) {
@@ -964,11 +972,6 @@ Processor.prototype.expandValue = function(ctx, property, value) {
  * @return the compacted value.
  */
 Processor.prototype.compactValue = function(ctx, property, value) {
-  // non-objects are already compact
-  if(!_isObject(value)) {
-    return value;
-  }
-
   // default to no compaction
   var rval = value;
 
@@ -978,43 +981,46 @@ Processor.prototype.compactValue = function(ctx, property, value) {
   // expand property
   var prop = _expandTerm(ctx, property);
 
-  // type for '@id' or '@type' is always '@id'
-  if(prop === '@id' || prop === '@type') {
-    type = '@id';
+  // compact @id or @type string
+  if(_isString(value)) {
+    if(prop === '@id' || prop === '@type') {
+      rval = _compactIri(ctx, value);
+    }
   }
-  else {
+  // compact object
+  else if(_isObject(value)) {
     // compact property to look for its type definition in the context
     prop = _compactIri(ctx, prop);
     type = jsonld.getContextValue(ctx, prop, '@type');
-  }
 
-  // no type, do keyword replacement
-  if(type === null) {
-    var keywords = _getKeywords(ctx);
-    rval = {};
-    for(var key in value) {
-      // compact @id and @type IRIs
-      var val = value[key];
-      if(key === '@id' || key === '@type') {
-        val = _compactIri(ctx, value[key]);
+    // no type, do keyword replacement
+    if(type === null) {
+      var keywords = _getKeywords(ctx);
+      rval = {};
+      for(var key in value) {
+        // compact @id and @type IRIs
+        var val = value[key];
+        if(key === '@id' || key === '@type') {
+          val = _compactIri(ctx, value[key]);
+        }
+        rval[keywords[key]] = val;
       }
-      rval[keywords[key]] = val;
     }
-  }
-  // can't type-coerce when a language is present
-  else if('@language' in value) {
-    throw new JsonLdError(
-      'Cannot compact a typed value when a language is specified because ' +
-      'the language information would be lost.',
-      'jsonld.CompactError', {context: ctx, value: value});
-  }
-  // compact IRI
-  else if(type === '@id') {
-    rval = _compactIri(ctx, value['@value']);
-  }
-  // other type
-  else {
-    rval = value['@value'];
+    // can't type-coerce when a language is present
+    else if('@language' in value) {
+      throw new JsonLdError(
+        'Cannot compact a typed value when a language is specified because ' +
+        'the language information would be lost.',
+        'jsonld.CompactError', {context: ctx, value: value});
+    }
+    // compact IRI
+    else if(type === '@id') {
+      rval = _compactIri(ctx, value['@value']);
+    }
+    // other type
+    else {
+      rval = value['@value'];
+    }
   }
 
   return rval;
@@ -1177,6 +1183,7 @@ function _getKeywords(ctx) {
  *
  * @return true if the key is a frame keyword, false if not.
  */
+// FIXME: remove if unused
 function _isFrameKeyword(key) {
   return (
     key === '@embed' ||
