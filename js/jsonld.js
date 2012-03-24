@@ -369,6 +369,11 @@ jsonld.useUrlResolver = function(type) {
  * @param callback(err, ctx) called once the operation completes.
  */
 jsonld.mergeContexts = function(ctx1, ctx2) {
+  // return empty context early for null context
+  if(ctx2 === null) {
+    return {};
+  }
+
   // get arguments
   var resolver = jsonld.urlResolver;
   var callbackArg = 2;
@@ -378,9 +383,9 @@ jsonld.mergeContexts = function(ctx1, ctx2) {
   }
   var callback = arguments[callbackArg];
 
-  // default to empty contexts
+  // default to empty context
   ctx1 = _clone(ctx1 || {});
-  ctx2 = _clone(ctx2 || {});
+  ctx2 = _clone(ctx2);
 
   // resolve URLs in ctx1
   _resolveUrls({'@context': ctx1}, resolver, function(err, ctx1) {
@@ -600,7 +605,7 @@ jsonld.setContextValue = function(ctx, key, type, value) {
   key = _compactIri(ctx, key);
 
   // get keyword for type
-  var kwtype = _getKeywords(ctx, type);
+  var kwtype = _getKeywords(ctx)[type];
 
   // add new key to @context
   if(!(key in ctx)) {
@@ -762,29 +767,16 @@ Processor.prototype.compact = function(ctx, property, value, optimizeCtx) {
     return this.compact(ctx, property, value['@set'], optimizeCtx);
   }
 
-  // try to compact @value or subject reference using @type definition
-  if(_isObject(value) && (_isValue(value) || _isSubjectReference(value))) {
+  // try to type-compact value
+  if(_canTypeCompact(value)) {
     // compact property to look for its @type definition in the context
     var prop = _compactIri(ctx, property);
     var type = jsonld.getContextValue(ctx, prop, '@type');
-    if(type === null && optimizeCtx && '@type' in value) {
-      // add @type to context when optimizing
-      type = _clone(value['@type']);
-      jsonld.setContextValue(optimizeCtx, prop, '@type', type);
-    }
-
     if(type !== null) {
       var key = _isValue(value) ? '@value' : '@id';
 
-      // can't type-coerce when a language is present
-      if('@language' in value) {
-        throw new JsonLdError(
-          'Cannot compact a typed value when a language is specified ' +
-          'because the language information would be lost.',
-          'jsonld.CompactError', {context: ctx, value: value});
-      }
       // compact IRI
-      else if(type === '@id') {
+      if(type === '@id') {
         return _compactIri(ctx, value[key]);
       }
       // other type, return string value
@@ -817,7 +809,13 @@ Processor.prototype.compact = function(ctx, property, value, optimizeCtx) {
         }
 
         // add non-null value
+        var values = [];
         if(val !== null) {
+          // optimize value compaction if optimize context is given
+          if(optimizeCtx) {
+            val = _optimalTypeCompact(ctx, prop, val, optimizeCtx);
+          }
+
           // determine if an array should be used by @container specification
           var container = jsonld.getContextValue(ctx, prop, '@container');
           var isArray = (container === '@set' || container === '@list');
@@ -1021,13 +1019,17 @@ Processor.prototype.mergeContexts = function(ctx1, ctx2) {
   // init return value as copy of first context
   var rval = _clone(ctx1);
 
-  if(_isArray(ctx2)) {
+  if(ctx2 === null) {
+    // reset to blank context
+    rval = {};
+  }
+  else if(_isArray(ctx2)) {
     // flatten array context in order
     for(var i in ctx2) {
       rval = this.mergeContexts(rval, ctx2[i]);
     }
   }
-  else {
+  else if(_isObject(ctx2)) {
     // if the ctx2 has a new definition for an IRI (possibly using a new
     // key), then the old definition must be removed
     for(var key in ctx2) {
@@ -1051,6 +1053,12 @@ Processor.prototype.mergeContexts = function(ctx1, ctx2) {
     for(var key in ctx2) {
       rval[key] = ctx2[key];
     }
+  }
+  else {
+    throw new JsonLdError(
+      'Invalid JSON-LD syntax; @context must be an array, object or ' +
+      'absolute IRI string.',
+      'jsonld.SyntaxError');
   }
 
   return rval;
@@ -1101,6 +1109,79 @@ Processor.prototype.expandValue = function(ctx, property, value) {
 
   return rval;
 };
+
+/**
+ * Optimally type-compacts a value.
+ *
+ * @param ctx the current context.
+ * @param prop the compacted property associated with the value.
+ * @param value the value to type-compact.
+ * @param optimizeCtx the context used to store optimization definitions.
+ *
+ * @return the optimally type-compacted value.
+ */
+function _optimalTypeCompact(ctx, prop, value, optimizeCtx) {
+  // only arrays and objects can be further optimized
+  if(!_isArray(value) && !_isObject(value)) {
+    return value;
+  }
+
+  // if @type is already in the context, value is already optimized
+  if(jsonld.getContextValue(ctx, prop, '@type')) {
+    return value;
+  }
+
+  // if every value is the same type, optimization is possible
+  var values = _isArray(value) ? value : [value];
+  var type = null;
+  for(var i = 0; i < values.length; ++i) {
+    // val can only be a subject reference or a @value with no @language
+    var val = values[i];
+    var vtype = null;
+    if(_canTypeCompact(val)) {
+      if(_isSubjectReference(val)) {
+        vtype = '@id';
+      }
+      // must be a @value with no @language
+      else if('@type' in val) {
+        vtype = val['@type'];
+      }
+    }
+
+    if(i === 0) {
+      type = vtype;
+    }
+
+    // no type or type difference, can't compact
+    if(type === null || !_compareTypes(type, vtype)) {
+      return value;
+    }
+  }
+
+  // all values have same type so can be compacted, add @type to context
+  jsonld.setContextValue(optimizeCtx, prop, '@type', _clone(type));
+
+  // do compaction
+  if(_isArray(value)) {
+    for(var i in value) {
+      var val = value[i];
+      if(_isSubjectReference(value[i])) {
+        value[i] = val['@id'];
+      }
+      else {
+        value[i] = val['@value'];
+      }
+    }
+  }
+  else if(_isSubjectReference(value)) {
+    value = value['@id'];
+  }
+  else {
+    value = value['@value'];
+  }
+
+  return value;
+}
 
 /**
  * Compacts an IRI into a term or prefix if it can be.
@@ -1422,6 +1503,53 @@ function _isListValue(value) {
   // 1. It is an Object.
   // 2. It has the @list property.
   return _isObject(value) && ('@list' in value);
+}
+
+/**
+ * Returns true if the given value can be possibly compacted based on type.
+ *
+ * Subject references and @values can be possibly compacted, however, a @value
+ * must not have a @language or type-compaction would cause data loss.
+ *
+ * @param value the value to check.
+ *
+ * @return true if the value can be possibly type-compacted, false if not.
+ */
+function _canTypeCompact(value) {
+  // Note: It may be possible to type-compact a value if all these hold true:
+  // 1. It is an Object.
+  // 2. It is a subject reference OR a @value with no @language.
+  return (_isObject(value) && (_isSubjectReference(value) ||
+    (_isValue(value) && !('@language' in value))));
+}
+
+/**
+ * Compares types for equality. The given types can be arrays or strings, and
+ * it is assumed that they are all in the same expanded/compacted state. If
+ * both types are the same or, in the case of arrays of types, if both type
+ * arrays contain the same types, they are equal.
+ *
+ * @param type1 the first type(s) to compare.
+ * @param type2 the second types(s) to compare.
+ *
+ * @return true if the types are equal, false if not.
+ */
+function _compareTypes(type1, type2) {
+  // normalize to arrays
+  type1 = _isArray(type1) ? type1.sort() : [type1];
+  type2 = _isArray(type2) ? type2.sort() : [type2];
+
+  if(type1.length !== type2.length) {
+    return false;
+  }
+
+  for(var i in type1) {
+    if(type1[i] !== type2[i]) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /**
