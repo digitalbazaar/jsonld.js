@@ -676,9 +676,9 @@ var JsonLdError = function(msg, type, details) {
     Error.call(this);
     Error.captureStackTrace(this, this.constructor);
   }
-  this.name = type;
-  this.message = msg;
-  this.details = details;
+  this.name = type || 'jsonld.Error';
+  this.message = msg || 'An unspecified JSON-LD error occurred.';
+  this.details = details || {};
 };
 if(_nodejs) {
   require('util').inherits(JsonLdError, Error);
@@ -793,6 +793,7 @@ Processor.prototype.compact = function(ctx, property, value, optimizeCtx) {
     for(var key in value) {
       // compact non-context
       if(key !== '@context') {
+        // FIXME: this should just be checking for absolute IRI or keyword
         // drop unmapped and non-absolute IRI keys that aren't keywords
         if(!jsonld.getContextValue(ctx, key) && !_isAbsoluteIri(key) &&
           !(key in keywords)) {
@@ -823,8 +824,8 @@ Processor.prototype.compact = function(ctx, property, value, optimizeCtx) {
         }
       }
     }
-    // drop empty objects
-    if(Object.keys(rval).length === 0) {
+    // drop empty objects when optimizing
+    if(optimizeCtx && Object.keys(rval).length === 0) {
       rval = null;
     }
     return rval;
@@ -846,7 +847,7 @@ Processor.prototype.compact = function(ctx, property, value, optimizeCtx) {
  * calling this method.
  *
  * @param ctx the context to use.
- * @param property the property that points to the value, null for none.
+ * @param property the expanded property for the value, null for none.
  * @param value the value to expand.
  */
 Processor.prototype.expand = function(ctx, property, value) {
@@ -923,28 +924,35 @@ Processor.prototype.expand = function(ctx, property, value) {
       ctx = this.mergeContexts(ctx, value['@context']);
     }
 
-    // recurse into object
+    // optimize away use of @graph
     var keywords = _getKeywords(ctx);
+    var kwgraph = keywords['@graph'];
+    if('@graph' in value) {
+      return this.expand(ctx, property, value['@graph']);
+    }
+
+    // recurse into object
     var rval = {};
     for(var key in value) {
-      // syntax error if @id is not a string
-      if(key === '@id' && !_isString(value[key])) {
-        throw new JsonLdError(
-          'Invalid JSON-LD syntax; "@id" value must a string.',
-          'jsonld.SyntaxError');
-      }
-
       // expand non-context
       if(key !== '@context') {
-        // drop unmapped and non-absolute IRI keys that aren't keywords
-        if(!jsonld.getContextValue(ctx, key) && !_isAbsoluteIri(key) &&
-          !(key in keywords)) {
+        // expand property
+        var prop = _expandTerm(ctx, key);
+
+        // drop non-absolute IRI keys that aren't keywords
+        if(!_isAbsoluteIri(prop) && !(prop in keywords)) {
           continue;
         }
 
-        // expand property and value
-        var prop = _expandTerm(ctx, key);
-        var val = this.expand(ctx, key, value[key]);
+        // syntax error if @id is not a string
+        if(prop === '@id' && !_isString(value[key])) {
+          throw new JsonLdError(
+            'Invalid JSON-LD syntax; "@id" value must a string.',
+            'jsonld.SyntaxError');
+        }
+
+        // expand value
+        var val = this.expand(ctx, prop, value[key]);
 
         // preserve empty arrays
         if(_isArray(val) && val.length === 0 && !(prop in rval)) {
@@ -954,7 +962,7 @@ Processor.prototype.expand = function(ctx, property, value) {
         // add non-null expanded value
         if(val !== null) {
           // always use array for subjects except for @id key and @list
-          var useArray = isSubject && (key !== '@id') && !_isListValue(val);
+          var useArray = isSubject && (prop !== '@id') && !_isListValue(val);
           jsonld.addValue(rval, prop, val, useArray);
         }
       }
@@ -1069,7 +1077,7 @@ Processor.prototype.mergeContexts = function(ctx1, ctx2) {
  * given context.
  *
  * @param ctx the context to use.
- * @param property the property the value is associated with.
+ * @param property the expanded property the value is associated with.
  * @param value the value to expand.
  *
  * @return the expanded value.
@@ -1078,24 +1086,14 @@ Processor.prototype.expandValue = function(ctx, property, value) {
   // default to simple string return value
   var rval = value;
 
-  // expand property
-  var prop = _expandTerm(ctx, property);
-
   // special-case expand @id and @type (skips '@id' expansion)
-  if(prop === '@id' || prop === '@type') {
+  if(property === '@id' || property === '@type') {
     rval = _expandTerm(ctx, value);
   }
   else {
     // compact property to look for its type definition in the context
-    prop = _compactIri(ctx, prop);
+    var prop = _compactIri(ctx, property);
     var type = jsonld.getContextValue(ctx, prop, '@type');
-
-    // no type found in context, handle special double-case
-    if(type === null && _isDouble(value)) {
-      // do special JSON-LD double format, printf('%1.16e') JS equivalent
-      value = value.toExponential(16).replace(
-        /(e(?:\+|-))([0-9])$/, '$10$2');
-    }
 
     // do @id expansion
     if(type === '@id') {
@@ -1103,7 +1101,7 @@ Processor.prototype.expandValue = function(ctx, property, value) {
     }
     // other type
     else if(type !== null) {
-      rval = {'@type': type, '@value': '' + value};
+      rval = {'@value': '' + value, '@type': type};
     }
   }
 
@@ -1114,20 +1112,20 @@ Processor.prototype.expandValue = function(ctx, property, value) {
  * Optimally type-compacts a value.
  *
  * @param ctx the current context.
- * @param prop the compacted property associated with the value.
+ * @param property the compacted property associated with the value.
  * @param value the value to type-compact.
  * @param optimizeCtx the context used to store optimization definitions.
  *
  * @return the optimally type-compacted value.
  */
-function _optimalTypeCompact(ctx, prop, value, optimizeCtx) {
+function _optimalTypeCompact(ctx, property, value, optimizeCtx) {
   // only arrays and objects can be further optimized
   if(!_isArray(value) && !_isObject(value)) {
     return value;
   }
 
   // if @type is already in the context, value is already optimized
-  if(jsonld.getContextValue(ctx, prop, '@type')) {
+  if(jsonld.getContextValue(ctx, property, '@type')) {
     return value;
   }
 
@@ -1159,7 +1157,7 @@ function _optimalTypeCompact(ctx, prop, value, optimizeCtx) {
   }
 
   // all values have same type so can be compacted, add @type to context
-  jsonld.setContextValue(optimizeCtx, prop, '@type', _clone(type));
+  jsonld.setContextValue(optimizeCtx, property, '@type', _clone(type));
 
   // do compaction
   if(_isArray(value)) {
