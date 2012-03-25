@@ -247,14 +247,22 @@ jsonld.normalize = function(input, callback) {
   }
   callback = arguments[callbackArg];
 
-  // resolve all @context URLs in the input
-  input = _clone(input);
-  _resolveUrls(input, resolver, function(err, input) {
+  // expand input then do normalization
+  jsonld.expand(input, function(err, expanded) {
     if(err) {
-      return callback(err);
+      return callback(new JsonLdError(
+        'Could not expand input before normalization.',
+        'jsonld.NormalizeError', {cause: err}));
     }
-    // do normalization
-    return new Processor().normalize(input, callback);
+
+    try {
+      // do normalization
+      var normalized = new Processor().normalize(expanded);
+      callback(null, normalized);
+    }
+    catch(ex) {
+      callback(ex);
+    }
   });
 };
 
@@ -441,11 +449,16 @@ jsonld.hasValue = function(subject, property, value) {
   if(jsonld.hasProperty(subject, property)) {
     var val = subject[property];
     if(_isArray(val)) {
-      rval = (val.indexOf(value) !== -1);
+      for(var i in val) {
+        if(jsonld.compareValues(value, val[i])) {
+          rval = true;
+          break;
+        }
+      }
     }
     // avoid matching the set of values with an array value parameter
     else if(!_isArray(value)) {
-      rval = (val === value);
+      rval = jsonld.compareValues(value, val);
     }
   }
   return rval;
@@ -455,6 +468,10 @@ jsonld.hasValue = function(subject, property, value) {
  * Adds a value to a subject. If the subject already has the value, it will
  * not be added. If the value is an array, all values in the array will be
  * added.
+ *
+ * Note: If the value is a subject that already exists as a property of the
+ * given subject, this method makes no attempt to deeply merge properties.
+ * Instead, the value will not be added.
  *
  * @param subject the subject to add the value to.
  * @param property the property that relates the value to the subject.
@@ -541,6 +558,105 @@ jsonld.removeValue = function(subject, property, value, propertyIsArray) {
   else {
     subject[property] = values;
   }
+};
+
+/**
+ * Compares two JSON-LD values for equality. Two JSON-LD values will be
+ * considered equal if:
+ *
+ * 1. They are both primitives of the same type and value.
+ * 2. They are both @values with the same @value, @type, and @language, OR
+ * 3. They both have @ids they are the same.
+ *
+ * @param v1 the first value.
+ * @param v2 the second value.
+ *
+ * @return true if v1 and v2 are considered equal, false if not.
+ */
+jsonld.compareValues = function(v1, v2) {
+  // 1. equal primitives
+  if(v1 === v2) {
+    return true;
+  }
+
+  // 2. equal @values
+  if(_isValue(v1) && _isValue(v2) &&
+    v1['@value'] === v2['@value'] &&
+    v1['@type'] === v2['@type'] &&
+    v2['@language'] === v2['@language']) {
+    return true;
+  }
+
+  // 3. equal @ids
+  if(_isObject(v1) && ('@id' in v1) && _isObject(v2) && ('@id' in v2)) {
+    return v1['@id'] === v2['@id'];
+  }
+
+  return false;
+};
+
+/**
+ * Compares two JSON-LD normalized inputs for equality.
+ *
+ * @param n1 the first normalized input.
+ * @param n2 the second normalized input.
+ *
+ * @return true if the inputs are equivalent, false if not.
+ */
+jsonld.compareNormalized = function(n1, n2) {
+  if(!_isArray(n1) || !_isArray(n2)) {
+    throw new JsonLdError(
+      'Invalid JSON-LD syntax; normalized JSON-LD must be an array.',
+      'jsonld.SyntaxError');
+  }
+
+  // different # of subjects
+  if(n1.length !== n2.length) {
+    return false;
+  }
+
+  // assume subjects are in the same order because of normalization
+  for(var i in n1) {
+    var s1 = n1[i];
+    var s2 = n2[i];
+
+    // different @ids
+    if(s1['@id'] !== s2['@id']) {
+      return false;
+    }
+
+    // subjects have different properties
+    if(Object.keys(s1).length !== Object.keys(s2).length) {
+      return false;
+    }
+
+    for(var p in s1) {
+      // skip @id property
+      if(p === '@id') {
+        continue;
+      }
+
+      // s2 is missing s1 property
+      if(!jsonld.hasProperty(s2, p)) {
+        return false;
+      }
+
+      // subjects have different objects for the property
+      if(s1[p].length !== s2[p].length) {
+        return false;
+      }
+
+      var objects = s1[p];
+      for(var oi in objects) {
+        // s2 is missing s1 object
+        if(!jsonld.hasValue(s2, p, objects[oi])) {
+          return false;
+        }
+      }
+    }
+  }
+
+  return true;
 };
 
 /**
@@ -971,13 +1087,13 @@ Processor.prototype.expand = function(ctx, property, value) {
   }
 
   // expand value
-  return this.expandValue(ctx, property, value);
+  return _expandValue(ctx, property, value);
 };
 
 /**
  * Performs JSON-LD framing.
  *
- * @param input the JSON-LD object to frame.
+ * @param input the compacted JSON-LD object to frame.
  * @param frame the JSON-LD frame to use.
  * @param options the framing options.
  * @param callback(err, framed) called once the operation completes.
@@ -990,12 +1106,95 @@ Processor.prototype.frame = function(input, frame, options, callback) {
 /**
  * Performs JSON-LD normalization.
  *
- * @param input the JSON-LD object to normalize.
- * @param callback(err, normalized) called once the operation completes.
+ * @param input the expanded JSON-LD object to normalize.
+ *
+ * @return the normalized output.
  */
-Processor.prototype.normalize = function(input, callback) {
-  // FIXME: implement
-  callback(new JsonLdError('Not implemented', 'jsonld.NotImplemented'), null);
+Processor.prototype.normalize = function(input) {
+  var self = this;
+
+  // get statements
+  var namer = new BlankNodeNamer('t');
+  var bnodes = {};
+  var subjects = {};
+  _getStatements(input, namer, bnodes, subjects);
+
+  // create bnode name maps
+  var maps = [{}, {}];
+
+  // initialize old map entries to 'z'
+  var oldMap = maps[0];
+  for(var bnode in bnodes) {
+    oldMap[bnode] = 'z';
+  }
+
+  // FIXME: do iterations asynchronously to allow other work to proceed
+
+  // do iterative hashing
+  var n = Object.keys(bnodes).length;
+  for(var i = 0; i <= n; ++i) {
+    // hash statements for all bnodes
+    for(var bnode in bnodes) {
+      var statements = bnodes[bnode];
+      _hashStatements(bnode, statements, maps[0], maps[1]);
+    }
+
+    // swap maps
+    var tmp = maps[1];
+    maps[0] = maps[1];
+    maps[1] = tmp;
+  }
+
+  // name bnodes
+  namer = new BlankNodeNamer('c14n');
+  _nameBlankNode(bnodes, maps[0], namer, null);
+
+  // create JSON-LD array
+  var normalized = [];
+
+  // add all bnodes
+  for(var id in bnodes) {
+    var name = namer.getName(id);
+    var bnode = {'@id': name};
+
+    // add all property statements to bnode
+    var statements = bnodes[id];
+    for(var i in statements) {
+      var statement = statements[i];
+      if(statement.s === '_:a') {
+        var z = _getBlankNodeName(statement.o);
+        var o = z ? {'@id': namer.getName(z)} : statement.o;
+        jsonld.addValue(bnode, statement.p, o, true);
+      }
+    }
+
+    normalized.push(bnode);
+  }
+
+  // add all non-bnodes
+  for(var id in subjects) {
+    var subject = {'@id': id};
+
+    // add all statements to subject
+    var statements = subjects[id];
+    for(var i in statements) {
+      var statement = statements[i];
+      var z = _getBlankNodeName(statement.o);
+      var o = z ? {'@id': namer.getName(z)} : statement.o;
+      jsonld.addValue(subject, statement.p, o, true);
+    }
+
+    normalized.push(subject);
+  }
+
+  // sort normalized output by @id
+  normalized.sort(function(a, b) {
+    a = a['@id'];
+    b = b['@id'];
+    return (a < b) ? -1 : ((a > b) ? 1 : 0);
+  });
+
+  return normalized;
 };
 
 /**
@@ -1082,7 +1281,7 @@ Processor.prototype.mergeContexts = function(ctx1, ctx2) {
  *
  * @return the expanded value.
  */
-Processor.prototype.expandValue = function(ctx, property, value) {
+function _expandValue(ctx, property, value) {
   // default to simple string return value
   var rval = value;
 
@@ -1101,12 +1300,292 @@ Processor.prototype.expandValue = function(ctx, property, value) {
     }
     // other type
     else if(type !== null) {
-      rval = {'@value': '' + value, '@type': type};
+      rval = {'@value': String(value), '@type': type};
     }
   }
 
   return rval;
 };
+
+/**
+ * Recursively gets all statements from the given expanded JSON-LD input.
+ *
+ * @param input the valid expanded JSON-LD input.
+ * @param namer the BlankNodeNamer to use when encountering blank nodes.
+ * @param bnodes the blank node statements map to populate.
+ * @param subjects the subject statements map to populate.
+ * @param [name] the name (@id) assigned to the current input.
+ */
+function _getStatements(input, namer, bnodes, subjects, name) {
+  // recurse into arrays
+  if(_isArray(input)) {
+    for(var i in input) {
+      _getStatements(input[i], namer, bnodes, subjects);
+    }
+  }
+  // safe to assume input is a subject/blank node
+  else {
+    var isBnode = _isBlankNode(input);
+
+    // name blank node if appropriate, use passed name if given
+    if(_isUndefined(name)) {
+      name = isBnode ? namer.getName(input['@id']) : input['@id'];
+    }
+
+    // use a subject of '_:a' for blank node statements
+    var s = isBnode ? '_:a' : name;
+
+    // get statements for the blank node
+    var entries;
+    if(isBnode) {
+      entries = bnodes[name] = bnodes[name] || [];
+    }
+    else {
+      entries = subjects[name] = subjects[name] || [];
+    }
+
+    // add all statements in input
+    for(var p in input) {
+      // skip @id
+      if(p === '@id') {
+        continue;
+      }
+
+      var objects = input[p];
+      for(var i in objects) {
+        var o = objects[i];
+
+        // convert boolean to @value
+        if(_isBoolean(o)) {
+          o = {'@value': String(o), '@type': XSD['boolean']};
+        }
+        // convert double to @value
+        else if(_isDouble(o)) {
+          // do special JSON-LD double format, printf('%1.16e') JS equivalent
+          o = o.toExponential(16).replace(/(e(?:\+|-))([0-9])$/, '$10$2');
+          o = {'@value': o, '@type': XSD['double']};
+        }
+        // convert integer to @value
+        else if(_isNumber(o)) {
+          o = {'@value': String(o), '@type': XSD['integer']};
+        }
+
+        // object is a blank node
+        if(_isBlankNode(o)) {
+          // name object position blank node
+          var oName = namer.getName(o['@id']);
+
+          // add property statement
+          _addStatement(entries, {s: s, p: p, o: {'@id': oName}});
+
+          // add reference statement
+          var oEntries = bnodes[oName] = bnodes[oName] || [];
+          _addStatement(oEntries, {s: name, p: p, o: {'@id': '_:a'}});
+
+          // recurse into blank node
+          _getStatements(o, namer, bnodes, subjects, oName);
+        }
+        // object is a string, @value, subject reference
+        else if(_isString(o) || _isValue(o) || _isSubjectReference(o)) {
+          // add property statement
+          _addStatement(entries, {s: s, p: p, o: o});
+
+          // ensure a subject entry exists for subject reference
+          if(_isSubjectReference(o)) {
+            subjects[o['@id']] = subjects[o['@id']] || [];
+          }
+        }
+        // object must be an embedded subject
+        else {
+          // add property statement
+          _addStatement(entries, {s: s, p: p, o: {'@id': o['@id']}});
+
+          // recurse into subject
+          _getStatements(o, namer, bnodes, subjects);
+        }
+      }
+    }
+  }
+};
+
+/**
+ * Adds a statement to an array of statements. If the statement already exists
+ * in the array, it will not be added.
+ *
+ * @param statements the statements array.
+ * @param statement the statement to add.
+ */
+function _addStatement(statements, statement) {
+  for(var i in statements) {
+    var s = statements[i];
+    if(s.s === statement.s && s.p === statements.p &&
+      jsonld.compareValues(s.o, statement.o)) {
+      return;
+    }
+  }
+  statements.push(statement);
+}
+
+/**
+ * Hashes all of the statements about the given blank node, generating a
+ * new hash for it.
+ *
+ * @param bnode the bnode @id to generate the new hash for.
+ * @param statements the statements about the bnode.
+ * @param oldMap the old map of hashes for adjacent blank nodes.
+ * @param newMap the new map to store the new hash in.
+ */
+function _hashStatements(bnode, statements, oldMap, newMap) {
+  // serialize all statements
+  var triples = [];
+  for(var i in statements) {
+    var statement = statements[i];
+
+    // serialize triple
+    var triple = '';
+
+    // serialize subject
+    if(statement.s === '_:a') {
+      triple += '_:a ';
+    }
+    else if(statement.s.indexOf('_:') === 0) {
+      var hash = oldMap[statement.s];
+      triple += '_:' + hash + ' ';
+    }
+    else {
+      triple += '<' + statement.s + '>';
+    }
+
+    // serialize property
+    triple += '<' + statement.p + '>';
+
+    // serialize object
+    if(_isBlankNode(statement.o)) {
+      if(statement.o['@id'] === '_:a') {
+        triple += '_:a ';
+      }
+      else {
+        var hash = oldMap[statement.o['@id']];
+        triple += '_:' + hash + ' ';
+      }
+    }
+    else if(_isString(statement.o)) {
+      triple += '"' + statement.o + '"';
+    }
+    else if(_isSubjectReference(statement.o)) {
+      triple += '<' + statement.o + '>';
+    }
+    // must be a value
+    else {
+      triple += '"' + statement.o['@value'] + '"';
+
+      if('@type' in statement.o) {
+        triple += '^^<' + statement.p['@type'] + '>';
+      }
+      else if('@language' in statement.o) {
+        triple += '@' + statement.o['@language'];
+      }
+    }
+
+    // add triple
+    triples.push(triple);
+  }
+
+  // sort serialized triples
+  triples.sort();
+
+  // hash triples and store result in new map
+  newMap[bnode] = sha1.hash(triples);
+}
+
+/**
+ * Recursively canonically names blank nodes.
+ *
+ * @param bnodes the statements about blank nodes.
+ * @param map the map of bnode name => hash.
+ * @param namer the blank node namer.
+ * @param bnode the next bnode to name, null if this is the root call.
+ */
+function _nameBlankNode(bnodes, map, namer, bnode) {
+  // skip blank nodes that are already named
+  if(bnode !== null && namer.isNamed(bnode)) {
+    return;
+  }
+
+  if(bnode === null) {
+    // get all hashes
+    var hashes = [];
+    for(var bnode in map) {
+      var hash = map[bnode];
+      hashes.push({hash: hash, bnode: bnode});
+    }
+
+    // sort hashes
+    hashes.sort(function(a, b) {
+      return (a.hash < b.hash) ? -1 : ((a.hash > b.hash) ? 1 : 0);
+    });
+  }
+  else {
+    // name blank node
+    namer.getName(bnode);
+
+    // get hashes from statements for the blank node, separated into
+    // different lists for properties vs. references
+    var props = [];
+    var refs = [];
+    var statements = bnodes[bnode];
+    for(var i in statements) {
+      var statement = statements[i];
+      var list = null;
+      // try to get blank node in object position
+      bnode = _getBlankNodeName(statement.o);
+      if(bnode !== null) {
+        list = props;
+      }
+      else {
+        // try to get blank node in subject position
+        bnode = _getBlankNodeName(statement.s);
+        if(bnode !== null) {
+          list = refs;
+        }
+      }
+      if(list) {
+        var hash = map[bnode];
+        list.push({hash: hash, bnode: bnode});
+      }
+    }
+
+    // sort hash lists independently
+    props.sort(function(a, b) {
+      return (a.hash < b.hash) ? -1 : ((a.hash > b.hash) ? 1 : 0);
+    });
+    refs.sort(function(a, b) {
+      return (a.hash < b.hash) ? -1 : ((a.hash > b.hash) ? 1 : 0);
+    });
+
+    // concatenate lists
+    var hashes = props.concat(refs);
+  }
+
+  // recursively name blank nodes
+  for(var i in hashes) {
+    _nameBlankNode(bnodes, map, namer, hashes[i].bnode);
+  }
+}
+
+/**
+ * A helper function that gets the blank node name from a statement value
+ * (a subject or object). If the statement value is not a blank node or it
+ * has an @id of '_:a', then null will be returned.
+ *
+ * @param value the statement value.
+ *
+ * @return the blank node name or null if none was found.
+ */
+function _getBlankNodeName(value) {
+  return ((_isBlankNode(value) && value['@id'] !== '_:a') ?
+    value['@id'] : null);
+}
 
 /**
  * Optimally type-compacts a value.
@@ -1399,7 +1878,7 @@ function _isNumber(input) {
  * @return true if the input is a double, false if not.
  */
 function _isDouble(input) {
-  return _isNumber(input) && ('' + input).indexOf('.') !== -1;
+  return _isNumber(input) && String(input).indexOf('.') !== -1;
 }
 
 /**
@@ -1436,7 +1915,7 @@ function _isSubject(value) {
 
   // Note: A value is a subject if all of these hold true:
   // 1. It is an Object.
-  // 2. It is not a literal, set, or list (no @value, @set, or @list).
+  // 2. It is not a @value, @set, or @list.
   // 3. It has more than 1 key OR any existing key is not @id.
   if(_isObject(value) &&
     !(('@value' in value) || ('@set' in value) || ('@list' in value))) {
@@ -1501,6 +1980,31 @@ function _isListValue(value) {
   // 1. It is an Object.
   // 2. It has the @list property.
   return _isObject(value) && ('@list' in value);
+}
+
+/**
+ * Returns true if the given value is a blank node.
+ *
+ * @param value the value to check.
+ *
+ * @return true if the value is a blank node, false if not.
+ */
+function _isBlankNode(value) {
+  var rval = false;
+  // Note: A value is a blank node if all of these hold true:
+  // 1. It is an Object.
+  // 2. If it has an @id key its value begins with '_:'.
+  // 3. It has no keys OR is not a @value, @set, or @list.
+  if(_isObject(value)) {
+    if('@id' in value) {
+      rval = (value['@id'].indexOf('_:') === 0);
+    }
+    else {
+      rval = (Object.keys(value).length === 0 ||
+        !(('@value' in value) || ('@set' in value) || ('@list' in value)));
+    }
+  }
+  return rval;
 }
 
 /**
@@ -1739,28 +2243,85 @@ if(!Object.keys) {
   };
 }
 
+/**
+ * Creates a new BlankNodeNamer. A BlankNodeNamer issues blank node names
+ * to blank nodes, keeping track of any previously issued names.
+ *
+ * @param prefix the prefix to use ('_:<prefix>').
+ */
+var BlankNodeNamer = function(prefix) {
+  this.prefix = '_:' + prefix;
+  this.counter = 0;
+  this.existing = {};
+};
+
+/**
+ * Gets the new blank node name for the given old name, where if no old name
+ * is given a new name will be generated.
+ *
+ * @param [oldName] the old name to get the new name for.
+ *
+ * @return the new name.
+ */
+BlankNodeNamer.prototype.getName = function(oldName) {
+  // return existing old name
+  if(oldName && oldName in this.existing) {
+    return this.existing[oldName];
+  }
+
+  // get next name
+  var name = this.prefix + this.counter;
+  this.counter += 1;
+
+  // save mapping
+  if(oldName) {
+    this.existing[oldName] = name;
+  }
+  else {
+    this.existing[name] = name;
+  }
+
+  return name;
+};
+
+/**
+ * Returns true if the given oldName has already been assigned a new name.
+ *
+ * @param oldName the oldName to check.
+ *
+ * @return true if the oldName has been assigned a new name, false if not.
+ */
+BlankNodeNamer.prototype.isNamed = function(oldName) {
+  return (oldName in this.existing);
+};
+
 // SHA-1 API
 var sha1 = jsonld.sha1 = {};
 
 /**
- * Hashes the given string and returns its hexadecimal SHA-1 message digest.
+ * Hashes the given array of triples and returns its hexadecimal SHA-1 message
+ * digest.
  *
- * @param str the string to hash.
+ * @param triples the list of serialized triples to hash.
  *
  * @return the hexadecimal SHA-1 message digest.
  */
 if(_nodejs) {
   var crypto = require('crypto');
-  sha1.hash = function(str) {
+  sha1.hash = function(triples) {
     var md = crypto.createHash('sha1');
-    md.update(str, 'utf8');
-    rval = md.digest('hex');
+    for(var i in triples) {
+      md.update(triples[i], 'utf8');
+    }
+    return md.digest('hex');
   };
 }
 else {
-  sha1.hash = function(str) {
+  sha1.hash = function(triples) {
     var md = new sha1.MessageDigest();
-    md.update(str);
+    for(var i in triples) {
+      md.update(triples[i]);
+    }
     return md.digest();
   };
 }

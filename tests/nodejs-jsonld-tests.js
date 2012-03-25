@@ -37,9 +37,7 @@ TestRunner.prototype.ungroup = function() {
 TestRunner.prototype.test = function(name) {
   this.groups[this.groups.length - 1].tests.push(name);
   this.total += 1;
-};
 
-TestRunner.prototype.check = function(expect, result) {
   var line = '';
   for(var i in this.groups) {
     var g = this.groups[i];
@@ -57,9 +55,18 @@ TestRunner.prototype.check = function(expect, result) {
     g.count += 1;
   }
   line += '/' + g.tests.pop();
+  process.stdout.write(line);
+};
 
+TestRunner.prototype.check = function(test, expect, result) {
+  var line = '';
   try {
-    assert.deepEqual(expect, result);
+    if(test['@type'].indexOf('jld:NormalizeTest') !== -1) {
+      assert.equal(true, jsonld.compareNormalized(expect, result));
+    }
+    else {
+      assert.deepEqual(expect, result);
+    }
     line += '... PASS';
     this.passed += 1;
   }
@@ -69,10 +76,10 @@ TestRunner.prototype.check = function(expect, result) {
     this.failed += 1;
   }
 
-  util.puts(line);
+  console.log(line);
   if(fail) {
-    util.puts('Expect: ' + util.inspect(expect, false, 10));
-    util.puts('Result: ' + util.inspect(result, false, 10));
+    console.log('Expect: ' + util.inspect(expect, false, 10));
+    console.log('Result: ' + util.inspect(result, false, 10));
   }
 };
 
@@ -89,8 +96,8 @@ TestRunner.prototype.load = function(filepath) {
     // TODO: read manifests as JSON-LD, process cleanly, this is hacked
     var file = path.join(filepath, files[i]);
     if(file.indexOf('manifest') !== -1 && path.extname(file) == '.jsonld') {
-      // FIXME: remove me, only do expand/compact tests
-      if(file.indexOf('expand') === -1 && file.indexOf('compact') === -1) {
+      // FIXME: remove me, only do normalize tests
+      if(file.indexOf('normalize') === -1) {
         util.log('Skipping manifest: "' + file + '"');
         continue;
       }
@@ -163,16 +170,19 @@ TestRunner.prototype.run = function(manifests, callback) {
         var result;
         var type = test['@type'];
         if(type.indexOf('jld:NormalizeTest') !== -1) {
+          self.test(test.name);
           input = _readTestJson(test.input, filepath);
           test.expect = _readTestJson(test.expect, filepath);
           jsonld.normalize(input, checkResult);
         }
         else if(type.indexOf('jld:ExpandTest') !== -1) {
+          self.test(test.name);
           input = _readTestJson(test.input, filepath);
           test.expect = _readTestJson(test.expect, filepath);
           jsonld.expand(input, checkResult);
         }
         else if(type.indexOf('jld:CompactTest') !== -1) {
+          self.test(test.name);
           input = _readTestJson(test.input, filepath);
           test.context = _readTestJson(test.context, filepath);
           test.expect = _readTestJson(test.expect, filepath);
@@ -181,6 +191,7 @@ TestRunner.prototype.run = function(manifests, callback) {
             input, test.context['@context'], test.optimize, checkResult);
         }
         else if(type.indexOf('jld:FrameTest') !== -1) {
+          self.test(test.name);
           input = _readTestJson(test.input, filepath);
           test.frame = _readTestJson(test.frame, filepath);
           test.expect = _readTestJson(test.expect, filepath);
@@ -200,14 +211,10 @@ TestRunner.prototype.run = function(manifests, callback) {
       function checkResult(err, result) {
         // skip error, go onto next test
         if(err) {
-          util.puts(err.stack);
-          if('details' in err) {
-            util.puts(util.inspect(err, false, 10));
-          }
+          outputError(err);
           return callback();
         }
-        self.test(test.name);
-        self.check(test.expect, result);
+        self.check(test, test.expect, result);
         callback();
       }
     }, function(err) {
@@ -223,6 +230,19 @@ TestRunner.prototype.run = function(manifests, callback) {
     callback(err);
   });
 };
+
+function outputError(err) {
+  console.log();
+  if(err.stack !== undefined) {
+    console.log(err.stack);
+  }
+  else {
+    console.log(err);
+  }
+  if('details' in err) {
+    console.log(util.inspect(err, false, 10));
+  }
+}
 
 // load and run tests
 try {
@@ -243,8 +263,5 @@ try {
   });
 }
 catch(ex) {
-  util.puts(ex.stack);
-  if('details' in ex) {
-    util.puts(util.inspect(ex, false, 10));
-  }
+  outputError(ex);
 }
