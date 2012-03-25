@@ -96,8 +96,8 @@ TestRunner.prototype.load = function(filepath) {
     // TODO: read manifests as JSON-LD, process cleanly, this is hacked
     var file = path.join(filepath, files[i]);
     if(file.indexOf('manifest') !== -1 && path.extname(file) == '.jsonld') {
-      // FIXME: remove me, only do normalize tests
-      if(file.indexOf('normalize') === -1) {
+      // FIXME: remove me, skip framing tests
+      if(file.indexOf('frame') !== -1) {
         util.log('Skipping manifest: "' + file + '"');
         continue;
       }
