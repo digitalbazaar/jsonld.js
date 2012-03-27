@@ -190,7 +190,7 @@ jsonld.expand = function(input) {
 jsonld.frame = function(input, frame) {
   // get arguments
   var resolver = jsonld.urlResolver;
-  var options = {};
+  var options;
   var callbackArg = 2;
   if(arguments.length > 4) {
     options = arguments[2];
@@ -208,25 +208,54 @@ jsonld.frame = function(input, frame) {
   }
   var callback = arguments[callbackArg];
 
-  // resolve all @context URLs in the input
-  input = _clone(input);
+  // set default options
+  options = options || {};
+  if(!('embed' in options)) {
+    options.embed = true;
+  }
+  options.explicit = options.explicit || false;
+  options.omitDefault = options.omitDefault || false;
+  options.optimize = options.optimize || false;
+
+  // clone frame
   frame = _clone(frame);
-  _resolveUrls(input, resolver, function(err, input) {
-    if(err) {
-      return callback(err);
-    }
-    // resolve all @context URLs in the frame
-    _resolveUrls(input, resolver, function(err, input) {
+
+  // compact the input according to the frame context
+  jsonld.compact(input, frame['@context'], options.optimize, resolver,
+    function(err, compacted) {
       if(err) {
-        return callback(err);
+        return callback(new JsonLdError(
+          'Could not compaction input before framing.',
+          'jsonld.CompactError', {cause: err}));
       }
-      // FIXME: might need to pass original context or do compaction
-      // outside of framing here... or create common function for adding
-      // a context to compacted output?
-      // do framing
-      new Processor().frame(input, frame, options, callback);
+
+      // preserve compacted context
+      var ctx = compacted['@context'] || {};
+      delete compacted['@context'];
+
+      // merge context
+      jsonld.mergeContexts(ctx, function(err, merged) {
+        if(err) {
+          return callback(new JsonLdError(
+            'Could not merge context before framing.',
+            'jsonld.CompactError', {cause: err}));
+        }
+
+        try {
+          // do framing
+          var framed = new Processor().frame(compacted, frame, merged, options);
+
+          // attach context
+          if(Object.keys(ctx).length > 0) {
+            framed['@context'] = ctx;
+          }
+          callback(null, framed);
+        }
+        catch(ex) {
+          callback(ex);
+        }
+      });
     });
-  });
 };
 
 /**
@@ -393,7 +422,7 @@ jsonld.mergeContexts = function(ctx1, ctx2) {
 
   // default to empty context
   ctx1 = _clone(ctx1 || {});
-  ctx2 = _clone(ctx2);
+  ctx2 = _clone(ctx2 || {});
 
   // resolve URLs in ctx1
   _resolveUrls({'@context': ctx1}, resolver, function(err, ctx1) {
@@ -546,7 +575,7 @@ jsonld.removeValue = function(subject, property, value, propertyIsArray) {
 
   // filter out value
   var values = jsonld.getValues(subject, property).filter(function(e) {
-    return e !== value;
+    return !jsonld.compareValues(e, value);
   });
 
   if(values.length === 0) {
@@ -1095,12 +1124,30 @@ Processor.prototype.expand = function(ctx, property, value) {
  *
  * @param input the compacted JSON-LD object to frame.
  * @param frame the JSON-LD frame to use.
+ * @param ctx the input's context.
  * @param options the framing options.
- * @param callback(err, framed) called once the operation completes.
+ *
+ * @return the framed output.
  */
-Processor.prototype.frame = function(input, frame, options, callback) {
-  // FIXME: implement
-  callback(new JsonLdError('Not implemented', 'jsonld.NotImplemented'), null);
+Processor.prototype.frame = function(input, frame, ctx, options) {
+  // create framing state
+  var state = {
+    context: ctx,
+    keywords: _getKeywords(ctx),
+    options: options,
+    subjects: {},
+    embeds: {}
+  };
+
+  // produce a map of all subjects and name each bnode
+  var namer = BlankNodeNamer('t');
+  _getFramingSubjects(state, input, namer);
+
+  // frame the subjects
+  var framed = [];
+  _frame(state, frame, framed);
+
+  return framed;
 };
 
 /**
@@ -1588,6 +1635,399 @@ function _getBlankNodeName(value) {
 }
 
 /**
+ * Recursively gets the subjects in the given JSON-LD compact input for use
+ * in the framing algorithm.
+ *
+ * @param state the current framing state.
+ * @param input the JSON-LD compact input.
+ * @param namer the blank node namer.
+ * @param name the name assigned to the current input if it is a bnode.
+ */
+function _getFramingSubjects(state, input, namer, name) {
+  // recurse through array
+  if(_isArray(input)) {
+    for(var i in input) {
+      _getFramingSubjects(state, input[i]);
+    }
+  }
+  // input is a subject
+  else if(_isObject(input)) {
+    // get name for subject
+    if(_isUndefined(name)) {
+      name = _isBlankNode(input) ? namer.getName(input['@id']) : input['@id'];
+    }
+
+    // create new subject or merge into existing one
+    var subject = state.subjects[name] = state.subjects[name] || {};
+    for(var prop in input) {
+      // copy keywords
+      if(_isKeyword(state.keywords, prop)) {
+        subject[prop] = _clone(input[prop]);
+        continue;
+      }
+
+      // normalize objects to array
+      var objects = input[prop];
+      objects = _isArray(objects) ? objects : [objects];
+      for(var i in objects) {
+        var o = objects[i];
+        if(_isSubject(o)) {
+          // add a reference, use an array
+          jsonld.addValue(subject, prop, {'@id': o['@id']}, true);
+
+          // recurse
+          _getFramingSubjects(state, o, namer);
+        }
+        else if(_isBlankNode(o)) {
+          // add a reference
+          var oName = namer.getName(o['@id']);
+          jsonld.addValue(subject, prop, {'@id': oName}, true);
+
+          // recurse
+          _getFramingSubjects(state, o, namer, oName);
+        }
+        else {
+          // add value, use an array
+          jsonld.addValue(subject, prop, o, true);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Frames subjects according to the given frame.
+ *
+ * @param state the current framing state.
+ * @param subjects the subjects to filter.
+ * @param frame the frame.
+ * @param parent the parent subject or top-level array.
+ * @param property the parent property, null for an array parent.
+ */
+function _frame(state, subjects, frame, parent, property) {
+  // validate the frame
+  frame = _validateFrame(state, frame);
+
+  // filter out subjects that match the frame
+  var matches = _filterSubjects(state, subjects, frame);
+
+  // get flags for current frame
+  var options = state.options;
+  var embedOn = _getFrameFlag(state, frame, options, '@embed');
+  var explicitOn = _getFrameFlag(state, frame, options, '@explicit');
+  var omitDefaultOn = _getFrameFlag(state, frame, options, '@omitDefault');
+
+  // get keyword for @id
+  var kwid = state.keywords['@id'];
+
+  // add matches to output
+  for(var id in matches) {
+    // start output
+    var output = {};
+    output[kwid] = id;
+
+    // prepare embed meta info
+    var embed = {parent: parent, property: property};
+
+    // if embed is on and there is an existing embed
+    if(embedOn && (id in state.embeds)) {
+      // only overwrite an existing embed if it has already been added to its
+      // parent -- otherwise its parent is somewhere up the tree from this
+      // embed and the embed would occur twice once the tree is added
+      embedOn = false;
+
+      // existing embed's parent is an array
+      if(_isArray(embed.parent)) {
+        for(var i in embed.parent) {
+          var value = embed.parent[value];
+          if(jsonld.compareValues(output, embed.parent[value])) {
+            embedOn = true;
+            break;
+          }
+        }
+      }
+      // existing embed's parent is an object
+      else if(jsonld.hasValue(embed.parent, embed.property, output)) {
+        embedOn = true;
+      }
+
+      // existing embed has already been added, so allow an overwrite
+      if(embedOn) {
+        _removeEmbed(state.embeds, id);
+      }
+    }
+
+    // not embedding, add output without any other properties
+    if(!embedOn) {
+      _addFrameOutput(state, parent, property, output);
+    }
+    else {
+      // add embed meta info
+      state.embeds[id] = embed;
+
+      // iterate over subject properties
+      var subject = matches[id];
+      for(var prop in subject) {
+        // copy keywords to output
+        if(_isKeyword(state.keywords, prop)) {
+          output[prop] = _clone(subject[prop]);
+          continue;
+        }
+
+        // if property isn't in the frame
+        if(!(prop in frame)) {
+          // if explicit is off, embed values
+          if(!explicitOn) {
+            _embedValues(state, subject, property, output);
+          }
+          continue;
+        }
+
+        // recurse into subframe
+        var _subjects = {};
+        _subjects[id] = subject;
+        _frame(state, _subjects, frame[prop], output, prop);
+      }
+
+      // if omit default is off, then include default values for properties
+      // that appear in the frame but not in the matching subject
+      if(!omitDefaultOn) {
+        var kwdefault = state.keywords['@default'];
+        for(var prop in frame) {
+          // skip keywords
+          if(_isKeyword(state.keywords, prop)) {
+            continue;
+          }
+
+          if(!(prop in output)) {
+            if(kwdefault in frame) {
+              output[prop] = _clone(frame[kwdefault]);
+            }
+            else {
+              output[prop] = null;
+            }
+          }
+        }
+      }
+
+      // add output to parent
+      _addFrameOutput(state, parent, property, output);
+    }
+  }
+}
+
+/**
+ * Gets the frame flag value for the given flag name.
+ *
+ * @param frame the frame.
+ * @param options the framing options.
+ * @param name the flag name.
+ *
+ * @return the flag value.
+ */
+function _getFrameFlag(state, frame, options, name) {
+  var kw = state.keywords['@' + name];
+  return (kw in frame) ? frame[kw] : options[name];
+};
+
+/**
+ * Validates a JSON-LD frame, throwing an exception if the frame is invalid.
+ *
+ * @param state the current frame state.
+ * @param frame the frame to validate.
+ */
+function _validateFrame(state, frame) {
+  if(!_isObject(frame)) {
+    throw new JsonLdError(
+      'Invalid JSON-LD syntax; a JSON-LD frame must be an object.',
+      'jsonld.SyntaxError');
+  }
+}
+
+/**
+ * Returns a map of all of the subjects that match a parsed frame.
+ *
+ * @param state the current framing state.
+ * @param subjects the set of subjects to filter.
+ * @param frame the parsed frame.
+ *
+ * @return all of the matched subjects.
+ */
+function _filterSubjects(state, subjects, frame) {
+  var rval = {};
+  for(var id in subjects) {
+    var subject = state.subjects[id];
+    if(_subjectMatchesFrame(state, subject, frame)) {
+      rval[id] = subject;
+    }
+  }
+  return rval;
+}
+
+/**
+ * Returns true if the given subject matches the given frame.
+ *
+ * @param state the current frame state.
+ * @param subject the subject to check.
+ * @param frame the frame to check.
+ *
+ * @return true if the subject matches, false if not.
+ */
+function _subjectMatchesFrame(state, subject, frame) {
+  var rval = false;
+
+  // check @type
+  var kwtype = state.keywords['@type'];
+  if(kwtype in frame && !_isObject(frame[kwtype])) {
+    // normalize to array
+    var types = frame[kwtype];
+    types = _isArray(types) ? types : [types];
+    for(var i in types) {
+      if(jsonld.hasValue(subject, kwtype, types[i])) {
+        rval = true;
+        break;
+      }
+    }
+  }
+  // check ducktype
+  else {
+    rval = true;
+    var kwid = state.keywords['@id'];
+    for(var key in frame) {
+      // skip non-@id keywords
+      if(key !== kwid && _isKeyword(state.keywords, key)) {
+        continue;
+      }
+
+      if(!(key in subject)) {
+        rval = false;
+        break;
+      }
+    }
+  }
+
+  return rval;
+}
+
+/**
+ * Embeds values for the given subject and property into the given output
+ * during the framing algorithm.
+ *
+ * @param state the current framing state.
+ * @param subject the subject.
+ * @param property the property.
+ * @param output the output.
+ */
+function _embedValues(state, subject, property, output) {
+  var kwid = state.keywords['@id'];
+
+  // objects are always in an array
+  var objects = subject[property];
+  for(var i in objects) {
+    var o = objects[i];
+    if(_isSubjectReference(o)) {
+      // embed full subject if isn't already embedded
+      var id = o[kwid];
+      if(!(id in state.embeds)) {
+        // add embed
+        var embed = {parent: output, property: property};
+        state.embeds[id] = embed;
+
+        // recurse into subject
+        o = {};
+        var s = state.subjects[id];
+        for(var prop in s) {
+          // copy keywords
+          if(_isKeyword(state.keywords, prop)) {
+            o[prop] = _clone(s[prop]);
+            continue;
+          }
+          _embedValues(state, s, prop, o);
+        }
+      }
+      _addFrameOutput(state, output, property, o);
+    }
+    else {
+      _addFrameOutput(state, output, property, _clone(o));
+    }
+  }
+}
+
+/**
+ * Removes an existing embed.
+ *
+ * @param state the current framing state.
+ * @param id the @id of the embed to remove.
+ */
+function _removeEmbed(state, id) {
+  // create reference to replace embed
+  var kwid = state.keywords['@id'];
+  var ref = {};
+  ref[kwid] = id;
+
+  // remove existing embed
+  var embed = state.embeds[id];
+  var parent = embed.parent;
+  var property = embed.property;
+  if(_isArray(parent)) {
+    // replace value with reference
+    for(var i in parent) {
+      if(jsonld.compareValues(parent[i], ref)) {
+        parent[i] = ref;
+        break;
+      }
+    }
+  }
+  else {
+    // replace value with reference
+    var useArray = _isArray(parent[property]);
+    jsonld.removeValue(parent, property, ref, useArray);
+    jsonld.addValue(parent, property, ref, useArray);
+  }
+
+  // recursively remove dependent dangling embeds
+  var removeDependents = function(id) {
+    // get embed keys as a separate array to enable deleting keys in map
+    var ids = Object.keys(embeds);
+    for(var i in ids) {
+      var next = ids[i];
+      if(next in embeds && _isObject(embeds[next].parent) &&
+        embeds[next].parent[kwid] === id) {
+        delete embeds[next];
+        removeDependents(next);
+      }
+    }
+  };
+  removeDependents(id);
+}
+
+/**
+ * Adds framing output to the given parent.
+ *
+ * @param state the current framing state.
+ * @param parent the parent to add to.
+ * @param property the parent property, null for an array parent.
+ * @param output the output to add.
+ */
+function _addFrameOutput(state, parent, property, output) {
+  if(_isObject(parent)) {
+    // get keywords
+    var kwset = state.keywords['@set'];
+    var kwlist = state.keywords['@list'];
+    var kwcontainer = state.keywords['@container'];
+
+    // use an array if @container specifies it
+    var ctx = state.context;
+    var container = jsonld.getContextValue(ctx, property, kwcontainer);
+    var useArray = (container === kwset) || (container === kwlist);
+    jsonld.addValue(parent, property, output, useArray);
+  }
+  else {
+    parent.push(output);
+  }
+}
+
+/**
  * Optimally type-compacts a value.
  *
  * @param ctx the current context.
@@ -1674,6 +2114,9 @@ function _compactIri(ctx, iri) {
   for(var key in ctx) {
     // skip special context keys (start with '@')
     if(key.length > 0 && key[0] !== '@') {
+      // FIXME: there might be more than one choice, choose the most
+      // specific definition and if none is more specific, choose
+      // the lexicographically least term
       // compact to a term
       if(iri === jsonld.getContextValue(ctx, key, '@id')) {
         return key;
@@ -1783,10 +2226,14 @@ function _expandTerm(ctx, term, deep) {
 function _getKeywords(ctx) {
   var rval = {
     '@container': '@container',
+    '@default': '@default',
+    '@embed': '@embed',
+    '@explicit': '@explicit',
     '@graph': '@graph',
     '@id': '@id',
     '@language': '@language',
     '@list': '@list',
+    '@omitDefault': '@omitDefault',
     '@set': '@set',
     '@type': '@type',
     '@value': '@value'
@@ -1811,19 +2258,37 @@ function _getKeywords(ctx) {
 }
 
 /**
- * Returns true if the given key is a frame keyword.
+ * Returns whether or not the given value is a keyword (or a keyword alias).
  *
- * @param key the key to check.
+ * @param keywords the map of keyword aliases to check against.
+ * @param value the value to check.
+ * @param [specific] the specific keyword to check against.
  *
- * @return true if the key is a frame keyword, false if not.
+ * @return true if the value is a keyword, false if not.
  */
-// FIXME: remove if unused
-function _isFrameKeyword(key) {
-  return (
-    key === '@embed' ||
-    key === '@explicit' ||
-    key === '@default' ||
-    key === '@omitDefault');
+function _isKeyword(keywords, value, specific) {
+  switch(value) {
+  case '@container':
+  case '@default':
+  case '@embed':
+  case '@explicit':
+  case '@graph':
+  case '@id':
+  case '@language':
+  case '@list':
+  case '@omitDefault':
+  case '@set':
+  case '@type':
+  case '@value':
+    return _isUndefined(specific) ? true : (value === specific);
+  default:
+    for(var key in keywords) {
+      if(value === keywords[key]) {
+        return _isUndefined(specific) ? true : (key === specific);
+      }
+    }
+  }
+  return false;
 }
 
 /**
