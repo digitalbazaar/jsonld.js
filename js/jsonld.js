@@ -78,7 +78,7 @@ jsonld.compact = function(input, ctx) {
         cleanup(null, compacted, optimizeCtx);
       }
       catch(ex) {
-        cleanup(ex);
+        callback(ex);
       }
     });
   });
@@ -219,13 +219,14 @@ jsonld.frame = function(input, frame) {
 
   // clone frame
   frame = _clone(frame);
+  frame['@context'] = frame['@context'] || {};
 
   // compact the input according to the frame context
   jsonld.compact(input, frame['@context'], options.optimize, resolver,
     function(err, compacted) {
       if(err) {
         return callback(new JsonLdError(
-          'Could not compaction input before framing.',
+          'Could not compact input before framing.',
           'jsonld.CompactError', {cause: err}));
       }
 
@@ -234,7 +235,7 @@ jsonld.frame = function(input, frame) {
       delete compacted['@context'];
 
       // merge context
-      jsonld.mergeContexts(ctx, function(err, merged) {
+      jsonld.mergeContexts({}, ctx, function(err, merged) {
         if(err) {
           return callback(new JsonLdError(
             'Could not merge context before framing.',
@@ -1140,7 +1141,7 @@ Processor.prototype.frame = function(input, frame, ctx, options) {
   };
 
   // produce a map of all subjects and name each bnode
-  var namer = BlankNodeNamer('t');
+  var namer = new BlankNodeNamer('t');
   _getFramingSubjects(state, input, namer);
 
   // frame the subjects
@@ -1647,7 +1648,7 @@ function _getFramingSubjects(state, input, namer, name) {
   // recurse through array
   if(_isArray(input)) {
     for(var i in input) {
-      _getFramingSubjects(state, input[i]);
+      _getFramingSubjects(state, input[i], namer);
     }
   }
   // input is a subject
@@ -1840,7 +1841,8 @@ function _validateFrame(state, frame) {
   if(!_isObject(frame)) {
     throw new JsonLdError(
       'Invalid JSON-LD syntax; a JSON-LD frame must be an object.',
-      'jsonld.SyntaxError');
+      'jsonld.SyntaxError',
+      {frame: frame});
   }
 }
 
