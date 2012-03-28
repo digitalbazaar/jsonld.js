@@ -246,9 +246,11 @@ jsonld.frame = function(input, frame) {
           // do framing
           var framed = new Processor().frame(compacted, frame, merged, options);
 
-          // attach context
+          // attach context to each framed entry
           if(Object.keys(ctx).length > 0) {
-            framed['@context'] = ctx;
+            for(var i in framed) {
+              framed[i]['@context'] = ctx;
+            }
           }
           callback(null, framed);
         }
@@ -478,7 +480,11 @@ jsonld.hasValue = function(subject, property, value) {
   var rval = false;
   if(jsonld.hasProperty(subject, property)) {
     var val = subject[property];
-    if(_isArray(val)) {
+    var isList = _isListValue(val);
+    if(_isArray(val) || isList) {
+      if(isList) {
+        val = val['@list'];
+      }
       for(var i in val) {
         if(jsonld.compareValues(value, val[i])) {
           rval = true;
@@ -517,17 +523,35 @@ jsonld.addValue = function(subject, property, value, propertyIsArray) {
       jsonld.addValue(subject, property, value[i], propertyIsArray);
     }
   }
+  else if(_isListValue(value)) {
+    // create list
+    if(!(property in subject)) {
+      subject[property] = {'@list': []};
+    }
+    // add list values
+    var list = value['@list'];
+    for(var i in list) {
+      jsonld.addValue(subject, property, list[i]);
+    }
+  }
   else if(property in subject) {
     var hasValue = jsonld.hasValue(subject, property, value);
 
-    // make property an array if value not present or always a set
-    if(!_isArray(subject[property]) && (!hasValue || propertyIsArray)) {
+    // make property an array if value not present or always an array
+    var isList = _isListValue(subject[property]);
+    if(!_isArray(subject[property]) && !isList &&
+      (!hasValue || propertyIsArray)) {
       subject[property] = [subject[property]];
     }
 
     // add new value
     if(!hasValue) {
-      subject[property].push(value);
+      if(isList) {
+        subject[property]['@list'].push(value);
+      }
+      else {
+        subject[property].push(value);
+      }
     }
   }
   else {
@@ -703,8 +727,12 @@ jsonld.compareNormalized = function(n1, n2) {
 jsonld.getContextValue = function(ctx, key, type, expand) {
   var rval = null;
 
+  // return null for invalid key
+  if(!key) {
+    rval = null;
+  }
   // return entire context entry if type is unspecified
-  if(_isUndefined(type)) {
+  else if(_isUndefined(type)) {
     rval = ctx[key] || null;
   }
   else if(key in ctx) {
@@ -803,11 +831,16 @@ if(_browser) {
   window.jsonld = window.jsonld || jsonld;
 }
 
-// xsd constants
+// constants
 var XSD = {
   'boolean': 'http://www.w3.org/2001/XMLSchema#boolean',
   'double': 'http://www.w3.org/2001/XMLSchema#double',
   'integer': 'http://www.w3.org/2001/XMLSchema#integer'
+};
+var RDF = {
+  'first': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+  'rest': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
+  'nil': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'
 };
 
 /**
@@ -883,6 +916,7 @@ Processor.prototype.compact = function(ctx, property, value, optimizeCtx) {
     }
 
     // use @list if previously used unless @context specifies container @list
+    // which indicates value should be a simple array
     if(isList) {
       var prop = _compactIri(ctx, property);
       var container = jsonld.getContextValue(ctx, prop, '@container');
@@ -1146,8 +1180,7 @@ Processor.prototype.frame = function(input, frame, ctx, options) {
 
   // frame the subjects
   var framed = [];
-  _frame(state, frame, framed);
-
+  _frame(state, state.subjects, frame, framed, null);
   return framed;
 };
 
@@ -1400,6 +1433,11 @@ function _getStatements(input, namer, bnodes, subjects, name) {
       }
 
       var objects = input[p];
+      var isList = _isListValue(objects);
+      if(isList) {
+        // convert @list array into embedded blank node linked list
+        objects = _makeLinkedList(objects);
+      }
       for(var i in objects) {
         var o = objects[i];
 
@@ -1455,6 +1493,35 @@ function _getStatements(input, namer, bnodes, subjects, name) {
     }
   }
 };
+
+/**
+ * Converts a @list value into an embedded linked list of blank nodes in
+ * expanded form. The resulting array can be used as an RDF-replacement for
+ * a property that used a @list.
+ *
+ * @param value the @list value.
+ *
+ * @return the linked list of blank nodes.
+ */
+function _makeLinkedList(value) {
+  // convert @list array into embedded blank node linked list
+  var list = value['@list'];
+  var first = RDF['first'];
+  var rest = RDF['rest'];
+  var nil = RDF['nil'];
+
+  // build linked list in reverse
+  var len = list.length;
+  var tail = {'@id': nil};
+  for(var i = len - 1; i >= 0; --i) {
+    var e = {};
+    e[first] = [list[i]];
+    e[rest] = [tail];
+    tail = e;
+  }
+
+  return [tail];
+}
 
 /**
  * Adds a statement to an array of statements. If the statement already exists
@@ -1645,51 +1712,109 @@ function _getBlankNodeName(value) {
  * @param name the name assigned to the current input if it is a bnode.
  */
 function _getFramingSubjects(state, input, namer, name) {
+  var kwgraph = state.keywords['@graph'];
+  var kwid = state.keywords['@id'];
+  var kwlist = state.keywords['@list'];
+
   // recurse through array
   if(_isArray(input)) {
     for(var i in input) {
       _getFramingSubjects(state, input[i], namer);
     }
   }
+  // recurse through @graph
+  else if(_isObject(input) && (kwgraph in input)) {
+    _getFramingSubjects(state, input[kwgraph], namer);
+  }
   // input is a subject
   else if(_isObject(input)) {
     // get name for subject
     if(_isUndefined(name)) {
-      name = _isBlankNode(input) ? namer.getName(input['@id']) : input['@id'];
+      name = _isBlankNode(input, state.keywords) ?
+        namer.getName(input[kwid]) : input[kwid];
     }
 
     // create new subject or merge into existing one
     var subject = state.subjects[name] = state.subjects[name] || {};
     for(var prop in input) {
+      // use assigned name for @id
+      if(_isKeyword(state.keywords, prop, '@id')) {
+        subject[prop] = name;
+        continue;
+      }
+
       // copy keywords
       if(_isKeyword(state.keywords, prop)) {
         subject[prop] = _clone(input[prop]);
         continue;
       }
 
+      // determine if property @type is @id
+      var isId = _isKeyword(state.keywords,
+        jsonld.getContextValue(state.context, prop, '@type'), '@id');
+
       // normalize objects to array
       var objects = input[prop];
-      objects = _isArray(objects) ? objects : [objects];
+      // preserve list
+      if(_isListValue(objects, state.keywords)) {
+        jsonld.addValue(subject, prop, {kwlist: []});
+        objects = objects[kwlist];
+      }
+      var useArray = _isArray(objects);
+      objects = useArray ? objects : [objects];
       for(var i in objects) {
         var o = objects[i];
-        if(_isSubject(o)) {
+
+        // determine if property
+
+        // get subject @id from expanded or compact form
+        var sid = null;
+        if(_isSubject(o, state.keywords) ||
+          _isSubjectReference(o, state.keywords)) {
+          sid = o[kwid];
+        }
+        else if(_isString(o) && isId) {
+          sid = o;
+          o = {};
+          o[kwid] = sid;
+        }
+
+        // regular subject
+        if(sid !== null && (kwid in o) && sid.indexOf('_:') !== 0) {
           // add a reference, use an array
-          jsonld.addValue(subject, prop, {'@id': o['@id']}, true);
+          var ref;
+          if(isId) {
+            ref = sid;
+          }
+          else {
+            ref = {};
+            ref[kwid] = sid;
+          }
+          jsonld.addValue(subject, prop, ref, useArray);
 
           // recurse
           _getFramingSubjects(state, o, namer);
         }
-        else if(_isBlankNode(o)) {
+        // blank node subject
+        else if(sid !== null) {
           // add a reference
-          var oName = namer.getName(o['@id']);
-          jsonld.addValue(subject, prop, {'@id': oName}, true);
+          var oName = namer.getName(sid);
+          var ref;
+          if(isId) {
+            ref = oName;
+          }
+          else {
+            ref = {};
+            ref[kwid] = oName;
+          }
+          jsonld.addValue(subject, prop, ref, useArray);
 
           // recurse
           _getFramingSubjects(state, o, namer, oName);
         }
         else {
-          // add value, use an array
-          jsonld.addValue(subject, prop, o, true);
+          // add value
+          jsonld.addValue(subject, prop, o, useArray);
         }
       }
     }
@@ -1707,16 +1832,15 @@ function _getFramingSubjects(state, input, namer, name) {
  */
 function _frame(state, subjects, frame, parent, property) {
   // validate the frame
-  frame = _validateFrame(state, frame);
+  _validateFrame(state, frame);
 
   // filter out subjects that match the frame
   var matches = _filterSubjects(state, subjects, frame);
 
   // get flags for current frame
   var options = state.options;
-  var embedOn = _getFrameFlag(state, frame, options, '@embed');
-  var explicitOn = _getFrameFlag(state, frame, options, '@explicit');
-  var omitDefaultOn = _getFrameFlag(state, frame, options, '@omitDefault');
+  var embedOn = _getFrameFlag(state, frame, options, 'embed');
+  var explicitOn = _getFrameFlag(state, frame, options, 'explicit');
 
   // get keyword for @id
   var kwid = state.keywords['@id'];
@@ -1738,23 +1862,23 @@ function _frame(state, subjects, frame, parent, property) {
       embedOn = false;
 
       // existing embed's parent is an array
-      if(_isArray(embed.parent)) {
-        for(var i in embed.parent) {
-          var value = embed.parent[value];
-          if(jsonld.compareValues(output, embed.parent[value])) {
+      var existing = state.embeds[id];
+      if(_isArray(existing.parent)) {
+        for(var i in existing.parent) {
+          if(jsonld.compareValues(output, existing.parent[i])) {
             embedOn = true;
             break;
           }
         }
       }
       // existing embed's parent is an object
-      else if(jsonld.hasValue(embed.parent, embed.property, output)) {
+      else if(jsonld.hasValue(existing.parent, existing.property, output)) {
         embedOn = true;
       }
 
       // existing embed has already been added, so allow an overwrite
       if(embedOn) {
-        _removeEmbed(state.embeds, id);
+        _removeEmbed(state, id);
       }
     }
 
@@ -1779,30 +1903,70 @@ function _frame(state, subjects, frame, parent, property) {
         if(!(prop in frame)) {
           // if explicit is off, embed values
           if(!explicitOn) {
-            _embedValues(state, subject, property, output);
+            _embedValues(state, subject, prop, output);
           }
           continue;
         }
 
-        // recurse into subframe
-        var _subjects = {};
-        _subjects[id] = subject;
-        _frame(state, _subjects, frame[prop], output, prop);
-      }
+        // determine if property @type is @id
+        var isId = _isKeyword(state.keywords,
+          jsonld.getContextValue(state.context, prop, '@type'), '@id');
 
-      // if omit default is off, then include default values for properties
-      // that appear in the frame but not in the matching subject
-      if(!omitDefaultOn) {
-        var kwdefault = state.keywords['@default'];
-        for(var prop in frame) {
-          // skip keywords
-          if(_isKeyword(state.keywords, prop)) {
-            continue;
+        // add objects
+        var objects = subject[prop];
+        // preserve list
+        if(_isListValue(objects, state.keywords)) {
+          jsonld.addValue(output, prop, {'@list': []});
+          objects = objects['@list'];
+        }
+        objects = _isArray(objects) ? objects : [objects];
+        for(var i in objects) {
+          var o = objects[i];
+
+          // get subject @id from expanded or compact form
+          var sid = null;
+          if(_isSubjectReference(o, state.keywords)) {
+            sid = o[kwid];
+          }
+          else if(_isString(o) && isId) {
+            sid = o;
           }
 
-          if(!(prop in output)) {
-            if(kwdefault in frame) {
-              output[prop] = _clone(frame[kwdefault]);
+          // recurse into sub-subjects
+          if(sid !== null) {
+            var _subjects = {};
+            _subjects[sid] = o;
+            _frame(state, _subjects, frame[prop], output, prop);
+          }
+          // include other values automatically
+          else {
+            _addFrameOutput(state, output, prop, _clone(o));
+          }
+        }
+      }
+
+      var kwdefault = state.keywords['@default'];
+      for(var prop in frame) {
+        // skip keywords
+        if(_isKeyword(state.keywords, prop)) {
+          continue;
+        }
+
+        // if omit default is off, then include default values for properties
+        // that appear in the next frame but are not in the matching subject
+        var next = frame[prop];
+        var omitDefaultOn = _getFrameFlag(state, next, options, 'omitDefault');
+        if(!omitDefaultOn && !(prop in output)) {
+          if(kwdefault in next) {
+            output[prop] = _clone(next[kwdefault]);
+          }
+          // no frame @default, use [] for @set/@list and null otherwise
+          else {
+            var container = jsonld.getContextValue(
+              state.context, prop, '@container');
+            if(_isKeyword(state.keywords, container, '@set') ||
+              _isKeyword(state.keywords, container, '@list')) {
+              output[prop] = [];
             }
             else {
               output[prop] = null;
@@ -1820,6 +1984,7 @@ function _frame(state, subjects, frame, parent, property) {
 /**
  * Gets the frame flag value for the given flag name.
  *
+ * @param state the current framing state.
  * @param frame the frame.
  * @param options the framing options.
  * @param name the flag name.
@@ -1859,7 +2024,7 @@ function _filterSubjects(state, subjects, frame) {
   var rval = {};
   for(var id in subjects) {
     var subject = state.subjects[id];
-    if(_subjectMatchesFrame(state, subject, frame)) {
+    if(_filterSubject(state, subject, frame)) {
       rval[id] = subject;
     }
   }
@@ -1875,7 +2040,7 @@ function _filterSubjects(state, subjects, frame) {
  *
  * @return true if the subject matches, false if not.
  */
-function _subjectMatchesFrame(state, subject, frame) {
+function _filterSubject(state, subject, frame) {
   var rval = false;
 
   // check @type
@@ -1923,21 +2088,37 @@ function _subjectMatchesFrame(state, subject, frame) {
 function _embedValues(state, subject, property, output) {
   var kwid = state.keywords['@id'];
 
-  // objects are always in an array
+  // normalize to an array
   var objects = subject[property];
+  // preserve list
+  if(_isListValue(objects, state.keywords)) {
+    jsonld.addValue(output, property, {'@list': []});
+    objects = objects['@list'];
+  }
+  objects = _isArray(objects) ? objects : [objects];
   for(var i in objects) {
     var o = objects[i];
-    if(_isSubjectReference(o)) {
+
+    // get subject @id from expanded or compact form
+    var sid = null;
+    if(_isSubjectReference(o, state.keywords)) {
+      sid = o[kwid];
+    }
+    else if(_isString(o) && _isKeyword(state.keywords,
+      jsonld.getContextValue(state.context, property, '@type'), '@id')) {
+      sid = o;
+    }
+
+    if(sid !== null) {
       // embed full subject if isn't already embedded
-      var id = o[kwid];
-      if(!(id in state.embeds)) {
+      if(!(sid in state.embeds)) {
         // add embed
         var embed = {parent: output, property: property};
-        state.embeds[id] = embed;
+        state.embeds[sid] = embed;
 
         // recurse into subject
         o = {};
-        var s = state.subjects[id];
+        var s = state.subjects[sid];
         for(var prop in s) {
           // copy keywords
           if(_isKeyword(state.keywords, prop)) {
@@ -1962,28 +2143,41 @@ function _embedValues(state, subject, property, output) {
  * @param id the @id of the embed to remove.
  */
 function _removeEmbed(state, id) {
-  // create reference to replace embed
-  var kwid = state.keywords['@id'];
-  var ref = {};
-  ref[kwid] = id;
-
-  // remove existing embed
-  var embed = state.embeds[id];
+  // get existing embed
+  var embeds = state.embeds;
+  var embed = embeds[id];
   var parent = embed.parent;
   var property = embed.property;
+
+  // create reference to replace embed
+  var subject = {};
+  var ref;
+  var kwid = state.keywords['@id'];
+  if(property !== null && _isKeyword(state.keywords,
+    jsonld.getContextValue(state.context, property, '@type'), '@id')) {
+    ref = id;
+    subject[kwid] = id;
+  }
+  else {
+    ref = {};
+    ref[kwid] = id;
+    subject[kwid] = id;
+  }
+
+  // remove existing embed
   if(_isArray(parent)) {
-    // replace value with reference
+    // replace subject with reference
     for(var i in parent) {
-      if(jsonld.compareValues(parent[i], ref)) {
+      if(jsonld.compareValues(parent[i], subject)) {
         parent[i] = ref;
         break;
       }
     }
   }
   else {
-    // replace value with reference
+    // replace subject with reference
     var useArray = _isArray(parent[property]);
-    jsonld.removeValue(parent, property, ref, useArray);
+    jsonld.removeValue(parent, property, subject, useArray);
     jsonld.addValue(parent, property, ref, useArray);
   }
 
@@ -2111,18 +2305,25 @@ function _optimalTypeCompact(ctx, property, value, optimizeCtx) {
  * @return the compacted IRI as a term or prefix or the original IRI.
  */
 function _compactIri(ctx, iri) {
+  // can't compact null
+  if(iri === null) {
+    return iri;
+  }
+
   // check the context for a term that could shorten the IRI
   // (give preference to terms over prefixes)
   for(var key in ctx) {
     // skip special context keys (start with '@')
-    if(key.length > 0 && key[0] !== '@') {
-      // FIXME: there might be more than one choice, choose the most
-      // specific definition and if none is more specific, choose
-      // the lexicographically least term
-      // compact to a term
-      if(iri === jsonld.getContextValue(ctx, key, '@id')) {
-        return key;
-      }
+    if(key.indexOf('@') === 0) {
+      continue;
+    }
+
+    // FIXME: there might be more than one choice, choose the most
+    // specific definition and if none is more specific, choose
+    // the lexicographically least term
+    // compact to a term
+    if(iri === jsonld.getContextValue(ctx, key, '@id')) {
+      return key;
     }
   }
 
@@ -2135,15 +2336,17 @@ function _compactIri(ctx, iri) {
   // term not found, check the context for a prefix
   for(var key in ctx) {
     // skip special context keys (start with '@')
-    if(key.length > 0 && key[0] !== '@') {
-      // see if IRI begins with the next IRI from the context
-      var ctxIri = jsonld.getContextValue(ctx, key, '@id');
-      if(ctxIri !== null) {
-        // compact to a prefix
-        var idx = iri.indexOf(ctxIri);
-        if(idx === 0 && iri.length > ctxIri.length) {
-          return key + ':' + iri.substr(ctxIri.length);
-        }
+    if(key.indexOf('@') === 0) {
+      continue;
+    }
+
+    // see if IRI begins with the next IRI from the context
+    var ctxIri = jsonld.getContextValue(ctx, key, '@id');
+    if(ctxIri !== null) {
+      // compact to a prefix
+      var idx = iri.indexOf(ctxIri);
+      if(idx === 0 && iri.length > ctxIri.length) {
+        return key + ':' + iri.substr(ctxIri.length);
       }
     }
   }
@@ -2227,6 +2430,7 @@ function _expandTerm(ctx, term, deep) {
  */
 function _getKeywords(ctx) {
   var rval = {
+    '@context': '@context',
     '@container': '@container',
     '@default': '@default',
     '@embed': '@embed',
@@ -2246,6 +2450,11 @@ function _getKeywords(ctx) {
     var keywords = {};
     for(var key in ctx) {
       if(_isString(ctx[key]) && ctx[key] in rval) {
+        if(ctx[key] === '@context') {
+          throw new JsonLdError(
+            'Invalid JSON-LD syntax; @context cannot be aliased.',
+            'jsonld.SyntaxError');
+        }
         keywords[ctx[key]] = key;
       }
     }
@@ -2374,20 +2583,25 @@ function _isUndefined(input) {
  * Returns true if the given value is a subject with properties.
  *
  * @param value the value to check.
+ * @param [keywords] the keywords map to use.
  *
  * @return true if the value is a subject with properties, false if not.
  */
-function _isSubject(value) {
+function _isSubject(value, keywords) {
   var rval = false;
 
   // Note: A value is a subject if all of these hold true:
   // 1. It is an Object.
   // 2. It is not a @value, @set, or @list.
   // 3. It has more than 1 key OR any existing key is not @id.
+  var kwvalue = keywords ? keywords['@value'] : '@value';
+  var kwset = keywords ? keywords['@set'] : '@set';
+  var kwlist = keywords ? keywords['@list'] : '@list';
+  var kwid = keywords ? keywords['@id'] : '@id';
   if(_isObject(value) &&
-    !(('@value' in value) || ('@set' in value) || ('@list' in value))) {
+    !((kwvalue in value) || (kwset in value) || (kwlist in value))) {
     var keyCount = Object.keys(value).length;
-    rval = (keyCount > 1 || !('@id' in value));
+    rval = (keyCount > 1 || !(kwid in value));
   }
 
   return rval;
@@ -2397,78 +2611,91 @@ function _isSubject(value) {
  * Returns true if the given value is a subject reference.
  *
  * @param value the value to check.
+ * @param [keywords] the keywords map to use.
  *
  * @return true if the value is a subject reference, false if not.
  */
-function _isSubjectReference(value) {
+function _isSubjectReference(value, keywords) {
   // Note: A value is a subject reference if all of these hold true:
   // 1. It is an Object.
   // 2. It has a single key: @id.
-  return _isObject(value) && Object.keys(value).length === 1 && '@id' in value;
+  var kwid = keywords ? keywords['@id'] : '@id';
+  return _isObject(value) && Object.keys(value).length === 1 && (kwid in value);
 }
 
 /**
  * Returns true if the given value is a @value.
  *
  * @param value the value to check.
+ * @param [keywords] the keywords map to use.
  *
  * @return true if the value is a @value, false if not.
  */
-function _isValue(value) {
+function _isValue(value, keywords) {
   // Note: A value is a @value if all of these hold true:
   // 1. It is an Object.
   // 2. It has the @value property.
-  return _isObject(value) && ('@value' in value);
+  var kwvalue = keywords ? keywords['@value'] : '@value';
+  return _isObject(value) && (kwvalue in value);
 }
 
 /**
  * Returns true if the given value is a @set.
  *
  * @param value the value to check.
+ * @param [keywords] the keywords map to use.
  *
  * @return true if the value is a @set, false if not.
  */
-function _isSetValue(value) {
+function _isSetValue(value, keywords) {
   // Note: A value is a @set if all of these hold true:
   // 1. It is an Object.
   // 2. It has the @set property.
-  return _isObject(value) && ('@set' in value);
+  var kwset = keywords ? keywords['@set'] : '@set';
+  return _isObject(value) && (kwset in value);
 }
 
 /**
  * Returns true if the given value is a @list.
  *
  * @param value the value to check.
+ * @param [keywords] the keywords map to use.
  *
  * @return true if the value is a @list, false if not.
  */
-function _isListValue(value) {
+function _isListValue(value, keywords) {
   // Note: A value is a @list if all of these hold true:
   // 1. It is an Object.
   // 2. It has the @list property.
-  return _isObject(value) && ('@list' in value);
+  var kwlist = keywords ? keywords['@list'] : '@list';
+  return _isObject(value) && (kwlist in value);
 }
 
 /**
  * Returns true if the given value is a blank node.
  *
  * @param value the value to check.
+ * @param [keywords] the keywords map to use.
  *
  * @return true if the value is a blank node, false if not.
  */
-function _isBlankNode(value) {
+function _isBlankNode(value, keywords) {
   var rval = false;
   // Note: A value is a blank node if all of these hold true:
   // 1. It is an Object.
   // 2. If it has an @id key its value begins with '_:'.
   // 3. It has no keys OR is not a @value, @set, or @list.
+  var kwvalue = keywords ? keywords['@value'] : '@value';
+  var kwset = keywords ? keywords['@set'] : '@set';
+  var kwlist = keywords ? keywords['@list'] : '@list';
+  var kwid = keywords ? keywords['@id'] : '@id';
   if(_isObject(value)) {
-    if('@id' in value) {
-      rval = (value['@id'].indexOf('_:') === 0);
+    if(kwid in value) {
+      rval = (value[kwid].indexOf('_:') === 0);
     }
     else {
       rval = (Object.keys(value).length === 0 ||
-        !(('@value' in value) || ('@set' in value) || ('@list' in value)));
+        !((kwvalue in value) || (kwset in value) || (kwlist in value)));
     }
   }
   return rval;
