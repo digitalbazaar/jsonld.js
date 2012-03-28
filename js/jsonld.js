@@ -227,7 +227,7 @@ jsonld.frame = function(input, frame) {
       if(err) {
         return callback(new JsonLdError(
           'Could not compact input before framing.',
-          'jsonld.CompactError', {cause: err}));
+          'jsonld.FrameError', {cause: err}));
       }
 
       // preserve compacted context
@@ -239,7 +239,7 @@ jsonld.frame = function(input, frame) {
         if(err) {
           return callback(new JsonLdError(
             'Could not merge context before framing.',
-            'jsonld.CompactError', {cause: err}));
+            'jsonld.FrameError', {cause: err}));
         }
 
         try {
