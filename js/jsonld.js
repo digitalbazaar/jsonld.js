@@ -249,7 +249,14 @@ jsonld.frame = function(input, frame) {
           // attach context to each framed entry
           if(Object.keys(ctx).length > 0) {
             for(var i in framed) {
-              framed[i]['@context'] = ctx;
+              var next = framed[i];
+              if(_isObject(next)) {
+                // reorder keys so @context is first
+                framed[i] = {'@context': ctx};
+                for(var key in next) {
+                  framed[i][key] = next[key];
+                }
+              }
             }
           }
           callback(null, framed);
@@ -397,7 +404,7 @@ jsonld.useUrlResolver = function(type) {
 
   // set URL resolver
   jsonld.urlResolver = jsonld.urlResolvers[type].apply(
-    Array.prototype.slice(arguments, 1));
+    jsonld, Array.prototype.slice.call(arguments, 1));
 };
 
 /**
@@ -816,7 +823,7 @@ jsonld.setContextValue = function(ctx, key, type, value) {
 };
 
 // determine if in-browser or using node.js
-var _nodejs = !(_isUndefined(module) || _isUndefined(module.exports));
+var _nodejs = (typeof module !== 'undefined');
 var _browser = !_nodejs;
 
 // export nodejs API
