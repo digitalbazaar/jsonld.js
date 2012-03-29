@@ -1570,7 +1570,7 @@ function _hashStatements(bnode, statements, oldMap, newMap) {
     }
 
     // serialize property
-    triple += '<' + statement.p + '>';
+    triple += '<' + statement.p + '> ';
 
     // serialize object
     if(_isBlankNode(statement.o)) {
@@ -1586,7 +1586,7 @@ function _hashStatements(bnode, statements, oldMap, newMap) {
       triple += '"' + statement.o + '"';
     }
     else if(_isSubjectReference(statement.o)) {
-      triple += '<' + statement.o + '>';
+      triple += '<' + statement.o['@id'] + '>';
     }
     // must be a value
     else {
