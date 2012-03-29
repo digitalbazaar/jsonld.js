@@ -1763,8 +1763,6 @@ function _getFramingSubjects(state, input, namer, name) {
       for(var i in objects) {
         var o = objects[i];
 
-        // determine if property
-
         // get subject @id from expanded or compact form
         var sid = null;
         if(_isSubject(o, state.keywords) ||
