@@ -1593,7 +1593,7 @@ function _hashStatements(bnode, statements, oldMap, newMap) {
       triple += '"' + statement.o['@value'] + '"';
 
       if('@type' in statement.o) {
-        triple += '^^<' + statement.p['@type'] + '>';
+        triple += '^^<' + statement.o['@type'] + '>';
       }
       else if('@language' in statement.o) {
         triple += '@' + statement.o['@language'];
