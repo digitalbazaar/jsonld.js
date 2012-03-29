@@ -788,23 +788,11 @@ jsonld.setContextValue = function(ctx, key, type, value) {
   // get keyword for type
   var kwtype = _getKeywords(ctx)[type];
 
-  // add new key to @context
-  if(!(key in ctx)) {
+  // add new key to @context or update existing key w/string value
+  if(!(key in ctx) || _isString(ctx[key])) {
     if(type === '@id') {
       ctx[key] = value;
     }
-    else {
-      ctx[key] = {};
-      ctx[key][kwtype] = value;
-    }
-  }
-  // update existing key w/string value
-  else if(_isString(ctx[key])) {
-    // overwrite @id
-    if(type === '@id') {
-      ctx[key] = value;
-    }
-    // expand to an object
     else {
       ctx[key] = {};
       ctx[key][kwtype] = value;
@@ -1036,6 +1024,8 @@ Processor.prototype.compact = function(ctx, property, value, optimizeCtx) {
  * @param ctx the context to use.
  * @param property the expanded property for the value, null for none.
  * @param value the value to expand.
+ *
+ * @return the expanded value.
  */
 Processor.prototype.expand = function(ctx, property, value) {
   // nothing to expand when value is null
