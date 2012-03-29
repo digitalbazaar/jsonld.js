@@ -1050,8 +1050,9 @@ Processor.prototype.expand = function(ctx, property, value) {
       if(value === null) {
         return null;
       }
+
       // invalid input if @list points at a non-array
-      else if(!_isArray(value)) {
+      if(!_isArray(value)) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; "@list" value must be an array or null.',
           'jsonld.SyntaxError');
@@ -1530,7 +1531,7 @@ function _makeLinkedList(value) {
 function _addStatement(statements, statement) {
   for(var i in statements) {
     var s = statements[i];
-    if(s.s === statement.s && s.p === statements.p &&
+    if(s.s === statement.s && s.p === statement.p &&
       jsonld.compareValues(s.o, statement.o)) {
       return;
     }
