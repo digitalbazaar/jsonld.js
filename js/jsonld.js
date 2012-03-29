@@ -1767,7 +1767,13 @@ function _getFramingSubjects(state, input, namer, name) {
         var sid = null;
         if(_isSubject(o, state.keywords) ||
           _isSubjectReference(o, state.keywords)) {
-          sid = o[kwid];
+          if(kwid in o) {
+            sid = o[kwid];
+          }
+          // rename blank node subject
+          if(sid === null || o[kwid].indexOf('_:') === 0) {
+            sid = namer.getName(sid);
+          }
         }
         else if(_isString(o) && isId) {
           sid = o;
@@ -1775,9 +1781,12 @@ function _getFramingSubjects(state, input, namer, name) {
           o[kwid] = sid;
         }
 
-        // regular subject
-        if(sid !== null && (kwid in o) && sid.indexOf('_:') !== 0) {
-          // add a reference, use an array
+        if(sid === null) {
+          // add non-subject value
+          jsonld.addValue(subject, prop, o, useArray);
+        }
+        else {
+          // add a subject reference
           var ref;
           if(isId) {
             ref = sid;
@@ -1789,28 +1798,7 @@ function _getFramingSubjects(state, input, namer, name) {
           jsonld.addValue(subject, prop, ref, useArray);
 
           // recurse
-          _getFramingSubjects(state, o, namer);
-        }
-        // blank node subject
-        else if(sid !== null) {
-          // add a reference
-          var oName = namer.getName(sid);
-          var ref;
-          if(isId) {
-            ref = oName;
-          }
-          else {
-            ref = {};
-            ref[kwid] = oName;
-          }
-          jsonld.addValue(subject, prop, ref, useArray);
-
-          // recurse
-          _getFramingSubjects(state, o, namer, oName);
-        }
-        else {
-          // add value
-          jsonld.addValue(subject, prop, o, useArray);
+          _getFramingSubjects(state, o, namer, sid);
         }
       }
     }
