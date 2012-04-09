@@ -829,7 +829,8 @@ var XSD = {
 var RDF = {
   'first': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
   'rest': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
-  'nil': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'
+  'nil': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil',
+  'type': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
 };
 
 /**
@@ -1636,29 +1637,30 @@ function _hashStatements(statements, namer) {
 
     // serialize subject
     if(statement.s === '_:a') {
-      triple += '_:a ';
+      triple += '_:a';
     }
     else if(statement.s.indexOf('_:') === 0) {
       var id = statement.s;
       id = namer.isNamed(id) ? namer.getName(id) : '_:z';
-      triple += id + ' ';
+      triple += id;
     }
     else {
       triple += '<' + statement.s + '>';
     }
 
     // serialize property
-    triple += '<' + statement.p + '> ';
+    var p = (statement.p === '@type') ? RDF.type : statement.p;
+    triple += ' <' + p + '> ';
 
     // serialize object
     if(_isBlankNode(statement.o)) {
       if(statement.o['@id'] === '_:a') {
-        triple += '_:a ';
+        triple += '_:a';
       }
       else {
         var id = statement.o['@id'];
         id = namer.isNamed(id) ? namer.getName(id) : '_:z';
-        triple += id + ' ';
+        triple += id;
       }
     }
     else if(_isString(statement.o)) {
