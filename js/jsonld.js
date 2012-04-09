@@ -1173,7 +1173,7 @@ Processor.prototype.frame = function(input, frame, ctx, options) {
   };
 
   // produce a map of all subjects and name each bnode
-  var namer = new BlankNodeNamer('t');
+  var namer = new UniqueNamer('_:t');
   _getFramingSubjects(state, input, namer);
 
   // frame the subjects
@@ -1190,53 +1190,107 @@ Processor.prototype.frame = function(input, frame, ctx, options) {
  * @return the normalized output.
  */
 Processor.prototype.normalize = function(input) {
-  var self = this;
-
   // get statements
-  var namer = new BlankNodeNamer('t');
+  var namer = new UniqueNamer('_:t');
   var bnodes = {};
   var subjects = {};
   _getStatements(input, namer, bnodes, subjects);
 
-  // create bnode name maps
-  var maps = [{}, {}];
+  // create canonical namer
+  namer = new UniqueNamer('_:c14n');
 
-  // initialize old map entries to 'z'
-  var oldMap = maps[0];
-  for(var bnode in bnodes) {
-    oldMap[bnode] = 'z';
-  }
-
-  // FIXME: do iterations asynchronously to allow other work to proceed
-
-  // do iterative hashing
-  var n = Object.keys(bnodes).length;
-  for(var i = 0; i <= n; ++i) {
-    // hash statements for all bnodes
-    for(var bnode in bnodes) {
+  // continue to hash bnode statements while bnodes are assigned names
+  var unnamed;
+  var nextUnnamed = Object.keys(bnodes);
+  var duplicates;
+  do {
+    unnamed = nextUnnamed;
+    nextUnnamed = [];
+    duplicates = {};
+    var unique = {};
+    for(var i in unnamed) {
+      // FIXME: do asynchronously
+      // hash statements for each unnamed bnode
+      var bnode = unnamed[i];
       var statements = bnodes[bnode];
-      _hashStatements(bnode, statements, maps[0], maps[1]);
+      var hash = _hashStatements(statements, namer);
+
+      // store hash as unique or a duplicate
+      if(hash in duplicates) {
+        duplicates[hash].push(bnode);
+        nextUnnamed.push(bnode);
+      }
+      else if(hash in unique) {
+        duplicates[hash] = [unique[hash], bnode];
+        nextUnnamed.push(unique[hash]);
+        nextUnnamed.push(bnode);
+        delete unique[hash];
+      }
+      else {
+        unique[hash] = bnode;
+      }
     }
 
-    // swap maps
-    var tmp = maps[1];
-    maps[0] = maps[1];
-    maps[1] = tmp;
+    // name unique bnodes in sorted hash order
+    var hashes = Object.keys(unique).sort();
+    for(var i in hashes) {
+      var bnode = unique[hashes[i]];
+      namer.getName(bnode);
+    }
   }
+  while(unnamed.length > nextUnnamed.length);
 
-  // name bnodes
-  namer = new BlankNodeNamer('c14n');
-  _nameBlankNode(bnodes, maps[0], namer, null);
+  // enumerate duplicate hash groups in sorted order
+  var hashes = Object.keys(duplicates).sort();
+  for(var i in hashes) {
+    // process group until every bnode is named
+    var group = duplicates[hashes[i]];
+    var unnamed = group.length;
+    while(unnamed > 0) {
+      unnamed = 0;
+      var first = null;
+      for(var n in group) {
+        // skip already-named bnodes
+        var bnode = group[n];
+        if(namer.isNamed(bnode)) {
+          continue;
+        }
+
+        // bnode is unnamed
+        unnamed += 1;
+
+        // FIXME: do asynchronously
+        // hash bnode paths
+        var pathNamer = new UniqueNamer('_:t');
+        pathNamer.getName(bnode);
+        var result = _hashPaths(bnodes, bnodes[bnode], namer, pathNamer);
+        result.bnode = bnode;
+        if(first === null || result.hash < first.hash) {
+          first = result;
+        }
+      }
+
+      if(first) {
+        // name first bnode
+        namer.getName(first.bnode);
+
+        // name all bnodes in its path namer in key-entry-order
+        // Note: key-order is preserved in javascript
+        for(var key in first.pathNamer.existing) {
+          namer.getName(key);
+        }
+      }
+    }
+  }
 
   // create JSON-LD array
   var normalized = [];
 
   // add all bnodes
   for(var id in bnodes) {
+    // add all property statements to bnode
     var name = namer.getName(id);
     var bnode = {'@id': name};
-
-    // add all property statements to bnode
     var statements = bnodes[id];
     for(var i in statements) {
       var statement = statements[i];
@@ -1246,15 +1300,13 @@ Processor.prototype.normalize = function(input) {
         jsonld.addValue(bnode, statement.p, o, true);
       }
     }
-
     normalized.push(bnode);
   }
 
   // add all non-bnodes
   for(var id in subjects) {
-    var subject = {'@id': id};
-
     // add all statements to subject
+    var subject = {'@id': id};
     var statements = subjects[id];
     for(var i in statements) {
       var statement = statements[i];
@@ -1262,7 +1314,6 @@ Processor.prototype.normalize = function(input) {
       var o = z ? {'@id': namer.getName(z)} : statement.o;
       jsonld.addValue(subject, statement.p, o, true);
     }
-
     normalized.push(subject);
   }
 
@@ -1390,7 +1441,7 @@ function _expandValue(ctx, property, value) {
  * Recursively gets all statements from the given expanded JSON-LD input.
  *
  * @param input the valid expanded JSON-LD input.
- * @param namer the BlankNodeNamer to use when encountering blank nodes.
+ * @param namer the UniqueNamer to use when encountering blank nodes.
  * @param bnodes the blank node statements map to populate.
  * @param subjects the subject statements map to populate.
  * @param [name] the name (@id) assigned to the current input.
@@ -1540,15 +1591,14 @@ function _addStatement(statements, statement) {
 }
 
 /**
- * Hashes all of the statements about the given blank node, generating a
- * new hash for it.
+ * Hashes all of the statements about a blank node.
  *
- * @param bnode the bnode @id to generate the new hash for.
  * @param statements the statements about the bnode.
- * @param oldMap the old map of hashes for adjacent blank nodes.
- * @param newMap the new map to store the new hash in.
+ * @param namer the canonical bnode namer.
+ *
+ * @return the new hash.
  */
-function _hashStatements(bnode, statements, oldMap, newMap) {
+function _hashStatements(statements, namer) {
   // serialize all statements
   var triples = [];
   for(var i in statements) {
@@ -1562,8 +1612,9 @@ function _hashStatements(bnode, statements, oldMap, newMap) {
       triple += '_:a ';
     }
     else if(statement.s.indexOf('_:') === 0) {
-      var hash = oldMap[statement.s];
-      triple += '_:' + hash + ' ';
+      var id = statement.s;
+      id = namer.isNamed(id) ? namer.getName(id) : '_:z';
+      triple += id + ' ';
     }
     else {
       triple += '<' + statement.s + '>';
@@ -1578,8 +1629,9 @@ function _hashStatements(bnode, statements, oldMap, newMap) {
         triple += '_:a ';
       }
       else {
-        var hash = oldMap[statement.o['@id']];
-        triple += '_:' + hash + ' ';
+        var id = statement.o['@id'];
+        id = namer.isNamed(id) ? namer.getName(id) : '_:z';
+        triple += id + ' ';
       }
     }
     else if(_isString(statement.o)) {
@@ -1607,83 +1659,147 @@ function _hashStatements(bnode, statements, oldMap, newMap) {
   // sort serialized triples
   triples.sort();
 
-  // hash triples and store result in new map
-  newMap[bnode] = sha1.hash(triples);
+  // return hashed triples
+  return sha1.hash(triples);
 }
 
 /**
- * Recursively canonically names blank nodes.
+ * Produces a hash for the paths of adjacent bnodes for a bnode,
+ * incorporating all information about its subgraph of bnodes. This
+ * method will recursively pick adjacent bnode permutations that produce the
+ * lexicographically-least 'path' serializations.
  *
- * @param bnodes the statements about blank nodes.
- * @param map the map of bnode name => hash.
- * @param namer the blank node namer.
- * @param bnode the next bnode to name, null if this is the root call.
+ * @param bnodes the map of bnode statements.
+ * @param statements the statements for the bnode to produce the hash for.
+ * @param namer the canonical bnode namer.
+ * @param pathNamer the namer used to assign names to adjacent bnodes.
+ *
+ * @return an object with the hash and the pathNamer used.
  */
-function _nameBlankNode(bnodes, map, namer, bnode) {
-  // skip blank nodes that are already named
-  if(bnode !== null && namer.isNamed(bnode)) {
-    return;
-  }
-
-  if(bnode === null) {
-    // get all hashes
-    var hashes = [];
-    for(var bnode in map) {
-      var hash = map[bnode];
-      hashes.push({hash: hash, bnode: bnode});
+function _hashPaths(bnodes, statements, namer, pathNamer) {
+  // group adjacent bnodes by hash, keep properties and references separate
+  var groups = {};
+  for(var i in statements) {
+    var statement = statements[i];
+    var bnode = null;
+    var direction = null;
+    if(statement.s !== '_:a' && statement.s.indexOf('_:') === 0) {
+      bnode = statement.s;
+      direction = 'p';
+    }
+    else {
+      bnode = _getBlankNodeName(statement.o);
+      direction = 'r';
     }
 
-    // sort hashes
-    hashes.sort(function(a, b) {
-      return (a.hash < b.hash) ? -1 : ((a.hash > b.hash) ? 1 : 0);
-    });
-  }
-  else {
-    // name blank node
-    namer.getName(bnode);
-
-    // get hashes from statements for the blank node, separated into
-    // different lists for properties vs. references
-    var props = [];
-    var refs = [];
-    var statements = bnodes[bnode];
-    for(var i in statements) {
-      var statement = statements[i];
-      var list = null;
-      // try to get blank node in object position
-      bnode = _getBlankNodeName(statement.o);
-      if(bnode !== null) {
-        list = props;
+    if(bnode) {
+      // get bnode name (try canonical, path, then hash)
+      var name;
+      if(namer.isNamed(bnode)) {
+        name = namer.getName(bnode);
+      }
+      else if(pathNamer.isNamed(bnode)) {
+        name = pathNamer.getName(bnode);
       }
       else {
-        // try to get blank node in subject position
-        bnode = _getBlankNodeName(statement.s);
-        if(bnode !== null) {
-          list = refs;
+        name = _hashStatements(bnodes[bnode], namer);
+      }
+
+      // hash direction, property, and bnode name/hash
+      var md = sha1.create();
+      md.update(direction);
+      md.update(statement.p);
+      md.update(name);
+      var groupHash = md.digest();
+
+      // add bnode to hash group
+      if(groupHash in groups) {
+        groups[groupHash].push(bnode);
+      }
+      else {
+        groups[groupHash] = [bnode];
+      }
+    }
+  }
+
+  // create SHA-1 digest
+  var md = sha1.create();
+
+  // iterate over groups in sorted hash order
+  var groupHashes = Object.keys(groups).sort();
+  for(var i in groupHashes) {
+    // digest group hash
+    var groupHash = groupHashes[i];
+    md.update(groupHash);
+
+    // FIXME: do each permutation asynchronously
+    var chosenPath = null;
+    var chosenNamer = null;
+    var permutator = new Permutator(groups[groupHash]);
+    while(permutator.hasNext()) {
+      var permutation = permutator.next();
+      var pathNamerCopy = pathNamer.clone();
+
+      // build adjacent path
+      var path = '';
+      var skipped = false;
+      var recurse;
+      for(var n in permutation) {
+        var bnode = permutation[n];
+        recurse = [];
+
+        // use canonical name if available
+        if(namer.isNamed(bnode)) {
+          path += namer.getName(bnode);
+        }
+        else {
+          // recurse if bnode isn't named in the path yet
+          if(!pathNamerCopy.isNamed(bnode)) {
+            recurse.push(bnode);
+          }
+          path += pathNamerCopy.getName(bnode);
+        }
+
+        // skip permutation if path is already >= chosen path
+        if(chosenPath !== null && path.length >= chosenPath.length &&
+          path > chosenPath) {
+          skipped = true;
+          break;
         }
       }
-      if(list) {
-        var hash = map[bnode];
-        list.push({hash: hash, bnode: bnode});
+
+      // recurse
+      if(!skipped) {
+        for(var n in recurse) {
+          var bnode = recurse[n];
+          var result = _hashPaths(bnodes, bnodes[bnode], namer, pathNamerCopy);
+          path += pathNamerCopy.getName(bnode) + '<' + result.hash + '>';
+          pathNamerCopy = result.pathNamer;
+
+          // skip permutation if path is already >= chosen path
+          if(chosenPath !== null && path.length >= chosenPath.length &&
+            path > chosenPath) {
+            skipped = true;
+            break;
+          }
+        }
+      }
+
+      if(!skipped && (chosenPath === null || path < chosenPath)) {
+        chosenPath = path;
+        chosenNamer = pathNamerCopy;
       }
     }
 
-    // sort hash lists independently
-    props.sort(function(a, b) {
-      return (a.hash < b.hash) ? -1 : ((a.hash > b.hash) ? 1 : 0);
-    });
-    refs.sort(function(a, b) {
-      return (a.hash < b.hash) ? -1 : ((a.hash > b.hash) ? 1 : 0);
-    });
+    // digest chosen path
+    md.update(chosenPath);
 
-    // concatenate lists
-    var hashes = props.concat(refs);
+    // update namer
+    pathNamer = chosenNamer;
   }
 
-  // recursively name blank nodes
-  for(var i in hashes) {
-    _nameBlankNode(bnodes, map, namer, hashes[i].bnode);
-  }
+  // return SHA-1 digest and path namer
+  return {hash: md.digest(), pathNamer: pathNamer};
 }
 
 /**
@@ -1755,7 +1871,9 @@ function _getFramingSubjects(state, input, namer, name) {
       var objects = input[prop];
       // preserve list
       if(_isListValue(objects, state.keywords)) {
-        jsonld.addValue(subject, prop, {kwlist: []});
+        var list = {};
+        list[kwlist] = [];
+        jsonld.addValue(subject, prop, list);
         objects = objects[kwlist];
       }
       var useArray = _isArray(objects);
@@ -1826,8 +1944,9 @@ function _frame(state, subjects, frame, parent, property) {
   var embedOn = _getFrameFlag(state, frame, options, 'embed');
   var explicitOn = _getFrameFlag(state, frame, options, 'explicit');
 
-  // get keyword for @id
+  // get keywords for @id, @list
   var kwid = state.keywords['@id'];
+  var kwlist = state.keywords['@list'];
 
   // add matches to output
   for(var id in matches) {
@@ -1900,8 +2019,10 @@ function _frame(state, subjects, frame, parent, property) {
         var objects = subject[prop];
         // preserve list
         if(_isListValue(objects, state.keywords)) {
-          jsonld.addValue(output, prop, {'@list': []});
-          objects = objects['@list'];
+          var list = {};
+          list[kwlist] = [];
+          jsonld.addValue(output, prop, list);
+          objects = objects[kwlist];
         }
         objects = _isArray(objects) ? objects : [objects];
         for(var i in objects) {
@@ -2071,13 +2192,16 @@ function _filterSubject(state, subject, frame) {
  */
 function _embedValues(state, subject, property, output) {
   var kwid = state.keywords['@id'];
+  var kwlist = state.keywords['@list'];
 
   // normalize to an array
   var objects = subject[property];
   // preserve list
   if(_isListValue(objects, state.keywords)) {
-    jsonld.addValue(output, property, {'@list': []});
-    objects = objects['@list'];
+    var list = {};
+    list[kwlist] = [];
+    jsonld.addValue(output, property, list);
+    objects = objects[kwlist];
   }
   objects = _isArray(objects) ? objects : [objects];
   for(var i in objects) {
@@ -2462,6 +2586,7 @@ function _getKeywords(ctx) {
  * @return true if the value is a keyword, false if not.
  */
 function _isKeyword(keywords, value, specific) {
+  // FIXME: do 'in' on keywords instead
   switch(value) {
   case '@container':
   case '@default':
@@ -2922,26 +3047,38 @@ if(!Object.keys) {
 }
 
 /**
- * Creates a new BlankNodeNamer. A BlankNodeNamer issues blank node names
- * to blank nodes, keeping track of any previously issued names.
+ * Creates a new UniqueNamer. A UniqueNamer issues unique names, keeping
+ * track of any previously issued names.
  *
- * @param prefix the prefix to use ('_:<prefix>').
+ * @param prefix the prefix to use ('<prefix><counter>').
  */
-var BlankNodeNamer = function(prefix) {
-  this.prefix = '_:' + prefix;
+var UniqueNamer = function(prefix) {
+  this.prefix = prefix;
   this.counter = 0;
   this.existing = {};
 };
 
 /**
- * Gets the new blank node name for the given old name, where if no old name
- * is given a new name will be generated.
+ * Copies this UniqueNamer.
+ *
+ * @return a copy of this UniqueNamer.
+ */
+UniqueNamer.prototype.clone = function() {
+  var copy = new UniqueNamer(this.prefix);
+  copy.counter = this.counter;
+  copy.existing = _clone(this.existing);
+  return copy;
+};
+
+/**
+ * Gets the new name for the given old name, where if no old name is given
+ * a new name will be generated.
  *
  * @param [oldName] the old name to get the new name for.
  *
  * @return the new name.
  */
-BlankNodeNamer.prototype.getName = function(oldName) {
+UniqueNamer.prototype.getName = function(oldName) {
   // return existing old name
   if(oldName && oldName in this.existing) {
     return this.existing[oldName];
@@ -2969,12 +3106,109 @@ BlankNodeNamer.prototype.getName = function(oldName) {
  *
  * @return true if the oldName has been assigned a new name, false if not.
  */
-BlankNodeNamer.prototype.isNamed = function(oldName) {
+UniqueNamer.prototype.isNamed = function(oldName) {
   return (oldName in this.existing);
+};
+
+/**
+ * A Permutator iterates over all possible permutations of the given array
+ * of elements.
+ *
+ * @param list the array of elements to iterate over.
+ */
+Permutator = function(list) {
+  // original array
+  this.list = list.sort();
+  // indicates whether there are more permutations
+  this.done = false;
+  // directional info for permutation algorithm
+  this.left = {};
+  for(var i in list) {
+    this.left[list[i]] = true;
+  }
+};
+
+/**
+ * Returns true if there is another permutation.
+ *
+ * @return true if there is another permutation, false if not.
+ */
+Permutator.prototype.hasNext = function() {
+  return !this.done;
+};
+
+/**
+ * Gets the next permutation. Call hasNext() to ensure there is another one
+ * first.
+ *
+ * @return the next permutation.
+ */
+Permutator.prototype.next = function() {
+  // copy current permutation
+  var rval = this.list.slice();
+
+  /* Calculate the next permutation using the Steinhaus-Johnson-Trotter
+   permutation algorithm. */
+
+  // get largest mobile element k
+  // (mobile: element is greater than the one it is looking at)
+  var k = null;
+  var pos = 0;
+  var length = this.list.length;
+  for(var i = 0; i < length; ++i) {
+    var element = this.list[i];
+    var left = this.left[element];
+    if((k === null || element > k) &&
+      ((left && i > 0 && element > this.list[i - 1]) ||
+      (!left && i < (length - 1) && element > this.list[i + 1]))) {
+      k = element;
+      pos = i;
+    }
+  }
+
+  // no more permutations
+  if(k === null) {
+    this.done = true;
+  }
+  else {
+    // swap k and the element it is looking at
+    var swap = this.left[k] ? pos - 1 : pos + 1;
+    this.list[pos] = this.list[swap];
+    this.list[swap] = k;
+
+    // reverse the direction of all elements larger than k
+    for(var i = 0; i < length; ++i) {
+      if(this.list[i] > k) {
+        this.left[this.list[i]] = !this.left[this.list[i]];
+      }
+    }
+  }
+
+  return rval;
 };
 
 // SHA-1 API
 var sha1 = jsonld.sha1 = {};
+
+if(_nodejs) {
+  var crypto = require('crypto');
+  sha1.create = function() {
+    var md = crypto.createHash('sha1');
+    return {
+      update: function(data) {
+        md.update(data, 'utf8');
+      },
+      digest: function() {
+        return md.digest('hex');
+      }
+    };
+  };
+}
+else {
+  sha1.create = function() {
+    return new sha1.MessageDigest();
+  };
+}
 
 /**
  * Hashes the given array of triples and returns its hexadecimal SHA-1 message
@@ -2984,25 +3218,13 @@ var sha1 = jsonld.sha1 = {};
  *
  * @return the hexadecimal SHA-1 message digest.
  */
-if(_nodejs) {
-  var crypto = require('crypto');
-  sha1.hash = function(triples) {
-    var md = crypto.createHash('sha1');
-    for(var i in triples) {
-      md.update(triples[i], 'utf8');
-    }
-    return md.digest('hex');
-  };
-}
-else {
-  sha1.hash = function(triples) {
-    var md = new sha1.MessageDigest();
-    for(var i in triples) {
-      md.update(triples[i]);
-    }
-    return md.digest();
-  };
-}
+sha1.hash = function(triples) {
+  var md = sha1.create();
+  for(var i in triples) {
+    md.update(triples[i]);
+  }
+  return md.digest();
+};
 
 // only define sha1 MessageDigest for non-nodejs
 if(!_nodejs) {
