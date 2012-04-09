@@ -1752,7 +1752,7 @@ function _hashPaths(bnodes, statements, namer, pathNamer, callback) {
       // hash direction, property, and bnode name/hash
       var md = sha1.create();
       md.update(direction);
-      md.update(statement.p);
+      md.update((statement.p === '@type') ? RDF.type : statement.p);
       md.update(name);
       var groupHash = md.digest();
 
