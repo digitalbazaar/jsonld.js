@@ -294,14 +294,8 @@ jsonld.normalize = function(input, callback) {
         'jsonld.NormalizeError', {cause: err}));
     }
 
-    try {
-      // do normalization
-      var normalized = new Processor().normalize(expanded);
-      callback(null, normalized);
-    }
-    catch(ex) {
-      callback(ex);
-    }
+    // do normalization
+    new Processor().normalize(expanded, callback);
   });
 };
 
@@ -1186,10 +1180,9 @@ Processor.prototype.frame = function(input, frame, ctx, options) {
  * Performs JSON-LD normalization.
  *
  * @param input the expanded JSON-LD object to normalize.
- *
- * @return the normalized output.
+ * @param callback(err, normalized) called once the operation completes.
  */
-Processor.prototype.normalize = function(input) {
+Processor.prototype.normalize = function(input, callback) {
   // get statements
   var namer = new UniqueNamer('_:t');
   var bnodes = {};
@@ -1199,18 +1192,22 @@ Processor.prototype.normalize = function(input) {
   // create canonical namer
   namer = new UniqueNamer('_:c14n');
 
-  // continue to hash bnode statements while bnodes are assigned names
-  var unnamed;
-  var nextUnnamed = Object.keys(bnodes);
-  var duplicates;
-  do {
-    unnamed = nextUnnamed;
-    nextUnnamed = [];
-    duplicates = {};
+  // generates unique and duplicate hashes for bnodes
+  hashBlankNodes(Object.keys(bnodes));
+  function hashBlankNodes(unnamed) {
+    var nextUnnamed = [];
+    var duplicates = {};
     var unique = {};
-    for(var i in unnamed) {
-      // FIXME: do asynchronously
-      // hash statements for each unnamed bnode
+
+    // hash statements for each unnamed bnode
+    setTimeout(function() {hashUnnamed(0);}, 0);
+    function hashUnnamed(i) {
+      if(i === unnamed.length) {
+        // done, name blank nodes
+        return nameBlankNodes(unique, duplicates, nextUnnamed);
+      }
+
+      // hash unnamed bnode
       var bnode = unnamed[i];
       var statements = bnodes[bnode];
       var hash = _hashStatements(statements, namer);
@@ -1229,102 +1226,132 @@ Processor.prototype.normalize = function(input) {
       else {
         unique[hash] = bnode;
       }
-    }
 
+      // hash next unnamed bnode
+      hashUnnamed(i + 1);
+    }
+  }
+
+  // names unique hash bnodes
+  function nameBlankNodes(unique, duplicates, unnamed) {
     // name unique bnodes in sorted hash order
+    var named = false;
     var hashes = Object.keys(unique).sort();
     for(var i in hashes) {
       var bnode = unique[hashes[i]];
       namer.getName(bnode);
+      named = true;
+    }
+
+    // continue to hash bnodes if a bnode was assigned a name
+    if(named) {
+      hashBlankNodes(unnamed);
+    }
+    // name the duplicate hash bnodes
+    else {
+      nameDuplicates(duplicates);
     }
   }
-  while(unnamed.length > nextUnnamed.length);
 
-  // enumerate duplicate hash groups in sorted order
-  var hashes = Object.keys(duplicates).sort();
-  for(var i in hashes) {
-    // process group until every bnode is named
-    var group = duplicates[hashes[i]];
-    var unnamed = group.length;
-    while(unnamed > 0) {
-      unnamed = 0;
-      var first = null;
-      for(var n in group) {
+  // names duplicate hash bnodes
+  function nameDuplicates(duplicates) {
+    // enumerate duplicate hash groups in sorted order
+    var hashes = Object.keys(duplicates).sort();
+
+    // process each group until every bnode member is named
+    processGroup(0);
+    function processGroup(i) {
+      if(i === hashes.length) {
+        // done, create JSON-LD array
+        return createArray();
+      }
+
+      // name each group member
+      var unnamed = 0;
+      var group = duplicates[hashes[i]];
+      var member = null;
+      nameGroupMember(group, 0);
+      function nameGroupMember(group, n) {
+        if(n === group.length) {
+          if(member) {
+            // name all bnodes in its path namer in key-entry-order
+            // Note: key-order is preserved in javascript
+            for(var key in member.pathNamer.existing) {
+              namer.getName(key);
+            }
+          }
+
+          // reprocess group if a bnode is still unnamed
+          return processGroup((unnamed > 0) ? i : i + 1);
+        }
+
         // skip already-named bnodes
         var bnode = group[n];
         if(namer.isNamed(bnode)) {
-          continue;
+          return nameGroupMember(group, n + 1);
         }
 
         // bnode is unnamed
         unnamed += 1;
 
-        // FIXME: do asynchronously
         // hash bnode paths
         var pathNamer = new UniqueNamer('_:t');
         pathNamer.getName(bnode);
-        var result = _hashPaths(bnodes, bnodes[bnode], namer, pathNamer);
-        result.bnode = bnode;
-        if(first === null || result.hash < first.hash) {
-          first = result;
-        }
+        _hashPaths(bnodes, bnodes[bnode], namer, pathNamer,
+          function(err, result) {
+            if(member === null || result.hash < member.hash) {
+              member = result;
+            }
+            nameGroupMember(group, n + 1);
+          });
       }
-
-      if(first) {
-        // name first bnode
-        namer.getName(first.bnode);
-
-        // name all bnodes in its path namer in key-entry-order
-        // Note: key-order is preserved in javascript
-        for(var key in first.pathNamer.existing) {
-          namer.getName(key);
-        }
-      }
-    }
+    };
   }
 
-  // create JSON-LD array
-  var normalized = [];
+  // creates the normalized JSON-LD array
+  function createArray() {
+    var normalized = [];
 
-  // add all bnodes
-  for(var id in bnodes) {
-    // add all property statements to bnode
-    var name = namer.getName(id);
-    var bnode = {'@id': name};
-    var statements = bnodes[id];
-    for(var i in statements) {
-      var statement = statements[i];
-      if(statement.s === '_:a') {
+    // add all bnodes
+    for(var id in bnodes) {
+      // add all property statements to bnode
+      var name = namer.getName(id);
+      var bnode = {'@id': name};
+      var statements = bnodes[id];
+      for(var i in statements) {
+        var statement = statements[i];
+        if(statement.s === '_:a') {
+          var z = _getBlankNodeName(statement.o);
+          var o = z ? {'@id': namer.getName(z)} : statement.o;
+          jsonld.addValue(bnode, statement.p, o, true);
+        }
+      }
+      normalized.push(bnode);
+    }
+
+    // add all non-bnodes
+    for(var id in subjects) {
+      // add all statements to subject
+      var subject = {'@id': id};
+      var statements = subjects[id];
+      for(var i in statements) {
+        var statement = statements[i];
         var z = _getBlankNodeName(statement.o);
         var o = z ? {'@id': namer.getName(z)} : statement.o;
-        jsonld.addValue(bnode, statement.p, o, true);
+        jsonld.addValue(subject, statement.p, o, true);
       }
+      normalized.push(subject);
     }
-    normalized.push(bnode);
+
+    // sort normalized output by @id
+    normalized.sort(function(a, b) {
+      a = a['@id'];
+      b = b['@id'];
+      return (a < b) ? -1 : ((a > b) ? 1 : 0);
+    });
+
+    callback(null, normalized);
   }
-
-  // add all non-bnodes
-  for(var id in subjects) {
-    // add all statements to subject
-    var subject = {'@id': id};
-    var statements = subjects[id];
-    for(var i in statements) {
-      var statement = statements[i];
-      var z = _getBlankNodeName(statement.o);
-      var o = z ? {'@id': namer.getName(z)} : statement.o;
-      jsonld.addValue(subject, statement.p, o, true);
-    }
-    normalized.push(subject);
-  }
-
-  // sort normalized output by @id
-  normalized.sort(function(a, b) {
-    a = a['@id'];
-    b = b['@id'];
-    return (a < b) ? -1 : ((a > b) ? 1 : 0);
-  });
-
-  return normalized;
 };
 
 /**
@@ -1673,13 +1700,24 @@ function _hashStatements(statements, namer) {
  * @param statements the statements for the bnode to produce the hash for.
  * @param namer the canonical bnode namer.
  * @param pathNamer the namer used to assign names to adjacent bnodes.
- *
- * @return an object with the hash and the pathNamer used.
+ * @param callback(err, result) called once the operation completes.
  */
-function _hashPaths(bnodes, statements, namer, pathNamer) {
+function _hashPaths(bnodes, statements, namer, pathNamer, callback) {
+  // create SHA-1 digest
+  var md = sha1.create();
+
   // group adjacent bnodes by hash, keep properties and references separate
   var groups = {};
-  for(var i in statements) {
+  var cache = {};
+  var groupHashes;
+  setTimeout(function() {groupNodes(0);}, 0);
+  function groupNodes(i) {
+    if(i === statements.length) {
+      // done, hash groups
+      groupHashes = Object.keys(groups).sort();
+      return hashGroup(0);
+    }
+
     var statement = statements[i];
     var bnode = null;
     var direction = null;
@@ -1701,8 +1739,12 @@ function _hashPaths(bnodes, statements, namer, pathNamer) {
       else if(pathNamer.isNamed(bnode)) {
         name = pathNamer.getName(bnode);
       }
+      else if(bnode in cache) {
+        name = cache[bnode];
+      }
       else {
         name = _hashStatements(bnodes[bnode], namer);
+        cache[bnode] = name;
       }
 
       // hash direction, property, and bnode name/hash
@@ -1720,29 +1762,32 @@ function _hashPaths(bnodes, statements, namer, pathNamer) {
         groups[groupHash] = [bnode];
       }
     }
+
+    groupNodes(i + 1);
   }
 
-  // create SHA-1 digest
-  var md = sha1.create();
+  // hashes a group of adjacent bnodes
+  function hashGroup(i) {
+    if(i === groupHashes.length) {
+      // done, return SHA-1 digest and path namer
+      return callback(null, {hash: md.digest(), pathNamer: pathNamer});
+    }
 
-  // iterate over groups in sorted hash order
-  var groupHashes = Object.keys(groups).sort();
-  for(var i in groupHashes) {
     // digest group hash
     var groupHash = groupHashes[i];
     md.update(groupHash);
 
-    // FIXME: do each permutation asynchronously
+    // choose a path and namer from the permutations
     var chosenPath = null;
     var chosenNamer = null;
     var permutator = new Permutator(groups[groupHash]);
-    while(permutator.hasNext()) {
+    setTimeout(function() {permutate();}, 0);
+    function permutate() {
       var permutation = permutator.next();
       var pathNamerCopy = pathNamer.clone();
 
       // build adjacent path
       var path = '';
-      var skipped = false;
       var recurse;
       for(var n in permutation) {
         var bnode = permutation[n];
@@ -1763,43 +1808,58 @@ function _hashPaths(bnodes, statements, namer, pathNamer) {
         // skip permutation if path is already >= chosen path
         if(chosenPath !== null && path.length >= chosenPath.length &&
           path > chosenPath) {
-          skipped = true;
-          break;
+          return nextPermutation(true);
         }
       }
 
-      // recurse
-      if(!skipped) {
-        for(var n in recurse) {
-          var bnode = recurse[n];
-          var result = _hashPaths(bnodes, bnodes[bnode], namer, pathNamerCopy);
-          path += pathNamerCopy.getName(bnode) + '<' + result.hash + '>';
-          pathNamerCopy = result.pathNamer;
-
-          // skip permutation if path is already >= chosen path
-          if(chosenPath !== null && path.length >= chosenPath.length &&
-            path > chosenPath) {
-            skipped = true;
-            break;
-          }
+      // does the next recursion
+      nextRecursion(0);
+      function nextRecursion(n) {
+        if(n === recurse.length) {
+          // done, do next permutation
+          return nextPermutation(false);
         }
+
+        // do recursion
+        var bnode = recurse[n];
+        _hashPaths(bnodes, bnodes[bnode], namer, pathNamerCopy,
+          function(err, result) {
+            path += pathNamerCopy.getName(bnode) + '<' + result.hash + '>';
+            pathNamerCopy = result.pathNamer;
+
+            // skip permutation if path is already >= chosen path
+            if(chosenPath !== null && path.length >= chosenPath.length &&
+              path > chosenPath) {
+              return nextPermutation(true);
+            }
+
+            // do next recursion
+            nextRecursion(n + 1);
+          });
       }
 
-      if(!skipped && (chosenPath === null || path < chosenPath)) {
-        chosenPath = path;
-        chosenNamer = pathNamerCopy;
+      // stores the results of this permutation and runs the next
+      function nextPermutation(skipped) {
+        if(!skipped && (chosenPath === null || path < chosenPath)) {
+          chosenPath = path;
+          chosenNamer = pathNamerCopy;
+        }
+
+        // do next permutation
+        if(permutator.hasNext()) {
+          permutate();
+        }
+        else {
+          // digest chosen path and update namer
+          md.update(chosenPath);
+          pathNamer = chosenNamer;
+
+          // hash the next group
+          hashGroup(i + 1);
+        }
       }
     }
-
-    // digest chosen path
-    md.update(chosenPath);
-
-    // update namer
-    pathNamer = chosenNamer;
   }
-
-  // return SHA-1 digest and path namer
-  return {hash: md.digest(), pathNamer: pathNamer};
 }
 
 /**
