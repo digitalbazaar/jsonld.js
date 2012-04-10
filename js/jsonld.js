@@ -1229,7 +1229,7 @@ Processor.prototype.normalize = function(input, callback) {
       }
 
       // hash next unnamed bnode
-      hashUnnamed(i + 1);
+      setTimeout(function() {hashUnnamed(i + 1);}, 0);
     }
   }
 
@@ -1259,7 +1259,7 @@ Processor.prototype.normalize = function(input, callback) {
     // enumerate duplicate hash groups in sorted order
     var hashes = Object.keys(duplicates).sort();
 
-    // process each group until every bnode member is named
+    // process each group
     processGroup(0);
     function processGroup(i) {
       if(i === hashes.length) {
@@ -1268,22 +1268,25 @@ Processor.prototype.normalize = function(input, callback) {
       }
 
       // name each group member
-      var unnamed = 0;
       var group = duplicates[hashes[i]];
-      var member = null;
+      var results = [];
       nameGroupMember(group, 0);
       function nameGroupMember(group, n) {
         if(n === group.length) {
-          if(member) {
-            // name all bnodes in its path namer in key-entry-order
+          // name bnodes in hash order
+          results.sort(function(a, b) {
+            a = a.hash;
+            b = b.hash;
+            return (a < b) ? -1 : ((a > b) ? 1 : 0);
+          });
+          for(var r in results) {
+            // name all bnodes in path namer in key-entry order
             // Note: key-order is preserved in javascript
-            for(var key in member.pathNamer.existing) {
+            for(var key in results[r].pathNamer.existing) {
               namer.getName(key);
             }
           }
-
-          // reprocess group if a bnode is still unnamed
-          return processGroup((unnamed > 0) ? i : i + 1);
+          return processGroup(i + 1);
         }
 
         // skip already-named bnodes
@@ -1292,17 +1295,15 @@ Processor.prototype.normalize = function(input, callback) {
           return nameGroupMember(group, n + 1);
         }
 
-        // bnode is unnamed
-        unnamed += 1;
-
         // hash bnode paths
         var pathNamer = new UniqueNamer('_:t');
         pathNamer.getName(bnode);
         _hashPaths(bnodes, bnodes[bnode], namer, pathNamer,
           function(err, result) {
-            if(member === null || result.hash < member.hash) {
-              member = result;
+            if(err) {
+              return callback(err);
             }
+            results.push(result);
             nameGroupMember(group, n + 1);
           });
       }
@@ -1765,7 +1766,7 @@ function _hashPaths(bnodes, statements, namer, pathNamer, callback) {
       }
     }
 
-    groupNodes(i + 1);
+    setTimeout(function() {groupNodes(i + 1);}, 0);
   }
 
   // hashes a group of adjacent bnodes
@@ -1826,6 +1827,9 @@ function _hashPaths(bnodes, statements, namer, pathNamer, callback) {
         var bnode = recurse[n];
         _hashPaths(bnodes, bnodes[bnode], namer, pathNamerCopy,
           function(err, result) {
+            if(err) {
+              return callback(err);
+            }
             path += pathNamerCopy.getName(bnode) + '<' + result.hash + '>';
             pathNamerCopy = result.pathNamer;
 
@@ -1849,7 +1853,7 @@ function _hashPaths(bnodes, statements, namer, pathNamer, callback) {
 
         // do next permutation
         if(permutator.hasNext()) {
-          permutate();
+          setTimeout(function() {permutate();}, 0);
         }
         else {
           // digest chosen path and update namer
