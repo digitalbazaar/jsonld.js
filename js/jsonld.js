@@ -1046,12 +1046,8 @@ Processor.prototype.expand = function(ctx, property, value) {
         return null;
       }
 
-      // invalid input if @list points at a non-array
-      if(!_isArray(value)) {
-        throw new JsonLdError(
-          'Invalid JSON-LD syntax; "@list" value must be an array or null.',
-          'jsonld.SyntaxError');
-      }
+      // arrayify @list
+      value = _isArray(value) ? value : [value];
     }
 
     // recurse through array
@@ -1097,11 +1093,12 @@ Processor.prototype.expand = function(ctx, property, value) {
       ctx = this.mergeContexts(ctx, value['@context']);
     }
 
+    // FIXME: need to check for @graph or an alias, not just one
     // optimize away use of @graph
     var keywords = _getKeywords(ctx);
     var kwgraph = keywords['@graph'];
-    if('@graph' in value) {
-      return this.expand(ctx, property, value['@graph']);
+    if(kwgraph in value) {
+      return this.expand(ctx, property, value[kwgraph]);
     }
 
     // recurse into object
@@ -2440,7 +2437,7 @@ function _optimalTypeCompact(ctx, property, value, optimizeCtx) {
     }
 
     // no type or type difference, can't compact
-    if(type === null || !_compareTypes(type, vtype)) {
+    if(type === null || type !== vtype) {
       return value;
     }
   }
@@ -2652,26 +2649,12 @@ function _getKeywords(ctx) {
  * @return true if the value is a keyword, false if not.
  */
 function _isKeyword(keywords, value, specific) {
-  // FIXME: do 'in' on keywords instead
-  switch(value) {
-  case '@container':
-  case '@default':
-  case '@embed':
-  case '@explicit':
-  case '@graph':
-  case '@id':
-  case '@language':
-  case '@list':
-  case '@omitDefault':
-  case '@set':
-  case '@type':
-  case '@value':
+  if(value in keywords) {
     return _isUndefined(specific) ? true : (value === specific);
-  default:
-    for(var key in keywords) {
-      if(value === keywords[key]) {
-        return _isUndefined(specific) ? true : (key === specific);
-      }
+  }
+  for(var key in keywords) {
+    if(value === keywords[key]) {
+      return _isUndefined(specific) ? true : (key === specific);
     }
   }
   return false;
@@ -2895,35 +2878,6 @@ function _canTypeCompact(value) {
 }
 
 /**
- * Compares types for equality. The given types can be arrays or strings, and
- * it is assumed that they are all in the same expanded/compacted state. If
- * both types are the same or, in the case of arrays of types, if both type
- * arrays contain the same types, they are equal.
- *
- * @param type1 the first type(s) to compare.
- * @param type2 the second types(s) to compare.
- *
- * @return true if the types are equal, false if not.
- */
-function _compareTypes(type1, type2) {
-  // normalize to arrays
-  type1 = _isArray(type1) ? type1.sort() : [type1];
-  type2 = _isArray(type2) ? type2.sort() : [type2];
-
-  if(type1.length !== type2.length) {
-    return false;
-  }
-
-  for(var i in type1) {
-    if(type1[i] !== type2[i]) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-/**
  * Returns true if the given value is an absolute IRI, false if not.
  *
  * @param value the value to check.
@@ -2931,7 +2885,7 @@ function _compareTypes(type1, type2) {
  * @return true if the value is an absolute IRI, false if not.
  */
 function _isAbsoluteIri(value) {
-  return /(\w+):\/\/(.+)/.test(value);
+  return (/\w+:\/\/.+/).test(value);
 }
 
 /**
