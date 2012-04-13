@@ -121,7 +121,7 @@ jsonld.compact = function(input, ctx) {
 
       if(_isArray(compacted)) {
         // use '@graph' keyword
-        var kwgraph = _getKeywords(ctx)['@graph'];
+        var kwgraph = _compactIri(ctx, '@graph');
         var graph = compacted;
         compacted = {'@context': ctx};
         compacted[kwgraph] = graph;
@@ -166,7 +166,14 @@ jsonld.expand = function(input) {
     }
     try {
       // do expansion
-      var expanded = new Processor().expand({}, null, input);
+      var expanded = new Processor().expand({}, null, input, false);
+
+      // optimize away @graph with no other properties
+      if(_isObject(expanded) && ('@graph' in expanded) &&
+        Object.keys(expanded).length === 1) {
+        expanded = expanded['@graph'];
+      }
+      // normalize to an array
       if(!_isArray(expanded)) {
         expanded = [expanded];
       }
@@ -520,39 +527,24 @@ jsonld.addValue = function(subject, property, value, propertyIsArray) {
   propertyIsArray = _isUndefined(propertyIsArray) ? false : propertyIsArray;
 
   if(_isArray(value)) {
+    if(value.length === 0 && propertyIsArray && !(property in subject)) {
+      subject[property] = [];
+    }
     for(var i in value) {
       jsonld.addValue(subject, property, value[i], propertyIsArray);
-    }
-  }
-  else if(_isListValue(value)) {
-    // create list
-    if(!(property in subject)) {
-      subject[property] = {'@list': []};
-    }
-    // add list values
-    var list = value['@list'];
-    for(var i in list) {
-      jsonld.addValue(subject, property, list[i]);
     }
   }
   else if(property in subject) {
     var hasValue = jsonld.hasValue(subject, property, value);
 
     // make property an array if value not present or always an array
-    var isList = _isListValue(subject[property]);
-    if(!_isArray(subject[property]) && !isList &&
-      (!hasValue || propertyIsArray)) {
+    if(!_isArray(subject[property]) && (!hasValue || propertyIsArray)) {
       subject[property] = [subject[property]];
     }
 
     // add new value
     if(!hasValue) {
-      if(isList) {
-        subject[property]['@list'].push(value);
-      }
-      else {
-        subject[property].push(value);
-      }
+      subject[property].push(value);
     }
   }
   else {
@@ -721,12 +713,17 @@ jsonld.compareNormalized = function(n1, n2) {
  * @param key the context key.
  * @param [type] the type of value to get (eg: '@id', '@type'), if not
  *          specified gets the entire entry for a key, null if not found.
- * @param [expand] true to expand the value, false not to (default: true).
+ * @param [expand] true to expand the key, false not to (default: false).
  *
  * @return the value.
  */
 jsonld.getContextValue = function(ctx, key, type, expand) {
   var rval = null;
+
+  // get default language
+  if(type === '@language' && (type in ctx)) {
+    rval = ctx[type];
+  }
 
   // return null for invalid key
   if(!key) {
@@ -755,12 +752,17 @@ jsonld.getContextValue = function(ctx, key, type, expand) {
         {context: ctx, key: key});
     }
 
-    if(rval !== null) {
-      // expand term if requested
-      expand = _isUndefined(expand) ? true : expand;
-      if(expand) {
-        rval = _expandTerm(ctx, rval);
-      }
+    // expand term
+    if(rval !== null && type !== '@language') {
+      rval = _expandTerm(ctx, rval);
+    }
+  }
+  else {
+    // expand key if requested
+    expand = _isUndefined(expand) ? true : expand;
+    if(expand) {
+      key = _expandTerm(ctx, key);
+      rval = jsonld.getContextValue(ctx, key, type, false);
     }
   }
 
@@ -779,9 +781,6 @@ jsonld.setContextValue = function(ctx, key, type, value) {
   // compact key
   key = _compactIri(ctx, key);
 
-  // get keyword for type
-  var kwtype = _getKeywords(ctx)[type];
-
   // add new key to @context or update existing key w/string value
   if(!(key in ctx) || _isString(ctx[key])) {
     if(type === '@id') {
@@ -789,12 +788,12 @@ jsonld.setContextValue = function(ctx, key, type, value) {
     }
     else {
       ctx[key] = {};
-      ctx[key][kwtype] = value;
+      ctx[key][type] = value;
     }
   }
   // update existing key w/object value
   else if(_isObject(ctx[key])) {
-    ctx[key][kwtype] = value;
+    ctx[key][type] = value;
   }
   else {
     throw new JsonLdError(
@@ -926,7 +925,7 @@ Processor.prototype.compact = function(ctx, property, value, optimizeCtx) {
 
   // replace '@graph' keyword and recurse
   if(_isObject(value) && '@graph' in value) {
-    var kwgraph = _getKeywords(ctx)['@graph'];
+    var kwgraph = _compactIri(ctx, '@graph');
     var rval = {};
     rval[kwgraph] = this.compact(ctx, property, value['@graph'], optimizeCtx);
     return rval;
@@ -966,7 +965,7 @@ Processor.prototype.compact = function(ctx, property, value, optimizeCtx) {
         // FIXME: this should just be checking for absolute IRI or keyword
         // drop unmapped and non-absolute IRI keys that aren't keywords
         if(!jsonld.getContextValue(ctx, key) && !_isAbsoluteIri(key) &&
-          !(key in keywords)) {
+          !_isKeyword(keywords, key)) {
           continue;
         }
 
@@ -1012,136 +1011,204 @@ Processor.prototype.compact = function(ctx, property, value, optimizeCtx) {
 };
 
 /**
- * Recursively expands a value using the given context. Any context in
- * the value will be removed. All context URLs must have been resolved before
- * calling this method.
+ * Recursively expands an element using the given context. Any context in
+ * the element will be removed. All context URLs must have been resolved
+ * before calling this method.
  *
  * @param ctx the context to use.
- * @param property the expanded property for the value, null for none.
- * @param value the value to expand.
+ * @param property the property for the element, null for none.
+ * @param element the element to expand.
+ * @param propertyIsList true if the property is a list, false if not.
  *
  * @return the expanded value.
  */
-Processor.prototype.expand = function(ctx, property, value) {
-  // nothing to expand when value is null
-  if(value === null) {
-    return null;
-  }
-
-  // if no property is specified and the value is a string (this means the
-  // value is a property itself), expand to an IRI
-  if(property === null && _isString(value)) {
-    return _expandTerm(ctx, value);
-  }
-
-  // recursively expand array and @list
-  var isList = _isListValue(value);
-  if(_isArray(value) || isList) {
-    // get array from @list
-    if(isList) {
-      value = value['@list'];
-
-      // nothing to expand in null case
-      if(value === null) {
-        return null;
-      }
-
-      // arrayify @list
-      value = _isArray(value) ? value : [value];
-    }
-
-    // recurse through array
+Processor.prototype.expand = function(ctx, property, element, propertyIsList) {
+  // recursively process arrays
+  if(_isArray(element)) {
     var rval = [];
-    for(var i in value) {
-      var val = value[i];
-      if(_isArray(val)) {
-        throw new JsonLdError(
-          'Invalid JSON-LD syntax; arrays of arrays are not permitted.',
-          'jsonld.SyntaxError');
-      }
-      // expand value and add if non-null
-      val = this.expand(ctx, property, val);
-      if(val !== null) {
-        rval.push(val);
-      }
-    }
-
-    // use @list if previously used or if @context indicates it is one
-    if(property !== null) {
-      var prop = _compactIri(ctx, property);
-      var container = jsonld.getContextValue(ctx, prop, '@container');
-      isList = isList || (container === '@list');
-      if(isList) {
-        rval = {'@list': rval};
-      }
-    }
-    return rval;
-  }
-
-  // optimize away use of @set
-  if(_isSetValue(value)) {
-    return this.expand(ctx, property, value['@set']);
-  }
-
-  // recursively expand object
-  if(_isObject(value)) {
-    // determine if value is a subject
-    var isSubject = _isSubject(value) || (property === null);
-
-    // if value has a context, merge it in
-    if('@context' in value) {
-      ctx = this.mergeContexts(ctx, value['@context']);
-    }
-
-    // FIXME: need to check for @graph or an alias, not just one
-    // optimize away use of @graph
-    var keywords = _getKeywords(ctx);
-    var kwgraph = keywords['@graph'];
-    if(kwgraph in value) {
-      return this.expand(ctx, property, value[kwgraph]);
-    }
-
-    // recurse into object
-    var rval = {};
-    for(var key in value) {
-      // expand non-context
-      if(key !== '@context') {
-        // expand property
-        var prop = _expandTerm(ctx, key);
-
-        // drop non-absolute IRI keys that aren't keywords
-        if(!_isAbsoluteIri(prop) && !(prop in keywords)) {
-          continue;
-        }
-
-        // syntax error if @id is not a string
-        if(prop === '@id' && !_isString(value[key])) {
+    for(var i in element) {
+      // expand element
+      var e = this.expand(ctx, property, element[i], propertyIsList);
+      if(_isArray(e) && propertyIsList) {
+        // lists of lists are illegal
+        if(propertyIsList) {
           throw new JsonLdError(
-            'Invalid JSON-LD syntax; "@id" value must a string.',
+            'Invalid JSON-LD syntax; lists of lists are not permitted.',
             'jsonld.SyntaxError');
         }
 
-        // expand value
-        var val = this.expand(ctx, prop, value[key]);
-
-        // preserve empty arrays
-        if(_isArray(val) && val.length === 0 && !(prop in rval)) {
-          rval[prop] = [];
-        }
-
-        // add non-null expanded value
-        if(val !== null) {
-          // always use array for subjects except for @id key and @list
-          var useArray = isSubject && (prop !== '@id') && !_isListValue(val);
-          jsonld.addValue(rval, prop, val, useArray);
-        }
+        // merge arrays
+        rval.splice(0, 0, e);
+      }
+      // drop null values
+      else if(e !== null) {
+        rval.push(e);
       }
     }
     return rval;
   }
 
-  // expand value
-  return _expandValue(ctx, property, value);
+  // recursively process objects
+  if(_isObject(element)) {
+    // if element has a context, merge it in
+    if('@context' in element) {
+      ctx = this.mergeContexts(ctx, element['@context']);
+    }
+
+    // get keyword aliases
+    var keywords = _getKeywords(ctx);
+
+    var rval = {};
+    for(var key in element) {
+      // skip @context
+      if(key === '@context') {
+        continue;
+      }
+
+      // expand property
+      var prop = _expandTerm(ctx, key);
+
+      // drop non-absolute IRI keys that aren't keywords
+      if(!_isAbsoluteIri(prop) && !_isKeyword(keywords, prop)) {
+        continue;
+      }
+
+      // if value is null and property is not @value, continue
+      var value = element[key];
+      if(value === null && prop !== '@value') {
+        continue;
+      }
+
+      // syntax error if @id is not a string
+      if(prop === '@id' && !_isString(value)) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; "@id" value must a string.',
+          'jsonld.SyntaxError', {value: value});
+      }
+
+      // @type must be a string, array of strings, or an empty JSON object
+      if(prop === '@type' &&
+        !(_isString(value) || _isArrayOfStrings(value) ||
+        _isEmptyObject(value))) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; "@type" value must a string, an array ' +
+          'of strings, or an empty object.',
+          'jsonld.SyntaxError', {value: value});
+      }
+
+      // @graph must be an array or an object
+      if(prop === '@graph' && !(_isObject(value) || _isArray(value))) {
+        throw new JsonLdError(
+            'Invalid JSON-LD syntax; "@value" value must not be an ' +
+            'object or an array.',
+            'jsonld.SyntaxError', {value: value});
+      }
+
+      // @value must not be an object or an array
+      if(prop === '@value' && (_isObject(value) || _isArray(value))) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; "@value" value must not be an ' +
+          'object or an array.',
+          'jsonld.SyntaxError', {value: value});
+      }
+
+      // @language must be a string
+      if(prop === '@language' && !_isString(value)) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; "@language" value must not be a string.',
+          'jsonld.SyntaxError', {value: value});
+      }
+
+      // recurse into @list, @set, or @graph, keeping the active property
+      var isList = (prop === '@list');
+      if(isList || prop === '@set' || prop === '@graph') {
+        value = this.expand(ctx, property, value, isList);
+        if(isList && _isListValue(value)) {
+          throw new JsonLdError(
+            'Invalid JSON-LD syntax; lists of lists are not permitted.',
+            'jsonld.SyntaxError');
+        }
+      }
+      else {
+        // update active property and recursively expand value
+        property = key;
+        value = this.expand(ctx, property, value, false);
+      }
+
+      // drop null values if property is not @value (dropped below)
+      if(value !== null || prop === '@value') {
+        // convert value to @list if container specifies it
+        if(prop !== '@list' && !_isListValue(value)) {
+          var container = jsonld.getContextValue(ctx, property, '@container');
+          if(container === '@list') {
+            // ensure value is an array
+            value = _isArray(value) ? value : [value];
+            value = {'@list': value};
+          }
+        }
+
+        // add value, use an array if not @id, @type, @value, or @language
+        var useArray = !(prop === '@id' || prop === '@type' ||
+          prop === '@value' || prop === '@language');
+        jsonld.addValue(rval, prop, value, useArray);
+      }
+    }
+
+    // get property count on expanded output
+    var count = Object.keys(rval).length;
+
+    // @value must only have @language or @type
+    if('@value' in rval) {
+      if((count === 2 && !('@type' in rval) && !('@language' in rval)) ||
+        count > 2) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; an element containing "@value" must have ' +
+          'at most one other property which can be "@type" or "@language".',
+          'jsonld.SyntaxError', {element: rval});
+      }
+      // value @type must be a string
+      if('@type' in rval && !_isString(rval['@type'])) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; the "@type" value of an element ' +
+          'containing "@value" must be a string.',
+          'jsonld.SyntaxError', {element: rval});
+      }
+      // return only the value of @value if there is no @type or @language
+      else if(count === 1) {
+        rval = rval['@value'];
+      }
+      // drop null @values
+      else if(rval['@value'] === null) {
+        rval = null;
+      }
+    }
+    // convert @type to an array
+    else if('@type' in rval && !_isArray(rval['@type'])) {
+      rval['@type'] = [rval['@type']];
+    }
+    // handle @set and @list
+    else if('@set' in rval || '@list' in rval) {
+      if(count !== 1) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; if an element has the property "@set" ' +
+          'or "@list", then it must be its only property.',
+          'jsonld.SyntaxError', {element: rval});
+      }
+      // optimize away @set
+      if('@set' in rval) {
+        rval = rval['@set'];
+      }
+    }
+    // drop objects with only @language
+    else if('@language' in rval && count === 1) {
+      rval = null;
+    }
+
+    return rval;
+  }
+
+  // expand element according to value expansion rules
+  return _expandValue(ctx, property, element);
 };
 
 /**
@@ -1432,7 +1499,7 @@ Processor.prototype.mergeContexts = function(ctx1, ctx2) {
  * given context.
  *
  * @param ctx the context to use.
- * @param property the expanded property the value is associated with.
+ * @param property the property the value is associated with.
  * @param value the value to expand.
  *
  * @return the expanded value.
@@ -1442,13 +1509,13 @@ function _expandValue(ctx, property, value) {
   var rval = value;
 
   // special-case expand @id and @type (skips '@id' expansion)
-  if(property === '@id' || property === '@type') {
+  var prop = _expandTerm(ctx, property);
+  if(prop === '@id' || prop === '@type') {
     rval = _expandTerm(ctx, value);
   }
   else {
     // compact property to look for its type definition in the context
-    var prop = _compactIri(ctx, property);
-    var type = jsonld.getContextValue(ctx, prop, '@type');
+    var type = jsonld.getContextValue(ctx, property, '@type');
 
     // do @id expansion
     if(type === '@id') {
@@ -1457,6 +1524,13 @@ function _expandValue(ctx, property, value) {
     // other type
     else if(type !== null) {
       rval = {'@value': String(value), '@type': type};
+    }
+    // check for language tagging
+    else {
+      var language = jsonld.getContextValue(ctx, property, '@language');
+      if(language !== null) {
+        rval = {'@value': String(value), '@language': language};
+      }
     }
   }
 
@@ -1889,10 +1963,6 @@ function _getBlankNodeName(value) {
  * @param name the name assigned to the current input if it is a bnode.
  */
 function _getFramingSubjects(state, input, namer, name) {
-  var kwgraph = state.keywords['@graph'];
-  var kwid = state.keywords['@id'];
-  var kwlist = state.keywords['@list'];
-
   // recurse through array
   if(_isArray(input)) {
     for(var i in input) {
@@ -1900,15 +1970,15 @@ function _getFramingSubjects(state, input, namer, name) {
     }
   }
   // recurse through @graph
-  else if(_isObject(input) && (kwgraph in input)) {
-    _getFramingSubjects(state, input[kwgraph], namer);
+  else if(_isObject(input) && ('@graph' in input)) {
+    _getFramingSubjects(state, input['@graph'], namer);
   }
   // input is a subject
   else if(_isObject(input)) {
     // get name for subject
     if(_isUndefined(name)) {
-      name = _isBlankNode(input, state.keywords) ?
-        namer.getName(input[kwid]) : input[kwid];
+      name = _isBlankNode(input) ?
+        namer.getName(input['@id']) : input['@id'];
     }
 
     // create new subject or merge into existing one
@@ -1933,11 +2003,11 @@ function _getFramingSubjects(state, input, namer, name) {
       // normalize objects to array
       var objects = input[prop];
       // preserve list
-      if(_isListValue(objects, state.keywords)) {
+      if(_isListValue(objects)) {
         var list = {};
-        list[kwlist] = [];
+        list['@list'] = [];
         jsonld.addValue(subject, prop, list);
-        objects = objects[kwlist];
+        objects = objects['@list'];
       }
       var useArray = _isArray(objects);
       objects = useArray ? objects : [objects];
@@ -1946,20 +2016,19 @@ function _getFramingSubjects(state, input, namer, name) {
 
         // get subject @id from expanded or compact form
         var sid = null;
-        if(_isSubject(o, state.keywords) ||
-          _isSubjectReference(o, state.keywords)) {
-          if(kwid in o) {
-            sid = o[kwid];
+        if(_isSubject(o) || _isSubjectReference(o)) {
+          if('@id' in o) {
+            sid = o['@id'];
           }
           // rename blank node subject
-          if(sid === null || o[kwid].indexOf('_:') === 0) {
+          if(sid === null || o['@id'].indexOf('_:') === 0) {
             sid = namer.getName(sid);
           }
         }
         else if(_isString(o) && isId) {
           sid = o;
           o = {};
-          o[kwid] = sid;
+          o['@id'] = sid;
         }
 
         if(sid === null) {
@@ -1974,7 +2043,7 @@ function _getFramingSubjects(state, input, namer, name) {
           }
           else {
             ref = {};
-            ref[kwid] = sid;
+            ref['@id'] = sid;
           }
           jsonld.addValue(subject, prop, ref, useArray);
 
@@ -2007,15 +2076,11 @@ function _frame(state, subjects, frame, parent, property) {
   var embedOn = _getFrameFlag(state, frame, options, 'embed');
   var explicitOn = _getFrameFlag(state, frame, options, 'explicit');
 
-  // get keywords for @id, @list
-  var kwid = state.keywords['@id'];
-  var kwlist = state.keywords['@list'];
-
   // add matches to output
   for(var id in matches) {
     // start output
     var output = {};
-    output[kwid] = id;
+    output['@id'] = id;
 
     // prepare embed meta info
     var embed = {parent: parent, property: property};
@@ -2081,11 +2146,11 @@ function _frame(state, subjects, frame, parent, property) {
         // add objects
         var objects = subject[prop];
         // preserve list
-        if(_isListValue(objects, state.keywords)) {
+        if(_isListValue(objects)) {
           var list = {};
-          list[kwlist] = [];
+          list['@list'] = [];
           jsonld.addValue(output, prop, list);
-          objects = objects[kwlist];
+          objects = objects['@list'];
         }
         objects = _isArray(objects) ? objects : [objects];
         for(var i in objects) {
@@ -2093,8 +2158,8 @@ function _frame(state, subjects, frame, parent, property) {
 
           // get subject @id from expanded or compact form
           var sid = null;
-          if(_isSubjectReference(o, state.keywords)) {
-            sid = o[kwid];
+          if(_isSubjectReference(o)) {
+            sid = o['@id'];
           }
           else if(_isString(o) && isId) {
             sid = o;
@@ -2212,7 +2277,7 @@ function _filterSubject(state, subject, frame) {
   var rval = false;
 
   // check @type
-  var kwtype = state.keywords['@type'];
+  var kwtype = _compactIri(state.context, '@type');
   if(kwtype in frame && !_isObject(frame[kwtype])) {
     // normalize to array
     var types = frame[kwtype];
@@ -2227,10 +2292,9 @@ function _filterSubject(state, subject, frame) {
   // check ducktype
   else {
     rval = true;
-    var kwid = state.keywords['@id'];
     for(var key in frame) {
       // skip non-@id keywords
-      if(key !== kwid && _isKeyword(state.keywords, key)) {
+      if(key !== '@id' && _isKeyword(state.keywords, key)) {
         continue;
       }
 
@@ -2254,17 +2318,14 @@ function _filterSubject(state, subject, frame) {
  * @param output the output.
  */
 function _embedValues(state, subject, property, output) {
-  var kwid = state.keywords['@id'];
-  var kwlist = state.keywords['@list'];
-
   // normalize to an array
   var objects = subject[property];
   // preserve list
-  if(_isListValue(objects, state.keywords)) {
+  if(_isListValue(objects)) {
     var list = {};
-    list[kwlist] = [];
+    list['@list'] = [];
     jsonld.addValue(output, property, list);
-    objects = objects[kwlist];
+    objects = objects['@list'];
   }
   objects = _isArray(objects) ? objects : [objects];
   for(var i in objects) {
@@ -2272,8 +2333,8 @@ function _embedValues(state, subject, property, output) {
 
     // get subject @id from expanded or compact form
     var sid = null;
-    if(_isSubjectReference(o, state.keywords)) {
-      sid = o[kwid];
+    if(_isSubjectReference(o)) {
+      sid = o['@id'];
     }
     else if(_isString(o) && _isKeyword(state.keywords,
       jsonld.getContextValue(state.context, property, '@type'), '@id')) {
@@ -2323,16 +2384,15 @@ function _removeEmbed(state, id) {
   // create reference to replace embed
   var subject = {};
   var ref;
-  var kwid = state.keywords['@id'];
   if(property !== null && _isKeyword(state.keywords,
     jsonld.getContextValue(state.context, property, '@type'), '@id')) {
     ref = id;
-    subject[kwid] = id;
+    subject['@id'] = id;
   }
   else {
     ref = {};
-    ref[kwid] = id;
-    subject[kwid] = id;
+    ref['@id'] = id;
+    subject['@id'] = id;
   }
 
   // remove existing embed
@@ -2359,7 +2419,7 @@ function _removeEmbed(state, id) {
     for(var i in ids) {
       var next = ids[i];
       if(next in embeds && _isObject(embeds[next].parent) &&
-        embeds[next].parent[kwid] === id) {
+        embeds[next].parent['@id'] === id) {
         delete embeds[next];
         removeDependents(next);
       }
@@ -2378,15 +2438,10 @@ function _removeEmbed(state, id) {
  */
 function _addFrameOutput(state, parent, property, output) {
   if(_isObject(parent)) {
-    // get keywords
-    var kwset = state.keywords['@set'];
-    var kwlist = state.keywords['@list'];
-    var kwcontainer = state.keywords['@container'];
-
     // use an array if @container specifies it
     var ctx = state.context;
-    var container = jsonld.getContextValue(ctx, property, kwcontainer);
-    var useArray = (container === kwset) || (container === kwlist);
+    var container = jsonld.getContextValue(ctx, property, '@container');
+    var useArray = (container === '@set') || (container === '@list');
     jsonld.addValue(parent, property, output, useArray);
   }
   else {
@@ -2500,8 +2555,10 @@ function _compactIri(ctx, iri) {
 
   // term not found, if term is keyword, use alias
   var keywords = _getKeywords(ctx);
-  if(iri in keywords) {
-    return keywords[iri];
+  if(_isKeyword(keywords, iri)) {
+    // FIXME: don't just pick first one, pick shortest, then lexicographically
+    // least
+    return keywords[iri][0];
   }
 
   // term not found, check the context for a prefix
@@ -2541,7 +2598,7 @@ function _expandTerm(ctx, term, deep) {
   // default to the term being fully-expanded or not in the context
   var rval = term;
 
-  // 1. If the property has a colon, it is a prefix or an absolute IRI:
+  // 1. If the term has a colon, it is a prefix or an absolute IRI:
   var idx = term.indexOf(':');
   if(idx !== -1) {
     // get the potential prefix
@@ -2550,19 +2607,19 @@ function _expandTerm(ctx, term, deep) {
     // expand term if prefix is in context, otherwise leave it be
     if(prefix in ctx) {
       // prefix found, expand property to absolute IRI
-      var iri = jsonld.getContextValue(ctx, prefix, '@id');
+      var iri = jsonld.getContextValue(ctx, prefix, '@id', false);
       rval = iri + term.substr(idx + 1);
     }
   }
-  // 2. If the property is in the context, then it's a term.
+  // 2. If the term is in the context, then it's a term.
   else if(term in ctx) {
     rval = jsonld.getContextValue(ctx, term, '@id', false);
   }
-  // 3. The property is a keyword or not in the context.
+  // 3. The term is a keyword or not in the context.
   else {
     var keywords = _getKeywords(ctx);
     for(var key in keywords) {
-      if(term === keywords[key]) {
+      if(keywords[key].indexOf(term) !== -1) {
         rval = key;
         break;
       }
@@ -2601,38 +2658,33 @@ function _expandTerm(ctx, term, deep) {
  */
 function _getKeywords(ctx) {
   var rval = {
-    '@context': '@context',
-    '@container': '@container',
-    '@default': '@default',
-    '@embed': '@embed',
-    '@explicit': '@explicit',
-    '@graph': '@graph',
-    '@id': '@id',
-    '@language': '@language',
-    '@list': '@list',
-    '@omitDefault': '@omitDefault',
-    '@set': '@set',
-    '@type': '@type',
-    '@value': '@value'
+    '@context': [],
+    '@container': [],
+    '@default': [],
+    '@embed': [],
+    '@explicit': [],
+    '@graph': [],
+    '@id': [],
+    '@language': [],
+    '@list': [],
+    '@omitDefault': [],
+    '@set': [],
+    '@type': [],
+    '@value': []
   };
 
   if(ctx) {
     // gather keyword aliases from context
-    var keywords = {};
     for(var key in ctx) {
-      if(_isString(ctx[key]) && ctx[key] in rval) {
-        if(ctx[key] === '@context') {
+      var kw = ctx[key];
+      if(_isString(kw) && kw in rval) {
+        if(kw === '@context') {
           throw new JsonLdError(
             'Invalid JSON-LD syntax; @context cannot be aliased.',
             'jsonld.SyntaxError');
         }
-        keywords[ctx[key]] = key;
+        rval[kw].push(key);
       }
-    }
-
-    // overwrite keywords
-    for(var key in keywords) {
-      rval[key] = keywords[key];
     }
   }
 
@@ -2653,7 +2705,7 @@ function _isKeyword(keywords, value, specific) {
     return _isUndefined(specific) ? true : (value === specific);
   }
   for(var key in keywords) {
-    if(value === keywords[key]) {
+    if(keywords[key].indexOf(value) !== -1) {
       return _isUndefined(specific) ? true : (key === specific);
     }
   }
@@ -2672,6 +2724,17 @@ function _isObject(input) {
 }
 
 /**
+ * Returns true if the given input is an empty Object.
+ *
+ * @param input the input to check.
+ *
+ * @return true if the input is an empty Object, false if not.
+ */
+function _isEmptyObject(input) {
+  return _isObject(input) && Object.keys(input).length === 0;
+}
+
+/**
  * Returns true if the given input is an Array.
  *
  * @param input the input to check.
@@ -2680,6 +2743,25 @@ function _isObject(input) {
  */
 function _isArray(input) {
   return (input && input.constructor === Array);
+}
+
+/**
+ * Returns true if the given input is an Array of Strings.
+ *
+ * @param input the input to check.
+ *
+ * @return true if the input is an Array of Strings, false if not.
+ */
+function _isArrayOfStrings(input) {
+  if(!_isArray(input)) {
+    return false;
+  }
+  for(var i in input) {
+    if(!_isString(input[i])) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -2741,25 +2823,20 @@ function _isUndefined(input) {
  * Returns true if the given value is a subject with properties.
  *
  * @param value the value to check.
- * @param [keywords] the keywords map to use.
  *
  * @return true if the value is a subject with properties, false if not.
  */
-function _isSubject(value, keywords) {
+function _isSubject(value) {
   var rval = false;
 
   // Note: A value is a subject if all of these hold true:
   // 1. It is an Object.
   // 2. It is not a @value, @set, or @list.
   // 3. It has more than 1 key OR any existing key is not @id.
-  var kwvalue = keywords ? keywords['@value'] : '@value';
-  var kwset = keywords ? keywords['@set'] : '@set';
-  var kwlist = keywords ? keywords['@list'] : '@list';
-  var kwid = keywords ? keywords['@id'] : '@id';
   if(_isObject(value) &&
-    !((kwvalue in value) || (kwset in value) || (kwlist in value))) {
+    !(('@value' in value) || ('@set' in value) || ('@list' in value))) {
     var keyCount = Object.keys(value).length;
-    rval = (keyCount > 1 || !(kwid in value));
+    rval = (keyCount > 1 || !('@id' in value));
   }
 
   return rval;
@@ -2769,91 +2846,79 @@ function _isSubject(value, keywords) {
  * Returns true if the given value is a subject reference.
  *
  * @param value the value to check.
- * @param [keywords] the keywords map to use.
  *
  * @return true if the value is a subject reference, false if not.
  */
-function _isSubjectReference(value, keywords) {
+function _isSubjectReference(value) {
   // Note: A value is a subject reference if all of these hold true:
   // 1. It is an Object.
   // 2. It has a single key: @id.
-  var kwid = keywords ? keywords['@id'] : '@id';
-  return _isObject(value) && Object.keys(value).length === 1 && (kwid in value);
+  return (_isObject(value) && Object.keys(value).length === 1 &&
+    ('@id' in value));
 }
 
 /**
  * Returns true if the given value is a @value.
  *
  * @param value the value to check.
- * @param [keywords] the keywords map to use.
  *
  * @return true if the value is a @value, false if not.
  */
-function _isValue(value, keywords) {
+function _isValue(value) {
   // Note: A value is a @value if all of these hold true:
   // 1. It is an Object.
   // 2. It has the @value property.
-  var kwvalue = keywords ? keywords['@value'] : '@value';
-  return _isObject(value) && (kwvalue in value);
+  return _isObject(value) && ('@value' in value);
 }
 
 /**
  * Returns true if the given value is a @set.
  *
  * @param value the value to check.
- * @param [keywords] the keywords map to use.
  *
  * @return true if the value is a @set, false if not.
  */
-function _isSetValue(value, keywords) {
+function _isSetValue(value) {
   // Note: A value is a @set if all of these hold true:
   // 1. It is an Object.
   // 2. It has the @set property.
-  var kwset = keywords ? keywords['@set'] : '@set';
-  return _isObject(value) && (kwset in value);
+  return _isObject(value) && ('@set' in value);
 }
 
 /**
  * Returns true if the given value is a @list.
  *
  * @param value the value to check.
- * @param [keywords] the keywords map to use.
  *
  * @return true if the value is a @list, false if not.
  */
-function _isListValue(value, keywords) {
+function _isListValue(value) {
   // Note: A value is a @list if all of these hold true:
   // 1. It is an Object.
   // 2. It has the @list property.
-  var kwlist = keywords ? keywords['@list'] : '@list';
-  return _isObject(value) && (kwlist in value);
+  return _isObject(value) && ('@list' in value);
 }
 
 /**
  * Returns true if the given value is a blank node.
  *
  * @param value the value to check.
- * @param [keywords] the keywords map to use.
  *
  * @return true if the value is a blank node, false if not.
  */
-function _isBlankNode(value, keywords) {
+function _isBlankNode(value) {
   var rval = false;
   // Note: A value is a blank node if all of these hold true:
   // 1. It is an Object.
   // 2. If it has an @id key its value begins with '_:'.
   // 3. It has no keys OR is not a @value, @set, or @list.
-  var kwvalue = keywords ? keywords['@value'] : '@value';
-  var kwset = keywords ? keywords['@set'] : '@set';
-  var kwlist = keywords ? keywords['@list'] : '@list';
-  var kwid = keywords ? keywords['@id'] : '@id';
   if(_isObject(value)) {
-    if(kwid in value) {
-      rval = (value[kwid].indexOf('_:') === 0);
+    if('@id' in value) {
+      rval = (value['@id'].indexOf('_:') === 0);
     }
     else {
       rval = (Object.keys(value).length === 0 ||
-        !((kwvalue in value) || (kwset in value) || (kwlist in value)));
+        !(('@value' in value) || ('@set' in value) || ('@list' in value)));
     }
   }
   return rval;
