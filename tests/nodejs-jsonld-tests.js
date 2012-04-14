@@ -183,7 +183,8 @@ TestRunner.prototype.run = function(manifests, callback) {
           test.expect = _readTestJson(test.expect, filepath);
           test.optimize = test.optimize || false;
           jsonld.compact(
-            input, test.context['@context'], test.optimize, checkResult);
+            input, test.context['@context'], {optimize: test.optimize},
+            checkResult);
         }
         else if(type.indexOf('jld:FrameTest') !== -1) {
           self.test(test.name);
