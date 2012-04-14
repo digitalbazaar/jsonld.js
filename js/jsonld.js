@@ -17,41 +17,43 @@ var jsonld = {};
  *
  * @param input the JSON-LD object to compact.
  * @param ctx the context to compact with.
- * @param [optimize] true to optimize the compaction (default: false).
- * @param [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
+ * @param [options] options to use:
+ *          [strict] use strict mode (default: true).
+ *          [optimize] true to optimize the compaction (default: false).
+ *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, compacted) called once the operation completes.
  */
 jsonld.compact = function(input, ctx) {
+  // get arguments
+  var options = {};
+  var callbackArg = 2;
+  if(arguments.length > 3) {
+    options = arguments[2] || {};
+    callbackArg += 1;
+  }
+  var callback = arguments[callbackArg];
+
   // nothing to compact
   if(input === null) {
     return callback(null, null);
   }
 
-  // get arguments
-  var optimize = false;
-  var resolver = jsonld.urlResolver;
-  var callbackArg = 2;
-  if(arguments.length > 4) {
-    optimize = arguments[2];
-    resolver = arguments[3];
-    callbackArg += 2;
+  // set default options
+  if(!('strict' in options)) {
+    options.strict = true;
   }
-  else if(arguments.length > 3) {
-    if(_isBoolean(arguments[2])) {
-      optimize = arguments[2];
-    }
-    else {
-      resolver = arguments[2];
-    }
-    callbackArg += 1;
+  if(!('optimize') in options) {
+    options.optimize = false;
   }
-  var callback = arguments[callbackArg];
+  if(!('resolver') in options) {
+    options.resolver = jsonld.urlResolver;
+  }
 
   // default to empty context if not given
   ctx = ctx || {};
 
   // expand input then do compaction
-  jsonld.expand(input, function(err, expanded) {
+  jsonld.expand(input, options, function(err, expanded) {
     if(err) {
       return callback(new JsonLdError(
         'Could not expand input before compaction.',
@@ -59,7 +61,7 @@ jsonld.compact = function(input, ctx) {
     }
 
     // merge and resolve contexts
-    jsonld.mergeContexts({}, ctx, function(err, ctx) {
+    jsonld.mergeContexts({}, ctx, options, function(err, ctx) {
       if(err) {
         return callback(new JsonLdError(
           'Could not merge context before compaction.',
@@ -68,14 +70,14 @@ jsonld.compact = function(input, ctx) {
 
       try {
         // create optimize context
-        if(optimize) {
-          var optimizeCtx = {};
+        if(options.optimize) {
+          options.optimizeCtx = {};
         }
 
         // do compaction
         input = expanded;
-        var compacted = new Processor().compact(ctx, null, input, optimizeCtx);
-        cleanup(null, compacted, optimizeCtx);
+        var compacted = new Processor().compact(ctx, null, input, options);
+        cleanup(null, compacted, options.optimizeCtx);
       }
       catch(ex) {
         callback(ex);
@@ -144,23 +146,29 @@ jsonld.compact = function(input, ctx) {
  * Performs JSON-LD expansion.
  *
  * @param input the JSON-LD object to expand.
- * @param [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
+ * @param [options] the options to use:
+ *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, expanded) called once the operation completes.
  */
 jsonld.expand = function(input) {
   // get arguments
-  var resolver = jsonld.urlResolver;
+  var options = {};
   var callback;
   var callbackArg = 1;
   if(arguments.length > 2) {
-    resolver = arguments[1];
+    options = arguments[1] || {};
     callbackArg += 1;
   }
   callback = arguments[callbackArg];
 
+  // set default options
+  if(!('resolver' in options)) {
+    options.resolver = jsonld.urlResolver;
+  }
+
   // resolve all @context URLs in the input
   input = _clone(input);
-  _resolveUrls(input, resolver, function(err, input) {
+  _resolveUrls(input, options.resolver, function(err, input) {
     if(err) {
       return callback(err);
     }
@@ -191,32 +199,27 @@ jsonld.expand = function(input) {
  * @param input the JSON-LD object to frame.
  * @param frame the JSON-LD frame to use.
  * @param [options] the framing options.
- * @param [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
+ *          [embed] default @embed flag (default: true).
+ *          [explicit] default @explicit flag (default: false).
+ *          [omitDefault] default @omitDefault flag (default: false).
+ *          [optimize] optimize when compacting (default: false).
+ *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, framed) called once the operation completes.
  */
 jsonld.frame = function(input, frame) {
   // get arguments
-  var resolver = jsonld.urlResolver;
-  var options;
+  var options = {};
   var callbackArg = 2;
-  if(arguments.length > 4) {
-    options = arguments[2];
-    resolver = arguments[3];
-    callbackArg += 2;
-  }
-  else if(arguments.length > 3) {
-    if(_isObject(arguments[2])) {
-      options = arguments[2];
-    }
-    else {
-      resolver = arguments[2];
-    }
+  if(arguments.length > 3) {
+    options = arguments[2] || {};
     callbackArg += 1;
   }
   var callback = arguments[callbackArg];
 
   // set default options
-  options = options || {};
+  if(!('resolver' in options)) {
+    options.resolver = jsonld.urlResolver;
+  }
   if(!('embed' in options)) {
     options.embed = true;
   }
@@ -279,22 +282,28 @@ jsonld.frame = function(input, frame) {
  * Performs JSON-LD normalization.
  *
  * @param input the JSON-LD object to normalize.
- * @param [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
+ * @param [options] the options to use:
+ *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, normalized) called once the operation completes.
  */
 jsonld.normalize = function(input, callback) {
   // get arguments
-  var resolver = jsonld.urlResolver;
+  var options = {};
   var callback;
   var callbackArg = 1;
   if(arguments.length > 2) {
-    resolver = arguments[1];
+    options = arguments[1] || {};
     callbackArg += 1;
   }
   callback = arguments[callbackArg];
 
+  // set default options
+  if(!('resolver' in options)) {
+    options.resolver = jsonld.urlResolver;
+  }
+
   // expand input then do normalization
-  jsonld.expand(input, function(err, expanded) {
+  jsonld.expand(input, options, function(err, expanded) {
     if(err) {
       return callback(new JsonLdError(
         'Could not expand input before normalization.',
@@ -307,32 +316,38 @@ jsonld.normalize = function(input, callback) {
 };
 
 /**
- * Outputs the triples found in the given JSON-LD object.
+ * Outputs the RDF statements found in the given JSON-LD object.
  *
  * @param input the JSON-LD object.
- * @param [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
- * @param callback(err, triple) called when a triple is output, with the last
- *          triple as null.
+ * @param [options] the options to use:
+ *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
+ * @param callback(err, statement) called when a statement is output, with the
+ *          last statement as null.
  */
-jsonld.triples = function(input, callback) {
+jsonld.toRDF = function(input, callback) {
   // get arguments
-  var resolver = jsonld.urlResolver;
+  var options = {};
   var callback;
   var callbackArg = 1;
   if(arguments.length > 2) {
-    resolver = arguments[1];
+    options = arguments[1] || {};
     callbackArg += 1;
   }
   callback = arguments[callbackArg];
 
+  // set default options
+  if(!('resolver' in options)) {
+    options.resolver = jsonld.urlResolver;
+  }
+
   // resolve all @context URLs in the input
   input = _clone(input);
-  _resolveUrls(input, resolver, function(err, input) {
+  _resolveUrls(input, options.resolver, function(err, input) {
     if(err) {
       return callback(err);
     }
-    // output triples
-    return new Processor().triples(input, callback);
+    // output RDF statements
+    return new Processor().toRDF(input, callback);
   });
 };
 
@@ -413,7 +428,8 @@ jsonld.useUrlResolver = function(type) {
  *
  * @param ctx1 the context to overwrite/append to.
  * @param ctx2 the new context to merge onto ctx1.
- * @param [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
+ * @param [options] the options to use:
+ *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, ctx) called once the operation completes.
  */
 jsonld.mergeContexts = function(ctx1, ctx2) {
@@ -423,25 +439,30 @@ jsonld.mergeContexts = function(ctx1, ctx2) {
   }
 
   // get arguments
-  var resolver = jsonld.urlResolver;
+  var options = {};
   var callbackArg = 2;
   if(arguments.length > 3) {
-    resolver = arguments[2];
+    options = arguments[2] || {};
     callbackArg += 1;
   }
   var callback = arguments[callbackArg];
+
+  // set default options
+  if(!('resolver' in options)) {
+    options.resolver = jsonld.urlResolver;
+  }
 
   // default to empty context
   ctx1 = _clone(ctx1 || {});
   ctx2 = _clone(ctx2 || {});
 
   // resolve URLs in ctx1
-  _resolveUrls({'@context': ctx1}, resolver, function(err, ctx1) {
+  _resolveUrls({'@context': ctx1}, options.resolver, function(err, ctx1) {
     if(err) {
       return callback(err);
     }
     // resolve URLs in ctx2
-    _resolveUrls({'@context': ctx2}, resolver, function(err, ctx2) {
+    _resolveUrls({'@context': ctx2}, options.resolver, function(err, ctx2) {
       if(err) {
         return callback(err);
       }
@@ -858,156 +879,157 @@ if(_nodejs) {
 var Processor = function() {};
 
 /**
- * Recursively compacts a value using the given context. All context URLs
+ * Recursively compacts an element using the given context. All context URLs
  * must have been resolved before calling this method and all values must
  * be in expanded form.
  *
  * @param ctx the context to use.
- * @param property the property that points to the value, null for none.
- * @param value the value to compact.
- * @param [optimizeCtx] the context to populate with optimizations.
+ * @param property the property that points to the element, null for none.
+ * @param element the element to compact.
+ * @param options the compaction options.
  *
  * @return the compacted value.
  */
-Processor.prototype.compact = function(ctx, property, value, optimizeCtx) {
-  // null is already compact
-  if(value === null) {
-    return null;
-  }
-
-  // recursively compact array or list
-  var isList = _isListValue(value);
-  if(_isArray(value) || isList) {
-    // get array from @list
-    if(isList) {
-      value = value['@list'];
-
-      // nothing to compact in null case
-      if(value === null) {
-        return null;
-      }
-      // invalid input if @list points at a non-array
-      else if(!_isArray(value)) {
-        throw new JsonLdError(
-          'Invalid JSON-LD syntax; "@list" value must be an array or null.',
-          'jsonld.SyntaxError');
-      }
-    }
-
-    // recurse through array
+Processor.prototype.compact = function(ctx, property, element, options) {
+  // recursively compact array
+  if(_isArray(element)) {
     var rval = [];
-    for(var i in value) {
-      // compact value and add if non-null
-      var val = this.compact(ctx, property, value[i], optimizeCtx);
-      if(val !== null) {
-        rval.push(val);
+    for(var i in element) {
+      var e = this.compact(ctx, property, element[i], options);
+      // drop null values
+      if(e !== null) {
+        rval.push(e);
       }
     }
-
-    // use @list if previously used unless @context specifies container @list
-    // which indicates value should be a simple array
-    if(isList) {
-      var prop = _compactIri(ctx, property);
-      var container = jsonld.getContextValue(ctx, prop, '@container');
-      var useList = (container !== '@list');
-      if(useList) {
-        // if optimizing, add @container entry
-        if(optimizeCtx && container === null) {
-          jsonld.setContextValue(optimizeCtx, prop, '@container', '@list');
-        }
-        else {
-          rval = {'@list': rval};
-        }
+    if(rval.length === 1) {
+      // use single element if no container is specified
+      var container = jsonld.getContextValue(ctx, property, '@container');
+      if(container !== '@list' && container !== '@set') {
+        rval = rval[0];
       }
     }
     return rval;
-  }
-
-  // replace '@graph' keyword and recurse
-  if(_isObject(value) && '@graph' in value) {
-    var kwgraph = _compactIri(ctx, '@graph');
-    var rval = {};
-    rval[kwgraph] = this.compact(ctx, property, value['@graph'], optimizeCtx);
-    return rval;
-  }
-
-  // optimize away use of @set
-  if(_isSetValue(value)) {
-    return this.compact(ctx, property, value['@set'], optimizeCtx);
-  }
-
-  // try to type-compact value
-  if(_canTypeCompact(value)) {
-    // compact property to look for its @type definition in the context
-    var prop = _compactIri(ctx, property);
-    var type = jsonld.getContextValue(ctx, prop, '@type');
-    if(type !== null) {
-      var key = _isValue(value) ? '@value' : '@id';
-
-      // compact IRI
-      if(type === '@id') {
-        return _compactIri(ctx, value[key]);
-      }
-      // other type, return string value
-      else {
-        return value[key];
-      }
-    }
   }
 
   // recursively compact object
-  if(_isObject(value)) {
-    var keywords = _getKeywords(ctx);
-    var rval = {};
-    for(var key in value) {
-      // compact non-context
-      if(key !== '@context') {
-        // FIXME: this should just be checking for absolute IRI or keyword
-        // drop unmapped and non-absolute IRI keys that aren't keywords
-        if(!jsonld.getContextValue(ctx, key) && !_isAbsoluteIri(key) &&
-          !_isKeyword(keywords, key)) {
-          continue;
+  if(_isObject(element)) {
+    // element is a @value
+    if(_isValue(element)) {
+      var type = jsonld.getContextValue(ctx, property, '@type');
+      var language = jsonld.getContextValue(ctx, property, '@language');
+
+      // matching @type specified in context, compact element
+      if(type !== null &&
+        ('@type' in element) && element['@type'] === type) {
+        element = element['@value'];
+
+        // use native datatypes for certain xsd types
+        if(type === XSD['boolean']) {
+          element = !(element === 'false' || element === '0');
         }
-
-        // compact property and value
-        var prop = _compactIri(ctx, key);
-        var val = this.compact(ctx, key, value[key], optimizeCtx);
-
-        // preserve empty arrays
-        if(_isArray(val) && val.length === 0 && !(prop in rval)) {
-          rval[prop] = [];
+        else if(type === XSD['integer']) {
+          element = parseInt(element);
         }
-
-        // add non-null value
-        var values = [];
-        if(val !== null) {
-          // optimize value compaction if optimize context is given
-          if(optimizeCtx) {
-            val = _optimalTypeCompact(ctx, prop, val, optimizeCtx);
-          }
-
-          // determine if an array should be used by @container specification
-          var container = jsonld.getContextValue(ctx, prop, '@container');
-          var isArray = (container === '@set' || container === '@list');
-          jsonld.addValue(rval, prop, val, isArray);
+        else if(type === XSD['double']) {
+          element = parseFloat(element);
         }
       }
+      // matching @language specified in context, compact element
+      else if(language !== null &&
+        ('@language' in element) && element['@language'] === language) {
+        element = element['@value'];
+      }
+      // compact @type IRI
+      else if('@type' in element) {
+        element['@type'] = _compactIri(ctx, element['@type']);
+      }
+      return element;
     }
-    // drop empty objects when optimizing
-    if(optimizeCtx && Object.keys(rval).length === 0) {
-      rval = null;
+
+    // recursively compact containers (always @set, and @list if specified)
+    var container = jsonld.getContextValue(ctx, property, '@container');
+    if('@set' in element || ('@list' in element && container === '@list')) {
+      var key = ('@set' in element) ? '@set' : '@list';
+      return this.compact(ctx, property, element[key], options);
+    }
+
+    // compact subject references
+    if(_isSubjectReference(element)) {
+      var type = jsonld.getContextValue(ctx, property, '@type');
+      if(type === '@id') {
+        element = _compactIri(ctx, element['@id']);
+        return element;
+      }
+    }
+
+    // recursively process element keys
+    var rval = {};
+    for(var key in element) {
+      var value = element[key];
+
+      // compact property
+      var prop = _compactIri(ctx, key);
+
+      // compact @id and @type(s)
+      if(key === '@id' || key === '@type') {
+        // compact single @id
+        if(_isString(value)) {
+          value = _compactIri(ctx, value);
+        }
+        // value must be a @type array
+        else {
+          var types = [];
+          for(var i in value) {
+            types.push(_compactIri(ctx, value[i]));
+          }
+          value = types;
+        }
+      }
+      // recurse for objects and arrays
+      else if(_isObject(value) || _isArray(value)) {
+        value = this.compact(ctx, prop, value, options);
+      }
+
+      // handle adding @list value to an existing @list property
+      var container = jsonld.getContextValue(ctx, prop, '@container');
+      if(container === '@list' && prop in rval &&
+        _isArray(rval[prop]) && rval[prop].length > 0) {
+        if(options.strict) {
+          throw new JsonLdError(
+            'JSON-LD compact error; property has a "@list" @container rule ' +
+            'but there are multiple lists in the document.',
+            'jsonld.SyntaxError');
+        }
+        else {
+          // reintroduce @list keyword
+          var kwlist = _compactIri('@list');
+          var val = {};
+          val[kwlist] = value;
+          value = val;
+
+          // revise existing list entry
+          var existing = rval[prop][0];
+          if(!(_isObject(existing) && kwlist in existing)) {
+            val = {};
+            val[kwlist] = existing;
+            rval[prop][0] = val;
+          }
+        }
+      }
+
+      // if @container is @set or @list or value is an empty array, use
+      // an array when adding value
+      var isArray = (container === '@set' || container === '@list' ||
+        (_isArray(value) && value.length === 0));
+
+      // add compact value
+      jsonld.addValue(rval, prop, value, isArray);
     }
     return rval;
   }
 
-  // compact @id or @type string
-  var prop = _expandTerm(ctx, property);
-  if(prop === '@id' || prop === '@type') {
-    return _compactIri(ctx, value);
-  }
-
   // only primitives remain which are already compact
-  return value;
+  return element;
 };
 
 /**
@@ -1023,7 +1045,7 @@ Processor.prototype.compact = function(ctx, property, value, optimizeCtx) {
  * @return the expanded value.
  */
 Processor.prototype.expand = function(ctx, property, element, propertyIsList) {
-  // recursively process arrays
+  // recursively expand array
   if(_isArray(element)) {
     var rval = [];
     for(var i in element) {
@@ -1048,7 +1070,7 @@ Processor.prototype.expand = function(ctx, property, element, propertyIsList) {
     return rval;
   }
 
-  // recursively process objects
+  // recursively expand object
   if(_isObject(element)) {
     // if element has a context, merge it in
     if('@context' in element) {
@@ -1421,13 +1443,13 @@ Processor.prototype.normalize = function(input, callback) {
 };
 
 /**
- * Outputs the triples found in the given JSON-LD object.
+ * Outputs the RDF statements found in the given JSON-LD object.
  *
  * @param input the JSON-LD object.
- * @param callback(err, triple) called when a triple is output, with the last
- *          triple as null.
+ * @param callback(err, statement) called when a statement is output, with the
+ *          last statement as null.
  */
-Processor.prototype.triples = function(input, callback) {
+Processor.prototype.toRDF = function(input, callback) {
   // FIXME: implement
   callback(new JsonLdError('Not implemented', 'jsonld.NotImplemented'), null);
 };
@@ -1441,6 +1463,8 @@ Processor.prototype.triples = function(input, callback) {
  * @return the resulting merged context.
  */
 Processor.prototype.mergeContexts = function(ctx1, ctx2) {
+  // FIXME: consider using spec context processing rules instead
+
   // flatten array context
   if(_isArray(ctx1)) {
     ctx1 = this.mergeContexts({}, ctx1);
@@ -1460,19 +1484,26 @@ Processor.prototype.mergeContexts = function(ctx1, ctx2) {
     }
   }
   else if(_isObject(ctx2)) {
-    // if the ctx2 has a new definition for an IRI (possibly using a new
-    // key), then the old definition must be removed
+    // iterate over new keys
     for(var key in ctx2) {
-      var newIri = jsonld.getContextValue(ctx2, key, '@id');
+      // ensure @language is a string
+      if(key === '@language' && !_isString(ctx2[key])) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; @language must be a string.',
+          'jsonld.SyntaxError');
+      }
 
       // no IRI defined, skip
+      var newIri = jsonld.getContextValue(ctx2, key, '@id', false);
       if(newIri === null) {
         continue;
       }
 
+      // if the ctx2 has a new definition for an IRI (possibly using a new
+      // key), then the old definition must be removed
       for(var mkey in rval) {
         // matching IRI, remove old entry
-        if(newIri === jsonld.getContextValue(rval, mkey, '@id')) {
+        if(newIri === jsonld.getContextValue(rval, mkey, '@id', false)) {
           delete rval[mkey];
           break;
         }
@@ -1582,11 +1613,15 @@ function _getStatements(input, namer, bnodes, subjects, name) {
       }
 
       var objects = input[p];
-      var isList = _isListValue(objects);
-      if(isList) {
-        // convert @list array into embedded blank node linked list
-        objects = _makeLinkedList(objects);
+
+      // convert @lists into embedded blank node linked lists
+      for(var i in objects) {
+        var o = objects[i];
+        if(_isListValue(o)) {
+          objects[i] = _makeLinkedList(o);
+        }
       }
+
       for(var i in objects) {
         var o = objects[i];
 
@@ -1650,7 +1685,7 @@ function _getStatements(input, namer, bnodes, subjects, name) {
  *
  * @param value the @list value.
  *
- * @return the linked list of blank nodes.
+ * @return the head of the linked list of blank nodes.
  */
 function _makeLinkedList(value) {
   // convert @list array into embedded blank node linked list
@@ -1669,7 +1704,7 @@ function _makeLinkedList(value) {
     tail = e;
   }
 
-  return [tail];
+  return tail;
 }
 
 /**
@@ -2523,7 +2558,25 @@ function _optimalTypeCompact(ctx, property, value, optimizeCtx) {
 }
 
 /**
- * Compacts an IRI into a term or prefix if it can be.
+ * Compares two strings first based on length and then lexicographically.
+ *
+ * @param a the first string.
+ * @param b the second string.
+ *
+ * @return -1 if a < b, 1 if a > b, 0 if a == b.
+ */
+function _compareShortestLeast(a, b) {
+  if(a.length < b.length) {
+    return -1;
+  }
+  else if(b.length < a.length) {
+    return 1;
+  }
+  return (a < b) ? -1 : ((a > b) ? 1 : 0);
+}
+
+/**
+ * Compacts an IRI or keyword into a term or prefix if it can be.
  *
  * @param ctx the context to use.
  * @param iri the IRI to compact.
@@ -2536,32 +2589,43 @@ function _compactIri(ctx, iri) {
     return iri;
   }
 
-  // check the context for a term that could shorten the IRI
+  // check the context for terms that could shorten the IRI
   // (give preference to terms over prefixes)
+  var terms = [];
   for(var key in ctx) {
     // skip special context keys (start with '@')
     if(key.indexOf('@') === 0) {
       continue;
     }
-
-    // FIXME: there might be more than one choice, choose the most
-    // specific definition and if none is more specific, choose
-    // the lexicographically least term
     // compact to a term
     if(iri === jsonld.getContextValue(ctx, key, '@id')) {
-      return key;
+      terms.push(key);
     }
   }
 
-  // term not found, if term is keyword, use alias
-  var keywords = _getKeywords(ctx);
-  if(_isKeyword(keywords, iri)) {
-    // FIXME: don't just pick first one, pick shortest, then lexicographically
-    // least
-    return keywords[iri][0];
+  if(terms.length > 0) {
+    // pick shortest, least term
+    terms.sort(_compareShortestLeast);
+    return terms[0];
+  }
+
+  // term not found, if term is a keyword, use alias
+  if(_isKeyword(null, iri)) {
+    // pick shortest, least alias
+    var keywords = _getKeywords(ctx);
+    aliases = keywords[iri];
+    if(aliases.length > 0) {
+      aliases.sort(_compareShortestLeast);
+      return aliases[0];
+    }
+    else {
+      // no alias, keep original keyword
+      return iri;
+    }
   }
 
   // term not found, check the context for a prefix
+  var curies = [];
   for(var key in ctx) {
     // skip special context keys (start with '@')
     if(key.indexOf('@') === 0) {
@@ -2574,9 +2638,15 @@ function _compactIri(ctx, iri) {
       // compact to a prefix
       var idx = iri.indexOf(ctxIri);
       if(idx === 0 && iri.length > ctxIri.length) {
-        return key + ':' + iri.substr(ctxIri.length);
+        curies.push(key + ':' + iri.substr(ctxIri.length));
       }
     }
+  }
+
+  if(curies.length > 0) {
+    // pick shortest, least curie
+    curies.sort(_compareShortestLeast);
+    return curies[0];
   }
 
   // could not compact IRI, return it as is
@@ -2595,6 +2665,11 @@ function _compactIri(ctx, iri) {
  * @return the expanded term as an absolute IRI.
  */
 function _expandTerm(ctx, term, deep) {
+  // nothing to expand
+  if(term === null) {
+    return null;
+  }
+
   // default to the term being fully-expanded or not in the context
   var rval = term;
 
@@ -2694,19 +2769,39 @@ function _getKeywords(ctx) {
 /**
  * Returns whether or not the given value is a keyword (or a keyword alias).
  *
- * @param keywords the map of keyword aliases to check against.
+ * @param keywords the keyword alias map to check against, null for default.
  * @param value the value to check.
  * @param [specific] the specific keyword to check against.
  *
  * @return true if the value is a keyword, false if not.
  */
 function _isKeyword(keywords, value, specific) {
-  if(value in keywords) {
-    return _isUndefined(specific) ? true : (value === specific);
+  if(keywords) {
+    if(value in keywords) {
+      return _isUndefined(specific) ? true : (value === specific);
+    }
+    for(var key in keywords) {
+      if(keywords[key].indexOf(value) !== -1) {
+        return _isUndefined(specific) ? true : (key === specific);
+      }
+    }
   }
-  for(var key in keywords) {
-    if(keywords[key].indexOf(value) !== -1) {
-      return _isUndefined(specific) ? true : (key === specific);
+  else {
+    switch(value) {
+    case '@context':
+    case '@container':
+    case '@default':
+    case '@embed':
+    case '@explicit':
+    case '@graph':
+    case '@id':
+    case '@language':
+    case '@list':
+    case '@omitDefault':
+    case '@set':
+    case '@type':
+    case '@value':
+      return true;
     }
   }
   return false;
