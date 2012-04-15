@@ -946,13 +946,6 @@ Processor.prototype.compact = function(ctx, property, element, options) {
       return element;
     }
 
-    // recursively compact containers (always @set, and @list if specified)
-    var container = jsonld.getContextValue(ctx, property, '@container');
-    if('@set' in element || ('@list' in element && container === '@list')) {
-      var key = ('@set' in element) ? '@set' : '@list';
-      return this.compact(ctx, property, element[key], options);
-    }
-
     // compact subject references
     if(_isSubjectReference(element)) {
       var type = jsonld.getContextValue(ctx, property, '@type');
@@ -966,9 +959,6 @@ Processor.prototype.compact = function(ctx, property, element, options) {
     var rval = {};
     for(var key in element) {
       var value = element[key];
-
-      // compact property
-      var prop = _compactIri(ctx, key);
 
       // compact @id and @type(s)
       if(key === '@id' || key === '@type') {
@@ -984,46 +974,76 @@ Processor.prototype.compact = function(ctx, property, element, options) {
           }
           value = types;
         }
-      }
-      // recurse for objects and arrays
-      else if(_isObject(value) || _isArray(value)) {
-        value = this.compact(ctx, prop, value, options);
+
+        // compact property and add value
+        var prop = _compactIri(ctx, key);
+        var isArray = (_isArray(value) && value.length === 0);
+        jsonld.addValue(rval, prop, value, isArray);
+        continue;
       }
 
-      // handle adding @list value to an existing @list property
-      var container = jsonld.getContextValue(ctx, prop, '@container');
-      if(container === '@list' && prop in rval &&
-        _isArray(rval[prop]) && rval[prop].length > 0) {
-        if(options.strict) {
-          throw new JsonLdError(
-            'JSON-LD compact error; property has a "@list" @container rule ' +
-            'but there are multiple lists in the document.',
-            'jsonld.SyntaxError');
+      // Note: value must be an array due to expansion algorithm.
+
+      // preserve empty arrays
+      if(value.length === 0) {
+        var prop = _compactIri(ctx, key);
+        jsonld.addValue(rval, prop, [], true);
+      }
+
+      // recusively process array values
+      for(var i in value) {
+        var v = value[i];
+        var isList = _isListValue(v);
+
+        // compact property
+        var prop;
+        if(_isValue(v)) {
+          prop = _compactIri(ctx, key, v);
+        }
+        else if(isList) {
+          prop = _compactIri(ctx, key, v, '@list');
+          v = v['@list'];
+        }
+        else if(_isString(v)) {
+          // pass expanded form of plain literal to handle null language
+          prop = _compactIri(ctx, key, {'@value': v});
         }
         else {
-          // reintroduce @list keyword
-          var kwlist = _compactIri('@list');
-          var val = {};
-          val[kwlist] = value;
-          value = val;
-
-          // revise existing list entry
-          var existing = rval[prop][0];
-          if(!(_isObject(existing) && kwlist in existing)) {
-            val = {};
-            val[kwlist] = existing;
-            rval[prop][0] = val;
-          }
+          prop = _compactIri(ctx, key);
         }
+
+        // recursively compact value
+        v = this.compact(ctx, prop, v, options);
+
+        // get container type for property
+        var container = jsonld.getContextValue(ctx, prop, '@container');
+
+        // handle @list
+        if(isList && container !== '@list') {
+          // handle messy @list compaction
+          if(prop in rval && options.strict) {
+            throw new JsonLdError(
+              'JSON-LD compact error; property has a "@list" @container ' +
+              'rule but there is more than a single @list that matches ' +
+              'the compacted term in the document. Compaction might mix ' +
+              'unwanted items into the list.',
+              'jsonld.SyntaxError');
+          }
+          // reintroduce @list keyword
+          var kwlist = _compactIri(ctx, '@list');
+          var val = {};
+          val[kwlist] = v;
+          v = val;
+        }
+
+        // if @container is @set or @list or value is an empty array, use
+        // an array when adding value
+        var isArray = (container === '@set' || container === '@list' ||
+          (_isArray(v) && v.length === 0));
+
+        // add compact value
+        jsonld.addValue(rval, prop, v, isArray);
       }
-
-      // if @container is @set or @list or value is an empty array, use
-      // an array when adding value
-      var isArray = (container === '@set' || container === '@list' ||
-        (_isArray(value) && value.length === 0));
-
-      // add compact value
-      jsonld.addValue(rval, prop, value, isArray);
     }
     return rval;
   }
@@ -2576,40 +2596,99 @@ function _compareShortestLeast(a, b) {
 }
 
 /**
- * Compacts an IRI or keyword into a term or prefix if it can be.
+ * Checks to see if a context key's type definition best matches the
+ * given value and @container.
+ *
+ * @param ctx the context.
+ * @param key the context key to check.
+ * @param value the value to check.
+ * @param container the specific @container to match or null.
+ * @param result the resulting term or CURIE.
+ * @param results the results array.
+ * @param bestMatch the current bestMatch value.
+ *
+ * @return the new bestMatch value.
+ */
+function _isBestMatch(ctx, key, value, container, result, results, bestMatch) {
+  // value is null, match any key
+  if(value === null) {
+    results.push(result);
+    return bestMatch;
+  }
+
+  var valueIsList = _isListValue(value);
+  var valueHasType = ('@type' in value);
+  var language = ('@language' in value) ? value['@language'] : null;
+  var entry = jsonld.getContextValue(ctx, key);
+  if(_isString(entry)) {
+    entry = {'@id': entry};
+  }
+  var entryHasContainer = ('@container' in entry);
+  var entryType = jsonld.getContextValue(ctx, key, '@type');
+
+  // container with type or language
+  if(!valueIsList && entryHasContainer &&
+    (entry['@container'] === container ||
+      (entry['@container'] === '@set' && container === null)) &&
+    ((valueHasType && entryType === value['@type']) ||
+    (!valueHasType && entry['@language'] === language))) {
+    if(bestMatch < 3) {
+      bestMatch = 3;
+      results.length = 0;
+    }
+    results.push(result);
+  }
+  // no container with type or language
+  else if(bestMatch < 3 &&
+    !entryHasContainer && !valueIsList &&
+    ((valueHasType && entryType === value['@type']) ||
+      (!valueHasType && entry['@language'] === language))) {
+    if(bestMatch < 2) {
+      bestMatch = 2;
+      results.length = 0;
+    }
+    results.push(result);
+  }
+  // container with no type or language
+  else if(bestMatch < 2 &&
+    entryHasContainer &&
+    (entry['@container'] === container ||
+      (entry['@container'] === '@set' && container === null)) &&
+    !('@type' in entry) && !('@language' in entry)) {
+    if(bestMatch < 1) {
+      bestMatch = 1;
+      results.length = 0;
+    }
+    results.push(result);
+  }
+  // no container, no type, no language
+  else if(bestMatch < 1 &&
+    !entryHasContainer && !('@type' in entry) && !('@language' in entry)) {
+    results.push(result);
+  }
+
+  return bestMatch;
+}
+
+/**
+ * Compacts an IRI or keyword into a term or prefix if it can be. If the
+ * IRI has an associated value, its @type, @language, and/or @container may
+ * be passed.
  *
  * @param ctx the context to use.
  * @param iri the IRI to compact.
+ * @param value the value to check or null.
+ * @param container the specific @container to match or null.
  *
  * @return the compacted IRI as a term or prefix or the original IRI.
  */
-function _compactIri(ctx, iri) {
+function _compactIri(ctx, iri, value, container) {
   // can't compact null
   if(iri === null) {
     return iri;
   }
 
-  // check the context for terms that could shorten the IRI
-  // (give preference to terms over prefixes)
-  var terms = [];
-  for(var key in ctx) {
-    // skip special context keys (start with '@')
-    if(key.indexOf('@') === 0) {
-      continue;
-    }
-    // compact to a term
-    if(iri === jsonld.getContextValue(ctx, key, '@id')) {
-      terms.push(key);
-    }
-  }
-
-  if(terms.length > 0) {
-    // pick shortest, least term
-    terms.sort(_compareShortestLeast);
-    return terms[0];
-  }
-
-  // term not found, if term is a keyword, use alias
+  // if term is a keyword, use alias
   if(_isKeyword(null, iri)) {
     // pick shortest, least alias
     var keywords = _getKeywords(ctx);
@@ -2624,8 +2703,39 @@ function _compactIri(ctx, iri) {
     }
   }
 
+  // default value and container to null
+  if(_isUndefined(value)) {
+    value = null;
+  }
+  if(_isUndefined(container)) {
+    container = null;
+  }
+
+  // check the context for terms that could shorten the IRI
+  // (give preference to terms over prefixes)
+  var terms = [];
+  var bestMatch = 0;
+  for(var key in ctx) {
+    // skip special context keys (start with '@')
+    if(key.indexOf('@') === 0) {
+      continue;
+    }
+    // compact to a term
+    if(iri === jsonld.getContextValue(ctx, key, '@id')) {
+      bestMatch = _isBestMatch(
+        ctx, key, value, container, key, terms, bestMatch);
+    }
+  }
+
+  if(terms.length > 0) {
+    // pick shortest, least term
+    terms.sort(_compareShortestLeast);
+    return terms[0];
+  }
+
   // term not found, check the context for a prefix
   var curies = [];
+  bestMatch = 0;
   for(var key in ctx) {
     // skip special context keys (start with '@')
     if(key.indexOf('@') === 0) {
@@ -2638,7 +2748,9 @@ function _compactIri(ctx, iri) {
       // compact to a prefix
       var idx = iri.indexOf(ctxIri);
       if(idx === 0 && iri.length > ctxIri.length) {
-        curies.push(key + ':' + iri.substr(ctxIri.length));
+        var curie = key + ':' + iri.substr(ctxIri.length);
+        bestMatch = _isBestMatch(
+          ctx, key, value, container, curie, curies, bestMatch);
       }
     }
   }
