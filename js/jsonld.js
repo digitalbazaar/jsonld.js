@@ -123,18 +123,22 @@ jsonld.compact = function(input, ctx) {
       }
     }
 
-    // add context
-    if(ctx.length > 0) {
-      // remove array if only one context
-      if(ctx.length === 1) {
-        ctx = ctx[0];
-      }
+    // remove array if only one context
+    var hasContext = (ctx.length > 0);
+    if(ctx.length === 1) {
+      ctx = ctx[0];
+    }
 
+    // add context
+    if(hasContext || options.graph) {
       if(_isArray(compacted)) {
         // use '@graph' keyword
         var kwgraph = _compactIri(ctx, '@graph');
         var graph = compacted;
-        compacted = {'@context': ctx};
+        compacted = {};
+        if(hasContext) {
+          compacted['@context'] = ctx;
+        }
         compacted[kwgraph] = graph;
       }
       else if(_isObject(compacted)) {
@@ -1280,11 +1284,6 @@ Processor.prototype.frame = function(input, frame, options) {
 
   // produce a map of all subjects and name each bnode
   var namer = new UniqueNamer('_:t');
-  /*input = [];
-  for(var key in state.subjects) {
-  }*/
-
-
   _flatten(state.subjects, input, namer);
 
   // frame the subjects
