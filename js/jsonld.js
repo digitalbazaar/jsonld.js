@@ -20,6 +20,7 @@ var jsonld = {};
  * @param [options] options to use:
  *          [strict] use strict mode (default: true).
  *          [optimize] true to optimize the compaction (default: false).
+ *          [graph] true to always output a top-level graph (default: false).
  *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, compacted) called once the operation completes.
  */
@@ -44,6 +45,9 @@ jsonld.compact = function(input, ctx) {
   }
   if(!('optimize') in options) {
     options.optimize = false;
+  }
+  if(!('graph') in options) {
+    options.graph = false;
   }
   if(!('resolver') in options) {
     options.resolver = jsonld.urlResolver;
@@ -77,7 +81,7 @@ jsonld.compact = function(input, ctx) {
         // do compaction
         input = expanded;
         var compacted = new Processor().compact(ctx, null, input, options);
-        cleanup(null, compacted, options.optimizeCtx);
+        cleanup(null, compacted, options);
       }
       catch(ex) {
         callback(ex);
@@ -86,14 +90,19 @@ jsonld.compact = function(input, ctx) {
   });
 
   // performs clean up after compaction
-  function cleanup(err, compacted, optimizeCtx) {
+  function cleanup(err, compacted, options) {
     if(err) {
       return callback(err);
     }
 
-    // if compacted is an array with 1 entry, remove array
-    if(_isArray(compacted) && compacted.length === 1) {
+    // if compacted is an array with 1 entry, remove array unless
+    // graph option is set
+    if(!options.graph && _isArray(compacted) && compacted.length === 1) {
       compacted = compacted[0];
+    }
+    // always use array if graph option is on
+    else if(options.graph && _isObject(compacted)) {
+      compacted = [compacted];
     }
 
     // build output context
@@ -102,8 +111,8 @@ jsonld.compact = function(input, ctx) {
       ctx = [ctx];
     }
     // add optimize context
-    if(optimizeCtx) {
-      ctx.push(optimizeCtx);
+    if(options.optimizeCtx) {
+      ctx.push(options.optimizeCtx);
     }
     // remove empty contexts
     var tmp = ctx;
@@ -227,55 +236,55 @@ jsonld.frame = function(input, frame) {
   options.omitDefault = options.omitDefault || false;
   options.optimize = options.optimize || false;
 
-  // clone frame
-  frame = _clone(frame);
-  frame['@context'] = frame['@context'] || {};
+  // preserve frame context
+  var ctx = frame['@context'] || {};
 
-  // compact the input according to the frame context
-  jsonld.compact(input, frame['@context'], options.optimize, resolver,
-    function(err, compacted) {
+  // expand input
+  jsonld.expand(input, options, function(err, _input) {
+    if(err) {
+      return callback(new JsonLdError(
+        'Could not expand input before framing.',
+        'jsonld.FrameError', {cause: err}));
+    }
+
+    // expand frame
+    jsonld.expand(frame, options, function(err, _frame) {
       if(err) {
         return callback(new JsonLdError(
-          'Could not compact input before framing.',
+          'Could not expand frame before framing.',
           'jsonld.FrameError', {cause: err}));
       }
 
-      // preserve compacted context
-      var ctx = compacted['@context'] || {};
-      delete compacted['@context'];
+      try {
+        // do framing
+        var framed = new Processor().frame(_input, _frame, options);
+      }
+      catch(ex) {
+        callback(ex);
+      }
 
-      // merge context
-      jsonld.mergeContexts({}, ctx, function(err, merged) {
+      // compact result (force @graph option to true)
+      options.graph = true;
+      jsonld.compact(framed, ctx, options, function(err, compacted) {
         if(err) {
           return callback(new JsonLdError(
-            'Could not merge context before framing.',
+            'Could not compact framed output.',
             'jsonld.FrameError', {cause: err}));
         }
-
-        try {
-          // do framing
-          var framed = new Processor().frame(compacted, frame, merged, options);
-
-          // attach context to each framed entry
-          if(Object.keys(ctx).length > 0) {
-            for(var i in framed) {
-              var next = framed[i];
-              if(_isObject(next)) {
-                // reorder keys so @context is first
-                framed[i] = {'@context': ctx};
-                for(var key in next) {
-                  framed[i][key] = next[key];
-                }
-              }
-            }
+        // get graph alias
+        var graph;
+        for(var key in compacted) {
+          if(key !== '@context') {
+            graph = key;
+            break;
           }
-          callback(null, framed);
         }
-        catch(ex) {
-          callback(ex);
-        }
+        // remove @preserve from results
+        compacted[graph] = _removePreserve(compacted[graph]);
+        callback(null, compacted);
       });
     });
+  });
 };
 
 /**
@@ -1256,26 +1265,27 @@ Processor.prototype.expand = function(ctx, property, element, propertyIsList) {
 /**
  * Performs JSON-LD framing.
  *
- * @param input the compacted JSON-LD object to frame.
- * @param frame the JSON-LD frame to use.
- * @param ctx the input's context.
+ * @param input the expanded JSON-LD to frame.
+ * @param frame the expanded JSON-LD frame to use.
  * @param options the framing options.
  *
  * @return the framed output.
  */
-Processor.prototype.frame = function(input, frame, ctx, options) {
+Processor.prototype.frame = function(input, frame, options) {
   // create framing state
   var state = {
-    context: ctx,
-    keywords: _getKeywords(ctx),
     options: options,
-    subjects: {},
-    embeds: {}
+    subjects: {}
   };
 
   // produce a map of all subjects and name each bnode
   var namer = new UniqueNamer('_:t');
-  _getFramingSubjects(state, input, namer);
+  /*input = [];
+  for(var key in state.subjects) {
+  }*/
+
+
+  _flatten(state.subjects, input, namer);
 
   // frame the subjects
   var framed = [];
@@ -2009,104 +2019,88 @@ function _getBlankNodeName(value) {
 }
 
 /**
- * Recursively gets the subjects in the given JSON-LD compact input for use
- * in the framing algorithm.
+ * Recursively flattens the subjects in the given JSON-LD expanded input.
  *
- * @param state the current framing state.
- * @param input the JSON-LD compact input.
+ * @param subjects a map of subject ID to subject.
+ * @param input the JSON-LD expanded input.
  * @param namer the blank node namer.
  * @param name the name assigned to the current input if it is a bnode.
+ * @param list the list to append to, null for none.
  */
-function _getFramingSubjects(state, input, namer, name) {
+function _flatten(subjects, input, namer, name, list) {
   // recurse through array
   if(_isArray(input)) {
     for(var i in input) {
-      _getFramingSubjects(state, input[i], namer);
+      _flatten(subjects, input[i], namer, list);
     }
   }
-  // recurse through @graph
-  else if(_isObject(input) && ('@graph' in input)) {
-    _getFramingSubjects(state, input['@graph'], namer);
-  }
-  // input is a subject
+  // handle subject
   else if(_isObject(input)) {
+    // add value to list
+    if(_isValue(input) && list) {
+      list.push(input);
+      return;
+    }
+
     // get name for subject
     if(_isUndefined(name)) {
-      name = _isBlankNode(input) ?
-        namer.getName(input['@id']) : input['@id'];
+      name = _isBlankNode(input) ? namer.getName(input['@id']) : input['@id'];
+    }
+
+    // add subject reference to list
+    if(list) {
+      list.push({'@id': name});
     }
 
     // create new subject or merge into existing one
-    var subject = state.subjects[name] = state.subjects[name] || {};
+    var subject = subjects[name] = subjects[name] || {};
+    subject['@id'] = name;
     for(var prop in input) {
-      // use assigned name for @id
-      if(_isKeyword(state.keywords, prop, '@id')) {
-        subject[prop] = name;
+      // skip @id
+      if(prop === '@id') {
         continue;
       }
 
       // copy keywords
-      if(_isKeyword(state.keywords, prop)) {
-        subject[prop] = _clone(input[prop]);
+      if(_isKeyword(null, prop)) {
+        subject[prop] = input[prop];
         continue;
       }
 
-      // determine if property @type is @id
-      var isId = _isKeyword(state.keywords,
-        jsonld.getContextValue(state.context, prop, '@type'), '@id');
-
-      // normalize objects to array
+      // iterate over objects
       var objects = input[prop];
-      // preserve list
-      if(_isListValue(objects)) {
-        var list = {};
-        list['@list'] = [];
-        jsonld.addValue(subject, prop, list);
-        objects = objects['@list'];
-      }
-      var useArray = _isArray(objects);
-      objects = useArray ? objects : [objects];
       for(var i in objects) {
         var o = objects[i];
 
-        // get subject @id from expanded or compact form
-        var sid = null;
+        // handle embedded subject or subject reference
         if(_isSubject(o) || _isSubjectReference(o)) {
-          if('@id' in o) {
-            sid = o['@id'];
+          // rename blank node @id
+          var id = ('@id' in o) ? o['@id'] : '_:';
+          if(id.indexOf('_:') === 0) {
+            id = namer.getName(id);
           }
-          // rename blank node subject
-          if(sid === null || o['@id'].indexOf('_:') === 0) {
-            sid = namer.getName(sid);
-          }
-        }
-        else if(_isString(o) && isId) {
-          sid = o;
-          o = {};
-          o['@id'] = sid;
-        }
 
-        if(sid === null) {
-          // add non-subject value
-          jsonld.addValue(subject, prop, o, useArray);
+          // add reference and recurse
+          jsonld.addValue(subject, prop, {'@id': id}, true);
+          _flatten(subjects, o, namer, id, null);
         }
         else {
-          // add a subject reference
-          var ref;
-          if(isId) {
-            ref = sid;
+          // recurse into list
+          if(_isListValue(o)) {
+            var l = [];
+            _flatten(subjects, o['@list'], namer, name, l);
+            o = {'@list': l};
           }
-          else {
-            ref = {};
-            ref['@id'] = sid;
-          }
-          jsonld.addValue(subject, prop, ref, useArray);
 
-          // recurse
-          _getFramingSubjects(state, o, namer, sid);
+          // add non-subject
+          jsonld.addValue(subject, prop, o, true);
         }
       }
     }
+  }
+  // add non-object to list
+  else if(list) {
+    list.push(input);
   }
 }
 
@@ -2117,22 +2111,30 @@ function _getFramingSubjects(state, input, namer, name) {
  * @param subjects the subjects to filter.
  * @param frame the frame.
  * @param parent the parent subject or top-level array.
- * @param property the parent property, null for an array parent.
+ * @param property the parent property, initialized to null.
  */
 function _frame(state, subjects, frame, parent, property) {
   // validate the frame
   _validateFrame(state, frame);
+  frame = frame[0];
 
   // filter out subjects that match the frame
   var matches = _filterSubjects(state, subjects, frame);
 
   // get flags for current frame
   var options = state.options;
-  var embedOn = _getFrameFlag(state, frame, options, 'embed');
-  var explicitOn = _getFrameFlag(state, frame, options, 'explicit');
+  var embedOn = _getFrameFlag(frame, options, 'embed');
+  var explicitOn = _getFrameFlag(frame, options, 'explicit');
 
   // add matches to output
   for(var id in matches) {
+    /* Note: In order to treat each top-level match as a compartmentalized
+    result, create an independent copy of the embedded subjects map when the
+    property is null, which only occurs at the top-level. */
+    if(property === null) {
+      state.embeds = {};
+    }
+
     // start output
     var output = {};
     output['@id'] = id;
@@ -2180,7 +2182,7 @@ function _frame(state, subjects, frame, parent, property) {
       var subject = matches[id];
       for(var prop in subject) {
         // copy keywords to output
-        if(_isKeyword(state.keywords, prop)) {
+        if(_isKeyword(null, prop)) {
           output[prop] = _clone(subject[prop]);
           continue;
         }
@@ -2194,36 +2196,39 @@ function _frame(state, subjects, frame, parent, property) {
           continue;
         }
 
-        // determine if property @type is @id
-        var isId = _isKeyword(state.keywords,
-          jsonld.getContextValue(state.context, prop, '@type'), '@id');
-
         // add objects
         var objects = subject[prop];
-        // preserve list
-        if(_isListValue(objects)) {
-          var list = {};
-          list['@list'] = [];
-          jsonld.addValue(output, prop, list);
-          objects = objects['@list'];
-        }
-        objects = _isArray(objects) ? objects : [objects];
         for(var i in objects) {
           var o = objects[i];
 
-          // get subject @id from expanded or compact form
-          var sid = null;
-          if(_isSubjectReference(o)) {
-            sid = o['@id'];
-          }
-          else if(_isString(o) && isId) {
-            sid = o;
+          // recurse into list
+          if(_isListValue(o)) {
+            // add empty list
+            var list = {'@list': []};
+            _addFrameOutput(state, output, prop, list);
+
+            // add list objects
+            var src = o['@list'];
+            for(var n in src) {
+              o = src[n];
+              // recurse into subject or subject reference
+              if(_isSubjectReference(o)) {
+                var _subjects = {};
+                _subjects[o['@id']] = o;
+                _frame(state, _subjects, frame[prop], list, '@list');
+              }
+              // include other values automatically
+              else {
+                _addFrameOutput(state, list, '@list', _clone(o));
+              }
+            }
+            continue;
           }
 
-          // recurse into sub-subjects
-          if(sid !== null) {
+          // recurse into subject reference
+          if(_isSubjectReference(o)) {
             var _subjects = {};
-            _subjects[sid] = o;
+            _subjects[o['@id']] = o;
             _frame(state, _subjects, frame[prop], output, prop);
           }
           // include other values automatically
@@ -2233,33 +2238,23 @@ function _frame(state, subjects, frame, parent, property) {
         }
       }
 
-      var kwdefault = state.keywords['@default'];
+      // handle defaults
       for(var prop in frame) {
         // skip keywords
-        if(_isKeyword(state.keywords, prop)) {
+        if(_isKeyword(null, prop)) {
           continue;
         }
 
         // if omit default is off, then include default values for properties
         // that appear in the next frame but are not in the matching subject
-        var next = frame[prop];
-        var omitDefaultOn = _getFrameFlag(state, next, options, 'omitDefault');
+        var next = frame[prop][0];
+        var omitDefaultOn = _getFrameFlag(next, options, 'omitDefault');
         if(!omitDefaultOn && !(prop in output)) {
-          if(kwdefault in next) {
-            output[prop] = _clone(next[kwdefault]);
+          var preserve = '@null';
+          if('@default' in next) {
+            preserve = _clone(next['@default']);
           }
-          // no frame @default, use [] for @set/@list and null otherwise
-          else {
-            var container = jsonld.getContextValue(
-              state.context, prop, '@container');
-            if(_isKeyword(state.keywords, container, '@set') ||
-              _isKeyword(state.keywords, container, '@list')) {
-              output[prop] = [];
-            }
-            else {
-              output[prop] = null;
-            }
-          }
+          output[prop] = {'@preserve': preserve};
         }
       }
 
@@ -2272,16 +2267,15 @@ function _frame(state, subjects, frame, parent, property) {
 /**
  * Gets the frame flag value for the given flag name.
  *
- * @param state the current framing state.
  * @param frame the frame.
  * @param options the framing options.
  * @param name the flag name.
  *
  * @return the flag value.
  */
-function _getFrameFlag(state, frame, options, name) {
-  var kw = state.keywords['@' + name];
-  return (kw in frame) ? frame[kw] : options[name];
+function _getFrameFlag(frame, options, name) {
+  var flag = '@' + name;
+  return (flag in frame) ? frame[flag][0] : options[name];
 };
 
 /**
@@ -2291,9 +2285,9 @@ function _getFrameFlag(state, frame, options, name) {
  * @param frame the frame to validate.
  */
 function _validateFrame(state, frame) {
-  if(!_isObject(frame)) {
+  if(!_isArray(frame) || frame.length !== 1 || !_isObject(frame[0])) {
     throw new JsonLdError(
-      'Invalid JSON-LD syntax; a JSON-LD frame must be an object.',
+      'Invalid JSON-LD syntax; a JSON-LD frame must be a single object.',
       'jsonld.SyntaxError',
       {frame: frame});
   }
@@ -2312,7 +2306,7 @@ function _filterSubjects(state, subjects, frame) {
   var rval = {};
   for(var id in subjects) {
     var subject = state.subjects[id];
-    if(_filterSubject(state, subject, frame)) {
+    if(_filterSubject(subject, frame)) {
       rval[id] = subject;
     }
   }
@@ -2322,45 +2316,33 @@ function _filterSubjects(state, subjects, frame) {
 /**
  * Returns true if the given subject matches the given frame.
  *
- * @param state the current frame state.
  * @param subject the subject to check.
  * @param frame the frame to check.
  *
  * @return true if the subject matches, false if not.
  */
-function _filterSubject(state, subject, frame) {
-  var rval = false;
-
-  // check @type
-  var kwtype = _compactIri(state.context, '@type');
-  if(kwtype in frame && !_isObject(frame[kwtype])) {
-    // normalize to array
-    var types = frame[kwtype];
-    types = _isArray(types) ? types : [types];
+function _filterSubject(subject, frame) {
+  // check @type (object value means 'any' type, fall through to ducktyping)
+  if('@type' in frame &&
+    !(frame['@type'].length === 1 && _isObject(frame['@type'][0]))) {
+    var types = frame['@type'];
     for(var i in types) {
-      if(jsonld.hasValue(subject, kwtype, types[i])) {
-        rval = true;
-        break;
+      // any matching @type is a match
+      if(jsonld.hasValue(subject, '@type', types[i])) {
+        return true;
       }
     }
+    return false;
   }
+
   // check ducktype
-  else {
-    rval = true;
-    for(var key in frame) {
-      // skip non-@id keywords
-      if(key !== '@id' && _isKeyword(state.keywords, key)) {
-        continue;
-      }
-
-      if(!(key in subject)) {
-        rval = false;
-        break;
-      }
+  for(var key in frame) {
+    // only not a duck if @id or non-keyword isn't in subject
+    if((key === '@id' || !_isKeyword(null, key)) && !(key in subject)) {
+      return false;
     }
   }
-
-  return rval;
+  return true;
 }
 
 /**
@@ -2373,42 +2355,34 @@ function _filterSubject(state, subject, frame) {
  * @param output the output.
  */
 function _embedValues(state, subject, property, output) {
-  // normalize to an array
+  // embed subject properties in output
   var objects = subject[property];
-  // preserve list
-  if(_isListValue(objects)) {
-    var list = {};
-    list['@list'] = [];
-    jsonld.addValue(output, property, list);
-    objects = objects['@list'];
-  }
-  objects = _isArray(objects) ? objects : [objects];
   for(var i in objects) {
     var o = objects[i];
 
-    // get subject @id from expanded or compact form
-    var sid = null;
-    if(_isSubjectReference(o)) {
-      sid = o['@id'];
-    }
-    else if(_isString(o) && _isKeyword(state.keywords,
-      jsonld.getContextValue(state.context, property, '@type'), '@id')) {
-      sid = o;
+    // recurse into @list
+    if(_isListValue(o)) {
+      var list = {'@list': []};
+      _addFrameOutput(state, output, property, list);
+      return _embedValues(state, o, '@list', list['@list']);
     }
 
-    if(sid !== null) {
+    // get subject @id from expanded or compact form
+    if(_isSubjectReference(o)) {
+      var id = o['@id'];
+
       // embed full subject if isn't already embedded
-      if(!(sid in state.embeds)) {
+      if(!(id in state.embeds)) {
         // add embed
         var embed = {parent: output, property: property};
-        state.embeds[sid] = embed;
+        state.embeds[id] = embed;
 
         // recurse into subject
         o = {};
-        var s = state.subjects[sid];
+        var s = state.subjects[id];
         for(var prop in s) {
           // copy keywords
-          if(_isKeyword(state.keywords, prop)) {
+          if(_isKeyword(null, prop)) {
             o[prop] = _clone(s[prop]);
             continue;
           }
@@ -2417,6 +2391,7 @@ function _embedValues(state, subject, property, output) {
       }
       _addFrameOutput(state, output, property, o);
     }
+    // copy non-subject value
     else {
       _addFrameOutput(state, output, property, _clone(o));
     }
@@ -2437,25 +2412,14 @@ function _removeEmbed(state, id) {
   var property = embed.property;
 
   // create reference to replace embed
-  var subject = {};
-  var ref;
-  if(property !== null && _isKeyword(state.keywords,
-    jsonld.getContextValue(state.context, property, '@type'), '@id')) {
-    ref = id;
-    subject['@id'] = id;
-  }
-  else {
-    ref = {};
-    ref['@id'] = id;
-    subject['@id'] = id;
-  }
+  var subject = {'@id': id};
 
   // remove existing embed
   if(_isArray(parent)) {
     // replace subject with reference
     for(var i in parent) {
       if(jsonld.compareValues(parent[i], subject)) {
-        parent[i] = ref;
+        parent[i] = subject;
         break;
       }
     }
@@ -2464,7 +2428,7 @@ function _removeEmbed(state, id) {
     // replace subject with reference
     var useArray = _isArray(parent[property]);
     jsonld.removeValue(parent, property, subject, useArray);
-    jsonld.addValue(parent, property, ref, useArray);
+    jsonld.addValue(parent, property, subject, useArray);
   }
 
   // recursively remove dependent dangling embeds
@@ -2488,16 +2452,12 @@ function _removeEmbed(state, id) {
  *
  * @param state the current framing state.
  * @param parent the parent to add to.
- * @param property the parent property, null for an array parent.
+ * @param property the parent property.
  * @param output the output to add.
  */
 function _addFrameOutput(state, parent, property, output) {
   if(_isObject(parent)) {
-    // use an array if @container specifies it
-    var ctx = state.context;
-    var container = jsonld.getContextValue(ctx, property, '@container');
-    var useArray = (container === '@set') || (container === '@list');
-    jsonld.addValue(parent, property, output, useArray);
+    jsonld.addValue(parent, property, output, true);
   }
   else {
     parent.push(output);
@@ -2505,76 +2465,49 @@ function _addFrameOutput(state, parent, property, output) {
 }
 
 /**
- * Optimally type-compacts a value.
+ * Removes the @preserve keywords as the last step of the framing algorithm.
  *
- * @param ctx the current context.
- * @param property the compacted property associated with the value.
- * @param value the value to type-compact.
- * @param optimizeCtx the context used to store optimization definitions.
+ * @param input the framed, compacted output.
  *
- * @return the optimally type-compacted value.
+ * @return the resulting output.
  */
-function _optimalTypeCompact(ctx, property, value, optimizeCtx) {
-  // only arrays and objects can be further optimized
-  if(!_isArray(value) && !_isObject(value)) {
-    return value;
-  }
-
-  // if @type is already in the context, value is already optimized
-  if(jsonld.getContextValue(ctx, property, '@type')) {
-    return value;
-  }
-
-  // if every value is the same type, optimization is possible
-  var values = _isArray(value) ? value : [value];
-  var type = null;
-  for(var i = 0; i < values.length; ++i) {
-    // val can only be a subject reference or a @value with no @language
-    var val = values[i];
-    var vtype = null;
-    if(_canTypeCompact(val)) {
-      if(_isSubjectReference(val)) {
-        vtype = '@id';
-      }
-      // must be a @value with no @language
-      else if('@type' in val) {
-        vtype = val['@type'];
-      }
+function _removePreserve(input) {
+  // recurse through arrays
+  if(_isArray(input)) {
+    for(var i in input) {
+      input[i] = _removePreserve(input[i]);
     }
-
-    if(i === 0) {
-      type = vtype;
-    }
-
-    // no type or type difference, can't compact
-    if(type === null || type !== vtype) {
-      return value;
+    // drop null-only arrays
+    if(input.length === 1 && input[0] === null) {
+      input = [];
     }
   }
-
-  // all values have same type so can be compacted, add @type to context
-  jsonld.setContextValue(optimizeCtx, property, '@type', _clone(type));
-
-  // do compaction
-  if(_isArray(value)) {
-    for(var i in value) {
-      var val = value[i];
-      if(_isSubjectReference(value[i])) {
-        value[i] = val['@id'];
+  else if(_isObject(input)) {
+    // remove @preserve
+    if('@preserve' in input) {
+      if(input['@preserve'] === '@null') {
+        return null;
       }
-      else {
-        value[i] = val['@value'];
-      }
+      return input['@preserve'];
+    }
+
+    // skip @values
+    if(_isValue(input)) {
+      return input;
+    }
+
+    // recurse through @lists
+    if(_isListValue(input)) {
+      input['@list'] = _removePreserve(input['@list']);
+      return input;
+    }
+
+    // recurse through properties
+    for(var prop in input) {
+      input[prop] = _removePreserve(input[prop]);
     }
   }
-  else if(_isSubjectReference(value)) {
-    value = value['@id'];
-  }
-  else {
-    value = value['@value'];
-  }
-
-  return value;
+  return input;
 }
 
 /**
@@ -2855,6 +2788,7 @@ function _getKeywords(ctx) {
     '@language': [],
     '@list': [],
     '@omitDefault': [],
+    '@preserve': [],
     '@set': [],
     '@type': [],
     '@value': []
@@ -2865,9 +2799,9 @@ function _getKeywords(ctx) {
     for(var key in ctx) {
       var kw = ctx[key];
       if(_isString(kw) && kw in rval) {
-        if(kw === '@context') {
+        if(kw === '@context' || kw === '@preserve') {
           throw new JsonLdError(
-            'Invalid JSON-LD syntax; @context cannot be aliased.',
+            'Invalid JSON-LD syntax; @context and @preserve cannot be aliased.',
             'jsonld.SyntaxError');
         }
         rval[kw].push(key);
@@ -2910,6 +2844,7 @@ function _isKeyword(keywords, value, specific) {
     case '@language':
     case '@list':
     case '@omitDefault':
+    case '@preserve':
     case '@set':
     case '@type':
     case '@value':
@@ -3129,24 +3064,6 @@ function _isBlankNode(value) {
     }
   }
   return rval;
-}
-
-/**
- * Returns true if the given value can be possibly compacted based on type.
- *
- * Subject references and @values can be possibly compacted, however, a @value
- * must not have a @language or type-compaction would cause data loss.
- *
- * @param value the value to check.
- *
- * @return true if the value can be possibly type-compacted, false if not.
- */
-function _canTypeCompact(value) {
-  // Note: It may be possible to type-compact a value if all these hold true:
-  // 1. It is an Object.
-  // 2. It is a subject reference OR a @value with no @language.
-  return (_isObject(value) && (_isSubjectReference(value) ||
-    (_isValue(value) && !('@language' in value))));
 }
 
 /**
