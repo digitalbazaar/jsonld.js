@@ -1118,7 +1118,7 @@ Processor.prototype.expand = function(ctx, property, element, propertyIsList) {
       var prop = _expandTerm(ctx, key);
 
       // drop non-absolute IRI keys that aren't keywords
-      if(!_isAbsoluteIri(prop) && !_isKeyword(keywords, prop)) {
+      if(!_isAbsoluteIri(prop) && !_isKeyword(prop, keywords)) {
         continue;
       }
 
@@ -2055,7 +2055,7 @@ function _flatten(subjects, input, namer, name, list) {
       }
 
       // copy keywords
-      if(_isKeyword(null, prop)) {
+      if(_isKeyword(prop)) {
         subject[prop] = input[prop];
         continue;
       }
@@ -2175,7 +2175,7 @@ function _frame(state, subjects, frame, parent, property) {
       var subject = matches[id];
       for(var prop in subject) {
         // copy keywords to output
-        if(_isKeyword(null, prop)) {
+        if(_isKeyword(prop)) {
           output[prop] = _clone(subject[prop]);
           continue;
         }
@@ -2234,7 +2234,7 @@ function _frame(state, subjects, frame, parent, property) {
       // handle defaults
       for(var prop in frame) {
         // skip keywords
-        if(_isKeyword(null, prop)) {
+        if(_isKeyword(prop)) {
           continue;
         }
 
@@ -2331,7 +2331,7 @@ function _filterSubject(subject, frame) {
   // check ducktype
   for(var key in frame) {
     // only not a duck if @id or non-keyword isn't in subject
-    if((key === '@id' || !_isKeyword(null, key)) && !(key in subject)) {
+    if((key === '@id' || !_isKeyword(key)) && !(key in subject)) {
       return false;
     }
   }
@@ -2375,7 +2375,7 @@ function _embedValues(state, subject, property, output) {
         var s = state.subjects[id];
         for(var prop in s) {
           // copy keywords
-          if(_isKeyword(null, prop)) {
+          if(_isKeyword(prop)) {
             o[prop] = _clone(s[prop]);
             continue;
           }
@@ -2615,7 +2615,7 @@ function _compactIri(ctx, iri, value, container) {
   }
 
   // if term is a keyword, use alias
-  if(_isKeyword(null, iri)) {
+  if(_isKeyword(iri)) {
     // pick shortest, least alias
     var keywords = _getKeywords(ctx);
     aliases = keywords[iri];
@@ -2808,20 +2808,19 @@ function _getKeywords(ctx) {
 /**
  * Returns whether or not the given value is a keyword (or a keyword alias).
  *
- * @param keywords the keyword alias map to check against, null for default.
  * @param value the value to check.
- * @param [specific] the specific keyword to check against.
+ * @param keywords the custom keyword alias map to check against.
  *
  * @return true if the value is a keyword, false if not.
  */
-function _isKeyword(keywords, value, specific) {
+function _isKeyword(value, keywords) {
   if(keywords) {
     if(value in keywords) {
-      return _isUndefined(specific) ? true : (value === specific);
+      return true;
     }
     for(var key in keywords) {
       if(keywords[key].indexOf(value) !== -1) {
-        return _isUndefined(specific) ? true : (key === specific);
+        return true;
       }
     }
   }
