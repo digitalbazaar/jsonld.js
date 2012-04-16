@@ -2021,7 +2021,7 @@ function _flatten(subjects, input, namer, name, list) {
   // recurse through array
   if(_isArray(input)) {
     for(var i in input) {
-      _flatten(subjects, input[i], namer, list);
+      _flatten(subjects, input[i], namer, undefined, list);
     }
   }
   // handle subject
