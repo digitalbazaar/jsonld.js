@@ -763,7 +763,7 @@ jsonld.getContextValue = function(ctx, key, type, expand) {
   }
 
   // return null for invalid key
-  if(!key) {
+  if(key === null) {
     rval = null;
   }
   // return entire context entry if type is unspecified
