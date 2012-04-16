@@ -1103,6 +1103,7 @@ Processor.prototype.expand = function(ctx, property, element, propertyIsList) {
     // if element has a context, merge it in
     if('@context' in element) {
       ctx = this.mergeContexts(ctx, element['@context']);
+      delete element['@context'];
     }
 
     // get keyword aliases
@@ -1110,11 +1111,6 @@ Processor.prototype.expand = function(ctx, property, element, propertyIsList) {
 
     var rval = {};
     for(var key in element) {
-      // skip @context
-      if(key === '@context') {
-        continue;
-      }
-
       // expand property
       var prop = _expandTerm(ctx, key);
 
@@ -2015,7 +2011,7 @@ function _getBlankNodeName(value) {
 /**
  * Recursively flattens the subjects in the given JSON-LD expanded input.
  *
- * @param subjects a map of subject ID to subject.
+ * @param subjects a map of subject @id to subject.
  * @param input the JSON-LD expanded input.
  * @param namer the blank node namer.
  * @param name the name assigned to the current input if it is a bnode.
