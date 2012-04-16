@@ -55,6 +55,9 @@ jsonld.compact = function(input, ctx) {
 
   // default to empty context if not given
   ctx = ctx || {};
+  if('@context' in ctx) {
+    ctx = ctx['@context'];
+  }
 
   // expand input then do compaction
   jsonld.expand(input, options, function(err, expanded) {
