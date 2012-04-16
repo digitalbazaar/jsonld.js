@@ -2855,7 +2855,8 @@ function _isKeyword(keywords, value, specific) {
  * @return true if the input is an Object, false if not.
  */
 function _isObject(input) {
-  return (input && input.constructor === Object);
+  return (input !== null && !_isUndefined(input) &&
+    input.constructor === Object);
 }
 
 /**
@@ -2877,7 +2878,8 @@ function _isEmptyObject(input) {
  * @return true if the input is an Array, false if not.
  */
 function _isArray(input) {
-  return (input && input.constructor === Array);
+  return (input !== null && !_isUndefined(input) &&
+    input.constructor === Array);
 }
 
 /**
@@ -2907,7 +2909,8 @@ function _isArrayOfStrings(input) {
  * @return true if the input is a String, false if not.
  */
 function _isString(input) {
-  return (input && input.constructor === String);
+  return (input !== null && !_isUndefined(input) &&
+    input.constructor === String);
 }
 
 /**
@@ -2918,7 +2921,8 @@ function _isString(input) {
  * @return true if the input is a Number, false if not.
  */
 function _isNumber(input) {
-  return (input && input.constructor === Number);
+  return (input !== null && !_isUndefined(input) &&
+    input.constructor === Number);
 }
 
 /**
@@ -2940,7 +2944,8 @@ function _isDouble(input) {
  * @return true if the input is a Boolean, false if not.
  */
 function _isBoolean(input) {
-  return (input && input.constructor === Boolean);
+  return (input !== null && !_isUndefined(input) &&
+    input.constructor === Boolean);
 }
 
 /**
