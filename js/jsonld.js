@@ -1086,14 +1086,9 @@ Processor.prototype.expand = function(ctx, property, element, propertyIsList) {
       var e = this.expand(ctx, property, element[i], propertyIsList);
       if(_isArray(e) && propertyIsList) {
         // lists of lists are illegal
-        if(propertyIsList) {
-          throw new JsonLdError(
-            'Invalid JSON-LD syntax; lists of lists are not permitted.',
-            'jsonld.SyntaxError');
-        }
-
-        // merge arrays
-        rval.splice(0, 0, e);
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; lists of lists are not permitted.',
+          'jsonld.SyntaxError');
       }
       // drop null values
       else if(e !== null) {
