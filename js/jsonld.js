@@ -279,7 +279,7 @@ jsonld.frame = function(input, frame) {
             'jsonld.FrameError', {cause: err}));
         }
         // get graph alias
-        var graph;
+        var graph = '@graph';
         for(var key in compacted) {
           if(key !== '@context') {
             graph = key;
@@ -750,7 +750,7 @@ jsonld.compareNormalized = function(n1, n2) {
  * @param key the context key.
  * @param [type] the type of value to get (eg: '@id', '@type'), if not
  *          specified gets the entire entry for a key, null if not found.
- * @param [expand] true to expand the key, false not to (default: false).
+ * @param [expand] true to expand the key, false not to (default: true).
  *
  * @return the value.
  */
