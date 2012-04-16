@@ -2201,7 +2201,7 @@ function _frame(state, subjects, frame, parent, property) {
             var src = o['@list'];
             for(var n in src) {
               o = src[n];
-              // recurse into subject or subject reference
+              // recurse into subject reference
               if(_isSubjectReference(o)) {
                 var _subjects = {};
                 _subjects[o['@id']] = o;
@@ -2357,7 +2357,7 @@ function _embedValues(state, subject, property, output) {
       return _embedValues(state, o, '@list', list['@list']);
     }
 
-    // get subject @id from expanded or compact form
+    // handle subject reference
     if(_isSubjectReference(o)) {
       var id = o['@id'];
 
