@@ -1568,7 +1568,7 @@ function _expandValue(ctx, property, value) {
     rval = _expandTerm(ctx, value);
   }
   else {
-    // compact property to look for its type definition in the context
+    // get type definition from context
     var type = jsonld.getContextValue(ctx, property, '@type');
 
     // do @id expansion
