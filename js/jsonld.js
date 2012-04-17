@@ -2531,15 +2531,15 @@ function _compareShortestLeast(a, b) {
  * @param container the specific @container to match or null.
  * @param result the resulting term or CURIE.
  * @param results the results array.
- * @param bestMatch the current bestMatch value.
+ * @param rank the current rank value.
  *
- * @return the new bestMatch value.
+ * @return the new rank value.
  */
-function _isBestMatch(ctx, key, value, container, result, results, bestMatch) {
+function _isBestMatch(ctx, key, value, container, result, results, rank) {
   // value is null, match any key
   if(value === null) {
     results.push(result);
-    return bestMatch;
+    return rank;
   }
 
   var valueIsList = _isListValue(value);
@@ -2558,42 +2558,42 @@ function _isBestMatch(ctx, key, value, container, result, results, bestMatch) {
       (entry['@container'] === '@set' && container === null)) &&
     ((valueHasType && entryType === value['@type']) ||
     (!valueHasType && entry['@language'] === language))) {
-    if(bestMatch < 3) {
-      bestMatch = 3;
+    if(rank < 3) {
+      rank = 3;
       results.length = 0;
     }
     results.push(result);
   }
   // no container with type or language
-  else if(bestMatch < 3 &&
+  else if(rank < 3 &&
     !entryHasContainer && !valueIsList &&
     ((valueHasType && entryType === value['@type']) ||
       (!valueHasType && entry['@language'] === language))) {
-    if(bestMatch < 2) {
-      bestMatch = 2;
+    if(rank < 2) {
+      rank = 2;
       results.length = 0;
     }
     results.push(result);
   }
   // container with no type or language
-  else if(bestMatch < 2 &&
+  else if(rank < 2 &&
     entryHasContainer &&
     (entry['@container'] === container ||
       (entry['@container'] === '@set' && container === null)) &&
     !('@type' in entry) && !('@language' in entry)) {
-    if(bestMatch < 1) {
-      bestMatch = 1;
+    if(rank < 1) {
+      rank = 1;
       results.length = 0;
     }
     results.push(result);
   }
   // no container, no type, no language
-  else if(bestMatch < 1 &&
+  else if(rank < 1 &&
     !entryHasContainer && !('@type' in entry) && !('@language' in entry)) {
     results.push(result);
   }
 
-  return bestMatch;
+  return rank;
 }
 
 /**
@@ -2640,7 +2640,7 @@ function _compactIri(ctx, iri, value, container) {
   // check the context for terms that could shorten the IRI
   // (give preference to terms over prefixes)
   var terms = [];
-  var bestMatch = 0;
+  var rank = 0;
   for(var key in ctx) {
     // skip special context keys (start with '@')
     if(key.indexOf('@') === 0) {
@@ -2648,8 +2648,7 @@ function _compactIri(ctx, iri, value, container) {
     }
     // compact to a term
     if(iri === jsonld.getContextValue(ctx, key, '@id')) {
-      bestMatch = _isBestMatch(
-        ctx, key, value, container, key, terms, bestMatch);
+      rank = _isBestMatch(ctx, key, value, container, key, terms, rank);
     }
   }
 
@@ -2661,7 +2660,7 @@ function _compactIri(ctx, iri, value, container) {
 
   // term not found, check the context for a prefix
   var curies = [];
-  bestMatch = 0;
+  rank = 0;
   for(var key in ctx) {
     // skip special context keys (start with '@')
     if(key.indexOf('@') === 0) {
@@ -2675,8 +2674,7 @@ function _compactIri(ctx, iri, value, container) {
       var idx = iri.indexOf(ctxIri);
       if(idx === 0 && iri.length > ctxIri.length) {
         var curie = key + ':' + iri.substr(ctxIri.length);
-        bestMatch = _isBestMatch(
-          ctx, key, value, container, curie, curies, bestMatch);
+        rank = _isBestMatch(ctx, key, value, container, curie, curies, rank);
       }
     }
   }
