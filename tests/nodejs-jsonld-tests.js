@@ -164,34 +164,36 @@ TestRunner.prototype.run = function(manifests, callback) {
         // read test input files
         var result;
         var type = test['@type'];
+        var options = {
+          base: 'http://json-ld.org/test-suite/tests/' + test.input
+        };
         if(type.indexOf('jld:NormalizeTest') !== -1) {
           self.test(test.name);
           input = _readTestJson(test.input, filepath);
           test.expect = _readTestJson(test.expect, filepath);
-          jsonld.normalize(input, checkResult);
+          jsonld.normalize(input, options, checkResult);
         }
         else if(type.indexOf('jld:ExpandTest') !== -1) {
           self.test(test.name);
           input = _readTestJson(test.input, filepath);
           test.expect = _readTestJson(test.expect, filepath);
-          jsonld.expand(input, checkResult);
+          jsonld.expand(input, options, checkResult);
         }
         else if(type.indexOf('jld:CompactTest') !== -1) {
           self.test(test.name);
           input = _readTestJson(test.input, filepath);
           test.context = _readTestJson(test.context, filepath);
           test.expect = _readTestJson(test.expect, filepath);
-          test.optimize = test.optimize || false;
+          options.optimize = test.optimize || false;
           jsonld.compact(
-            input, test.context['@context'], {optimize: test.optimize},
-            checkResult);
+            input, test.context['@context'], options, checkResult);
         }
         else if(type.indexOf('jld:FrameTest') !== -1) {
           self.test(test.name);
           input = _readTestJson(test.input, filepath);
           test.frame = _readTestJson(test.frame, filepath);
           test.expect = _readTestJson(test.expect, filepath);
-          jsonld.frame(input, test.frame, checkResult);
+          jsonld.frame(input, test.frame, options, checkResult);
         }
         else {
           util.log('Skipping test "' + test.name + '" of type: ' +

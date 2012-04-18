@@ -18,11 +18,12 @@ var jsonld = {};
  * @param input the JSON-LD object to compact.
  * @param ctx the context to compact with.
  * @param [options] options to use:
+ *          [base] the base IRI to use.
  *          [strict] use strict mode (default: true).
  *          [optimize] true to optimize the compaction (default: false).
  *          [graph] true to always output a top-level graph (default: false).
  *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
- * @param callback(err, compacted) called once the operation completes.
+ * @param callback(err, compacted, merged) called once the operation completes.
  */
 jsonld.compact = function(input, ctx) {
   // get arguments
@@ -40,6 +41,9 @@ jsonld.compact = function(input, ctx) {
   }
 
   // set default options
+  if(!('base' in options)) {
+    options.base = '';
+  }
   if(!('strict' in options)) {
     options.strict = true;
   }
@@ -84,7 +88,7 @@ jsonld.compact = function(input, ctx) {
         // do compaction
         input = expanded;
         var compacted = new Processor().compact(ctx, null, input, options);
-        cleanup(null, compacted, options);
+        cleanup(null, compacted, ctx, options);
       }
       catch(ex) {
         callback(ex);
@@ -93,7 +97,7 @@ jsonld.compact = function(input, ctx) {
   });
 
   // performs clean up after compaction
-  function cleanup(err, compacted, options) {
+  function cleanup(err, compacted, merged, options) {
     if(err) {
       return callback(err);
     }
@@ -154,7 +158,7 @@ jsonld.compact = function(input, ctx) {
       }
     }
 
-    callback(null, compacted);
+    callback(null, compacted, merged);
   };
 };
 
@@ -163,6 +167,7 @@ jsonld.compact = function(input, ctx) {
  *
  * @param input the JSON-LD object to expand.
  * @param [options] the options to use:
+ *          [base] the base IRI to use.
  *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, expanded) called once the operation completes.
  */
@@ -178,6 +183,9 @@ jsonld.expand = function(input) {
   callback = arguments[callbackArg];
 
   // set default options
+  if(!('base' in options)) {
+    options.base = '';
+  }
   if(!('resolver' in options)) {
     options.resolver = jsonld.urlResolver;
   }
@@ -190,7 +198,7 @@ jsonld.expand = function(input) {
     }
     try {
       // do expansion
-      var expanded = new Processor().expand({}, null, input, false);
+      var expanded = new Processor().expand({}, null, input, options, false);
 
       // optimize away @graph with no other properties
       if(_isObject(expanded) && ('@graph' in expanded) &&
@@ -215,6 +223,7 @@ jsonld.expand = function(input) {
  * @param input the JSON-LD object to frame.
  * @param frame the JSON-LD frame to use.
  * @param [options] the framing options.
+ *          [base] the base IRI to use.
  *          [embed] default @embed flag (default: true).
  *          [explicit] default @explicit flag (default: false).
  *          [omitDefault] default @omitDefault flag (default: false).
@@ -233,6 +242,9 @@ jsonld.frame = function(input, frame) {
   var callback = arguments[callbackArg];
 
   // set default options
+  if(!('base' in options)) {
+    options.base = '';
+  }
   if(!('resolver' in options)) {
     options.resolver = jsonld.urlResolver;
   }
@@ -272,22 +284,16 @@ jsonld.frame = function(input, frame) {
 
       // compact result (force @graph option to true)
       options.graph = true;
-      jsonld.compact(framed, ctx, options, function(err, compacted) {
+      jsonld.compact(framed, ctx, options, function(err, compacted, merged) {
         if(err) {
           return callback(new JsonLdError(
             'Could not compact framed output.',
             'jsonld.FrameError', {cause: err}));
         }
         // get graph alias
-        var graph = '@graph';
-        for(var key in compacted) {
-          if(key !== '@context') {
-            graph = key;
-            break;
-          }
-        }
+        var graph = _compactIri(merged, '@graph');
         // remove @preserve from results
-        compacted[graph] = _removePreserve(compacted[graph]);
+        compacted[graph] = _removePreserve(merged, compacted[graph]);
         callback(null, compacted);
       });
     });
@@ -299,6 +305,7 @@ jsonld.frame = function(input, frame) {
  *
  * @param input the JSON-LD object to normalize.
  * @param [options] the options to use:
+ *          [base] the base IRI to use.
  *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, normalized) called once the operation completes.
  */
@@ -314,6 +321,9 @@ jsonld.normalize = function(input, callback) {
   callback = arguments[callbackArg];
 
   // set default options
+  if(!('base' in options)) {
+    options.base = '';
+  }
   if(!('resolver' in options)) {
     options.resolver = jsonld.urlResolver;
   }
@@ -1076,17 +1086,19 @@ Processor.prototype.compact = function(ctx, property, element, options) {
  * @param ctx the context to use.
  * @param property the property for the element, null for none.
  * @param element the element to expand.
+ * @param options the expansion options.
  * @param propertyIsList true if the property is a list, false if not.
  *
  * @return the expanded value.
  */
-Processor.prototype.expand = function(ctx, property, element, propertyIsList) {
+Processor.prototype.expand = function(
+  ctx, property, element, options, propertyIsList) {
   // recursively expand array
   if(_isArray(element)) {
     var rval = [];
     for(var i in element) {
       // expand element
-      var e = this.expand(ctx, property, element[i], propertyIsList);
+      var e = this.expand(ctx, property, element[i], options, propertyIsList);
       if(_isArray(e) && propertyIsList) {
         // lists of lists are illegal
         throw new JsonLdError(
@@ -1171,7 +1183,7 @@ Processor.prototype.expand = function(ctx, property, element, propertyIsList) {
       // recurse into @list, @set, or @graph, keeping the active property
       var isList = (prop === '@list');
       if(isList || prop === '@set' || prop === '@graph') {
-        value = this.expand(ctx, property, value, isList);
+        value = this.expand(ctx, property, value, options, isList);
         if(isList && _isListValue(value)) {
           throw new JsonLdError(
             'Invalid JSON-LD syntax; lists of lists are not permitted.',
@@ -1181,7 +1193,7 @@ Processor.prototype.expand = function(ctx, property, element, propertyIsList) {
       else {
         // update active property and recursively expand value
         property = key;
-        value = this.expand(ctx, property, value, false);
+        value = this.expand(ctx, property, value, options, false);
       }
 
       // drop null values if property is not @value (dropped below)
@@ -1257,7 +1269,7 @@ Processor.prototype.expand = function(ctx, property, element, propertyIsList) {
   }
 
   // expand element according to value expansion rules
-  return _expandValue(ctx, property, element);
+  return _expandValue(ctx, property, element, options.base);
 };
 
 /**
@@ -1555,16 +1567,20 @@ Processor.prototype.mergeContexts = function(ctx1, ctx2) {
  * @param ctx the context to use.
  * @param property the property the value is associated with.
  * @param value the value to expand.
+ * @param base the base IRI to use.
  *
  * @return the expanded value.
  */
-function _expandValue(ctx, property, value) {
+function _expandValue(ctx, property, value, base) {
   // default to simple string return value
   var rval = value;
 
   // special-case expand @id and @type (skips '@id' expansion)
   var prop = _expandTerm(ctx, property);
-  if(prop === '@id' || prop === '@type') {
+  if(prop === '@id') {
+    rval = _expandTerm(ctx, value, base);
+  }
+  else if(prop === '@type') {
     rval = _expandTerm(ctx, value);
   }
   else {
@@ -1573,7 +1589,7 @@ function _expandValue(ctx, property, value) {
 
     // do @id expansion
     if(type === '@id') {
-      rval = {'@id': _expandTerm(ctx, value)};
+      rval = {'@id': _expandTerm(ctx, value, base)};
     }
     // other type
     else if(type !== null) {
@@ -2460,20 +2476,23 @@ function _addFrameOutput(state, parent, property, output) {
 /**
  * Removes the @preserve keywords as the last step of the framing algorithm.
  *
+ * @param ctx the context used to compact the input.
  * @param input the framed, compacted output.
  *
  * @return the resulting output.
  */
-function _removePreserve(input) {
+function _removePreserve(ctx, input) {
   // recurse through arrays
   if(_isArray(input)) {
+    var output = [];
     for(var i in input) {
-      input[i] = _removePreserve(input[i]);
+      var result = _removePreserve(ctx, input[i]);
+      // drop nulls from arrays
+      if(result !== null) {
+        output.push(result);
+      }
     }
-    // drop null-only arrays
-    if(input.length === 1 && input[0] === null) {
-      input = [];
-    }
+    input = output;
   }
   else if(_isObject(input)) {
     // remove @preserve
@@ -2491,13 +2510,19 @@ function _removePreserve(input) {
 
     // recurse through @lists
     if(_isListValue(input)) {
-      input['@list'] = _removePreserve(input['@list']);
+      input['@list'] = _removePreserve(ctx, input['@list']);
       return input;
     }
 
     // recurse through properties
     for(var prop in input) {
-      input[prop] = _removePreserve(input[prop]);
+      var result = _removePreserve(ctx, input[prop]);
+      var container = jsonld.getContextValue(ctx, prop, '@container');
+      if(_isArray(result) && result.length === 1 &&
+        container !== '@set' && container !== '@list') {
+        result = result[0];
+      }
+      input[prop] = result;
     }
   }
   return input;
@@ -2696,11 +2721,12 @@ function _compactIri(ctx, iri, value, container) {
  *
  * @param ctx the context to use.
  * @param term the term to expand.
+ * @param base the base IRI to use if a relative IRI is detected.
  * @param deep (used internally to recursively expand).
  *
  * @return the expanded term as an absolute IRI.
  */
-function _expandTerm(ctx, term, deep) {
+function _expandTerm(ctx, term, base, deep) {
   // nothing to expand
   if(term === null) {
     return null;
@@ -2752,9 +2778,14 @@ function _expandTerm(ctx, term, deep) {
         cycles[rval] = true;
       }
       recurse = rval;
-      recurse = _expandTerm(ctx, recurse, true);
+      recurse = _expandTerm(ctx, recurse, base, true);
     }
     rval = recurse;
+
+    // apply base IRI to relative IRIs if provided
+    if(!_isAbsoluteIri(rval) && !_isKeyword(rval) && !_isUndefined(base)) {
+      rval = base + rval;
+    }
   }
 
   return rval;
@@ -3069,7 +3100,7 @@ function _isBlankNode(value) {
  * @return true if the value is an absolute IRI, false if not.
  */
 function _isAbsoluteIri(value) {
-  return (/\w+:\/\/.+/).test(value);
+  return value.indexOf(':') !== -1;
 }
 
 /**
