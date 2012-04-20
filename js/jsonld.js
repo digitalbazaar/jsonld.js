@@ -387,6 +387,9 @@ jsonld.toRDF = function(input, callback) {
   callback = arguments[callbackArg];
 
   // set default options
+  if(!('base' in options)) {
+    options.base = '';
+  }
   if(!('resolver' in options)) {
     options.resolver = jsonld.urlResolver;
   }
@@ -501,6 +504,9 @@ jsonld.processContext = function(activeCtx, localCtx) {
   var callback = arguments[callbackArg];
 
   // set default options
+  if(!('base' in options)) {
+    options.base = '';
+  }
   if(!('resolver' in options)) {
     options.resolver = jsonld.urlResolver;
   }
