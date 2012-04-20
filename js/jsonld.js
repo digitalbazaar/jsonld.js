@@ -1117,9 +1117,9 @@ Processor.prototype.expand = function(
       // @graph must be an array or an object
       if(prop === '@graph' && !(_isObject(value) || _isArray(value))) {
         throw new JsonLdError(
-            'Invalid JSON-LD syntax; "@value" value must not be an ' +
-            'object or an array.',
-            'jsonld.SyntaxError', {value: value});
+          'Invalid JSON-LD syntax; "@value" value must not be an ' +
+          'object or an array.',
+          'jsonld.SyntaxError', {value: value});
       }
 
       // @value must not be an object or an array
@@ -1482,7 +1482,7 @@ Processor.prototype.processContext = function(
     if(!_isObject(ctx)) {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; @context must be an object.',
-        {context: ctx});
+        'jsonld.SyntaxError', {context: ctx});
     }
 
     // define context mappings for keys in local context
@@ -2232,8 +2232,7 @@ function _validateFrame(state, frame) {
   if(!_isArray(frame) || frame.length !== 1 || !_isObject(frame[0])) {
     throw new JsonLdError(
       'Invalid JSON-LD syntax; a JSON-LD frame must be a single object.',
-      'jsonld.SyntaxError',
-      {frame: frame});
+      'jsonld.SyntaxError', {frame: frame});
   }
 }
 
@@ -2737,13 +2736,14 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
     if(key !== '@language') {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; keywords cannot be overridden.',
-        {context: ctx});
+        'jsonld.SyntaxError', {context: ctx});
     }
 
     if(value !== null && !_isString(value)) {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; the value of "@language" in a ' +
-        '@context must be a string or null.', {context: ctx});
+        '@context must be a string or null.',
+        'jsonld.SyntaxError', {context: ctx});
     }
 
     if(value === null) {
@@ -2801,7 +2801,8 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
   if(!_isObject(value)) {
     throw new JsonLdError(
       'Invalid JSON-LD syntax; @context property values must be ' +
-      'strings or objects.', {context: ctx});
+      'strings or objects.',
+      'jsonld.SyntaxError', {context: ctx});
   }
 
   // create new mapping
@@ -2812,7 +2813,7 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
     if(!_isString(id)) {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; @context @id values must be strings.',
-        {context: ctx});
+        'jsonld.SyntaxError', {context: ctx});
     }
 
     // expand @id to full IRI
@@ -2826,7 +2827,7 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
     if(prefix === null) {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; @context terms must define an @id.',
-        {context: ctx, key: key});
+        'jsonld.SyntaxError', {context: ctx, key: key});
     }
 
     // set @id based on prefix parent
@@ -2845,7 +2846,7 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
     if(!_isString(type)) {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; @context @type values must be strings.',
-        {context: ctx});
+        'jsonld.SyntaxError', {context: ctx});
     }
 
     if(type !== '@id') {
@@ -2863,7 +2864,7 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; @context @container value must be ' +
         '"@list" or "@set".',
-        {context: ctx});
+        'jsonld.SyntaxError', {context: ctx});
     }
 
     // add @container to mapping
@@ -2876,7 +2877,7 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; @context @language value must be ' +
         'a string or null.',
-        {context: ctx});
+        'jsonld.SyntaxError', {context: ctx});
     }
 
     // add @language to mapping
@@ -2965,7 +2966,8 @@ function _expandContextIri(activeCtx, ctx, value, base, defined) {
   if(!_isAbsoluteIri(value)) {
     throw new JsonLdError(
       'Invalid JSON-LD syntax; a @context value does not expand to ' +
-      'an absolute IRI.', {context: ctx, value: value});
+      'an absolute IRI.',
+      'jsonld.SyntaxError', {context: ctx, value: value});
   }
 
   return value;
