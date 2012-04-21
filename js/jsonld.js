@@ -791,12 +791,12 @@ jsonld.compareNormalized = function(n1, n2) {
  * @return the value.
  */
 jsonld.getContextValue = function(ctx, key, type) {
+  var rval = null;
+
   // return null for invalid key
   if(key === null) {
-    return null;
+    return rval;
   }
-
-  var rval = null;
 
   // get default language
   if(type === '@language' && (type in ctx)) {
@@ -812,7 +812,7 @@ jsonld.getContextValue = function(ctx, key, type) {
       rval = entry;
     }
     // return entry value for type
-    if(type in entry) {
+    else if(type in entry) {
       rval = entry[type];
     }
   }
