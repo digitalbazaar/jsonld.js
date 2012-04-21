@@ -2927,12 +2927,10 @@ function _expandContextIri(activeCtx, ctx, value, base, defined) {
   }
 
   // split value into prefix:suffix
-  var prefix = value;
-  var suffix = '';
   var colon = value.indexOf(':');
   if(colon !== -1) {
-    prefix = value.substr(0, colon);
-    suffix = value.substr(colon + 1);
+    var prefix = value.substr(0, colon);
+    var suffix = value.substr(colon + 1);
 
     // a prefix of '_' indicates a blank node
     if(prefix === '_') {
