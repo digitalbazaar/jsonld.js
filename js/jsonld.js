@@ -150,7 +150,7 @@ jsonld.compact = function(input, ctx) {
     ctx = [];
     for(var i in tmp) {
       if(!_isObject(tmp[i]) || Object.keys(tmp[i]).length > 0) {
-        ctx[i] = tmp[i];
+        ctx.push(tmp[i]);
       }
     }
 
