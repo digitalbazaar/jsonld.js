@@ -2246,8 +2246,11 @@ function _validateFrame(state, frame) {
  * @return all of the matched subjects.
  */
 function _filterSubjects(state, subjects, frame) {
+  // filter subjects in @id order
   var rval = {};
-  for(var id in subjects) {
+  var ids = Object.keys(subjects).sort();
+  for(var i in ids) {
+    var id = ids[i];
     var subject = state.subjects[id];
     if(_filterSubject(subject, frame)) {
       rval[id] = subject;
