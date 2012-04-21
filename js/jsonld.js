@@ -2999,12 +2999,10 @@ function _expandTerm(ctx, term, base) {
   }
 
   // split term into prefix:suffix
-  var prefix = term;
-  var suffix = '';
   var colon = term.indexOf(':');
   if(colon !== -1) {
-    prefix = term.substr(0, colon);
-    suffix = term.substr(colon + 1);
+    var prefix = term.substr(0, colon);
+    var suffix = term.substr(colon + 1);
 
     // a prefix of '_' indicates a blank node
     if(prefix === '_') {
