@@ -1251,7 +1251,7 @@ Processor.prototype.frame = function(input, frame, options) {
 
   // frame the subjects
   var framed = [];
-  _frame(state, state.subjects, frame, framed, null);
+  _frame(state, Object.keys(state.subjects), frame, framed, null);
   return framed;
 };
 
@@ -2160,9 +2160,7 @@ function _frame(state, subjects, frame, parent, property) {
               o = src[n];
               // recurse into subject reference
               if(_isSubjectReference(o)) {
-                var _subjects = {};
-                _subjects[o['@id']] = o;
-                _frame(state, _subjects, frame[prop], list, '@list');
+                _frame(state, [o['@id']], frame[prop], list, '@list');
               }
               // include other values automatically
               else {
@@ -2174,9 +2172,7 @@ function _frame(state, subjects, frame, parent, property) {
 
           // recurse into subject reference
           if(_isSubjectReference(o)) {
-            var _subjects = {};
-            _subjects[o['@id']] = o;
-            _frame(state, _subjects, frame[prop], output, prop);
+            _frame(state, [o['@id']], frame[prop], output, prop);
           }
           // include other values automatically
           else {
@@ -2254,9 +2250,9 @@ function _validateFrame(state, frame) {
 function _filterSubjects(state, subjects, frame) {
   // filter subjects in @id order
   var rval = {};
-  var ids = Object.keys(subjects).sort();
-  for(var i in ids) {
-    var id = ids[i];
+  subjects.sort();
+  for(var i in subjects) {
+    var id = subjects[i];
     var subject = state.subjects[id];
     if(_filterSubject(subject, frame)) {
       rval[id] = subject;
