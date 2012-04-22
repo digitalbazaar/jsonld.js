@@ -3562,9 +3562,6 @@ UniqueNamer.prototype.getName = function(oldName) {
   if(oldName) {
     this.existing[oldName] = name;
   }
-  else {
-    this.existing[name] = name;
-  }
 
   return name;
 };
