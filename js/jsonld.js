@@ -1871,10 +1871,9 @@ function _hashPaths(bnodes, statements, namer, pathNamer, callback) {
 
       // build adjacent path
       var path = '';
-      var recurse;
+      var recurse = [];
       for(var n in permutation) {
         var bnode = permutation[n];
-        recurse = [];
 
         // use canonical name if available
         if(namer.isNamed(bnode)) {
