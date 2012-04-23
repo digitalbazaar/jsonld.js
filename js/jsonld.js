@@ -136,6 +136,11 @@ jsonld.compact = function(input, ctx) {
       compacted = [compacted];
     }
 
+    // follow @context key
+    if(_isObject(ctx) && '@context' in ctx) {
+      ctx = ctx['@context'];
+    }
+
     // build output context
     ctx = _clone(ctx);
     if(!_isArray(ctx)) {
