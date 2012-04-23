@@ -54,7 +54,7 @@ TestRunner.prototype.test = function(name) {
     line += ' ' + count;
     g.count += 1;
   }
-  line += '/' + g.tests.pop();
+  line += '/' + g.tests.pop() + '... ';
   process.stdout.write(line);
 };
 
@@ -67,11 +67,11 @@ TestRunner.prototype.check = function(test, expect, result) {
     else {
       assert.deepEqual(expect, result);
     }
-    line += '... PASS';
+    line += 'PASS';
     this.passed += 1;
   }
   catch(ex) {
-    line += '... FAIL';
+    line += 'FAIL';
     var fail = true;
     this.failed += 1;
   }
