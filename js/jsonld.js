@@ -3385,6 +3385,7 @@ function _resolveUrls(input, resolver, callback) {
     else if(_isObject(input)) {
       for(var key in input) {
         if(key !== '@context') {
+          findUrls(input[key], replace);
           continue;
         }
 
