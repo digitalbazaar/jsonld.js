@@ -3401,7 +3401,7 @@ function _resolveUrls(input, resolver, callback) {
                 ctx[i] = urls[ctx[i]];
               }
               // unresolved @context found
-              else {
+              else if(!(ctx[i] in urls)) {
                 urls[ctx[i]] = {};
               }
             }
@@ -3414,7 +3414,7 @@ function _resolveUrls(input, resolver, callback) {
             input[key] = urls[ctx];
           }
           // unresolved @context found
-          else {
+          else if(!(ctx in urls)) {
             urls[ctx] = {};
           }
         }
@@ -3481,7 +3481,8 @@ function _resolveUrls(input, resolver, callback) {
         errors.push(err);
       }
       else {
-        // FIXME: needs to recurse to resolve URLs in the result
+        // FIXME: needs to recurse to resolve URLs in the result, and
+        // detect cycles, and limit recursion
         urls[url] = ctx['@context'] || {};
       }
 
