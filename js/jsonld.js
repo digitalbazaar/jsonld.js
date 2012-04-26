@@ -566,7 +566,7 @@ jsonld.hasValue = function(subject, property, value) {
   var rval = false;
   if(jsonld.hasProperty(subject, property)) {
     var val = subject[property];
-    var isList = _isListValue(val);
+    var isList = _isList(val);
     if(_isArray(val) || isList) {
       if(isList) {
         val = val['@list'];
@@ -993,7 +993,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
       // recusively process array values
       for(var i in value) {
         var v = value[i];
-        var isList = _isListValue(v);
+        var isList = _isList(v);
 
         // compact property
         var prop = _compactIri(ctx, key, v);
@@ -1146,7 +1146,7 @@ Processor.prototype.expand = function(
       var isList = (prop === '@list');
       if(isList || prop === '@set' || prop === '@graph') {
         value = this.expand(ctx, property, value, options, isList);
-        if(isList && _isListValue(value)) {
+        if(isList && _isList(value)) {
           throw new JsonLdError(
             'Invalid JSON-LD syntax; lists of lists are not permitted.',
             'jsonld.SyntaxError');
@@ -1161,7 +1161,7 @@ Processor.prototype.expand = function(
       // drop null values if property is not @value (dropped below)
       if(value !== null || prop === '@value') {
         // convert value to @list if container specifies it
-        if(prop !== '@list' && !_isListValue(value)) {
+        if(prop !== '@list' && !_isList(value)) {
           var container = jsonld.getContextValue(ctx, property, '@container');
           if(container === '@list') {
             // ensure value is an array
@@ -1597,7 +1597,7 @@ function _getStatements(input, namer, bnodes, subjects, name) {
     // convert @lists into embedded blank node linked lists
     for(var i in objects) {
       var o = objects[i];
-      if(_isListValue(o)) {
+      if(_isList(o)) {
         objects[i] = _makeLinkedList(o);
       }
     }
@@ -2034,7 +2034,7 @@ function _flatten(subjects, input, namer, name, list) {
         }
         else {
           // recurse into list
-          if(_isListValue(o)) {
+          if(_isList(o)) {
             var l = [];
             _flatten(subjects, o['@list'], namer, name, l);
             o = {'@list': l};
@@ -2153,7 +2153,7 @@ function _frame(state, subjects, frame, parent, property) {
           var o = objects[i];
 
           // recurse into list
-          if(_isListValue(o)) {
+          if(_isList(o)) {
             // add empty list
             var list = {'@list': []};
             _addFrameOutput(state, output, prop, list);
@@ -2313,7 +2313,7 @@ function _embedValues(state, subject, property, output) {
     var o = objects[i];
 
     // recurse into @list
-    if(_isListValue(o)) {
+    if(_isList(o)) {
       var list = {'@list': []};
       _addFrameOutput(state, output, property, list);
       return _embedValues(state, o, '@list', list['@list']);
@@ -2452,7 +2452,7 @@ function _removePreserve(ctx, input) {
     }
 
     // recurse through @lists
-    if(_isListValue(input)) {
+    if(_isList(input)) {
       input['@list'] = _removePreserve(ctx, input['@list']);
       return input;
     }
@@ -2512,7 +2512,7 @@ function _rankTerm(ctx, term, value) {
   var hasDefaultLanguage = ('@language' in ctx);
 
   // @list rank is the sum of its values' ranks
-  if(_isListValue(value)) {
+  if(_isList(value)) {
     var list = value['@list'];
     if(list.length === 0) {
       return (entry['@container'] === '@list') ? 1 : 0;
@@ -2624,7 +2624,7 @@ function _compactIri(ctx, iri, value) {
   var terms = [];
   var highest = 0;
   var listContainer = false;
-  var isList = _isListValue(value);
+  var isList = _isList(value);
   for(var term in ctx.mappings) {
     // skip terms with non-matching iris
     var entry = ctx.mappings[term];
@@ -3274,27 +3274,13 @@ function _isValue(value) {
 }
 
 /**
- * Returns true if the given value is a @set.
- *
- * @param value the value to check.
- *
- * @return true if the value is a @set, false if not.
- */
-function _isSetValue(value) {
-  // Note: A value is a @set if all of these hold true:
-  // 1. It is an Object.
-  // 2. It has the @set property.
-  return _isObject(value) && ('@set' in value);
-}
-
-/**
  * Returns true if the given value is a @list.
  *
  * @param value the value to check.
  *
  * @return true if the value is a @list, false if not.
  */
-function _isListValue(value) {
+function _isList(value) {
   // Note: A value is a @list if all of these hold true:
   // 1. It is an Object.
   // 2. It has the @list property.
