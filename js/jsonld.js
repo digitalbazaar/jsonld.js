@@ -1562,96 +1562,96 @@ function _getStatements(input, namer, bnodes, subjects, name) {
     for(var i in input) {
       _getStatements(input[i], namer, bnodes, subjects);
     }
+    return;
   }
-  // safe to assume input is a subject/blank node
+
+  // Note: safe to assume input is a subject/blank node
+  var isBnode = _isBlankNode(input);
+
+  // name blank node if appropriate, use passed name if given
+  if(_isUndefined(name)) {
+    name = isBnode ? namer.getName(input['@id']) : input['@id'];
+  }
+
+  // use a subject of '_:a' for blank node statements
+  var s = isBnode ? '_:a' : name;
+
+  // get statements for the blank node
+  var entries;
+  if(isBnode) {
+    entries = bnodes[name] = bnodes[name] || [];
+  }
   else {
-    var isBnode = _isBlankNode(input);
+    entries = subjects[name] = subjects[name] || [];
+  }
 
-    // name blank node if appropriate, use passed name if given
-    if(_isUndefined(name)) {
-      name = isBnode ? namer.getName(input['@id']) : input['@id'];
+  // add all statements in input
+  for(var p in input) {
+    // skip @id
+    if(p === '@id') {
+      continue;
     }
 
-    // use a subject of '_:a' for blank node statements
-    var s = isBnode ? '_:a' : name;
+    var objects = input[p];
 
-    // get statements for the blank node
-    var entries;
-    if(isBnode) {
-      entries = bnodes[name] = bnodes[name] || [];
-    }
-    else {
-      entries = subjects[name] = subjects[name] || [];
+    // convert @lists into embedded blank node linked lists
+    for(var i in objects) {
+      var o = objects[i];
+      if(_isListValue(o)) {
+        objects[i] = _makeLinkedList(o);
+      }
     }
 
-    // add all statements in input
-    for(var p in input) {
-      // skip @id
-      if(p === '@id') {
-        continue;
+    for(var i in objects) {
+      var o = objects[i];
+
+      // convert boolean to @value
+      if(_isBoolean(o)) {
+        o = {'@value': String(o), '@type': XSD['boolean']};
+      }
+      // convert double to @value
+      else if(_isDouble(o)) {
+        // do special JSON-LD double format, printf('%1.16e') JS equivalent
+        o = o.toExponential(16).replace(/(e(?:\+|-))([0-9])$/, '$10$2');
+        o = {'@value': o, '@type': XSD['double']};
+      }
+      // convert integer to @value
+      else if(_isNumber(o)) {
+        o = {'@value': String(o), '@type': XSD['integer']};
       }
 
-      var objects = input[p];
+      // object is a blank node
+      if(_isBlankNode(o)) {
+        // name object position blank node
+        var oName = namer.getName(o['@id']);
 
-      // convert @lists into embedded blank node linked lists
-      for(var i in objects) {
-        var o = objects[i];
-        if(_isListValue(o)) {
-          objects[i] = _makeLinkedList(o);
+        // add property statement
+        _addStatement(entries, {s: s, p: p, o: {'@id': oName}});
+
+        // add reference statement
+        var oEntries = bnodes[oName] = bnodes[oName] || [];
+        _addStatement(oEntries, {s: name, p: p, o: {'@id': '_:a'}});
+
+        // recurse into blank node
+        _getStatements(o, namer, bnodes, subjects, oName);
+      }
+      // object is a string, @value, subject reference
+      else if(_isString(o) || _isValue(o) || _isSubjectReference(o)) {
+        // add property statement
+        _addStatement(entries, {s: s, p: p, o: o});
+
+        // ensure a subject entry exists for subject reference
+        if(_isSubjectReference(o)) {
+          subjects[o['@id']] = subjects[o['@id']] || [];
         }
       }
+      // object must be an embedded subject
+      else {
+        // add property statement
+        _addStatement(entries, {s: s, p: p, o: {'@id': o['@id']}});
 
-      for(var i in objects) {
-        var o = objects[i];
-
-        // convert boolean to @value
-        if(_isBoolean(o)) {
-          o = {'@value': String(o), '@type': XSD['boolean']};
-        }
-        // convert double to @value
-        else if(_isDouble(o)) {
-          // do special JSON-LD double format, printf('%1.16e') JS equivalent
-          o = o.toExponential(16).replace(/(e(?:\+|-))([0-9])$/, '$10$2');
-          o = {'@value': o, '@type': XSD['double']};
-        }
-        // convert integer to @value
-        else if(_isNumber(o)) {
-          o = {'@value': String(o), '@type': XSD['integer']};
-        }
-
-        // object is a blank node
-        if(_isBlankNode(o)) {
-          // name object position blank node
-          var oName = namer.getName(o['@id']);
-
-          // add property statement
-          _addStatement(entries, {s: s, p: p, o: {'@id': oName}});
-
-          // add reference statement
-          var oEntries = bnodes[oName] = bnodes[oName] || [];
-          _addStatement(oEntries, {s: name, p: p, o: {'@id': '_:a'}});
-
-          // recurse into blank node
-          _getStatements(o, namer, bnodes, subjects, oName);
-        }
-        // object is a string, @value, subject reference
-        else if(_isString(o) || _isValue(o) || _isSubjectReference(o)) {
-          // add property statement
-          _addStatement(entries, {s: s, p: p, o: o});
-
-          // ensure a subject entry exists for subject reference
-          if(_isSubjectReference(o)) {
-            subjects[o['@id']] = subjects[o['@id']] || [];
-          }
-        }
-        // object must be an embedded subject
-        else {
-          // add property statement
-          _addStatement(entries, {s: s, p: p, o: {'@id': o['@id']}});
-
-          // recurse into subject
-          _getStatements(o, namer, bnodes, subjects);
-        }
+        // recurse into subject
+        _getStatements(o, namer, bnodes, subjects);
       }
     }
   }
