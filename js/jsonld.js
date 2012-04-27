@@ -949,7 +949,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
     // compact subject references
     if(_isSubjectReference(element)) {
       var type = jsonld.getContextValue(ctx, property, '@type');
-      if(type === '@id') {
+      if(type === '@id' || property === '@graph') {
         element = _compactIri(ctx, element['@id']);
         return element;
       }
@@ -1109,14 +1109,9 @@ Processor.prototype.expand = function(
           'jsonld.SyntaxError', {value: value});
       }
 
-      // @type must be a string, array of strings, or an empty JSON object
-      if(prop === '@type' &&
-        !(_isString(value) || _isArrayOfStrings(value) ||
-        _isEmptyObject(value))) {
-        throw new JsonLdError(
-          'Invalid JSON-LD syntax; "@type" value must a string, an array ' +
-          'of strings, or an empty object.',
-          'jsonld.SyntaxError', {value: value});
+      // validate @type value
+      if(prop === '@type') {
+        _validateTypeValue(value);
       }
 
       // @graph must be an array or an object
@@ -1167,6 +1162,26 @@ Processor.prototype.expand = function(
             // ensure value is an array
             value = _isArray(value) ? value : [value];
             value = {'@list': value};
+          }
+        }
+
+        // optimize away @id for @type
+        if(prop === '@type') {
+          if(_isSubjectReference(value)) {
+            value = value['@id'];
+          }
+          else if(_isArray(value)) {
+            var val = [];
+            for(var i in value) {
+              var v = value[i];
+              if(_isSubjectReference(v)) {
+                val.push(v['@id']);
+              }
+              else {
+                val.push(v);
+              }
+            }
+            value = val;
           }
         }
 
@@ -1527,8 +1542,8 @@ function _expandValue(ctx, property, value, base) {
     // get type definition from context
     var type = jsonld.getContextValue(ctx, property, '@type');
 
-    // do @id expansion
-    if(type === '@id') {
+    // do @id expansion (automatic for @graph)
+    if(type === '@id' || prop === '@graph') {
       rval = {'@id': _expandTerm(ctx, value, base)};
     }
     // other type
@@ -2075,7 +2090,10 @@ function _frame(state, subjects, frame, parent, property) {
   var explicitOn = _getFrameFlag(frame, options, 'explicit');
 
   // add matches to output
-  for(var id in matches) {
+  var ids = Object.keys(matches).sort();
+  for(var idx in ids) {
+    var id = ids[idx];
+
     /* Note: In order to treat each top-level match as a compartmentalized
     result, create an independent copy of the embedded subjects map when the
     property is null, which only occurs at the top-level. */
@@ -2254,7 +2272,6 @@ function _validateFrame(state, frame) {
 function _filterSubjects(state, subjects, frame) {
   // filter subjects in @id order
   var rval = {};
-  subjects.sort();
   for(var i in subjects) {
     var id = subjects[i];
     var subject = state.subjects[id];
@@ -2597,11 +2614,6 @@ function _compactIri(ctx, iri, value) {
     return iri;
   }
 
-  // compact rdf:type
-  if(iri === RDF['type']) {
-    return '@type';
-  }
-
   // term is a keyword
   if(_isKeyword(iri)) {
     // return alias if available
@@ -2825,8 +2837,11 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
         'jsonld.SyntaxError', {context: ctx});
     }
 
-    // expand @id to full IRI
-    id = _expandContextIri(activeCtx, ctx, id, base, defined);
+    // expand @id if it is not @type
+    if(id !== '@type') {
+      // expand @id to full IRI
+      id = _expandContextIri(activeCtx, ctx, id, base, defined);
+    }
 
     // add @id to mapping
     mapping['@id'] = id;
@@ -3070,25 +3085,25 @@ function _getInitialContext() {
 /**
  * Returns whether or not the given value is a keyword (or a keyword alias).
  *
- * @param value the value to check.
+ * @param v the value to check.
  * @param [ctx] the active context to check against.
  *
  * @return true if the value is a keyword, false if not.
  */
-function _isKeyword(value, ctx) {
+function _isKeyword(v, ctx) {
   if(ctx) {
-    if(value in ctx.keywords) {
+    if(v in ctx.keywords) {
       return true;
     }
     for(var key in ctx.keywords) {
       var aliases = ctx.keywords[key];
-      if(aliases.indexOf(value) !== -1) {
+      if(aliases.indexOf(v) !== -1) {
         return true;
       }
     }
   }
   else {
-    switch(value) {
+    switch(v) {
     case '@context':
     case '@container':
     case '@default':
@@ -3110,203 +3125,208 @@ function _isKeyword(value, ctx) {
 }
 
 /**
- * Returns true if the given input is an Object.
+ * Returns true if the given value is an Object.
  *
- * @param input the input to check.
+ * @param v the value to check.
  *
- * @return true if the input is an Object, false if not.
+ * @return true if the value is an Object, false if not.
  */
-function _isObject(input) {
-  return (input !== null && !_isUndefined(input) &&
-    input.constructor === Object);
+function _isObject(v) {
+  return (v !== null && !_isUndefined(v) && v.constructor === Object);
 }
 
 /**
- * Returns true if the given input is an empty Object.
+ * Returns true if the given value is an empty Object.
  *
- * @param input the input to check.
+ * @param v the value to check.
  *
- * @return true if the input is an empty Object, false if not.
+ * @return true if the value is an empty Object, false if not.
  */
-function _isEmptyObject(input) {
-  return _isObject(input) && Object.keys(input).length === 0;
+function _isEmptyObject(v) {
+  return _isObject(v) && Object.keys(v).length === 0;
 }
 
 /**
- * Returns true if the given input is an Array.
+ * Returns true if the given value is an Array.
  *
- * @param input the input to check.
+ * @param v the value to check.
  *
- * @return true if the input is an Array, false if not.
+ * @return true if the value is an Array, false if not.
  */
-function _isArray(input) {
-  return (input !== null && !_isUndefined(input) &&
-    input.constructor === Array);
+function _isArray(v) {
+  return (v !== null && !_isUndefined(v) && v.constructor === Array);
 }
 
 /**
- * Returns true if the given input is an Array of Strings.
+ * Throws an exception if the given value is not a valid @type value.
  *
- * @param input the input to check.
- *
- * @return true if the input is an Array of Strings, false if not.
+ * @param v the value to check.
  */
-function _isArrayOfStrings(input) {
-  if(!_isArray(input)) {
-    return false;
+function _validateTypeValue(v) {
+  // must be a string, subject reference, or empty object
+  if(_isString(v) || _isSubjectReference(v) || _isEmptyObject(v)) {
+    return;
   }
-  for(var i in input) {
-    if(!_isString(input[i])) {
-      return false;
+
+  // must be an array
+  var isValid = false;
+  if(_isArray(v)) {
+    // must contain only strings or subject references
+    isValid = true;
+    for(var i in v) {
+      if(!(_isString(v[i]) || _isSubjectReference(v[i]))) {
+        isValid = false;
+        break;
+      }
     }
   }
-  return true;
+
+  if(!isValid) {
+    throw new JsonLdError(
+      'Invalid JSON-LD syntax; "@type" value must a string, a subject ' +
+      'reference, an array of strings or subject references, or an ' +
+      'empty object.', 'jsonld.SyntaxError', {value: v});
+  }
 }
 
 /**
- * Returns true if the given input is a String.
+ * Returns true if the given value is a String.
  *
- * @param input the input to check.
+ * @param v the value to check.
  *
- * @return true if the input is a String, false if not.
+ * @return true if the value is a String, false if not.
  */
-function _isString(input) {
-  return (input !== null && !_isUndefined(input) &&
-    input.constructor === String);
+function _isString(v) {
+  return (v !== null && !_isUndefined(v) && v.constructor === String);
 }
 
 /**
- * Returns true if the given input is a Number.
+ * Returns true if the given value is a Number.
  *
- * @param input the input to check.
+ * @param v the value to check.
  *
- * @return true if the input is a Number, false if not.
+ * @return true if the value is a Number, false if not.
  */
-function _isNumber(input) {
-  return (input !== null && !_isUndefined(input) &&
-    input.constructor === Number);
+function _isNumber(v) {
+  return (v !== null && !_isUndefined(v) && v.constructor === Number);
 }
 
 /**
- * Returns true if the given input is a double.
+ * Returns true if the given value is a double.
  *
- * @param input the input to check.
+ * @param v the value to check.
  *
- * @return true if the input is a double, false if not.
+ * @return true if the value is a double, false if not.
  */
-function _isDouble(input) {
-  return _isNumber(input) && String(input).indexOf('.') !== -1;
+function _isDouble(v) {
+  return _isNumber(v) && String(v).indexOf('.') !== -1;
 }
 
 /**
- * Returns true if the given input is a Boolean.
+ * Returns true if the given value is a Boolean.
  *
- * @param input the input to check.
+ * @param v the value to check.
  *
- * @return true if the input is a Boolean, false if not.
+ * @return true if the value is a Boolean, false if not.
  */
-function _isBoolean(input) {
-  return (input !== null && !_isUndefined(input) &&
-    input.constructor === Boolean);
+function _isBoolean(v) {
+  return (v !== null && !_isUndefined(v) && v.constructor === Boolean);
 }
 
 /**
- * Returns true if the given input is undefined.
+ * Returns true if the given value is undefined.
  *
- * @param input the input to check.
+ * @param v the value to check.
  *
- * @return true if the input is undefined, false if not.
+ * @return true if the value is undefined, false if not.
  */
-function _isUndefined(input) {
-  return (typeof input === 'undefined');
+function _isUndefined(v) {
+  return (typeof v === 'undefined');
 }
 
 /**
  * Returns true if the given value is a subject with properties.
  *
- * @param value the value to check.
+ * @param v the value to check.
  *
  * @return true if the value is a subject with properties, false if not.
  */
-function _isSubject(value) {
-  var rval = false;
-
+function _isSubject(v) {
   // Note: A value is a subject if all of these hold true:
   // 1. It is an Object.
   // 2. It is not a @value, @set, or @list.
   // 3. It has more than 1 key OR any existing key is not @id.
-  if(_isObject(value) &&
-    !(('@value' in value) || ('@set' in value) || ('@list' in value))) {
-    var keyCount = Object.keys(value).length;
-    rval = (keyCount > 1 || !('@id' in value));
+  var rval = false;
+  if(_isObject(v) &&
+    !(('@value' in v) || ('@set' in v) || ('@list' in v))) {
+    var keyCount = Object.keys(v).length;
+    rval = (keyCount > 1 || !('@id' in v));
   }
-
   return rval;
 }
 
 /**
  * Returns true if the given value is a subject reference.
  *
- * @param value the value to check.
+ * @param v the value to check.
  *
  * @return true if the value is a subject reference, false if not.
  */
-function _isSubjectReference(value) {
+function _isSubjectReference(v) {
   // Note: A value is a subject reference if all of these hold true:
   // 1. It is an Object.
   // 2. It has a single key: @id.
-  return (_isObject(value) && Object.keys(value).length === 1 &&
-    ('@id' in value));
+  return (_isObject(v) && Object.keys(v).length === 1 && ('@id' in v));
 }
 
 /**
  * Returns true if the given value is a @value.
  *
- * @param value the value to check.
+ * @param v the value to check.
  *
  * @return true if the value is a @value, false if not.
  */
-function _isValue(value) {
+function _isValue(v) {
   // Note: A value is a @value if all of these hold true:
   // 1. It is an Object.
   // 2. It has the @value property.
-  return _isObject(value) && ('@value' in value);
+  return _isObject(v) && ('@value' in v);
 }
 
 /**
  * Returns true if the given value is a @list.
  *
- * @param value the value to check.
+ * @param v the value to check.
  *
  * @return true if the value is a @list, false if not.
  */
-function _isList(value) {
+function _isList(v) {
   // Note: A value is a @list if all of these hold true:
   // 1. It is an Object.
   // 2. It has the @list property.
-  return _isObject(value) && ('@list' in value);
+  return _isObject(v) && ('@list' in v);
 }
 
 /**
  * Returns true if the given value is a blank node.
  *
- * @param value the value to check.
+ * @param v the value to check.
  *
  * @return true if the value is a blank node, false if not.
  */
-function _isBlankNode(value) {
-  var rval = false;
+function _isBlankNode(v) {
   // Note: A value is a blank node if all of these hold true:
   // 1. It is an Object.
   // 2. If it has an @id key its value begins with '_:'.
   // 3. It has no keys OR is not a @value, @set, or @list.
-  if(_isObject(value)) {
-    if('@id' in value) {
-      rval = (value['@id'].indexOf('_:') === 0);
+  var rval = false;
+  if(_isObject(v)) {
+    if('@id' in v) {
+      rval = (v['@id'].indexOf('_:') === 0);
     }
     else {
-      rval = (Object.keys(value).length === 0 ||
-        !(('@value' in value) || ('@set' in value) || ('@list' in value)));
+      rval = (Object.keys(v).length === 0 ||
+        !(('@value' in v) || ('@set' in v) || ('@list' in v)));
     }
   }
   return rval;
@@ -3315,12 +3335,12 @@ function _isBlankNode(value) {
 /**
  * Returns true if the given value is an absolute IRI, false if not.
  *
- * @param value the value to check.
+ * @param v the value to check.
  *
  * @return true if the value is an absolute IRI, false if not.
  */
-function _isAbsoluteIri(value) {
-  return value.indexOf(':') !== -1;
+function _isAbsoluteIri(v) {
+  return v.indexOf(':') !== -1;
 }
 
 /**
