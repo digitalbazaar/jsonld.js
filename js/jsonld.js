@@ -950,8 +950,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
     if(_isSubjectReference(element)) {
       var type = jsonld.getContextValue(ctx, property, '@type');
       if(type === '@id' || property === '@graph') {
-        element = _compactIri(ctx, element['@id']);
-        return element;
+        return _compactIri(ctx, element['@id']);
       }
     }
 
@@ -987,7 +986,9 @@ Processor.prototype.compact = function(ctx, property, element, options) {
       // preserve empty arrays
       if(value.length === 0) {
         var prop = _compactIri(ctx, key);
-        jsonld.addValue(rval, prop, [], true);
+        if(prop !== null) {
+          jsonld.addValue(rval, prop, [], true);
+        }
       }
 
       // recusively process array values
@@ -997,6 +998,11 @@ Processor.prototype.compact = function(ctx, property, element, options) {
 
         // compact property
         var prop = _compactIri(ctx, key, v);
+
+        // skip null properties
+        if(prop === null) {
+          continue;
+        }
 
         // remove @list for recursion (will be re-added if necessary)
         if(isList) {
@@ -2703,8 +2709,13 @@ function _compactIri(ctx, iri, value) {
     }
   }
 
-  // no matching terms, use IRI
+  // no matching terms
   if(terms.length === 0) {
+    // return null if a null mapping exists
+    if(iri in ctx.mappings && ctx.mappings[iri]['@id'] === null) {
+      return null;
+    }
+    // use iri
     return iri;
   }
 
@@ -2786,8 +2797,8 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
         var aliases = activeCtx.keywords[kw];
         aliases.splice(aliases.indexOf(key), 1);
       }
-      delete activeCtx.mappings[key];
     }
+    activeCtx.mappings[key] = {'@id': null};
     defined[key] = true;
     return;
   }
@@ -2808,7 +2819,7 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
         aliases.sort(_compareShortestLeast);
       }
     }
-    else {
+    else if(value !== null) {
       // expand value to a full IRI
       value = _expandContextIri(activeCtx, ctx, value, base, defined);
     }
@@ -2908,8 +2919,10 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
     mapping['@language'] = language;
   }
 
-  // merge onto parent mapping if one exists for a prefix
-  if(prefix !== null && prefix in activeCtx.mappings) {
+  // if not a null mapping, merge onto parent mapping if one exists for a
+  // prefix
+  if(mapping['@id'] !== null &&
+    prefix !== null && prefix in activeCtx.mappings) {
     var child = mapping;
     var mapping = _clone(activeCtx.mappings[prefix]);
     for(var k in child) {
@@ -2943,8 +2956,8 @@ function _expandContextIri(activeCtx, ctx, value, base, defined) {
   // recurse if value is a term
   if(value in activeCtx.mappings) {
     var id = activeCtx.mappings[value]['@id'];
-    // value is already an absolute IRI
-    if(value === id) {
+    // value is already an absolute IRI or id is null mapping
+    if(value === id || id === null) {
       return value;
     }
     return _expandContextIri(activeCtx, ctx, id, base, defined);
@@ -2974,7 +2987,9 @@ function _expandContextIri(activeCtx, ctx, value, base, defined) {
     // recurse if prefix is defined
     if(prefix in activeCtx.mappings) {
       var id = activeCtx.mappings[prefix]['@id'];
-      return _expandContextIri(activeCtx, ctx, id, base, defined) + suffix;
+      if(id !== null) {
+        return _expandContextIri(activeCtx, ctx, id, base, defined) + suffix;
+      }
     }
 
     // consider value an absolute IRI
