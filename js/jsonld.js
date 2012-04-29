@@ -43,7 +43,7 @@ var jsonld = {};
 /**
  * Performs JSON-LD compaction.
  *
- * @param input the JSON-LD object to compact.
+ * @param input the JSON-LD input to compact.
  * @param ctx the context to compact with.
  * @param [options] options to use:
  *          [base] the base IRI to use.
@@ -194,7 +194,7 @@ jsonld.compact = function(input, ctx) {
 /**
  * Performs JSON-LD expansion.
  *
- * @param input the JSON-LD object to expand.
+ * @param input the JSON-LD input to expand.
  * @param [options] the options to use:
  *          [base] the base IRI to use.
  *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
@@ -250,7 +250,7 @@ jsonld.expand = function(input) {
 /**
  * Performs JSON-LD framing.
  *
- * @param input the JSON-LD object to frame.
+ * @param input the JSON-LD input to frame.
  * @param frame the JSON-LD frame to use.
  * @param [options] the framing options.
  *          [base] the base IRI to use.
@@ -333,7 +333,7 @@ jsonld.frame = function(input, frame) {
 /**
  * Performs JSON-LD normalization.
  *
- * @param input the JSON-LD object to normalize.
+ * @param input the JSON-LD input to normalize.
  * @param [options] the options to use:
  *          [base] the base IRI to use.
  *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
@@ -372,15 +372,14 @@ jsonld.normalize = function(input, callback) {
 };
 
 /**
- * Outputs the RDF statements found in the given JSON-LD object.
+ * Converts RDF statements into JSON-LD.
  *
- * @param input the JSON-LD object.
+ * @param statements the RDF statements to convert.
  * @param [options] the options to use:
  *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
- * @param callback(err, statement) called when a statement is output, with the
- *          last statement as null.
+ * @param callback(err, output) called once the operation completes.
  */
-jsonld.toRDF = function(input, callback) {
+jsonld.fromRDF = function(statements) {
   // get arguments
   var options = {};
   var callback;
@@ -399,14 +398,48 @@ jsonld.toRDF = function(input, callback) {
     options.resolver = jsonld.urlResolver;
   }
 
-  // resolve all @context URLs in the input
-  input = _clone(input);
-  _resolveUrls(input, options.resolver, function(err, input) {
+  new Processor().fromRDF(statements, callback);
+};
+
+/**
+ * Outputs the RDF statements found in the given JSON-LD object.
+ *
+ * @param input the JSON-LD input.
+ * @param [options] the options to use:
+ *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
+ * @param callback(err, statement) called when a statement is output, with the
+ *          last statement as null.
+ */
+jsonld.toRDF = function(input) {
+  // get arguments
+  var options = {};
+  var callback;
+  var callbackArg = 1;
+  if(arguments.length > 2) {
+    options = arguments[1] || {};
+    callbackArg += 1;
+  }
+  callback = arguments[callbackArg];
+
+  // set default options
+  if(!('base' in options)) {
+    options.base = '';
+  }
+  if(!('resolver' in options)) {
+    options.resolver = jsonld.urlResolver;
+  }
+
+  // expand input
+  jsonld.expand(input, options, function(err, expanded) {
     if(err) {
-      return callback(err);
+      return callback(new JsonLdError(
+        'Could not expand input before conversion to RDF.',
+        'jsonld.RdfError', {cause: err}));
     }
+
     // output RDF statements
-    return new Processor().toRDF(input, callback);
+    var namer = new UniqueNamer('_:t');
+    new Processor().toRDF(expanded, namer, null, null, null, callback);
   });
 };
 
@@ -842,17 +875,14 @@ if(_browser) {
 }
 
 // constants
-var XSD = {
-  'boolean': 'http://www.w3.org/2001/XMLSchema#boolean',
-  'double': 'http://www.w3.org/2001/XMLSchema#double',
-  'integer': 'http://www.w3.org/2001/XMLSchema#integer'
-};
-var RDF = {
-  'first': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
-  'rest': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest',
-  'nil': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil',
-  'type': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
-};
+var XSD_BOOLEAN = 'http://www.w3.org/2001/XMLSchema#boolean';
+var XSD_DOUBLE = 'http://www.w3.org/2001/XMLSchema#double';
+var XSD_INTEGER = 'http://www.w3.org/2001/XMLSchema#integer';
+
+var RDF_FIRST = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first';
+var RDF_REST = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest';
+var RDF_NIL = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil';
+var RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
 
 /**
  * A JSON-LD Error.
@@ -924,13 +954,13 @@ Processor.prototype.compact = function(ctx, property, element, options) {
         element = element['@value'];
 
         // use native datatypes for certain xsd types
-        if(type === XSD['boolean']) {
+        if(type === XSD_BOOLEAN) {
           element = !(element === 'false' || element === '0');
         }
-        else if(type === XSD['integer']) {
+        else if(type === XSD_INTEGER) {
           element = parseInt(element);
         }
-        else if(type === XSD['double']) {
+        else if(type === XSD_DOUBLE) {
           element = parseFloat(element);
         }
       }
@@ -1461,15 +1491,334 @@ Processor.prototype.normalize = function(input, callback) {
 };
 
 /**
- * Outputs the RDF statements found in the given JSON-LD object.
+ * Converts RDF statements into JSON-LD.
  *
- * @param input the JSON-LD object.
+ * @param statements the RDF statements.
+ * @param callback(err, output) called once the operation completes.
+ */
+Processor.prototype.fromRDF = function(statements, callback) {
+  // prepare graph map (maps graph name => subjects, lists, etc)
+  var defaultGraph = {subjects: {}, listMap: {}};
+  var graphs = {'': defaultGraph};
+
+  for(var i in statements) {
+    var statement = statements[i];
+
+    // get subject, property, object, and graph name (default to '')
+    var s = statement.subject.nominalValue;
+    var p = statement.property.nominalValue;
+    var o = statement.object;
+    var name = ('name' in statement) ? statement.name.nominalValue : '';
+
+    // create a graph entry as needed
+    if(!(name in graphs)) {
+      var graph = graphs[name] = {subjects: {}, listMap: {}};
+    }
+    else {
+      var graph = graphs[name];
+    }
+
+    // handle element in @list
+    if(p === RDF_FIRST) {
+      // create list entry as needed
+      var listMap = graphs[name].listMap;
+      if(!(s in listMap)) {
+        var entry = listMap[s] = {};
+      }
+      else {
+        var entry = listMap[s];
+      }
+      // set object value
+      entry[s].first = _rdfToObject(o);
+      continue;
+    }
+
+    // handle other element in @list
+    if(p === RDF_REST) {
+      // create list entry as needed
+      var listMap = graphs[name].listMap;
+      if(!(s in listMap)) {
+        var entry = listMap[s] = {};
+      }
+      else {
+        var entry = listMap[s];
+      }
+      // set next in list
+      if(o.interfaceName === 'BlankNode') {
+        entry[s].rest = o.nominalValue;
+      }
+      continue;
+    }
+
+    // prepare to assign next JSON-LD value
+    var value;
+
+    // if graph is not the default graph
+    if(name !== '') {
+      // add graph subject to default graph as needed
+      if(!(name in defaultGraph.subjects)) {
+        value = defaultGraph.subjects[name] = {'@id': name};
+      }
+      else {
+        value = defaultGraph.subjects[name];
+      }
+    }
+
+    // add subject to graph as needed
+    var subjects = graphs[name].subjects;
+    if(!(s in subjects)) {
+      value = subjects[s] = {'@id': s};
+    }
+    // use existing subject value
+    else {
+      value = subjects[s];
+    }
+
+    // FIXME: make @type conversion optional
+    if(p === RDF_TYPE) {
+      // add value of object as @type
+      jsonld.addValue(value, '@type', o.nominalValue, true);
+    }
+    else {
+      // add property to value as needed
+      var object = _rdfToObject(o);
+      jsonld.addValue(value, p, object, true);
+
+      // a bnode might be the beginning of a list, so add it to the list map
+      if(o.interfaceName === 'BlankNode') {
+        var listMap = graphs[name].listMap;
+        if(!(s in listMap)) {
+          var entry = listMap[s] = {};
+        }
+        else {
+          var entry = listMap[s];
+        }
+        entry.head = object;
+      }
+    }
+  }
+
+  // build @lists
+  for(var name in graphs) {
+    var graph = graphs[name];
+
+    // find list heads
+    while(subject in listMap) {
+      var entry = listMap[subject];
+
+      // head found, build list
+      if('head' in entry && 'first' in entry) {
+        // replace bnode @id with @list
+        delete entry.head['@id'];
+        var list = entry.head['@list'] = [entry.first];
+        while('rest' in entry) {
+          var rest = entry.rest;
+          entry = listMap[rest];
+          if(!('first' in entry)) {
+            throw new JsonLdError(
+              'Invalid RDF list entry.',
+              'jsonld.RdfError', {bnode: rest});
+          }
+          list.push(entry.first);
+        }
+      }
+    }
+  }
+
+  // build default graph in subject @id order
+  var output = [];
+  var subjects = defaultGraph.subjects;
+  var ids = Object.keys(subjects).sort();
+  for(var i in ids) {
+    var id = ids[id];
+
+    // add subject to default graph
+    var subject = subjects[id];
+    output.push(subject);
+
+    // output named graph in subject @id order
+    var graph = subject['@graph'] = [];
+    if(id in graphs) {
+      var _subjects = graphs[id].subjects;
+      var _ids = Object.keys(_subjects).sort();
+      for(var _i in _ids) {
+        graph.push(_subjects[_ids[_i]]);
+      }
+    }
+  }
+  return output;
+};
+
+/**
+ * Outputs the RDF statements found in the given JSON-LD element.
+ *
+ * @param element the JSON-LD element.
+ * @param namer the UniqueNamer for assigning bnode names.
+ * @param subject the active subject.
+ * @param property the active property.
+ * @param graph the graph name.
  * @param callback(err, statement) called when a statement is output, with the
  *          last statement as null.
  */
-Processor.prototype.toRDF = function(input, callback) {
-  // FIXME: implement
-  callback(new JsonLdError('Not implemented', 'jsonld.NotImplemented'), null);
+Processor.prototype.toRDF = function(
+  element, namer, subject, property, graph, callback) {
+  // recurse into arrays
+  if(_isArray(element)) {
+    for(var i in element) {
+      this.toRDF(element[i], namer, subject, property, graph, callback);
+    }
+    return;
+  }
+
+  if(_isObject(element)) {
+    // convert @value to object
+    if(_isValue(element)) {
+      var object = {
+        nominalValue: element['@value'],
+        interfaceName: 'LiteralNode'
+      };
+
+      if('@type' in element) {
+        object.datatype = {
+          nominalValue: element['@type'],
+          interfaceName: 'IRI'
+        };
+      }
+      else if('@language' in element) {
+        object.language = element['@language'];
+      }
+
+      // emit literal
+      var statement = {
+        subject: _clone(subject),
+        property: _clone(property),
+        object: object
+      };
+      if(graph !== null) {
+        statement.name = graph;
+      }
+      return callback(null, statement);
+    }
+
+    // convert @list
+    if(_isList(element)) {
+      var list = _makeLinkedList(element);
+      return this.toRDF(list, namer, subject, property, graph, callback);
+    }
+
+    // Note: element must be a subject
+
+    // get subject @id (generate one if it is a bnode)
+    var isBnode = _isBlankNode(element);
+    var id = isBnode ? namer.getName(input['@id']) : input['@id'];
+
+    // create object
+    var object = {
+      nominalValue: id,
+      interfaceName: isBnode ? 'BlankNode' : 'IRI'
+    };
+
+    // emit statement if subject isn't null
+    if(subject !== null) {
+      var statement = {
+        subject: _clone(subject),
+        property: _clone(property),
+        object: _clone(object)
+      };
+      if(graph !== null) {
+        statement.name = graph;
+      }
+      callback(null, statement);
+    }
+
+    // set new active subject to object
+    subject = object;
+
+    // recurse over subject properties in order
+    var props = Object.keys(element).sort();
+    for(var pi in props) {
+      var prop = props[pi];
+
+      // convert @type to rdf:type
+      if(prop === '@type') {
+        prop = RDF_TYPE;
+      }
+
+      // recurse into @graph
+      if(prop === '@graph') {
+        this.toRDF(element[prop], namer, null, null, subject, callback);
+        continue;
+      }
+
+      // skip keywords
+      if(_isKeyword(prop)) {
+        continue;
+      }
+
+      // create new active property
+      property = {
+        nominalValue: id,
+        interfaceName: 'IRI'
+      };
+
+      // recurse into value
+      this.toRDF(element[prop], namer, subject, property, graph, callback);
+    }
+
+    return;
+  }
+
+  if(_isString(element)) {
+    // emit plain literal
+    var statement = {
+      subject: _clone(subject),
+      property: _clone(property),
+      object: {
+        nominalValue: element,
+        interfaceName: 'LiteralNode'
+      }
+    };
+    if(graph !== null) {
+      statement.name = graph;
+    }
+    return callback(null, statement);
+  }
+
+  if(_isBoolean(element) || _isNumber(element)) {
+    // convert to XSD datatype
+    if(_isBoolean(element)) {
+      var datatype = XSD_BOOLEAN;
+      var value = String(element);
+    }
+    else if(_isInteger(element)) {
+      var datatype = XSD_INTEGER;
+      var value = String(element);
+    }
+    else {
+      var datatype = XSD_DOUBLE;
+      // printf('%1.16e') equivalent
+      var value = element.toExponential(16).replace(
+        /(e(?:\+|-))([0-9])$/, '$10$2');
+    }
+
+    // emit typed literal
+    var statement = {
+      subject: _clone(subject),
+      property: _clone(property),
+      object: {
+        nominalValue: value,
+        interfaceName: 'LiteralNode',
+        datatype: {
+          nominalValue: datatype,
+          interfaceName: 'IRI'
+        }
+      }
+    };
+    if(graph !== null) {
+      statement.name = graph;
+    }
+    return callback(null, statement);
+  }
 };
 
 /**
@@ -1566,7 +1915,40 @@ function _expandValue(ctx, property, value, base) {
   }
 
   return rval;
-};
+}
+
+/**
+ * Converts an RDF statement object to a JSON-LD object.
+ *
+ * @param o the RDF statement object to convert.
+ *
+ * @return the JSON-LD object.
+ */
+function _rdfToObject(o) {
+  // convert empty list
+  if(o.interfaceName === 'IRI' && o.nominalValue === RDF_NIL) {
+    return {'@list': []};
+  }
+
+  // convert IRI/BlankNode object to JSON-LD
+  if(o.interfaceName === 'IRI' || o.interfaceName === 'BlankNode') {
+    return {'@id': o.nominalValue};
+  }
+
+  // convert literal object to JSON-LD
+  var rval = {'@value': o.nominalValue};
+
+  // add datatype
+  if('datatype' in o) {
+    rval['@type'] = o.datatype.nominalValue;
+  }
+  // add language
+  else if('language' in o) {
+    rval['@language'] = o.language;
+  }
+
+  return rval;
+}
 
 /**
  * Recursively gets all statements from the given expanded JSON-LD input.
@@ -1628,17 +2010,17 @@ function _getStatements(input, namer, bnodes, subjects, name) {
 
       // convert boolean to @value
       if(_isBoolean(o)) {
-        o = {'@value': String(o), '@type': XSD['boolean']};
+        o = {'@value': String(o), '@type': XSD_BOOLEAN};
       }
       // convert double to @value
       else if(_isDouble(o)) {
         // do special JSON-LD double format, printf('%1.16e') JS equivalent
         o = o.toExponential(16).replace(/(e(?:\+|-))([0-9])$/, '$10$2');
-        o = {'@value': o, '@type': XSD['double']};
+        o = {'@value': o, '@type': XSD_DOUBLE};
       }
       // convert integer to @value
       else if(_isNumber(o)) {
-        o = {'@value': String(o), '@type': XSD['integer']};
+        o = {'@value': String(o), '@type': XSD_INTEGER};
       }
 
       // object is a blank node
@@ -1676,7 +2058,7 @@ function _getStatements(input, namer, bnodes, subjects, name) {
       }
     }
   }
-};
+}
 
 /**
  * Converts a @list value into an embedded linked list of blank nodes in
@@ -1688,19 +2070,14 @@ function _getStatements(input, namer, bnodes, subjects, name) {
  * @return the head of the linked list of blank nodes.
  */
 function _makeLinkedList(value) {
-  // convert @list array into embedded blank node linked list
+  // convert @list array into embedded blank node linked list in reverse
   var list = value['@list'];
-  var first = RDF['first'];
-  var rest = RDF['rest'];
-  var nil = RDF['nil'];
-
-  // build linked list in reverse
   var len = list.length;
-  var tail = {'@id': nil};
+  var tail = {'@id': RDF_NIL};
   for(var i = len - 1; i >= 0; --i) {
     var e = {};
-    e[first] = [list[i]];
-    e[rest] = [tail];
+    e[RDF_FIRST] = [list[i]];
+    e[RDF_REST] = [tail];
     tail = e;
   }
 
@@ -1756,7 +2133,7 @@ function _hashStatements(statements, namer) {
     }
 
     // serialize property
-    var p = (statement.p === '@type') ? RDF.type : statement.p;
+    var p = (statement.p === '@type') ? RDF_TYPE : statement.p;
     triple += ' <' + p + '> ';
 
     // serialize object
@@ -1859,7 +2236,7 @@ function _hashPaths(bnodes, statements, namer, pathNamer, callback) {
       // hash direction, property, and bnode name/hash
       var md = sha1.create();
       md.update(direction);
-      md.update((statement.p === '@type') ? RDF.type : statement.p);
+      md.update((statement.p === '@type') ? RDF_TYPE : statement.p);
       md.update(name);
       var groupHash = md.digest();
 
@@ -2250,7 +2627,7 @@ function _frame(state, subjects, frame, parent, property) {
 function _getFrameFlag(frame, options, name) {
   var flag = '@' + name;
   return (flag in frame) ? frame[flag][0] : options[name];
-};
+}
 
 /**
  * Validates a JSON-LD frame, throwing an exception if the frame is invalid.
@@ -2552,13 +2929,13 @@ function _rankTerm(ctx, term, value) {
   if(_isBoolean(value) || _isNumber(value)) {
     var type;
     if(_isBoolean(value)) {
-      type = XSD['boolean'];
+      type = XSD_BOOLEAN;
     }
     else if(_isDouble(value)) {
-      type = XSD['double'];
+      type = XSD_DOUBLE;
     }
     else {
-      type = XSD['integer'];
+      type = XSD_INTEGER;
     }
     if(entry['@type'] === type) {
       return 3;
@@ -3392,7 +3769,7 @@ function _clone(value) {
  * of @context in the input that refers to a URL will be replaced with the
  * JSON @context found at that URL.
  *
- * @param input the JSON-LD object with possible contexts.
+ * @param input the JSON-LD input with possible contexts.
  * @param resolver(url, callback(err, jsonCtx)) the URL resolver to use.
  * @param callback(err, input) called once the operation completes.
  */
