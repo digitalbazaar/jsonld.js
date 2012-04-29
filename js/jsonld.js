@@ -1637,8 +1637,8 @@ Processor.prototype.fromRDF = function(statements, callback) {
     output.push(subject);
 
     // output named graph in subject @id order
-    var graph = subject['@graph'] = [];
     if(id in graphs) {
+      var graph = subject['@graph'] = [];
       var _subjects = graphs[id].subjects;
       var _ids = Object.keys(_subjects).sort();
       for(var _i in _ids) {
