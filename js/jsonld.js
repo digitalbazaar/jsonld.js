@@ -379,7 +379,7 @@ jsonld.normalize = function(input, callback) {
  *          to convert.
  * @param [options] the options to use:
  *          [format] the format if input is a string:
- *            'text/x-nquads' for N-Quads (default).
+ *            'application/nquads' for N-Quads (default).
  *          [notType] true to use rdf:type, false to use @type (default).
  * @param callback(err, output) called once the operation completes.
  */
@@ -396,7 +396,7 @@ jsonld.fromRDF = function(statements) {
 
   // set default options
   if(!('format' in options)) {
-    options.format = 'text/x-nquads';
+    options.format = 'application/nquads';
   }
   if(!('notType' in options)) {
     options.notType = false;
@@ -404,7 +404,7 @@ jsonld.fromRDF = function(statements) {
 
   if(_isString(statements)) {
     // supported formats
-    if(options.format === 'text/x-nquads') {
+    if(options.format === 'application/nquads') {
       statements = _parseNQuads(statements);
     }
     else {
@@ -424,7 +424,7 @@ jsonld.fromRDF = function(statements) {
  * @param input the JSON-LD input.
  * @param [options] the options to use:
  *          [format] the format to use to output a string:
- *            'text/x-nquads' for N-Quads (default).
+ *            'application/nquads' for N-Quads (default).
  *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, statement) called when a statement is output, with the
  *          last statement as null.
@@ -450,7 +450,7 @@ jsonld.toRDF = function(input) {
 
   if('format' in options) {
     // supported formats
-    if(options.format === 'text/x-nquads') {
+    if(options.format === 'application/nquads') {
       cb = function(err, statement) {
         if(err) {
           return callback(err);

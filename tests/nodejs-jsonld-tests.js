@@ -227,7 +227,7 @@ TestRunner.prototype.run = function(manifests, callback) {
           self.test(test.name);
           input = _readTestJson(test.input, filepath);
           test.expect = _readTestNQuads(test.expect, filepath);
-          options.format = 'text/x-nquads';
+          options.format = 'application/nquads';
           var nquads = '';
           jsonld.toRDF(input, options, function(err, quad) {
             if(err || quad === null) {
