@@ -1553,16 +1553,16 @@ Processor.prototype.fromRDF = function(statements, options, callback) {
 
     // handle other element in @list
     if(p === RDF_REST) {
-      // create list entry as needed
-      var listMap = graphs[name].listMap;
-      if(!(s in listMap)) {
-        var entry = listMap[s] = {};
-      }
-      else {
-        var entry = listMap[s];
-      }
       // set next in list
       if(o.interfaceName === 'BlankNode') {
+        // create list entry as needed
+        var listMap = graphs[name].listMap;
+        if(!(s in listMap)) {
+          var entry = listMap[s] = {};
+        }
+        else {
+          var entry = listMap[s];
+        }
         entry.rest = o.nominalValue;
       }
       continue;
