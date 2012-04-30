@@ -423,6 +423,8 @@ jsonld.fromRDF = function(statements) {
  *
  * @param input the JSON-LD input.
  * @param [options] the options to use:
+ *          [format] the format to use to output a string:
+ *            'text/x-nquads' for N-Quads (default).
  *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, statement) called when a statement is output, with the
  *          last statement as null.
@@ -436,7 +438,7 @@ jsonld.toRDF = function(input) {
     options = arguments[1] || {};
     callbackArg += 1;
   }
-  callback = arguments[callbackArg];
+  var cb = callback = arguments[callbackArg];
 
   // set default options
   if(!('base' in options)) {
@@ -444,6 +446,26 @@ jsonld.toRDF = function(input) {
   }
   if(!('resolver' in options)) {
     options.resolver = jsonld.urlResolver;
+  }
+
+  if('format' in options) {
+    // supported formats
+    if(options.format === 'text/x-nquads') {
+      cb = function(err, statement) {
+        if(err) {
+          return callback(err);
+        }
+        if(statement !== null) {
+          statement = _toNQuad(statement);
+        }
+        callback(null, statement);
+      };
+    }
+    else {
+      throw new JsonLdError(
+        'Unknown output format.',
+        'jsonld.UnknownFormat', {format: options.format});
+    }
   }
 
   // expand input
@@ -454,9 +476,15 @@ jsonld.toRDF = function(input) {
         'jsonld.RdfError', {cause: err}));
     }
 
-    // output RDF statements
-    var namer = new UniqueNamer('_:t');
-    new Processor().toRDF(expanded, namer, null, null, null, callback);
+    try {
+      // output RDF statements
+      var namer = new UniqueNamer('_:t');
+      new Processor().toRDF(expanded, namer, null, null, null, cb);
+      cb(null, null);
+    }
+    catch(ex) {
+      cb(ex);
+    }
   });
 };
 
@@ -1730,7 +1758,7 @@ Processor.prototype.toRDF = function(
 
     // get subject @id (generate one if it is a bnode)
     var isBnode = _isBlankNode(element);
-    var id = isBnode ? namer.getName(input['@id']) : input['@id'];
+    var id = isBnode ? namer.getName(element['@id']) : element['@id'];
 
     // create object
     var object = {
@@ -1757,11 +1785,11 @@ Processor.prototype.toRDF = function(
     // recurse over subject properties in order
     var props = Object.keys(element).sort();
     for(var pi in props) {
-      var prop = props[pi];
+      var prop = p = props[pi];
 
       // convert @type to rdf:type
       if(prop === '@type') {
-        prop = RDF_TYPE;
+        p = RDF_TYPE;
       }
 
       // recurse into @graph
@@ -1771,13 +1799,13 @@ Processor.prototype.toRDF = function(
       }
 
       // skip keywords
-      if(_isKeyword(prop)) {
+      if(_isKeyword(p)) {
         continue;
       }
 
       // create new active property
       property = {
-        nominalValue: id,
+        nominalValue: p,
         interfaceName: 'IRI'
       };
 
@@ -1789,13 +1817,14 @@ Processor.prototype.toRDF = function(
   }
 
   if(_isString(element)) {
-    // emit plain literal
+    // emit IRI for rdf:type, else plain literal
     var statement = {
       subject: _clone(subject),
       property: _clone(property),
       object: {
         nominalValue: element,
-        interfaceName: 'LiteralNode'
+        interfaceName: ((property.nominalValue === RDF_TYPE) ?
+          'IRI': 'LiteralNode')
       }
     };
     if(graph !== null) {
@@ -1810,15 +1839,15 @@ Processor.prototype.toRDF = function(
       var datatype = XSD_BOOLEAN;
       var value = String(element);
     }
-    else if(_isInteger(element)) {
-      var datatype = XSD_INTEGER;
-      var value = String(element);
-    }
-    else {
+    else if(_isDouble(element)) {
       var datatype = XSD_DOUBLE;
       // printf('%1.16e') equivalent
       var value = element.toExponential(16).replace(
         /(e(?:\+|-))([0-9])$/, '$10$2');
+    }
+    else {
+      var datatype = XSD_INTEGER;
+      var value = String(element);
     }
 
     // emit typed literal
@@ -4040,6 +4069,58 @@ function _parseNQuads(input) {
   }
 
   return statements;
+}
+
+/**
+ * Converts an RDF statement to an N-Quad string (a single quad).
+ *
+ * @param statement the RDF statement to convert.
+ *
+ * @return the N-Quad string.
+ */
+function _toNQuad(statement) {
+  var s = statement.subject;
+  var p = statement.property;
+  var o = statement.object;
+  var g = statement.name || null;
+
+  var quad = '';
+
+  // subject is an IRI or bnode
+  if(s.interfaceName === 'IRI') {
+    quad += '<' + s.nominalValue + '>';
+  }
+  else {
+    quad += s.nominalValue;
+  }
+
+  // property is always an IRI
+  quad += ' <' + p.nominalValue + '> ';
+
+  // object is IRI, bnode, or literal
+  if(o.interfaceName === 'IRI') {
+    quad += '<' + o.nominalValue + '>';
+  }
+  else if(o.interfaceName === 'BlankNode') {
+    quad += o.nominalValue;
+  }
+  else {
+    quad += '"' + o.nominalValue + '"';
+    if('datatype' in o) {
+      quad += '^^<' + o.datatype.nominalValue + '>';
+    }
+    else if('language' in o) {
+      quad += '@' + o.language;
+    }
+  }
+
+  // graph
+  if(g !== null) {
+    quad += ' <' + g.nominalValue + '>';
+  }
+
+  quad += ' .\n';
+  return quad;
 }
 
 /**

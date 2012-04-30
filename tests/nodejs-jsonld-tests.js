@@ -223,6 +223,19 @@ TestRunner.prototype.run = function(manifests, callback) {
           test.expect = _readTestJson(test.expect, filepath);
           jsonld.fromRDF(input, options, checkResult);
         }
+        else if(type.indexOf('jld:ToRDFTest') !== -1) {
+          self.test(test.name);
+          input = _readTestJson(test.input, filepath);
+          test.expect = _readTestNQuads(test.expect, filepath);
+          options.format = 'text/x-nquads';
+          var nquads = '';
+          jsonld.toRDF(input, options, function(err, quad) {
+            if(err || quad === null) {
+              return checkResult(err, nquads);
+            }
+            nquads += quad;
+          });
+        }
         else {
           util.log('Skipping test "' + test.name + '" of type: ' +
             JSON.stringify(type));
