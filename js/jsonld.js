@@ -1825,7 +1825,7 @@ Processor.prototype.toRDF = function(
       object: {
         nominalValue: element,
         interfaceName: ((property.nominalValue === RDF_TYPE) ?
-          'IRI': 'LiteralNode')
+          'IRI' : 'LiteralNode')
       }
     };
     if(graph !== null) {
