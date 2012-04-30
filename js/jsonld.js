@@ -1841,8 +1841,8 @@ Processor.prototype.toRDF = function(
     }
     else if(_isDouble(element)) {
       var datatype = XSD_DOUBLE;
-      // printf('%1.16e') equivalent
-      var value = element.toExponential(16).replace(
+      // printf('%1.15e') equivalent
+      var value = element.toExponential(15).replace(
         /(e(?:\+|-))([0-9])$/, '$10$2');
     }
     else {
@@ -2063,8 +2063,8 @@ function _getStatements(input, namer, bnodes, subjects, name) {
       }
       // convert double to @value
       else if(_isDouble(o)) {
-        // do special JSON-LD double format, printf('%1.16e') JS equivalent
-        o = o.toExponential(16).replace(/(e(?:\+|-))([0-9])$/, '$10$2');
+        // do special JSON-LD double format, printf('%1.15e') JS equivalent
+        o = o.toExponential(15).replace(/(e(?:\+|-))([0-9])$/, '$10$2');
         o = {'@value': o, '@type': XSD_DOUBLE};
       }
       // convert integer to @value
@@ -3423,7 +3423,7 @@ function _expandContextIri(activeCtx, ctx, value, base, defined) {
   }
 
   // prepend base
-  value = base + value;
+  value = _prependBase(base, value);
 
   // value must now be an absolute IRI
   if(!_isAbsoluteIri(value)) {
@@ -3490,10 +3490,28 @@ function _expandTerm(ctx, term, base) {
 
   // prepend base to term
   if(!_isUndefined(base)) {
-    term = base + term;
+    term = _prependBase(base, term);
   }
 
   return term;
+}
+
+/**
+ * Prepends a base IRI to the given relative IRI.
+ *
+ * @param base the base IRI.
+ * @param iri the relative IRI.
+ *
+ * @return the absolute IRI.
+ */
+function _prependBase(base, iri) {
+  if(iri === '' || iri.indexOf('#') === 0) {
+    return base + iri;
+  }
+  else {
+    // prepend last directory for base
+    return base.substr(0, base.lastIndexOf('/') + 1) + iri;
+  }
 }
 
 /**
