@@ -1567,7 +1567,7 @@ Processor.prototype.fromRDF = function(statements, options, callback) {
     // handle element in @list
     if(p === RDF_FIRST) {
       // create list entry as needed
-      var listMap = graphs[name].listMap;
+      var listMap = graph.listMap;
       if(!(s in listMap)) {
         var entry = listMap[s] = {};
       }
@@ -1584,7 +1584,7 @@ Processor.prototype.fromRDF = function(statements, options, callback) {
       // set next in list
       if(o.interfaceName === 'BlankNode') {
         // create list entry as needed
-        var listMap = graphs[name].listMap;
+        var listMap = graph.listMap;
         if(!(s in listMap)) {
           var entry = listMap[s] = {};
         }
@@ -1611,7 +1611,7 @@ Processor.prototype.fromRDF = function(statements, options, callback) {
     }
 
     // add subject to graph as needed
-    var subjects = graphs[name].subjects;
+    var subjects = graph.subjects;
     if(!(s in subjects)) {
       value = subjects[s] = {'@id': s};
     }
@@ -1633,7 +1633,7 @@ Processor.prototype.fromRDF = function(statements, options, callback) {
       // a bnode might be the beginning of a list, so add it to the list map
       if(o.interfaceName === 'BlankNode') {
         var id = object['@id'];
-        var listMap = graphs[name].listMap;
+        var listMap = graph.listMap;
         if(!(id in listMap)) {
           var entry = listMap[id] = {};
         }
