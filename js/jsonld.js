@@ -374,9 +374,13 @@ jsonld.normalize = function(input, callback) {
 /**
  * Converts RDF statements into JSON-LD.
  *
- * @param statements the RDF statements to convert.
+ * @param statements a serialized string of RDF statements in a format
+ *          specified by the format option or an array of the RDF statements
+ *          to convert.
  * @param [options] the options to use:
- *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
+ *          [format] the format if input is a string:
+ *            'text/x-nquads' for N-Quads (default).
+ *          [useRdfType] true to use rdf:type, false to use @type (default).
  * @param callback(err, output) called once the operation completes.
  */
 jsonld.fromRDF = function(statements) {
@@ -391,11 +395,23 @@ jsonld.fromRDF = function(statements) {
   callback = arguments[callbackArg];
 
   // set default options
-  if(!('base' in options)) {
-    options.base = '';
+  if(!('format' in options)) {
+    options.format = 'text/x-nquads';
   }
-  if(!('resolver' in options)) {
-    options.resolver = jsonld.urlResolver;
+  if(!('useRDFType' in options)) {
+    options.useRdfType = false;
+  }
+
+  if(_isString(statements)) {
+    // supported formats
+    if(options.format === 'text/x-nquads') {
+      statements = _parseNQuads(statements);
+    }
+    else {
+      throw new JsonLdError(
+        'Unknown input format.',
+        'jsonld.UnknownFormat', {format: options.format});
+    }
   }
 
   new Processor().fromRDF(statements, callback);
@@ -3914,6 +3930,110 @@ if(!Object.keys) {
     }
     return rval;
   };
+}
+
+/**
+ * Parses statements in the form of N-Quads.
+ *
+ * @param input the N-Quads input to parse.
+ */
+function _parseNQuads(input) {
+  // define partial regexes
+  var iri = '(?:<([^:]+:[^>]*)>)';
+  var bnode = '(_:(?:[A-Za-z][A-Za-z0-9]*))';
+  var plain = '"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"';
+  var datatype = '(?:\\^\\^' + iri + ')';
+  var language = '(?:@([a-z]+(?:-[a-z0-9]+)*))';
+  var literal = '(?:' + plain + '(?:' + datatype + '|' + language + ')?)';
+  var ws = '[ \t]+';
+  var wso = '[ \t]*';
+  var eoln = /(?:\r\n)|(?:\n)|(?:\r)/g;
+  var empty = new RegExp('^' + wso + '$');
+
+  // define quad part regexes
+  var subject = '(?:' + iri + '|' + bnode + ')' + ws;
+  var property = iri + ws;
+  var object = '(?:' + iri + '|' + bnode + '|' + literal + ')' + wso;
+  var graph = '(?:\\.|(?:(?:' + iri + '|' + bnode + ')' + wso + '\\.))';
+
+  // full quad regex
+  var quad = new RegExp(
+    '^' + wso + subject + property + object + graph + wso + '$');
+
+  // build RDF statements
+  var statements = [];
+
+  // split N-Quad input into lines
+  var lines = input.split(eoln);
+  var lineNumber = 0;
+  for(var i in lines) {
+    var line = lines[i];
+    lineNumber++;
+
+    // skip empty lines
+    if(empty.test(line)) {
+      continue;
+    }
+
+    // parse quad
+    var match = line.match(quad);
+    if(match === null) {
+      throw new JsonLdError(
+        'Error while parsing N-Quads; invalid quad.',
+        'jsonld.ParseError', {line: lineNumber});
+    }
+
+    // create RDF statement
+    var s = {subject: {}, property: {}, object: {}};
+
+    // get subject
+    if(_isUndefined(match[2])) {
+      s.subject.nominalValue = match[1];
+      s.subject.interfaceName = 'IRI';
+    }
+    else {
+      s.subject.nominalValue = match[2];
+      s.subject.interfaceName = 'BlankNode';
+    }
+
+    // get property
+    s.property = {nominalValue: match[3], interfaceName: 'IRI'};
+
+    // get object
+    if(_isUndefined(match[6])) {
+      if(_isUndefined(match[5])) {
+        s.object.nominalValue = match[4];
+        s.object.interfaceName = 'IRI';
+      }
+      else {
+        s.object.nominalValue = match[5];
+        s.object.interfaceName = 'BlankNode';
+      }
+    }
+    else {
+      s.object.nominalValue = match[6];
+      s.object.interfaceName = 'LiteralNode';
+      if(!_isUndefined(match[7])) {
+        s.object.datatype = {nominalValue: match[7], interfaceName: 'IRI'};
+      }
+      else if(!_isUndefined(match[8])) {
+        s.object.language = match[8];
+      }
+    }
+
+    // get graph
+    if(!_isUndefined(match[9])) {
+      s.name = {nominalValue: match[9], interfaceName: 'IRI'};
+    }
+    else if(!_isUndefined(match[10])) {
+      s.name = {nominalValue: match[10], interfaceName: 'BlankNode'};
+    }
+
+    // add statement
+    statements.push(s);
+  }
+
+  return statements;
 }
 
 /**
