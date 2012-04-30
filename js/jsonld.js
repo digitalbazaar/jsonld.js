@@ -380,7 +380,7 @@ jsonld.normalize = function(input, callback) {
  * @param [options] the options to use:
  *          [format] the format if input is a string:
  *            'text/x-nquads' for N-Quads (default).
- *          [useRdfType] true to use rdf:type, false to use @type (default).
+ *          [notType] true to use rdf:type, false to use @type (default).
  * @param callback(err, output) called once the operation completes.
  */
 jsonld.fromRDF = function(statements) {
@@ -398,8 +398,8 @@ jsonld.fromRDF = function(statements) {
   if(!('format' in options)) {
     options.format = 'text/x-nquads';
   }
-  if(!('useRDFType' in options)) {
-    options.useRdfType = false;
+  if(!('notType' in options)) {
+    options.notType = false;
   }
 
   if(_isString(statements)) {
@@ -414,7 +414,8 @@ jsonld.fromRDF = function(statements) {
     }
   }
 
-  new Processor().fromRDF(statements, callback);
+  // convert from RDF
+  new Processor().fromRDF(statements, options, callback);
 };
 
 /**
@@ -1510,9 +1511,10 @@ Processor.prototype.normalize = function(input, callback) {
  * Converts RDF statements into JSON-LD.
  *
  * @param statements the RDF statements.
+ * @param options the RDF conversion options.
  * @param callback(err, output) called once the operation completes.
  */
-Processor.prototype.fromRDF = function(statements, callback) {
+Processor.prototype.fromRDF = function(statements, options, callback) {
   // prepare graph map (maps graph name => subjects, lists, etc)
   var defaultGraph = {subjects: {}, listMap: {}};
   var graphs = {'': defaultGraph};
@@ -1545,7 +1547,7 @@ Processor.prototype.fromRDF = function(statements, callback) {
         var entry = listMap[s];
       }
       // set object value
-      entry[s].first = _rdfToObject(o);
+      entry.first = _rdfToObject(o);
       continue;
     }
 
@@ -1561,7 +1563,7 @@ Processor.prototype.fromRDF = function(statements, callback) {
       }
       // set next in list
       if(o.interfaceName === 'BlankNode') {
-        entry[s].rest = o.nominalValue;
+        entry.rest = o.nominalValue;
       }
       continue;
     }
@@ -1590,8 +1592,8 @@ Processor.prototype.fromRDF = function(statements, callback) {
       value = subjects[s];
     }
 
-    // FIXME: make @type conversion optional
-    if(p === RDF_TYPE) {
+    // convert to @type unless options indicate to treat rdf:type as property
+    if(p === RDF_TYPE && !options.notType) {
       // add value of object as @type
       jsonld.addValue(value, '@type', o.nominalValue, true);
     }
@@ -1602,12 +1604,13 @@ Processor.prototype.fromRDF = function(statements, callback) {
 
       // a bnode might be the beginning of a list, so add it to the list map
       if(o.interfaceName === 'BlankNode') {
+        var id = object['@id'];
         var listMap = graphs[name].listMap;
-        if(!(s in listMap)) {
-          var entry = listMap[s] = {};
+        if(!(id in listMap)) {
+          var entry = listMap[id] = {};
         }
         else {
-          var entry = listMap[s];
+          var entry = listMap[id];
         }
         entry.head = object;
       }
@@ -1618,11 +1621,12 @@ Processor.prototype.fromRDF = function(statements, callback) {
   for(var name in graphs) {
     var graph = graphs[name];
 
-    // find list heads
-    while(subject in listMap) {
+    // find list head
+    var listMap = graph.listMap;
+    for(subject in listMap) {
       var entry = listMap[subject];
 
-      // head found, build list
+      // head found, build lists
       if('head' in entry && 'first' in entry) {
         // replace bnode @id with @list
         delete entry.head['@id'];
@@ -1646,7 +1650,7 @@ Processor.prototype.fromRDF = function(statements, callback) {
   var subjects = defaultGraph.subjects;
   var ids = Object.keys(subjects).sort();
   for(var i in ids) {
-    var id = ids[id];
+    var id = ids[i];
 
     // add subject to default graph
     var subject = subjects[id];
@@ -1662,7 +1666,7 @@ Processor.prototype.fromRDF = function(statements, callback) {
       }
     }
   }
-  return output;
+  callback(null, output);
 };
 
 /**
@@ -3936,6 +3940,8 @@ if(!Object.keys) {
  * Parses statements in the form of N-Quads.
  *
  * @param input the N-Quads input to parse.
+ *
+ * @return an array of RDF statements.
  */
 function _parseNQuads(input) {
   // define partial regexes

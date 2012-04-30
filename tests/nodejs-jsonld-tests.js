@@ -139,6 +139,29 @@ var _readTestJson = function(file, filepath) {
   return rval;
 };
 
+/**
+ * Reads test N-Quads files.
+ *
+ * @param file the file to read.
+ * @param filepath the test filepath.
+ *
+ * @return the read N-Quads.
+ */
+var _readTestNQuads = function(file, filepath) {
+  var rval;
+
+  try {
+    file = path.join(filepath, file);
+    rval = fs.readFileSync(file, 'utf8');
+  }
+  catch(e) {
+    util.log('Exception while parsing test file: ' + file);
+    throw e;
+  }
+
+  return rval;
+};
+
 TestRunner.prototype.run = function(manifests, callback) {
   /* Manifest format: {
        name: <optional manifest name>,
@@ -193,6 +216,12 @@ TestRunner.prototype.run = function(manifests, callback) {
           test.frame = _readTestJson(test.frame, filepath);
           test.expect = _readTestJson(test.expect, filepath);
           jsonld.frame(input, test.frame, options, checkResult);
+        }
+        else if(type.indexOf('jld:FromRDFTest') !== -1) {
+          self.test(test.name);
+          input = _readTestNQuads(test.input, filepath);
+          test.expect = _readTestJson(test.expect, filepath);
+          jsonld.fromRDF(input, options, checkResult);
         }
         else {
           util.log('Skipping test "' + test.name + '" of type: ' +
