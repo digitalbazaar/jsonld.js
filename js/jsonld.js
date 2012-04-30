@@ -4040,7 +4040,7 @@ function _parseNQuads(input) {
     var s = {subject: {}, property: {}, object: {}};
 
     // get subject
-    if(_isUndefined(match[2])) {
+    if(!_isUndefined(match[1])) {
       s.subject.nominalValue = match[1];
       s.subject.interfaceName = 'IRI';
     }
@@ -4053,15 +4053,13 @@ function _parseNQuads(input) {
     s.property = {nominalValue: match[3], interfaceName: 'IRI'};
 
     // get object
-    if(_isUndefined(match[6])) {
-      if(_isUndefined(match[5])) {
-        s.object.nominalValue = match[4];
-        s.object.interfaceName = 'IRI';
-      }
-      else {
-        s.object.nominalValue = match[5];
-        s.object.interfaceName = 'BlankNode';
-      }
+    if(!_isUndefined(match[4])) {
+      s.object.nominalValue = match[4];
+      s.object.interfaceName = 'IRI';
+    }
+    else if(!_isUndefined(match[5])) {
+      s.object.nominalValue = match[5];
+      s.object.interfaceName = 'BlankNode';
     }
     else {
       s.object.nominalValue = match[6];
