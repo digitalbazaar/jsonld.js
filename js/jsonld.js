@@ -423,6 +423,7 @@ jsonld.fromRDF = function(statements) {
  *
  * @param input the JSON-LD input.
  * @param [options] the options to use:
+ *          [base] the base IRI to use.
  *          [format] the format to use to output a string:
  *            'application/nquads' for N-Quads (default).
  *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
