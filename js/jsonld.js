@@ -1818,6 +1818,10 @@ Processor.prototype.toRDF = function(
   }
 
   if(_isString(element)) {
+    // property can be null for string subject references in @graph
+    if(property === null) {
+      return;
+    }
     // emit IRI for rdf:type, else plain literal
     var statement = {
       subject: _clone(subject),
