@@ -1544,7 +1544,7 @@ Processor.prototype.normalize = function(input, callback) {
  * @param callback(err, output) called once the operation completes.
  */
 Processor.prototype.fromRDF = function(statements, options, callback) {
-  // prepare graph map (maps graph name => subjects, lists, etc)
+  // prepare graph map (maps graph name => subjects, lists)
   var defaultGraph = {subjects: {}, listMap: {}};
   var graphs = {'': defaultGraph};
 
