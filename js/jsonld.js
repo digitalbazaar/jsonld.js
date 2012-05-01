@@ -4000,8 +4000,8 @@ function _parseNQuads(input) {
   var datatype = '(?:\\^\\^' + iri + ')';
   var language = '(?:@([a-z]+(?:-[a-z0-9]+)*))';
   var literal = '(?:' + plain + '(?:' + datatype + '|' + language + ')?)';
-  var ws = '[ \t]+';
-  var wso = '[ \t]*';
+  var ws = '[ \\t]+';
+  var wso = '[ \\t]*';
   var eoln = /(?:\r\n)|(?:\n)|(?:\r)/g;
   var empty = new RegExp('^' + wso + '$');
 
