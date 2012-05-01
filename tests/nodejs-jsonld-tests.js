@@ -228,12 +228,12 @@ TestRunner.prototype.run = function(manifests, callback) {
           input = _readTestJson(test.input, filepath);
           test.expect = _readTestNQuads(test.expect, filepath);
           options.format = 'application/nquads';
-          var nquads = '';
+          var nquads = [];
           jsonld.toRDF(input, options, function(err, quad) {
             if(err || quad === null) {
-              return checkResult(err, nquads);
+              return checkResult(err, nquads.sort().join(''));
             }
-            nquads += quad;
+            nquads.push(quad);
           });
         }
         else {

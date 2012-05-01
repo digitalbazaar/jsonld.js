@@ -4039,16 +4039,14 @@ function _parseNQuads(input) {
     }
 
     // create RDF statement
-    var s = {subject: {}, property: {}, object: {}};
+    var s = {};
 
     // get subject
     if(!_isUndefined(match[1])) {
-      s.subject.nominalValue = match[1];
-      s.subject.interfaceName = 'IRI';
+      s.subject = {nominalValue: match[1], interfaceName: 'IRI'};
     }
     else {
-      s.subject.nominalValue = match[2];
-      s.subject.interfaceName = 'BlankNode';
+      s.subject = {nominalValue: match[2], interfaceName: 'BlankNode'};
     }
 
     // get property
@@ -4056,16 +4054,13 @@ function _parseNQuads(input) {
 
     // get object
     if(!_isUndefined(match[4])) {
-      s.object.nominalValue = match[4];
-      s.object.interfaceName = 'IRI';
+      s.object = {nominalValue: match[4], interfaceName: 'IRI'};
     }
     else if(!_isUndefined(match[5])) {
-      s.object.nominalValue = match[5];
-      s.object.interfaceName = 'BlankNode';
+      s.object = {nominalValue: match[5], interfaceName: 'BlankNode'};
     }
     else {
-      s.object.nominalValue = match[6];
-      s.object.interfaceName = 'LiteralNode';
+      s.object = {nominalValue: match[6], interfaceName: 'LiteralNode'};
       if(!_isUndefined(match[7])) {
         s.object.datatype = {nominalValue: match[7], interfaceName: 'IRI'};
       }
