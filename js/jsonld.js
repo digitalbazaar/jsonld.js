@@ -1597,28 +1597,25 @@ Processor.prototype.fromRDF = function(statements, options, callback) {
       continue;
     }
 
-    // prepare to assign next JSON-LD value
-    var value;
-
     // if graph is not the default graph
     if(name !== '') {
       // add graph subject to default graph as needed
       if(!(name in defaultGraph.subjects)) {
-        value = defaultGraph.subjects[name] = {'@id': name};
+        defaultGraph.subjects[name] = {'@id': name};
       }
       else {
-        value = defaultGraph.subjects[name];
+        defaultGraph.subjects[name];
       }
     }
 
     // add subject to graph as needed
     var subjects = graph.subjects;
     if(!(s in subjects)) {
-      value = subjects[s] = {'@id': s};
+      var value = subjects[s] = {'@id': s};
     }
     // use existing subject value
     else {
-      value = subjects[s];
+      var value = subjects[s];
     }
 
     // convert to @type unless options indicate to treat rdf:type as property
