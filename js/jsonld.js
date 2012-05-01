@@ -1708,14 +1708,6 @@ Processor.prototype.fromRDF = function(statements, options, callback) {
  */
 Processor.prototype.toRDF = function(
   element, namer, subject, property, graph, callback) {
-  // recurse into arrays
-  if(_isArray(element)) {
-    for(var i in element) {
-      this.toRDF(element[i], namer, subject, property, graph, callback);
-    }
-    return;
-  }
-
   if(_isObject(element)) {
     // convert @value to object
     if(_isValue(element)) {
@@ -1811,6 +1803,14 @@ Processor.prototype.toRDF = function(
       this.toRDF(element[prop], namer, subject, property, graph, callback);
     }
 
+    return;
+  }
+
+  if(_isArray(element)) {
+    // recurse into arrays
+    for(var i in element) {
+      this.toRDF(element[i], namer, subject, property, graph, callback);
+    }
     return;
   }
 
