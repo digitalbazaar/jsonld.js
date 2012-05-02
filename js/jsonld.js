@@ -3593,7 +3593,7 @@ function _isKeyword(v, ctx) {
  * @return true if the value is an Object, false if not.
  */
 function _isObject(v) {
-  return (v !== null && !_isUndefined(v) && v.constructor === Object);
+  return (Object.prototype.toString.call(v) === '[object Object]');
 }
 
 /**
@@ -3615,7 +3615,7 @@ function _isEmptyObject(v) {
  * @return true if the value is an Array, false if not.
  */
 function _isArray(v) {
-  return (v !== null && !_isUndefined(v) && v.constructor === Array);
+  return Array.isArray(v);
 }
 
 /**
@@ -3658,7 +3658,8 @@ function _validateTypeValue(v) {
  * @return true if the value is a String, false if not.
  */
 function _isString(v) {
-  return (v !== null && !_isUndefined(v) && v.constructor === String);
+  return (typeof v === 'string' ||
+    Object.prototype.toString.call(v) === '[object String]');
 }
 
 /**
@@ -3669,7 +3670,8 @@ function _isString(v) {
  * @return true if the value is a Number, false if not.
  */
 function _isNumber(v) {
-  return (v !== null && !_isUndefined(v) && v.constructor === Number);
+  return (typeof v === 'number' ||
+    Object.prototype.toString.call(v) === '[object Number]');
 }
 
 /**
@@ -3691,7 +3693,8 @@ function _isDouble(v) {
  * @return true if the value is a Boolean, false if not.
  */
 function _isBoolean(v) {
-  return (v !== null && !_isUndefined(v) && v.constructor === Boolean);
+  return (typeof v === 'boolean' ||
+    Object.prototype.toString.call(v) === '[object Boolean]');
 }
 
 /**
