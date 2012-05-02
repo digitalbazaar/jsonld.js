@@ -1597,15 +1597,9 @@ Processor.prototype.fromRDF = function(statements, options, callback) {
       continue;
     }
 
-    // if graph is not the default graph
-    if(name !== '') {
-      // add graph subject to default graph as needed
-      if(!(name in defaultGraph.subjects)) {
-        defaultGraph.subjects[name] = {'@id': name};
-      }
-      else {
-        defaultGraph.subjects[name];
-      }
+    // add graph subject to default graph as needed
+    if(name !== '' && !(name in defaultGraph.subjects)) {
+      defaultGraph.subjects[name] = {'@id': name};
     }
 
     // add subject to graph as needed
