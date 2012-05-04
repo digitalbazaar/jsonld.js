@@ -1350,22 +1350,17 @@ Processor.prototype.normalize = function(input, options, callback) {
     }
     // add statement and do mapping
     statements.push(statement);
-    var id = statement.subject.nominalValue;
-    if(statement.subject.interfaceName === 'BlankNode') {
-      if(id in bnodes) {
-        bnodes[id].push(statement);
-      }
-      else {
-        bnodes[id] = [statement];
-      }
-    }
-    if(statement.object.interfaceName === 'BlankNode') {
-      id = statement.object.nominalValue;
-      if(id in bnodes) {
-        bnodes[id].push(statement);
-      }
-      else {
-        bnodes[id] = [statement];
+    var nodes = ['subject', 'object'];
+    for(var n in nodes) {
+      var node = nodes[n];
+      var id = statement[node].nominalValue;
+      if(statement[node].interfaceName === 'BlankNode') {
+        if(id in bnodes) {
+          bnodes[id].push(statement);
+        }
+        else {
+          bnodes[id] = [statement];
+        }
       }
     }
   }
@@ -1492,13 +1487,13 @@ Processor.prototype.normalize = function(input, options, callback) {
     // update bnode names in each statement and serialize
     for(var i in statements) {
       var statement = statements[i];
-      if(statement.subject.interfaceName === 'BlankNode') {
-        statement.subject.nominalValue = namer.getName(
-          statement.subject.nominalValue);
-      }
-      if(statement.object.interfaceName === 'BlankNode') {
-        statement.object.nominalValue = namer.getName(
-          statement.object.nominalValue);
+      var nodes = ['subject', 'object'];
+      for(var n in nodes) {
+        var node = nodes[n];
+        if(statement[node].interfaceName === 'BlankNode') {
+          statement[node].nominalValue = namer.getName(
+            statement[node].nominalValue);
+        }
       }
       normalized.push(_toNQuad(statement));
     }
