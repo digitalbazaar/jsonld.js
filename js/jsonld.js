@@ -1356,10 +1356,10 @@ Processor.prototype.normalize = function(input, options, callback) {
       var id = statement[node].nominalValue;
       if(statement[node].interfaceName === 'BlankNode') {
         if(id in bnodes) {
-          bnodes[id].push(statement);
+          bnodes[id].statements.push(statement);
         }
         else {
-          bnodes[id] = [statement];
+          bnodes[id] = {statements: [statement]};
         }
       }
     }
@@ -2028,8 +2028,12 @@ function _makeLinkedList(value) {
  * @return the new hash.
  */
 function _hashStatements(id, bnodes, namer) {
+  if('hash' in bnodes[id]) {
+    return bnodes[id].hash;
+  }
+
   // serialize all of bnode's statements
-  var statements = bnodes[id];
+  var statements = bnodes[id].statements;
   var nquads = [];
   for(var i in statements) {
     nquads.push(_toNQuad(statements[i], id));
@@ -2037,7 +2041,8 @@ function _hashStatements(id, bnodes, namer) {
   // sort serialized quads
   nquads.sort();
   // return hashed quads
-  return sha1.hash(nquads);
+  var hash = bnodes[id].hash = sha1.hash(nquads);
+  return hash;
 }
 
 /**
@@ -2058,9 +2063,8 @@ function _hashPaths(id, bnodes, namer, pathNamer, callback) {
 
   // group adjacent bnodes by hash, keep properties and references separate
   var groups = {};
-  var cache = {};
   var groupHashes;
-  var statements = bnodes[id];
+  var statements = bnodes[id].statements;
   setTimeout(function() {groupNodes(0);}, 0);
   function groupNodes(i) {
     if(i === statements.length) {
@@ -2092,12 +2096,8 @@ function _hashPaths(id, bnodes, namer, pathNamer, callback) {
       else if(pathNamer.isNamed(bnode)) {
         name = pathNamer.getName(bnode);
       }
-      else if(bnode in cache) {
-        name = cache[bnode];
-      }
       else {
         name = _hashStatements(bnode, bnodes, namer);
-        cache[bnode] = name;
       }
 
       // hash direction, property, and bnode name/hash
