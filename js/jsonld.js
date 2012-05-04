@@ -2026,7 +2026,7 @@ function _makeLinkedList(value) {
 /**
  * Hashes all of the statements about a blank node.
  *
- * @param id the id of the bnode to hash statements for.
+ * @param id the ID of the bnode to hash statements for.
  * @param bnodes the mapping of bnodes to statements.
  * @param namer the canonical bnode namer.
  *
@@ -2074,7 +2074,7 @@ function _hashPaths(id, bnodes, namer, pathNamer, callback) {
       return hashGroup(0);
     }
 
-    // get adjacent bnodes
+    // get adjacent bnode
     var statement = statements[i];
     var bnode = _getAdjacentBlankNodeName(statement.subject, id);
     var direction = null;
