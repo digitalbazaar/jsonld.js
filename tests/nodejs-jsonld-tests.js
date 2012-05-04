@@ -61,12 +61,7 @@ TestRunner.prototype.test = function(name) {
 TestRunner.prototype.check = function(test, expect, result) {
   var line = '';
   try {
-    if(test['@type'].indexOf('jld:NormalizeTest') !== -1) {
-      assert.equal(true, jsonld.compareNormalized(expect, result));
-    }
-    else {
-      assert.deepEqual(expect, result);
-    }
+    assert.deepEqual(expect, result);
     line += 'PASS';
     this.passed += 1;
   }
@@ -193,7 +188,8 @@ TestRunner.prototype.run = function(manifests, callback) {
         if(type.indexOf('jld:NormalizeTest') !== -1) {
           self.test(test.name);
           input = _readTestJson(test.input, filepath);
-          test.expect = _readTestJson(test.expect, filepath);
+          test.expect = _readTestNQuads(test.expect, filepath);
+          options.format = 'application/nquads';
           jsonld.normalize(input, options, checkResult);
         }
         else if(type.indexOf('jld:ExpandTest') !== -1) {
