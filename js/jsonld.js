@@ -426,6 +426,9 @@ jsonld.fromRDF = function(statements) {
  *          [base] the base IRI to use.
  *          [format] the format to use to output a string:
  *            'application/nquads' for N-Quads (default).
+ *          [collate] true to output all statements at once (in an array
+ *            or as a formatted string), false to output one statement at
+ *            a time (default).
  *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, statement) called when a statement is output, with the
  *          last statement as null.
@@ -439,7 +442,7 @@ jsonld.toRDF = function(input) {
     options = arguments[1] || {};
     callbackArg += 1;
   }
-  var cb = callback = arguments[callbackArg];
+  callback = arguments[callbackArg];
 
   // set default options
   if(!('base' in options)) {
@@ -448,18 +451,43 @@ jsonld.toRDF = function(input) {
   if(!('resolver' in options)) {
     options.resolver = jsonld.urlResolver;
   }
+  if(!('collate' in options)) {
+    options.collate = false;
+  }
+
+  if(options.collate) {
+    // output array/string of statements all at once
+    var statements = [];
+    var collateCallback = callback;
+    callback = function(err, statement) {
+      if(err) {
+        return collateCallback(err);
+      }
+      if(statement !== null) {
+        statements.push(statement);
+      }
+      else {
+        // if outputting a string, sort and join statements
+        if('format' in options) {
+          statements = statements.sort().join('');
+        }
+        collateCallback(null, statements);
+      }
+    };
+  }
 
   if('format' in options) {
     // supported formats
     if(options.format === 'application/nquads') {
-      cb = function(err, statement) {
+      var statementCallback = callback;
+      callback = function(err, statement) {
         if(err) {
-          return callback(err);
+          return statementCallback(err);
         }
         if(statement !== null) {
           statement = _toNQuad(statement);
         }
-        callback(null, statement);
+        statementCallback(null, statement);
       };
     }
     else {
@@ -480,8 +508,8 @@ jsonld.toRDF = function(input) {
     try {
       // output RDF statements
       var namer = new UniqueNamer('_:t');
-      new Processor().toRDF(expanded, namer, null, null, null, cb);
-      cb(null, null);
+      new Processor().toRDF(expanded, namer, null, null, null, callback);
+      callback(null, null);
     }
     catch(ex) {
       cb(ex);
