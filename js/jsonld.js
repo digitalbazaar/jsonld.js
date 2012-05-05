@@ -2028,6 +2028,7 @@ function _makeLinkedList(value) {
  * @return the new hash.
  */
 function _hashStatements(id, bnodes, namer) {
+  // return cached hash
   if('hash' in bnodes[id]) {
     return bnodes[id].hash;
   }
@@ -3927,12 +3928,7 @@ function _toNQuad(statement, bnode) {
   }
   // normalization mode
   else if(bnode) {
-    if(s.nominalValue === bnode) {
-      quad += '_:a';
-    }
-    else {
-      quad += '_:z';
-    }
+    quad += (s.nominalValue === bnode) ? '_:a' : '_:z';
   }
   // normal mode
   else {
@@ -3949,12 +3945,7 @@ function _toNQuad(statement, bnode) {
   else if(o.interfaceName === 'BlankNode') {
     // normalization mode
     if(bnode) {
-      if(o.nominalValue === bnode) {
-        quad += '_:a';
-      }
-      else {
-        quad += '_:z';
-      }
+      quad += (o.nominalValue === bnode) ? '_:a' : '_:z';
     }
     // normal mode
     else {
