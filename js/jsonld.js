@@ -1029,9 +1029,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
       // preserve empty arrays
       if(value.length === 0) {
         var prop = _compactIri(ctx, key);
-        if(prop !== null) {
-          jsonld.addValue(rval, prop, [], true);
-        }
+        jsonld.addValue(rval, prop, [], true);
       }
 
       // recusively process array values
@@ -1041,11 +1039,6 @@ Processor.prototype.compact = function(ctx, property, element, options) {
 
         // compact property
         var prop = _compactIri(ctx, key, v);
-
-        // skip null properties
-        if(prop === null) {
-          continue;
-        }
 
         // remove @list for recursion (will be re-added if necessary)
         if(isList) {
@@ -1703,6 +1696,10 @@ Processor.prototype.processContext = function(
   var rval = _clone(activeCtx);
 
   // normalize local context to an array
+  if(_isObject(localCtx) && '@context' in localCtx &&
+    _isArray(localCtx['@context'])) {
+    localCtx = localCtx['@context'];
+  }
   var ctxs = _isArray(localCtx) ? localCtx : [localCtx];
 
   // process each context in order
@@ -2957,10 +2954,6 @@ function _compactIri(ctx, iri, value) {
 
   // no matching terms
   if(terms.length === 0) {
-    // return null if a null mapping exists
-    if(iri in ctx.mappings && ctx.mappings[iri]['@id'] === null) {
-      return null;
-    }
     // use iri
     return iri;
   }
@@ -3035,7 +3028,7 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
   }
 
   // clear context entry
-  if(value === null) {
+  if(value === null || (_isObject(value) && value['@id'] === null)) {
     if(key in activeCtx.mappings) {
       // if key is a keyword alias, remove it
       var kw = activeCtx.mappings[key]['@id'];
@@ -3043,8 +3036,8 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
         var aliases = activeCtx.keywords[kw];
         aliases.splice(aliases.indexOf(key), 1);
       }
+      delete activeCtx.mappings[key];
     }
-    activeCtx.mappings[key] = {'@id': null};
     defined[key] = true;
     return;
   }
@@ -3065,7 +3058,7 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
         aliases.sort(_compareShortestLeast);
       }
     }
-    else if(value !== null) {
+    else {
       // expand value to a full IRI
       value = _expandContextIri(activeCtx, ctx, value, base, defined);
     }
@@ -3165,10 +3158,8 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
     mapping['@language'] = language;
   }
 
-  // if not a null mapping, merge onto parent mapping if one exists for a
-  // prefix
-  if(mapping['@id'] !== null &&
-    prefix !== null && prefix in activeCtx.mappings) {
+  // merge onto parent mapping if one exists for a prefix
+  if(prefix !== null && prefix in activeCtx.mappings) {
     var child = mapping;
     var mapping = _clone(activeCtx.mappings[prefix]);
     for(var k in child) {
@@ -3202,8 +3193,8 @@ function _expandContextIri(activeCtx, ctx, value, base, defined) {
   // recurse if value is a term
   if(value in activeCtx.mappings) {
     var id = activeCtx.mappings[value]['@id'];
-    // value is already an absolute IRI or id is null mapping
-    if(value === id || id === null) {
+    // value is already an absolute IRI
+    if(value === id) {
       return value;
     }
     return _expandContextIri(activeCtx, ctx, id, base, defined);
@@ -3233,9 +3224,7 @@ function _expandContextIri(activeCtx, ctx, value, base, defined) {
     // recurse if prefix is defined
     if(prefix in activeCtx.mappings) {
       var id = activeCtx.mappings[prefix]['@id'];
-      if(id !== null) {
-        return _expandContextIri(activeCtx, ctx, id, base, defined) + suffix;
-      }
+      return _expandContextIri(activeCtx, ctx, id, base, defined) + suffix;
     }
 
     // consider value an absolute IRI
