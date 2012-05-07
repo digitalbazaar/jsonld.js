@@ -576,7 +576,7 @@ jsonld.urlResolvers['jquery'] = function($) {
   return function(url, callback) {
     var ctx = cache.get(url);
     if(ctx !== null) {
-      return callback(null, data);
+      return callback(null, ctx);
     }
     $.ajax({
       url: url,
