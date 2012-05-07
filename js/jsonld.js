@@ -3720,7 +3720,7 @@ function _findContextUrls(input, urls, replace) {
       // array @context
       if(_isArray(ctx)) {
         var length = ctx.length;
-        for(var i = 0; i < ctx.length; ++i) {
+        for(var i = 0; i < length; ++i) {
           var _ctx = ctx[i];
           if(_isString(_ctx)) {
             // replace w/@context if requested
