@@ -1,0 +1,13 @@
+{
+  "@context": "http://json-ld.org/test-suite/context.jsonld",
+  "@id": "",
+  "@type": "jld:Manifest",
+  "rdfs:comment": "JSON-LD remote context tests",
+  "name": "remote",
+  "sequence": [{
+    "@type": ["test:TestCase", "jld:ExpandTest"],
+    "name": "id",
+    "input": "remote-0001-in.jsonld",
+    "expect": "remote-0001-out.jsonld"
+  }]
+}
