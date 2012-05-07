@@ -6,8 +6,23 @@
   "name": "remote",
   "sequence": [{
     "@type": ["test:TestCase", "jld:ExpandTest"],
-    "name": "id",
+    "name": "resolve single URL",
     "input": "remote-0001-in.jsonld",
     "expect": "remote-0001-out.jsonld"
+  }, {
+    "@type": ["test:TestCase", "jld:ExpandTest"],
+    "name": "resolve recursive URL",
+    "input": "remote-0002-in.jsonld",
+    "expect": "remote-0002-out.jsonld"
+  }, {
+    "@type": ["test:TestCase", "jld:ExpandTest"],
+    "name": "resolve doubly recursive URL",
+    "input": "remote-0003-in.jsonld",
+    "expect": "remote-0003-out.jsonld"
+  }, {
+    "@type": ["test:TestCase", "jld:ExpandTest"],
+    "name": "resolve array context",
+    "input": "remote-0004-in.jsonld",
+    "expect": "remote-0004-out.jsonld"
   }]
 }

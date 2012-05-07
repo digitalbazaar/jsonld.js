@@ -221,7 +221,7 @@ jsonld.expand = function(input) {
 
   // resolve all @context URLs in the input
   input = _clone(input);
-  _resolveUrls(input, options.resolver, function(err, input) {
+  _resolveContextUrls(input, options.resolver, function(err, input) {
     if(err) {
       return callback(err);
     }
@@ -534,6 +534,36 @@ jsonld.urlResolver = function(url, callback) {
 /* Utility API */
 
 /**
+ * Creates a simple context cache.
+ *
+ * @param size the maximum size of the cache.
+ */
+jsonld.ContextCache = function(size) {
+  this.order = [];
+  this.cache = {};
+  this.size = size || 50;
+  this.expires = 30*60*1000;
+};
+jsonld.ContextCache.prototype.get = function(url) {
+  if(url in this.cache) {
+    var entry = this.cache[url];
+    if(entry.expires >= +new Date()) {
+      return entry.ctx;
+    }
+    delete this.cache[url];
+    this.order.splice(this.order.indexOf(url), 1);
+  }
+  return null;
+};
+jsonld.ContextCache.prototype.set = function(url, ctx) {
+  if(this.order.length === this.size) {
+    delete this.cache[this.order.shift()];
+  }
+  this.order.push(url);
+  this.cache[url] = {ctx: ctx, expires: (+new Date() + this.expires)};
+};
+
+/**
  * URL resolvers.
  */
 jsonld.urlResolvers = {};
@@ -542,12 +572,18 @@ jsonld.urlResolvers = {};
  * The built-in jquery URL resolver.
  */
 jsonld.urlResolvers['jquery'] = function($) {
+  var cache = new jsonld.ContextCache();
   return function(url, callback) {
+    var ctx = cache.get(url);
+    if(ctx !== null) {
+      return callback(null, data);
+    }
     $.ajax({
       url: url,
       dataType: 'json',
       crossDomain: true,
       success: function(data, textStatus, jqXHR) {
+        cache.set(url, data);
         callback(null, data);
       },
       error: function(jqXHR, textStatus, errorThrown) {
@@ -562,8 +598,16 @@ jsonld.urlResolvers['jquery'] = function($) {
  */
 jsonld.urlResolvers['node'] = function() {
   var request = require('request');
+  var cache = new jsonld.ContextCache();
   return function(url, callback) {
+    var ctx = cache.get(url);
+    if(ctx !== null) {
+      return callback(null, ctx);
+    }
     request(url, function(err, res, body) {
+      if(!err) {
+        cache.set(url, body);
+      }
       callback(err, body);
     });
   };
@@ -631,7 +675,7 @@ jsonld.processContext = function(activeCtx, localCtx) {
   if(_isObject(localCtx) && !('@context' in localCtx)) {
     localCtx = {'@context': localCtx};
   }
-  _resolveUrls(localCtx, options.resolver, function(err, ctx) {
+  _resolveContextUrls(localCtx, options.resolver, function(err, ctx) {
     if(err) {
       return callback(err);
     }
@@ -896,6 +940,8 @@ var RDF_FIRST = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first';
 var RDF_REST = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest';
 var RDF_NIL = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil';
 var RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
+
+var MAX_CONTEXT_URLS = 10;
 
 /**
  * A JSON-LD Error.
@@ -1695,7 +1741,7 @@ Processor.prototype.processContext = function(
   // initialize the resulting context
   var rval = _clone(activeCtx);
 
-  // normalize local context to an array
+  // normalize local context to an array of @context objects
   if(_isObject(localCtx) && '@context' in localCtx &&
     _isArray(localCtx['@context'])) {
     localCtx = localCtx['@context'];
@@ -3644,139 +3690,191 @@ function _clone(value) {
 }
 
 /**
- * Resolves external @context URLs using the given URL resolver. Each instance
- * of @context in the input that refers to a URL will be replaced with the
- * JSON @context found at that URL.
+ * Finds all @context URLs in the given JSON-LD input.
+ *
+ * @param input the JSON-LD input.
+ * @param urls a map of URLs (url => false/@contexts).
+ * @param replace true to replace the URLs in the given input with the
+ *           @contexts from the urls map, false not to.
+ *
+ * @return true if new URLs to resolve were found, false if not.
+ */
+function _findContextUrls(input, urls, replace) {
+  var count = Object.keys(urls).length;
+  if(_isArray(input)) {
+    for(var i in input) {
+      _findContextUrls(input[i], urls, replace);
+    }
+    return (count < Object.keys(urls).length);
+  }
+  else if(_isObject(input)) {
+    for(var key in input) {
+      if(key !== '@context') {
+        _findContextUrls(input[key], urls, replace);
+        continue;
+      }
+
+      // get @context
+      var ctx = input[key];
+
+      // array @context
+      if(_isArray(ctx)) {
+        var length = ctx.length;
+        for(var i = 0; i < ctx.length; ++i) {
+          var _ctx = ctx[i];
+          if(_isString(_ctx)) {
+            // replace w/@context if requested
+            if(replace) {
+              _ctx = urls[_ctx];
+              if(_isArray(_ctx)) {
+                // add flattened context
+                Array.prototype.splice.apply(ctx, [i, 1].concat(_ctx));
+                i += _ctx.length;
+                length += _ctx.length;
+              }
+              else {
+                ctx[i] = _ctx;
+              }
+            }
+            // @context URL found
+            else if(!(_ctx in urls)) {
+              urls[_ctx] = false;
+            }
+          }
+        }
+      }
+      // string @context
+      else if(_isString(ctx)) {
+        // replace w/@context if requested
+        if(replace) {
+          input[key] = urls[ctx];
+        }
+        // @context URL found
+        else if(!(ctx in urls)) {
+          urls[ctx] = false;
+        }
+      }
+    }
+    return (count < Object.keys(urls).length);
+  }
+  return false;
+}
+
+/**
+ * Resolves external @context URLs using the given URL resolver. Each
+ * instance of @context in the input that refers to a URL will be replaced
+ * with the JSON @context found at that URL.
  *
  * @param input the JSON-LD input with possible contexts.
  * @param resolver(url, callback(err, jsonCtx)) the URL resolver to use.
  * @param callback(err, input) called once the operation completes.
  */
-function _resolveUrls(input, resolver, callback) {
-  // keeps track of resolved URLs (prevents duplicate work)
-  var urls = {};
+function _resolveContextUrls(input, resolver, callback) {
+  // if any error occurs during URL resolution, quit
+  var error = null;
+  var regex = /(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
 
-  // finds URLs in @context properties and replaces them with their
-  // resolved @contexts if replace is true
-  var findUrls = function(input, replace) {
-    if(_isArray(input)) {
-      for(var i in input) {
-        findUrls(input[i], replace);
+  // recursive resolver
+  var resolve = function(input, cycles, resolver, callback) {
+    if(Object.keys(cycles).length > MAX_CONTEXT_URLS) {
+      error = new JsonLdError(
+        'Maximum number of @context URLs exceeded.',
+        'jsonld.ContextUrlError', {max: MAX_CONTEXT_URLS});
+      return callback(error);
+    }
+
+    // for tracking the URLs to resolve
+    var urls = {};
+
+    // finished will be called once the URL queue is empty
+    var finished = function() {
+      // replace all URLs in the input
+      _findContextUrls(input, urls, true);
+      callback(null, input);
+    };
+
+    // find all URLs in the given input
+    if(!_findContextUrls(input, urls, false)) {
+      // no new URLs in input
+      finished();
+    }
+
+    // queue all unresolved URLs
+    var queue = [];
+    for(var url in urls) {
+      if(urls[url] === false) {
+        // validate URL
+        if(!regex.test(url)) {
+          error = new JsonLdError(
+            'Malformed URL.', 'jsonld.InvalidUrl', {url: url});
+          return callback(error);
+        }
+        queue.push(url);
       }
     }
-    else if(_isObject(input)) {
-      for(var key in input) {
-        if(key !== '@context') {
-          findUrls(input[key], replace);
-          continue;
+
+    // resolve URLs in queue
+    var count = queue.length;
+    for(var i in queue) {
+      (function(url) {
+        // check for context URL cycle
+        if(url in cycles) {
+          error = new JsonLdError(
+            'Cyclical @context URLs detected.',
+            'jsonld.ContextUrlError', {url: url});
+          return callback(error);
         }
+        var _cycles = _clone(cycles);
+        _cycles[url] = true;
 
-        // get @context
-        var ctx = input[key];
+        resolver(url, function(err, ctx) {
+          // short-circuit if there was an error with another URL
+          if(error) {
+            return;
+          }
 
-        // array @context
-        if(_isArray(ctx)) {
-          for(var i in ctx) {
-            if(_isString(ctx[i])) {
-              // replace w/resolved @context if requested
-              if(replace) {
-                ctx[i] = urls[ctx[i]];
-              }
-              // unresolved @context found
-              else if(!(ctx[i] in urls)) {
-                urls[ctx[i]] = {};
-              }
+          // parse string context as JSON
+          if(!err && _isString(ctx)) {
+            try {
+              ctx = JSON.parse(ctx);
+            }
+            catch(ex) {
+              err = ex;
             }
           }
-        }
-        // string @context
-        else if(_isString(ctx)) {
-          // replace w/resolved @context if requested
-          if(replace) {
-            input[key] = urls[ctx];
+
+          // ensure ctx is an object
+          if(err || !_isObject(ctx)) {
+            err = new JsonLdError(
+              'URL does not resolve to a valid JSON-LD object.',
+              'jsonld.InvalidUrl', {url: url});
           }
-          // unresolved @context found
-          else if(!(ctx in urls)) {
-            urls[ctx] = {};
+          if(err) {
+            error = err;
+            return callback(error);
           }
-        }
-      }
+
+          // use empty context if no @context key is present
+          if(!('@context' in ctx)) {
+            ctx = {'@context': {}};
+          }
+
+          // recurse
+          resolve(ctx, _cycles, resolver, function(err, ctx) {
+            if(err) {
+              return callback(err);
+            }
+            urls[url] = ctx['@context'];
+            count -= 1;
+            if(count === 0) {
+              finished();
+            }
+          });
+        });
+      }(queue[i]));
     }
   };
-  findUrls(input, false);
-
-  // state for resolving URLs
-  var count = Object.keys(urls).length;
-  var errors = [];
-
-  // called once finished resolving URLs
-  var finished = function() {
-    if(errors.length > 0) {
-      callback(new JsonLdError(
-        'Could not resolve @context URL(s).',
-        'jsonld.ContextUrlError',
-        {errors: errors}));
-    }
-    else {
-      callback(null, input);
-    }
-  };
-
-  // nothing to resolve
-  if(count === 0) {
-    return finished();
-  }
-
-  // resolve all URLs
-  for(var url in urls) {
-    // validate URL
-    var regex = /(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
-    if(!regex.test(url)) {
-      count -= 1;
-      errors.push(new JsonLdError(
-        'Malformed URL.', 'jsonld.InvalidUrl', {url: url}));
-      continue;
-    }
-
-    // resolve URL
-    resolver(url, function(err, ctx) {
-      count -= 1;
-
-      // parse string context as JSON
-      if(!err && _isString(ctx)) {
-        try {
-          ctx = JSON.parse(ctx);
-        }
-        catch(ex) {
-          err = ex;
-        }
-      }
-
-      // ensure ctx is an object
-      if(!err && !_isObject(ctx)) {
-        err = new JsonLdError(
-          'URL does not resolve to a valid JSON-LD object.',
-          'jsonld.InvalidUrl', {url: url});
-      }
-
-      if(err) {
-        errors.push(err);
-      }
-      else {
-        // FIXME: needs to recurse to resolve URLs in the result, and
-        // detect cycles, and limit recursion
-        urls[url] = ctx['@context'] || {};
-      }
-
-      if(count === 0) {
-        // if no errors, do URL replacement
-        if(errors.length === 0) {
-          findUrls(input, true);
-        }
-        finished();
-      }
-    });
-  }
+  resolve(input, {}, resolver, callback);
 }
 
 // define js 1.8.5 Object.keys method if not present

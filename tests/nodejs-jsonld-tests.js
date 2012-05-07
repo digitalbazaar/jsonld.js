@@ -241,6 +241,8 @@ TestRunner.prototype.run = function(manifests, callback) {
       function checkResult(err, result) {
         // skip error, go onto next test
         if(err) {
+          console.log('EXCEPTION');
+          self.failed += 1;
           outputError(err);
           return callback();
         }

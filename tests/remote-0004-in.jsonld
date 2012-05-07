@@ -1,0 +1,7 @@
+{
+  "@context": [
+    {"term1": "http://notexample.org"},
+    "http://localhost:8000/context-4.jsonld"
+  ],
+  "term1": "foo"
+}

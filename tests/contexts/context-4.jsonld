@@ -1,0 +1,7 @@
+{
+  "@context": [
+    "http://localhost:8000/context-1.jsonld",
+    "http://localhost:8000/context-2.jsonld",
+    "http://localhost:8000/context-3.jsonld"
+  ] 
+}
