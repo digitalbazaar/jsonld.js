@@ -1807,7 +1807,7 @@ function _expandValue(ctx, property, value, base) {
     if(type === '@id' || prop === '@graph') {
       rval = {'@id': _expandTerm(ctx, value, base)};
     }
-    else if(prop !== '@value' && prop !== '@language') {
+    else if(!_isKeyword(prop)) {
       rval = {'@value': value};
 
       // other type
