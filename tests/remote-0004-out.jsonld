@@ -1,5 +1,5 @@
 [
   {
-    "http://example.org/term1": ["foo"]
+    "http://example.org/term1": [{"@value": "foo"}]
   }
 ]
