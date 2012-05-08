@@ -1220,9 +1220,9 @@ Processor.prototype.expand = function(
           'jsonld.SyntaxError', {value: value});
       }
 
-      // recurse into @list, @set, or @graph, keeping the active property
+      // recurse into @list or @set keeping the active property
       var isList = (prop === '@list');
-      if(isList || prop === '@set' || prop === '@graph') {
+      if(isList || prop === '@set') {
         value = this.expand(ctx, property, value, options, isList);
         if(isList && _isList(value)) {
           throw new JsonLdError(
@@ -1842,14 +1842,34 @@ function _toRDF(element, namer, subject, property, graph, callback) {
   if(_isObject(element)) {
     // convert @value to object
     if(_isValue(element)) {
+      var value = element['@value'];
+      var datatype = element['@type'] || null;
+      if(_isBoolean(value) || _isNumber(value)) {
+        // convert to XSD datatype
+        if(_isBoolean(value)) {
+          value = String(value);
+          datatype = datatype || XSD_BOOLEAN;
+        }
+        else if(_isDouble(value)) {
+          // printf('%1.15e') equivalent
+          value = value.toExponential(15).replace(
+            /(e(?:\+|-))([0-9])$/, '$10$2');
+          datatype = datatype || XSD_DOUBLE;
+        }
+        else {
+          value = String(value);
+          datatype = datatype || XSD_INTEGER;
+        }
+      }
+
       var object = {
-        nominalValue: element['@value'],
+        nominalValue: value,
         interfaceName: 'LiteralNode'
       };
 
-      if('@type' in element) {
+      if(datatype !== null) {
         object.datatype = {
-          nominalValue: element['@type'],
+          nominalValue: datatype,
           interfaceName: 'IRI'
         };
       }
@@ -1946,6 +1966,7 @@ function _toRDF(element, namer, subject, property, graph, callback) {
     return;
   }
 
+  // element must be an IRI (@values covered above)
   if(_isString(element)) {
     // property can be null for string subject references in @graph
     if(property === null) {
@@ -1957,44 +1978,7 @@ function _toRDF(element, namer, subject, property, graph, callback) {
       property: _clone(property),
       object: {
         nominalValue: element,
-        interfaceName: ((property.nominalValue === RDF_TYPE) ?
-          'IRI' : 'LiteralNode')
-      }
-    };
-    if(graph !== null) {
-      statement.name = graph;
-    }
-    return callback(null, statement);
-  }
-
-  if(_isBoolean(element) || _isNumber(element)) {
-    // convert to XSD datatype
-    if(_isBoolean(element)) {
-      var datatype = XSD_BOOLEAN;
-      var value = String(element);
-    }
-    else if(_isDouble(element)) {
-      var datatype = XSD_DOUBLE;
-      // printf('%1.15e') equivalent
-      var value = element.toExponential(15).replace(
-        /(e(?:\+|-))([0-9])$/, '$10$2');
-    }
-    else {
-      var datatype = XSD_INTEGER;
-      var value = String(element);
-    }
-
-    // emit typed literal
-    var statement = {
-      subject: _clone(subject),
-      property: _clone(property),
-      object: {
-        nominalValue: value,
-        interfaceName: 'LiteralNode',
-        datatype: {
-          nominalValue: datatype,
-          interfaceName: 'IRI'
-        }
+        interfaceName: 'IRI'
       }
     };
     if(graph !== null) {
@@ -2849,44 +2833,32 @@ function _rankTerm(ctx, term, value) {
     return sum;
   }
 
-  // rank boolean or number
-  if(_isBoolean(value) || _isNumber(value)) {
-    var type;
-    if(_isBoolean(value)) {
-      type = XSD_BOOLEAN;
-    }
-    else if(_isDouble(value)) {
-      type = XSD_DOUBLE;
-    }
-    else {
-      type = XSD_INTEGER;
-    }
-    if(entry['@type'] === type) {
-      return 3;
-    }
-    return (!hasType && !hasLanguage) ? 2 : 1;
-  }
-
-  // rank string (this means the value has no @language)
-  if(_isString(value)) {
-    // entry @language is specifically null or no @type, @language, or default
-    if(entry['@language'] === null ||
-      (!hasType && !hasLanguage && !hasDefaultLanguage)) {
-      return 3;
-    }
-    return 0;
-  }
-
   // Note: Value must be an object that is a @value or subject/reference.
 
-  // @value must have either @type or @language
   if(_isValue(value)) {
+    // rank non-string value
+    if(!_isString(value['@value'])) {
+      return (!hasType && !hasLanguage) ? 2 : 1;
+    }
+
+    // value has a @type
     if('@type' in value) {
       // @types match
       if(value['@type'] === entry['@type']) {
         return 3;
       }
       return (!hasType && !hasLanguage) ? 1 : 0;
+    }
+
+    // value has no @type or @language
+    if(!('@language' in value)) {
+      // entry @language is specifically null or no @type, @language, or
+      // default
+      if(entry['@language'] === null ||
+        (!hasType && !hasLanguage && !hasDefaultLanguage)) {
+        return 3;
+      }
+      return 0;
     }
 
     // @languages match or entry has no @type or @language but default
