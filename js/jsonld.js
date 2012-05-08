@@ -1966,13 +1966,9 @@ function _toRDF(element, namer, subject, property, graph, callback) {
     return;
   }
 
-  // element must be an IRI (@values covered above)
+  // element must be an rdf:type IRI (@values covered above)
   if(_isString(element)) {
-    // property can be null for string subject references in @graph
-    if(property === null) {
-      return;
-    }
-    // emit IRI for rdf:type, else plain literal
+    // emit IRI
     var statement = {
       subject: _clone(subject),
       property: _clone(property),
@@ -2836,11 +2832,6 @@ function _rankTerm(ctx, term, value) {
   // Note: Value must be an object that is a @value or subject/reference.
 
   if(_isValue(value)) {
-    // rank non-string value
-    if(!_isString(value['@value'])) {
-      return (!hasType && !hasLanguage) ? 2 : 1;
-    }
-
     // value has a @type
     if('@type' in value) {
       // @types match
@@ -2848,6 +2839,11 @@ function _rankTerm(ctx, term, value) {
         return 3;
       }
       return (!hasType && !hasLanguage) ? 1 : 0;
+    }
+
+    // rank non-string value
+    if(!_isString(value['@value'])) {
+      return (!hasType && !hasLanguage) ? 2 : 1;
     }
 
     // value has no @type or @language
