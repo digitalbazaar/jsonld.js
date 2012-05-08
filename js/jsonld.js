@@ -1004,6 +1004,12 @@ Processor.prototype.compact = function(ctx, property, element, options) {
   if(_isObject(element)) {
     // element is a @value
     if(_isValue(element)) {
+      // if @value is the only key, return its value
+      if(Object.keys(element).length === 1) {
+        return element['@value'];
+      }
+
+      // get type and language context rules
       var type = jsonld.getContextValue(ctx, property, '@type');
       var language = jsonld.getContextValue(ctx, property, '@language');
 
@@ -1011,17 +1017,6 @@ Processor.prototype.compact = function(ctx, property, element, options) {
       if(type !== null &&
         ('@type' in element) && element['@type'] === type) {
         element = element['@value'];
-
-        // use native datatypes for certain xsd types
-        if(type === XSD_BOOLEAN) {
-          element = !(element === 'false' || element === '0');
-        }
-        else if(type === XSD_INTEGER) {
-          element = parseInt(element);
-        }
-        else if(type === XSD_DOUBLE) {
-          element = parseFloat(element);
-        }
       }
       // matching @language specified in context, compact element
       else if(language !== null &&
@@ -1298,10 +1293,6 @@ Processor.prototype.expand = function(
           'Invalid JSON-LD syntax; the "@type" value of an element ' +
           'containing "@value" must be a string.',
           'jsonld.SyntaxError', {element: rval});
-      }
-      // return only the value of @value if there is no @type or @language
-      else if(count === 1) {
-        rval = rval['@value'];
       }
       // drop null @values
       else if(rval['@value'] === null) {
@@ -1792,6 +1783,11 @@ Processor.prototype.processContext = function(
  * @return the expanded value.
  */
 function _expandValue(ctx, property, value, base) {
+  // nothing to expand
+  if(value === null) {
+    return null;
+  }
+
   // default to simple string return value
   var rval = value;
 
@@ -1811,15 +1807,19 @@ function _expandValue(ctx, property, value, base) {
     if(type === '@id' || prop === '@graph') {
       rval = {'@id': _expandTerm(ctx, value, base)};
     }
-    // other type
-    else if(type !== null) {
-      rval = {'@value': String(value), '@type': type};
-    }
-    // check for language tagging
-    else {
-      var language = jsonld.getContextValue(ctx, property, '@language');
-      if(language !== null) {
-        rval = {'@value': String(value), '@language': language};
+    else if(prop !== '@value' && prop !== '@language') {
+      rval = {'@value': value};
+
+      // other type
+      if(type !== null) {
+        rval['@type'] = type;
+      }
+      // check for language tagging
+      else {
+        var language = jsonld.getContextValue(ctx, property, '@language');
+        if(language !== null) {
+          rval['@language'] = language;
+        }
       }
     }
   }
@@ -2027,6 +2027,18 @@ function _rdfToObject(o) {
 
   // add datatype
   if('datatype' in o) {
+    /*
+    var type = o.datatype.nominalValue;
+    // use native datatypes for certain xsd types
+    if(type === XSD_BOOLEAN) {
+      rval = !(rval['@value'] === 'false' || rval['@value'] === '0');
+    }
+    else if(type === XSD_INTEGER) {
+      rval = parseInt(rval['@value']);
+    }
+    else if(type === XSD_DOUBLE) {
+      rval = parseFloat(rval['@value']);
+    }*/
     rval['@type'] = o.datatype.nominalValue;
   }
   // add language
