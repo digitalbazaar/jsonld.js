@@ -10,7 +10,7 @@ be a simple publishing method for expressing not only Linked Data in
 JSON, but for adding semantics to existing JSON.
 
 This library is an implementation of the [JSON-LD] specification
-in [JavaScript].
+in JavaScript.
 
 JSON-LD is designed as a light-weight syntax that can be used to express
 Linked Data. It is primarily intended to be a way to express Linked Data
@@ -48,8 +48,8 @@ http://github.com/digitalbazaar/jsonld.js
 This library includes a sample testing utility which may be used to verify
 that changes to the processor maintain the correct output.
 
-To run the sample tests you will need to get the test suite files from the
-[json-ld.org repository][json-ld.org] hosted on GitHub.
+To run the sample tests you will need to get the test suite files by cloning
+the [json-ld.org repository][json-ld.org] hosted on GitHub.
 
 https://github.com/json-ld/json-ld.org
 
