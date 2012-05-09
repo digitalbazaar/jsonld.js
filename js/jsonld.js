@@ -408,10 +408,9 @@ jsonld.fromRDF = function(statements) {
 
   if(_isString(statements)) {
     // supported formats
-    if(options.format === 'application/nquads') {
-      statements = _parseNQuads(statements);
-    }
-    else {
+    if (options.format in _rdfParsers) {
+      statements = _rdfParsers[options.format](statements);
+	} else {
       throw new JsonLdError(
         'Unknown input format.',
         'jsonld.UnknownFormat', {format: options.format});
@@ -915,6 +914,24 @@ jsonld.getContextValue = function(ctx, key, type) {
   return rval;
 };
 
+/**
+ * Registers an RDF parser by content-type, for use with jsonld.fromRDF
+ * @param ct the content-type this parser handles
+ * @param p the parser function (which takes a single input and produces an
+ * array of statements) 
+ */
+jsonld.registerRDFParser = function(ct, parser) {
+	_rdfParsers[ct] = parser;
+};
+
+/**
+ * Unregisters an RDF parser by content-type, for use with jsonld.fromRDF
+ * @param ct the content-type this parser handles
+ */
+jsonld.unregisterRDFParser = function(ct) {
+	delete _rdfParsers[ct];
+};
+ 
 // determine if in-browser or using node.js
 var _nodejs = (typeof module !== 'undefined');
 var _browser = !_nodejs;
@@ -3874,6 +3891,11 @@ if(!Object.keys) {
 }
 
 /**
+ * Registered RDF Parsers hashed by content-type
+ */
+var _rdfParsers = {};
+
+/**
  * Parses statements in the form of N-Quads.
  *
  * @param input the N-Quads input to parse.
@@ -3971,6 +3993,8 @@ function _parseNQuads(input) {
 
   return statements;
 }
+
+jsonld.registerRDFParser('application/nquads', _parseNQuads);
 
 /**
  * Converts an RDF statement to an N-Quad string (a single quad).
