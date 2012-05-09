@@ -408,9 +408,10 @@ jsonld.fromRDF = function(statements) {
 
   if(_isString(statements)) {
     // supported formats
-    if (options.format in _rdfParsers) {
+    if(options.format in _rdfParsers) {
       statements = _rdfParsers[options.format](statements);
-	} else {
+    }
+    else {
       throw new JsonLdError(
         'Unknown input format.',
         'jsonld.UnknownFormat', {format: options.format});
@@ -914,24 +915,30 @@ jsonld.getContextValue = function(ctx, key, type) {
   return rval;
 };
 
+/** Registered RDF Statement parsers hashed by content-type. */
+var _rdfParsers = {};
+
 /**
- * Registers an RDF parser by content-type, for use with jsonld.fromRDF
- * @param ct the content-type this parser handles
- * @param p the parser function (which takes a single input and produces an
- * array of statements) 
+ * Registers an RDF Statement parser by content-type, for use with
+ * jsonld.fromRDF.
+ *
+ * @param contentType the content-type for the parser.
+ * @param parser(input) the parser function (takes a string as a parameter
+ *           and returns an array of RDF statements).
  */
-jsonld.registerRDFParser = function(ct, parser) {
-	_rdfParsers[ct] = parser;
+jsonld.registerRDFParser = function(contentType, parser) {
+  _rdfParsers[contentType] = parser;
 };
 
 /**
- * Unregisters an RDF parser by content-type, for use with jsonld.fromRDF
- * @param ct the content-type this parser handles
+ * Unregisters an RDF Statement parser by content-type.
+ *
+ * @param contentType the content-type for the parser.
  */
-jsonld.unregisterRDFParser = function(ct) {
-	delete _rdfParsers[ct];
+jsonld.unregisterRDFParser = function(contentType) {
+  delete _rdfParsers[contentType];
 };
- 
+
 // determine if in-browser or using node.js
 var _nodejs = (typeof module !== 'undefined');
 var _browser = !_nodejs;
@@ -3891,11 +3898,6 @@ if(!Object.keys) {
 }
 
 /**
- * Registered RDF Parsers hashed by content-type
- */
-var _rdfParsers = {};
-
-/**
  * Parses statements in the form of N-Quads.
  *
  * @param input the N-Quads input to parse.
@@ -3994,6 +3996,7 @@ function _parseNQuads(input) {
   return statements;
 }
 
+// register the N-Quads RDF parser
 jsonld.registerRDFParser('application/nquads', _parseNQuads);
 
 /**
