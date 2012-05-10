@@ -382,7 +382,7 @@ jsonld.normalize = function(input, callback) {
  *          specified by the format option or an array of the RDF statements
  *          to convert.
  * @param [options] the options to use:
- *          [format] the format if input is a string:
+ *          [format] the format if input is not an array:
  *            'application/nquads' for N-Quads (default).
  *          [notType] true to use rdf:type, false to use @type (default).
  * @param callback(err, output) called once the operation completes.
@@ -406,7 +406,7 @@ jsonld.fromRDF = function(statements) {
     options.notType = false;
   }
 
-  if(_isString(statements)) {
+  if(!_isArray(statements)) {
     // supported formats
     if(options.format in _rdfParsers) {
       statements = _rdfParsers[options.format](statements);
