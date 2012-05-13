@@ -3972,7 +3972,13 @@ function _parseNQuads(input) {
       s.object = {nominalValue: match[5], interfaceName: 'BlankNode'};
     }
     else {
-      s.object = {nominalValue: match[6], interfaceName: 'LiteralNode'};
+      var unescaped = match[6]
+        .replace(/\\"/g, '"')
+        .replace(/\\t/g, '\t')
+        .replace(/\\n/g, '\n')
+        .replace(/\\r/g, '\r')
+        .replace(/\\\\/g, '\\');
+      s.object = {nominalValue: unescaped, interfaceName: 'LiteralNode'};
       if(!_isUndefined(match[7])) {
         s.object.datatype = {nominalValue: match[7], interfaceName: 'IRI'};
       }
@@ -4047,7 +4053,13 @@ function _toNQuad(statement, bnode) {
     }
   }
   else {
-    quad += '"' + o.nominalValue + '"';
+    var escaped = o.nominalValue
+      .replace(/\\/g, '\\\\')
+      .replace(/\t/g, '\\t')
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '\\r')
+      .replace(/\"/g, '\\"');
+    quad += '"' + escaped + '"';
     if('datatype' in o) {
       quad += '^^<' + o.datatype.nominalValue + '>';
     }
