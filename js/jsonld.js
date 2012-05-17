@@ -331,6 +331,134 @@ jsonld.frame = function(input, frame) {
 };
 
 /**
+ * Performs JSON-LD objectification.
+ *
+ * @param input the JSON-LD input to objectify
+ * @param ctx the JSON-LD context to apply
+ * @param [options] the framing options.
+ *          [base] the base IRI to use.
+ *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
+ * @param callback(err, objectified) called once the operation completes.
+ */
+jsonld.objectify = function(input, ctx) {
+  // get arguments
+  var options = {};
+  var callbackArg = 2;
+  if(arguments.length > 3) {
+    options = arguments[2] || {};
+    callbackArg += 1;
+  }
+  var callback = arguments[callbackArg];
+
+  // set default options
+  if(!('base' in options)) {
+    options.base = '';
+  }
+  if(!('resolver' in options)) {
+    options.resolver = jsonld.urlResolver;
+  }
+
+  // expand input
+  jsonld.expand(input, options, function(err, _input) {
+    if(err) {
+      return callback(new JsonLdError(
+        'Could not expand input before framing.',
+        'jsonld.FrameError', {cause: err}));
+    }
+
+    try {
+      // flatten the graph
+      var flattened = new Processor().flatten(_input);
+    }
+    catch(ex) {
+      return callback(ex);
+    }
+
+    // compact result (force @graph option to true)
+    options.graph = true;
+    jsonld.compact(flattened, ctx, options, function(err, compacted, ctx) {
+      if(err) {
+        return callback(new JsonLdError(
+          'Could not compact flattened output.',
+          'jsonld.FrameError', {cause: err}));
+      }
+      // get graph alias
+      var graph = _compactIri(ctx, '@graph');
+      // remove @preserve from results
+      compacted[graph] = _removePreserve(ctx, compacted[graph]); // named graphs?
+
+      var top = compacted[graph][0];
+
+      var recurse = function(subject) {
+        // can't replace just a string
+        if(!_isObject(subject) && !_isArray(subject)) {
+            return;
+        }
+
+        // bottom out recursion on re-visit
+        if (_isObject(subject)) {
+            if(recurse.visited[subject['@id']]) {
+                return;
+            }
+            recurse.visited[subject['@id']] = true;
+        }
+
+        // each array elementt *or* object key
+        for(var k in subject) {
+          var obj = subject[k];
+          var isid = (jsonld.getContextValue(ctx, k, '@type') === '@id');
+
+          // can't replace a non-object or non-array unless it's an @id
+          if(!_isArray(obj) && !_isObject(obj) && !isid) {
+            continue;
+          }
+          
+          if(_isString(obj) && isid) {
+            subject[k] = obj = top[obj];
+            recurse(obj);
+          }
+          else if (_isArray(obj)) {
+            for (var i=0; i<obj.length; i++) {
+              if (_isString(obj[i]) && isid) {
+                obj[i] = top[obj[i]];
+              } else if (_isObject(obj[i]) && '@id' in obj[i]) {
+                obj[i] = top[obj[i]['@id']];
+              }
+              recurse(obj[i]);
+            }
+          }
+          else if (_isObject(obj)) {
+            var sid = obj["@id"];
+            subject[k] = obj = top[sid];
+            recurse(obj);
+          }
+        }
+      };
+      recurse.visited = {};
+      recurse(top);
+ 
+      compacted.of_type = {};
+      for(var s in top) {
+        if (!('@type' in top[s])){
+          continue;
+        }
+        var types = top[s]['@type'];
+        if (!_isArray(types)){
+          types = [types];
+        }
+        for (var t in types){
+          if (!(types[t] in compacted.of_type)){
+            compacted.of_type[types[t]] = [];
+          }
+          compacted.of_type[types[t]].push(top[s]);
+        }
+      }
+     callback(null, compacted);
+    });
+  });
+};
+
+/**
  * Performs RDF normalization on the given JSON-LD input. The output is
  * a sorted array of RDF statements unless the 'format' option is used.
  *
@@ -1350,6 +1478,21 @@ Processor.prototype.expand = function(
 
   // expand element according to value expansion rules
   return _expandValue(ctx, property, element, options.base);
+};
+
+/**
+ * Performs JSON-LD flattening.
+ *
+ * @param input the expanded JSON-LD to flatten.
+ *
+ * @return the flattened output.
+ */
+Processor.prototype.flatten = function(input, frame) {
+  // produce a map of all subjects and name each bnode
+  var namer = new UniqueNamer('_:t');
+  var flattened = {};
+  _flatten(flattened, input, namer);
+  return flattened;
 };
 
 /**
