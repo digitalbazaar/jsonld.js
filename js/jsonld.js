@@ -2349,10 +2349,7 @@ function _flatten(subjects, input, namer, name, list) {
         // handle embedded subject or subject reference
         if(_isSubject(o) || _isSubjectReference(o)) {
           // rename blank node @id
-          var id = ('@id' in o) ? o['@id'] : '_:';
-          if(id.indexOf('_:') === 0) {
-            id = namer.getName(id);
-          }
+          var id = _isBlankNode(o) ? namer.getName(o['@id']) : o['@id'];
 
           // add reference and recurse
           jsonld.addValue(subject, prop, {'@id': id}, true);
