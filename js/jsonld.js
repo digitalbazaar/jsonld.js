@@ -2352,8 +2352,8 @@ function _flatten(input, graphs, graph, namer, name, list) {
         continue;
       }
 
-      // copy keywords
-      if(_isKeyword(prop)) {
+      // copy non-@type keywords
+      if(prop !== '@type' && _isKeyword(prop)) {
         subject[prop] = input[prop];
         continue;
       }
@@ -2378,6 +2378,10 @@ function _flatten(input, graphs, graph, namer, name, list) {
             var _list = [];
             _flatten(o['@list'], graphs, graph, namer, name, _list);
             o = {'@list': _list};
+          }
+          // special-handle @type IRIs
+          else if(prop === '@type' && o.indexOf('_:') === 0) {
+            o = namer.getName(o);
           }
 
           // add non-subject
