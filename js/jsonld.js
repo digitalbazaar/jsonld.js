@@ -1365,12 +1365,16 @@ Processor.prototype.frame = function(input, frame, options) {
   // create framing state
   var state = {
     options: options,
-    subjects: {}
+    graphs: {'@default': {}, '@merged': {}}
   };
 
-  // produce a map of all subjects and name each bnode
+  // produce a map of all graphs and name each bnode
   var namer = new UniqueNamer('_:t');
-  _flatten(state.subjects, input, namer);
+  _flatten(input, state.graphs, '@default', namer);
+  namer = new UniqueNamer('_:t');
+  _flatten(input, state.graphs, '@merged', namer);
+  // FIXME: currently uses subjects from @merged graph only
+  state.subjects = state.graphs['@merged'];
 
   // frame the subjects
   var framed = [];
@@ -2295,17 +2299,18 @@ function _getAdjacentBlankNodeName(node, id) {
 /**
  * Recursively flattens the subjects in the given JSON-LD expanded input.
  *
- * @param subjects a map of subject @id to subject.
  * @param input the JSON-LD expanded input.
+ * @param graphs a map of graph name to subject map.
+ * @param graph the name of the current graph.
  * @param namer the blank node namer.
  * @param name the name assigned to the current input if it is a bnode.
  * @param list the list to append to, null for none.
  */
-function _flatten(subjects, input, namer, name, list) {
+function _flatten(input, graphs, graph, namer, name, list) {
   // recurse through array
   if(_isArray(input)) {
     for(var i in input) {
-      _flatten(subjects, input[i], namer, undefined, list);
+      _flatten(input[i], graphs, graph, namer, undefined, list);
     }
   }
   // handle subject
@@ -2327,11 +2332,23 @@ function _flatten(subjects, input, namer, name, list) {
     }
 
     // create new subject or merge into existing one
+    var subjects = graphs[graph];
     var subject = subjects[name] = subjects[name] || {};
     subject['@id'] = name;
     for(var prop in input) {
       // skip @id
       if(prop === '@id') {
+        continue;
+      }
+
+      // recurse into graph
+      if(prop === '@graph') {
+        // add graph subjects map entry
+        if(!(name in graphs)) {
+          graphs[name] = {};
+        }
+        var g = (graph === '@merged') ? '@merged' : name;
+        _flatten(input[prop], graphs, g, namer);
         continue;
       }
 
@@ -2353,14 +2370,14 @@ function _flatten(subjects, input, namer, name, list) {
 
           // add reference and recurse
           jsonld.addValue(subject, prop, {'@id': id}, true);
-          _flatten(subjects, o, namer, id, null);
+          _flatten(o, graphs, graph, namer, id);
         }
         else {
           // recurse into list
           if(_isList(o)) {
-            var l = [];
-            _flatten(subjects, o['@list'], namer, name, l);
-            o = {'@list': l};
+            var _list = [];
+            _flatten(o['@list'], graphs, graph, namer, name, _list);
+            o = {'@list': _list};
           }
 
           // add non-subject
