@@ -309,7 +309,7 @@ jsonld.frame = function(input, frame) {
         var framed = new Processor().frame(_input, _frame, options);
       }
       catch(ex) {
-        callback(ex);
+        return callback(ex);
       }
 
       // compact result (force @graph option to true)
@@ -754,20 +754,28 @@ jsonld.hasValue = function(subject, property, value) {
  * @param value the value to add.
  * @param [propertyIsArray] true if the property is always an array, false
  *          if not (default: false).
+ * @param [propertyIsList] true if the property is a @list, false
+ *          if not (default: false).
  */
-jsonld.addValue = function(subject, property, value, propertyIsArray) {
+jsonld.addValue = function(
+  subject, property, value, propertyIsArray, propertyIsList) {
   propertyIsArray = _isUndefined(propertyIsArray) ? false : propertyIsArray;
+  propertyIsList = (_isUndefined(propertyIsList) ?
+    (property === '@list') : propertyIsList);
 
   if(_isArray(value)) {
     if(value.length === 0 && propertyIsArray && !(property in subject)) {
       subject[property] = [];
     }
     for(var i in value) {
-      jsonld.addValue(subject, property, value[i], propertyIsArray);
+      jsonld.addValue(
+        subject, property, value[i], propertyIsArray, propertyIsList);
     }
   }
   else if(property in subject) {
-    var hasValue = jsonld.hasValue(subject, property, value);
+    // check if subject already has value unless property is list
+    var hasValue = (!propertyIsList &&
+      jsonld.hasValue(subject, property, value));
 
     // make property an array if value not present or always an array
     if(!_isArray(subject[property]) && (!hasValue || propertyIsArray)) {
@@ -1140,7 +1148,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
           (_isArray(v) && v.length === 0));
 
         // add compact value
-        jsonld.addValue(rval, prop, v, isArray);
+        jsonld.addValue(rval, prop, v, isArray, (container === '@list'));
       }
     }
     return rval;

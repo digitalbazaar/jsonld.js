@@ -60,6 +60,7 @@ TestRunner.prototype.test = function(name) {
 
 TestRunner.prototype.check = function(test, expect, result) {
   var line = '';
+  var fail = false;
   try {
     assert.deepEqual(expect, result);
     line += 'PASS';
@@ -67,7 +68,7 @@ TestRunner.prototype.check = function(test, expect, result) {
   }
   catch(ex) {
     line += 'FAIL';
-    var fail = true;
+    fail = true;
     this.failed += 1;
   }
 
@@ -180,7 +181,6 @@ TestRunner.prototype.run = function(manifests, callback) {
     async.forEachSeries(manifest.sequence, function(test, callback) {
       try {
         // read test input files
-        var result;
         var type = test['@type'];
         var options = {
           base: 'http://json-ld.org/test-suite/tests/' + test.input
