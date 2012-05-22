@@ -2323,7 +2323,7 @@ function _flatten(input, graphs, graph, namer, name, list) {
     return;
   }
 
-  // add non-object or value to list
+  // add non-object or value
   if(!_isObject(input) || _isValue(input)) {
     if(list) {
       list.push(input);
