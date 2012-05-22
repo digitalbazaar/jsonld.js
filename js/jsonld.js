@@ -2312,87 +2312,89 @@ function _flatten(input, graphs, graph, namer, name, list) {
     for(var i in input) {
       _flatten(input[i], graphs, graph, namer, undefined, list);
     }
+    return;
   }
-  // handle subject
-  else if(_isObject(input)) {
-    // add value to list
-    if(_isValue(input) && list) {
-      list.push(input);
-      return;
-    }
 
-    // get name for subject
-    if(_isUndefined(name)) {
-      name = _isBlankNode(input) ? namer.getName(input['@id']) : input['@id'];
-    }
-
-    // add subject reference to list
+  // add non-object or value to list
+  if(!_isObject(input) || _isValue(input)) {
     if(list) {
-      list.push({'@id': name});
+      list.push(input);
     }
-
-    // create new subject or merge into existing one
-    var subjects = graphs[graph];
-    var subject = subjects[name] = subjects[name] || {};
-    subject['@id'] = name;
-    for(var prop in input) {
-      // skip @id
-      if(prop === '@id') {
-        continue;
-      }
-
-      // recurse into graph
-      if(prop === '@graph') {
-        // add graph subjects map entry
-        if(!(name in graphs)) {
-          graphs[name] = {};
-        }
-        var g = (graph === '@merged') ? '@merged' : name;
-        _flatten(input[prop], graphs, g, namer);
-        continue;
-      }
-
-      // copy non-@type keywords
-      if(prop !== '@type' && _isKeyword(prop)) {
-        subject[prop] = input[prop];
-        continue;
-      }
-
-      // iterate over objects
-      var objects = input[prop];
-      for(var i in objects) {
-        var o = objects[i];
-
-        // handle embedded subject or subject reference
-        if(_isSubject(o) || _isSubjectReference(o)) {
-          // rename blank node @id
-          var id = _isBlankNode(o) ? namer.getName(o['@id']) : o['@id'];
-
-          // add reference and recurse
-          jsonld.addValue(subject, prop, {'@id': id}, true);
-          _flatten(o, graphs, graph, namer, id);
-        }
-        else {
-          // recurse into list
-          if(_isList(o)) {
-            var _list = [];
-            _flatten(o['@list'], graphs, graph, namer, name, _list);
-            o = {'@list': _list};
-          }
-          // special-handle @type IRIs
-          else if(prop === '@type' && o.indexOf('_:') === 0) {
-            o = namer.getName(o);
-          }
-
-          // add non-subject
-          jsonld.addValue(subject, prop, o, true);
-        }
-      }
-    }
+    return;
   }
-  // add non-object to list
-  else if(list) {
-    list.push(input);
+
+  // Note: At this point, input must be a subject.
+
+  // get name for subject
+  if(_isUndefined(name)) {
+    name = _isBlankNode(input) ? namer.getName(input['@id']) : input['@id'];
+  }
+
+  // add subject reference to list
+  if(list) {
+    list.push({'@id': name});
+  }
+
+  // create new subject or merge into existing one
+  var subjects = graphs[graph];
+  var subject = subjects[name] = subjects[name] || {};
+  subject['@id'] = name;
+  var props = Object.keys(input).sort();
+  for(var p in props) {
+    var prop = props[p];
+
+    // skip @id
+    if(prop === '@id') {
+      continue;
+    }
+
+    // recurse into graph
+    if(prop === '@graph') {
+      // add graph subjects map entry
+      if(!(name in graphs)) {
+        graphs[name] = {};
+      }
+      var g = (graph === '@merged') ? graph : name;
+      _flatten(input[prop], graphs, g, namer);
+      continue;
+    }
+
+    // copy non-@type keywords
+    if(prop !== '@type' && _isKeyword(prop)) {
+      subject[prop] = input[prop];
+      continue;
+    }
+
+    // iterate over objects
+    var objects = input[prop];
+    for(var i in objects) {
+      var o = objects[i];
+
+      // handle embedded subject or subject reference
+      if(_isSubject(o) || _isSubjectReference(o)) {
+        // rename blank node @id
+        var id = _isBlankNode(o) ? namer.getName(o['@id']) : o['@id'];
+
+        // add reference and recurse
+        jsonld.addValue(subject, prop, {'@id': id}, true);
+        _flatten(o, graphs, graph, namer, id);
+      }
+      else {
+        // recurse into list
+        if(_isList(o)) {
+          var _list = [];
+          _flatten(o['@list'], graphs, graph, namer, name, _list);
+          o = {'@list': _list};
+        }
+        // special-handle @type IRIs
+        else if(prop === '@type' && o.indexOf('_:') === 0) {
+          o = namer.getName(o);
+        }
+
+        // add non-subject
+        jsonld.addValue(subject, prop, o, true);
+      }
+    }
   }
 }
 
