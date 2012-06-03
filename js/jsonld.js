@@ -399,14 +399,19 @@ jsonld.fromRDF = function(statements) {
   callback = arguments[callbackArg];
 
   // set default options
-  if(!('format' in options)) {
-    options.format = 'application/nquads';
-  }
   if(!('notType' in options)) {
     options.notType = false;
   }
 
-  if(!_isArray(statements)) {
+  if(!('format' in options) && !_isArray(statements)) {
+    // set default format to nquads
+    if(!('format' in options)) {
+      options.format = 'application/nquads';
+    }
+  }
+
+  // handle special format
+  if('format' in options) {
     // supported formats
     if(options.format in _rdfParsers) {
       statements = _rdfParsers[options.format](statements);
@@ -968,10 +973,13 @@ var XSD_BOOLEAN = 'http://www.w3.org/2001/XMLSchema#boolean';
 var XSD_DOUBLE = 'http://www.w3.org/2001/XMLSchema#double';
 var XSD_INTEGER = 'http://www.w3.org/2001/XMLSchema#integer';
 
-var RDF_FIRST = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first';
-var RDF_REST = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest';
-var RDF_NIL = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil';
-var RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
+var RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+var RDF_FIRST = RDF + 'first';
+var RDF_REST = RDF + 'rest';
+var RDF_NIL = RDF + 'nil';
+var RDF_TYPE = RDF + 'type';
+var RDF_PLAIN_LITERAL = RDF + 'PlainLiteral';
+var RDF_OBJECT = RDF + 'object';
 
 var MAX_CONTEXT_URLS = 10;
 
@@ -4104,6 +4112,83 @@ function _toNQuad(statement, bnode) {
   quad += ' .\n';
   return quad;
 }
+
+/**
+ * Parses statements found via the data object from the RDFa API.
+ *
+ * @param data the RDFa API data object.
+ *
+ * @return an array of RDF statements.
+ */
+function _parseRdfaApiData(data) {
+  var statements = [];
+
+  var subjects = data.getSubjects();
+  for(var si in subjects) {
+    var subject = subjects[si];
+
+    // get all related triples
+    var triples = data.getSubjectTriples(subject);
+    var predicates = triples.predicates;
+    for(var p in predicates) {
+      // iterate over objects
+      var objects = predicates[p].objects;
+      for(var oi in objects) {
+        var object = objects[oi];
+
+        // create RDF statement
+        var s = {};
+
+        // add subject
+        if(subject.indexOf('_:') === 0) {
+          s.subject = {nominalValue: subject, interfaceName: 'BlankNode'};
+        }
+        else {
+          s.subject = {nominalValue: subject, interfaceName: 'IRI'};
+        }
+
+        // add property
+        s.property = {nominalValue: p, interfaceName: 'IRI'};
+
+        // add object
+        s.object = {nominalValue: object.value};
+
+        // object is an IRI
+        if(object.type === RDF_OBJECT) {
+          if(object.value.indexOf('_:') === 0) {
+            s.object.interfaceName = 'BlankNode';
+          }
+          else {
+            s.object.interfaceName = 'IRI';
+          }
+        }
+        // literal
+        else {
+          s.object.interfaceName = 'LiteralNode';
+          if(object.type === RDF_PLAIN_LITERAL) {
+            if(object.language) {
+              s.object.language = object.language;
+            }
+          }
+          else {
+            s.object.datatype = {
+              nominalValue: object.type,
+              interfaceName: 'IRI'
+            };
+          }
+        }
+
+        // add statement
+        statements.push(s);
+      }
+    }
+  }
+
+  return statements;
+}
+
+// register the RDFa API RDF parser
+jsonld.registerRDFParser('rdfa-api', _parseRdfaApiData);
 
 /**
  * Creates a new UniqueNamer. A UniqueNamer issues unique names, keeping
