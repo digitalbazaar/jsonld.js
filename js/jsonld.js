@@ -961,6 +961,27 @@ if(_nodejs) {
   module.exports = jsonld;
   // use node URL resolver by default
   jsonld.useUrlResolver('node');
+
+  // needed for serialization of XML literals
+  if(typeof XMLSerializer === 'undefined') {
+    var XMLSerializer = null;
+  }
+  if(typeof Node === 'undefined') {
+    var Node = {
+      ELEMENT_NODE: 1,
+      ATTRIBUTE_NODE: 2,
+      TEXT_NODE: 3,
+      CDATA_SECTION_NODE: 4,
+      ENTITY_REFERENCE_NODE: 5,
+      ENTITY_NODE: 6,
+      PROCESSING_INSTRUCTION_NODE: 7,
+      COMMENT_NODE: 8,
+      DOCUMENT_NODE: 9,
+      DOCUMENT_TYPE_NODE: 10,
+      DOCUMENT_FRAGMENT_NODE: 11,
+      NOTATION_NODE:12
+    };
+  }
 }
 
 // export browser API
@@ -979,6 +1000,7 @@ var RDF_REST = RDF + 'rest';
 var RDF_NIL = RDF + 'nil';
 var RDF_TYPE = RDF + 'type';
 var RDF_PLAIN_LITERAL = RDF + 'PlainLiteral';
+var RDF_XML_LITERAL = RDF + 'XMLLiteral';
 var RDF_OBJECT = RDF + 'object';
 
 var MAX_CONTEXT_URLS = 10;
@@ -4121,14 +4143,25 @@ function _toNQuad(statement, bnode) {
  * @return an array of RDF statements.
  */
 function _parseRdfaApiData(data) {
+  // initialize XMLSerializer
+  if(!XMLSerializer) {
+    _defineXMLSerializer();
+  }
+
   var statements = [];
 
   var subjects = data.getSubjects();
   for(var si in subjects) {
     var subject = subjects[si];
+    if(subject === null) {
+      continue;
+    }
 
     // get all related triples
     var triples = data.getSubjectTriples(subject);
+    if(triples === null) {
+      continue;
+    }
     var predicates = triples.predicates;
     for(var p in predicates) {
       // iterate over objects
@@ -4150,8 +4183,23 @@ function _parseRdfaApiData(data) {
         // add property
         s.property = {nominalValue: p, interfaceName: 'IRI'};
 
+        // serialize XML literal
+        var value = object.value;
+        if(object.type === RDF_XML_LITERAL) {
+          var serializer = new XMLSerializer();
+          value = '';
+          for(var x = 0; x < object.value.length; x++) {
+            if(object.value[x].nodeType === Node.ELEMENT_NODE) {
+              value += serializer.serializeToString(object.value[x]);
+            }
+            else if(object.value[x].nodeType === Node.TEXT_NODE) {
+              value += object.value[x].nodeValue;
+            }
+          }
+        }
+
         // add object
-        s.object = {nominalValue: object.value};
+        s.object = {nominalValue: value};
 
         // object is an IRI
         if(object.type === RDF_OBJECT) {
@@ -4687,5 +4735,13 @@ _sha1.update = function(s, w, input) {
 };
 
 } // end non-nodejs
+
+if(!XMLSerializer) {
+
+function _defineXMLSerializer() {
+  XMLSerializer = require('xmldom').XMLSerializer;
+}
+
+} // end _defineXMLSerializer
 
 })();
