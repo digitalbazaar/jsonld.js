@@ -4143,11 +4143,6 @@ function _toNQuad(statement, bnode) {
  * @return an array of RDF statements.
  */
 function _parseRdfaApiData(data) {
-  // initialize XMLSerializer
-  if(!XMLSerializer) {
-    _defineXMLSerializer();
-  }
-
   var statements = [];
 
   var subjects = data.getSubjects();
@@ -4186,6 +4181,10 @@ function _parseRdfaApiData(data) {
         // serialize XML literal
         var value = object.value;
         if(object.type === RDF_XML_LITERAL) {
+          // initialize XMLSerializer
+          if(!XMLSerializer) {
+            _defineXMLSerializer();
+          }
           var serializer = new XMLSerializer();
           value = '';
           for(var x = 0; x < object.value.length; x++) {
