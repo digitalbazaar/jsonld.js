@@ -75,13 +75,13 @@ jsonld.compact = function(input, ctx) {
   if(!('strict' in options)) {
     options.strict = true;
   }
-  if(!('optimize') in options) {
+  if(!('optimize' in options)) {
     options.optimize = false;
   }
-  if(!('graph') in options) {
+  if(!('graph' in options)) {
     options.graph = false;
   }
-  if(!('resolver') in options) {
+  if(!('resolver' in options)) {
     options.resolver = jsonld.urlResolver;
   }
 
@@ -188,7 +188,7 @@ jsonld.compact = function(input, ctx) {
     }
 
     callback(null, compacted, activeCtx);
-  };
+  }
 };
 
 /**
@@ -1573,7 +1573,7 @@ Processor.prototype.normalize = function(input, options, callback) {
             nameGroupMember(group, n + 1);
           });
       }
-    };
+    }
   }
 
   // creates the sorted array of RDF statements
@@ -1721,7 +1721,7 @@ Processor.prototype.fromRDF = function(statements, options, callback) {
 
     // find list head
     var listMap = graph.listMap;
-    for(subject in listMap) {
+    for(var subject in listMap) {
       var entry = listMap[subject];
 
       // head found, build lists
