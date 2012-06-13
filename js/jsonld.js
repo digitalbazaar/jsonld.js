@@ -1066,9 +1066,14 @@ Processor.prototype.compact = function(ctx, property, element, options) {
   if(_isObject(element)) {
     // element is a @value
     if(_isValue(element)) {
-      // if @value is the only key, return its value
+      // if @value is the only key
       if(Object.keys(element).length === 1) {
-        return element['@value'];
+        // if there is no default language, return value of @value
+        if(!('@language' in ctx)) {
+          return element['@value'];
+        }
+        // return full element
+        return element;
       }
 
       // get type and language context rules
