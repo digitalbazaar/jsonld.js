@@ -4133,7 +4133,15 @@ function _toNQuad(statement, bnode) {
 
   // graph
   if(g !== null) {
-    quad += ' <' + g.nominalValue + '>';
+    if(g.interfaceName === 'IRI') {
+      quad += ' <' + g.nominalValue + '>';
+    }
+    else if(bnode) {
+      quad += ' _:g';
+    }
+    else {
+      quad += ' ' + g.nominalValue;
+    }
   }
 
   quad += ' .\n';
