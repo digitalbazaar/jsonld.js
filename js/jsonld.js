@@ -1072,8 +1072,10 @@ Processor.prototype.compact = function(ctx, property, element, options) {
         if(!('@language' in ctx)) {
           return element['@value'];
         }
-        // return full element
-        return element;
+        // return full element, alias @value
+        var rval = {};
+        rval[_compactIri(ctx, '@value')] = element['@value'];
+        return rval;
       }
 
       // get type and language context rules
@@ -1083,18 +1085,27 @@ Processor.prototype.compact = function(ctx, property, element, options) {
       // matching @type specified in context, compact element
       if(type !== null &&
         ('@type' in element) && element['@type'] === type) {
-        element = element['@value'];
+        return element['@value'];
       }
       // matching @language specified in context, compact element
       else if(language !== null &&
         ('@language' in element) && element['@language'] === language) {
-        element = element['@value'];
+        return element['@value'];
       }
-      // compact @type IRI
-      else if('@type' in element) {
-        element['@type'] = _compactIri(ctx, element['@type']);
+      else {
+        var rval = {};
+        // compact @type IRI
+        if('@type' in element) {
+          rval[_compactIri(ctx, '@type')] =
+            _compactIri(ctx, element['@type']);
+        }
+        // alias @language
+        else if('@language' in element) {
+          rval[_compactIri(ctx, '@language')] = element['@language'];
+        }
+        rval[_compactIri(ctx, '@value')] = element['@value'];
+        return rval;
       }
-      return element;
     }
 
     // compact subject references
