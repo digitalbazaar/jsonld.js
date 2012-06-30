@@ -746,44 +746,44 @@ jsonld.hasValue = function(subject, property, value) {
 };
 
 /**
- * Adds a value to a subject. If the subject already has the value, it will
- * not be added. If the value is an array, all values in the array will be
- * added.
- *
- * Note: If the value is a subject that already exists as a property of the
- * given subject, this method makes no attempt to deeply merge properties.
- * Instead, the value will not be added.
+ * Adds a value to a subject. If the value is an array, all values in the
+ * array will be added.
  *
  * @param subject the subject to add the value to.
  * @param property the property that relates the value to the subject.
  * @param value the value to add.
- * @param [propertyIsArray] true if the property is always an array, false
+ * @param [options] the options to use:
+ *        [propertyIsArray] true if the property is always an array, false
  *          if not (default: false).
- * @param [propertyIsList] true if the property is a @list, false
- *          if not (default: false).
+ *        [allowDuplicate] true to allow duplicates, false not to (uses a
+ *          simple shallow comparison of subject ID or value) (default: true).
  */
-jsonld.addValue = function(
-  subject, property, value, propertyIsArray, propertyIsList) {
-  propertyIsArray = _isUndefined(propertyIsArray) ? false : propertyIsArray;
-  propertyIsList = (_isUndefined(propertyIsList) ?
-    (property === '@list') : propertyIsList);
+jsonld.addValue = function(subject, property, value, options) {
+  options = options || {};
+  if(!('propertyIsArray' in options)) {
+    options.propertyIsArray = false;
+  }
+  if(!('allowDuplicate' in options)) {
+    options.allowDuplicate = true;
+  }
 
   if(_isArray(value)) {
-    if(value.length === 0 && propertyIsArray && !(property in subject)) {
+    if(value.length === 0 && options.propertyIsArray &&
+      !(property in subject)) {
       subject[property] = [];
     }
     for(var i in value) {
-      jsonld.addValue(
-        subject, property, value[i], propertyIsArray, propertyIsList);
+      jsonld.addValue(subject, property, value[i], options);
     }
   }
   else if(property in subject) {
-    // check if subject already has value unless property is list
-    var hasValue = (!propertyIsList &&
+    // check if subject already has value if duplicates not allowed
+    var hasValue = (!options.allowDuplicate &&
       jsonld.hasValue(subject, property, value));
 
     // make property an array if value not present or always an array
-    if(!_isArray(subject[property]) && (!hasValue || propertyIsArray)) {
+    if(!_isArray(subject[property]) &&
+      (!hasValue || options.propertyIsArray)) {
       subject[property] = [subject[property]];
     }
 
@@ -794,7 +794,7 @@ jsonld.addValue = function(
   }
   else {
     // add new value as set or single value
-    subject[property] = propertyIsArray ? [value] : value;
+    subject[property] = options.propertyIsArray ? [value] : value;
   }
 };
 
@@ -830,11 +830,15 @@ jsonld.removeProperty = function(subject, property) {
  * @param subject the subject.
  * @param property the property that relates the value to the subject.
  * @param value the value to remove.
- * @param [propertyIsArray] true if the property is always an array, false
- *          if not (default: false).
+ * @param [options] the options to use:
+ *          [propertyIsArray] true if the property is always an array, false
+ *            if not (default: false).
  */
-jsonld.removeValue = function(subject, property, value, propertyIsArray) {
-  propertyIsArray = _isUndefined(propertyIsArray) ? false : propertyIsArray;
+jsonld.removeValue = function(subject, property, value, options) {
+  options = options || {};
+  if(!('propertyIsArray' in options)) {
+    options.propertyIsArray = false;
+  }
 
   // filter out value
   var values = jsonld.getValues(subject, property).filter(function(e) {
@@ -844,7 +848,7 @@ jsonld.removeValue = function(subject, property, value, propertyIsArray) {
   if(values.length === 0) {
     jsonld.removeProperty(subject, property);
   }
-  else if(values.length === 1 && !propertyIsArray) {
+  else if(values.length === 1 && !options.propertyIsArray) {
     subject[property] = values[0];
   }
   else {
@@ -1139,7 +1143,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
         // compact property and add value
         var prop = _compactIri(ctx, key);
         var isArray = (_isArray(value) && value.length === 0);
-        jsonld.addValue(rval, prop, value, isArray);
+        jsonld.addValue(rval, prop, value, {propertyIsArray: isArray});
         continue;
       }
 
@@ -1148,7 +1152,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
       // preserve empty arrays
       if(value.length === 0) {
         var prop = _compactIri(ctx, key);
-        jsonld.addValue(rval, prop, [], true);
+        jsonld.addValue(rval, prop, [], {propertyIsArray: true});
       }
 
       // recusively process array values
@@ -1194,7 +1198,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
           (_isArray(v) && v.length === 0));
 
         // add compact value
-        jsonld.addValue(rval, prop, v, isArray, (container === '@list'));
+        jsonld.addValue(rval, prop, v, {propertyIsArray: isArray});
       }
     }
     return rval;
@@ -1349,7 +1353,7 @@ Processor.prototype.expand = function(
         // add value, use an array if not @id, @type, @value, or @language
         var useArray = !(prop === '@id' || prop === '@type' ||
           prop === '@value' || prop === '@language');
-        jsonld.addValue(rval, prop, value, useArray);
+        jsonld.addValue(rval, prop, value, {propertyIsArray: useArray});
       }
     }
 
@@ -1652,22 +1656,24 @@ Processor.prototype.fromRDF = function(statements, options, callback) {
     var name = ('name' in statement) ? statement.name.nominalValue : '';
 
     // create a graph entry as needed
+    var graph;
     if(!(name in graphs)) {
-      var graph = graphs[name] = {subjects: {}, listMap: {}};
+      graph = graphs[name] = {subjects: {}, listMap: {}};
     }
     else {
-      var graph = graphs[name];
+      graph = graphs[name];
     }
 
     // handle element in @list
     if(p === RDF_FIRST) {
       // create list entry as needed
       var listMap = graph.listMap;
+      var entry;
       if(!(s in listMap)) {
-        var entry = listMap[s] = {};
+        entry = listMap[s] = {};
       }
       else {
-        var entry = listMap[s];
+        entry = listMap[s];
       }
       // set object value
       entry.first = _rdfToObject(o);
@@ -1680,11 +1686,12 @@ Processor.prototype.fromRDF = function(statements, options, callback) {
       if(o.interfaceName === 'BlankNode') {
         // create list entry as needed
         var listMap = graph.listMap;
+        var entry;
         if(!(s in listMap)) {
-          var entry = listMap[s] = {};
+          entry = listMap[s] = {};
         }
         else {
-          var entry = listMap[s];
+          entry = listMap[s];
         }
         entry.rest = o.nominalValue;
       }
@@ -1698,33 +1705,35 @@ Processor.prototype.fromRDF = function(statements, options, callback) {
 
     // add subject to graph as needed
     var subjects = graph.subjects;
+    var value;
     if(!(s in subjects)) {
-      var value = subjects[s] = {'@id': s};
+      value = subjects[s] = {'@id': s};
     }
     // use existing subject value
     else {
-      var value = subjects[s];
+      value = subjects[s];
     }
 
     // convert to @type unless options indicate to treat rdf:type as property
     if(p === RDF_TYPE && !options.notType) {
       // add value of object as @type
-      jsonld.addValue(value, '@type', o.nominalValue, true);
+      jsonld.addValue(value, '@type', o.nominalValue, {propertyIsArray: true});
     }
     else {
       // add property to value as needed
       var object = _rdfToObject(o);
-      jsonld.addValue(value, p, object, true);
+      jsonld.addValue(value, p, object, {propertyIsArray: true});
 
       // a bnode might be the beginning of a list, so add it to the list map
       if(o.interfaceName === 'BlankNode') {
         var id = object['@id'];
         var listMap = graph.listMap;
+        var entry;
         if(!(id in listMap)) {
-          var entry = listMap[id] = {};
+          entry = listMap[id] = {};
         }
         else {
-          var entry = listMap[id];
+          entry = listMap[id];
         }
         entry.head = object;
       }
@@ -2430,7 +2439,7 @@ function _flatten(input, graphs, graph, namer, name, list) {
         var id = _isBlankNode(o) ? namer.getName(o['@id']) : o['@id'];
 
         // add reference and recurse
-        jsonld.addValue(subject, prop, {'@id': id}, true);
+        jsonld.addValue(subject, prop, {'@id': id}, {propertyIsArray: true});
         _flatten(o, graphs, graph, namer, id);
       }
       else {
@@ -2446,7 +2455,7 @@ function _flatten(input, graphs, graph, namer, name, list) {
         }
 
         // add non-subject
-        jsonld.addValue(subject, prop, o, true);
+        jsonld.addValue(subject, prop, o, {propertyIsArray: true});
       }
     }
   }
@@ -2781,8 +2790,8 @@ function _removeEmbed(state, id) {
   else {
     // replace subject with reference
     var useArray = _isArray(parent[property]);
-    jsonld.removeValue(parent, property, subject, useArray);
-    jsonld.addValue(parent, property, subject, useArray);
+    jsonld.removeValue(parent, property, subject, {propertyIsArray: useArray});
+    jsonld.addValue(parent, property, subject, {propertyIsArray: useArray});
   }
 
   // recursively remove dependent dangling embeds
@@ -2811,7 +2820,7 @@ function _removeEmbed(state, id) {
  */
 function _addFrameOutput(state, parent, property, output) {
   if(_isObject(parent)) {
-    jsonld.addValue(parent, property, output, true);
+    jsonld.addValue(parent, property, output, {propertyIsArray: true});
   }
   else {
     parent.push(output);
@@ -3285,7 +3294,7 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
   // merge onto parent mapping if one exists for a prefix
   if(prefix !== null && prefix in activeCtx.mappings) {
     var child = mapping;
-    var mapping = _clone(activeCtx.mappings[prefix]);
+    mapping = _clone(activeCtx.mappings[prefix]);
     for(var k in child) {
       mapping[k] = child[k];
     }
