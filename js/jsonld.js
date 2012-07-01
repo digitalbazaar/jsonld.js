@@ -3081,7 +3081,7 @@ function _compactIri(ctx, iri, value) {
       continue;
     }
     // skip @list containers for non-@lists
-    if(!isList && entry['@container'] === '@list') {
+    if(!isList && entry['@container'] === '@list' && value !== null) {
       continue;
     }
     // for @lists, if listContainer is set, skip non-list containers
