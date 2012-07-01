@@ -473,6 +473,12 @@ jsonld.toRDF = function(input) {
         return collateCallback(err);
       }
       if(statement !== null) {
+        // do not allow duplicate statements
+        for(var i in statements) {
+          if(_compareRdfStatements(statements[i], statement)) {
+            return;
+          }
+        }
         statements.push(statement);
       }
       else {
@@ -1072,8 +1078,9 @@ Processor.prototype.compact = function(ctx, property, element, options) {
     if(_isValue(element)) {
       // if @value is the only key
       if(Object.keys(element).length === 1) {
-        // if there is no default language, return value of @value
-        if(!('@language' in ctx)) {
+        // if there is no default language or @value is not a string,
+        // return value of @value
+        if(!('@language' in ctx) || !_isString(element['@value'])) {
           return element['@value'];
         }
         // return full element, alias @value
@@ -1465,6 +1472,11 @@ Processor.prototype.normalize = function(input, options, callback) {
       return hashBlankNodes(Object.keys(bnodes));
     }
     // add statement and do mapping
+    for(var i in statements) {
+      if(_compareRdfStatements(statements[i], statement)) {
+        return;
+      }
+    }
     statements.push(statement);
     var nodes = ['subject', 'object'];
     for(var n in nodes) {
@@ -2118,6 +2130,45 @@ function _rdfToObject(o) {
   }
 
   return rval;
+}
+
+/**
+ * Compares two RDF statements for equality.
+ *
+ * @param s1 the first statement.
+ * @param s2 the second statement.
+ *
+ * @return true if the statements are the same, false if not.
+ */
+function _compareRdfStatements(s1, s2) {
+  if(_isString(s1) || _isString(s2)) {
+    return s1 === s2;
+  }
+
+  var attrs = ['subject', 'property', 'object'];
+  for(var i in attrs) {
+    var attr = attrs[i];
+    if(s1[attr].interfaceName !== s2[attr].interfaceName ||
+      s1[attr].nominalValue !== s2[attr].nominalValue) {
+      return false;
+    }
+  }
+  if(s1.object.language !== s2.object.language) {
+    return false;
+  }
+  if(('datatype' in s1.object) !== ('datatype' in s2.object)) {
+    return false;
+  }
+  if('datatype' in s1.object) {
+    if(s1.object.datatype.interfaceName !== s2.object.datatype.interfaceName ||
+      s1.object.datatype.nominalValue !== s2.object.datatype.nominalValue) {
+      return false;
+    }
+  }
+  if(s1.name !== s2.name) {
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -4078,7 +4129,12 @@ function _parseNQuads(input) {
       s.name = {nominalValue: match[10], interfaceName: 'BlankNode'};
     }
 
-    // add statement
+    // add unique statement
+    for(var si in statements) {
+      if(_compareRdfStatements(statements[si], s)) {
+        continue;
+      }
+    }
     statements.push(s);
   }
 
