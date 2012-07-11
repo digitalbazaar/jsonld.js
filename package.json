@@ -23,8 +23,6 @@
   "main": "js/jsonld.js",
   "optionalDependencies": {
     "request": "",
-    "util": "",
-    "crypto": "",
     "xmldom": ""
   },
   "engines": {
