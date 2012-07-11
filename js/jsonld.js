@@ -1230,6 +1230,12 @@ Processor.prototype.compact = function(ctx, property, element, options) {
  */
 Processor.prototype.expand = function(
   ctx, property, element, options, propertyIsList) {
+  if(typeof element === 'undefined') {
+    throw new JsonLdError(
+      'Invalid JSON-LD syntax; undefined element.',
+      'jsonld.SyntaxError');
+  }
+
   // recursively expand array
   if(_isArray(element)) {
     var rval = [];
