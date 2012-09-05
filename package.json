@@ -25,6 +25,9 @@
     "request": "",
     "xmldom": ""
   },
+  "dependencies" : {
+    "async" : "0.1.22"
+  },
   "engines": {
     "node": "*"
   },
