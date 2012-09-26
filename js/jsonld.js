@@ -3180,9 +3180,8 @@ function _compactIri(ctx, iri, value) {
     }
   }
 
-  // no matching terms,
+  // no matching terms, use iri
   if(terms.length === 0) {
-    // use iri
     return iri;
   }
 
