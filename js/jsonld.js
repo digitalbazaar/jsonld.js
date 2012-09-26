@@ -2126,7 +2126,7 @@ function _rdfToObject(o, useNativeTypes) {
   if('datatype' in o) {
     var type = o.datatype.nominalValue;
     if(useNativeTypes) {
-      // use native datatypes for certain xsd types
+      // use native types for certain xsd types
       if(type === XSD_BOOLEAN) {
         if(rval['@value'] === 'true') {
           rval['@value'] = true;
