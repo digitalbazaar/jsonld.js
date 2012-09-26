@@ -384,7 +384,11 @@ jsonld.normalize = function(input, callback) {
  * @param [options] the options to use:
  *          [format] the format if input is not an array:
  *            'application/nquads' for N-Quads (default).
- *          [notType] true to use rdf:type, false to use @type (default).
+ *          [useRdfType] true to use rdf:type, false to use @type
+ *            (default: false).
+ *          [useNativeTypes] true to convert XSD types into native types
+ *            (boolean, integer, double), false not to (default: true).
+ *
  * @param callback(err, output) called once the operation completes.
  */
 jsonld.fromRDF = function(statements) {
@@ -399,8 +403,11 @@ jsonld.fromRDF = function(statements) {
   callback = arguments[callbackArg];
 
   // set default options
-  if(!('notType' in options)) {
-    options.notType = false;
+  if(!('useRdfType' in options)) {
+    options.useRdfType = false;
+  }
+  if(!('useNativeTypes' in options)) {
+    options.useNativeTypes = true;
   }
 
   if(!('format' in options) && !_isArray(statements)) {
@@ -1003,6 +1010,7 @@ if(_browser) {
 var XSD_BOOLEAN = 'http://www.w3.org/2001/XMLSchema#boolean';
 var XSD_DOUBLE = 'http://www.w3.org/2001/XMLSchema#double';
 var XSD_INTEGER = 'http://www.w3.org/2001/XMLSchema#integer';
+var XSD_STRING = 'http://www.w3.org/2001/XMLSchema#string';
 
 var RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
 var RDF_FIRST = RDF + 'first';
@@ -1694,7 +1702,7 @@ Processor.prototype.fromRDF = function(statements, options, callback) {
         entry = listMap[s];
       }
       // set object value
-      entry.first = _rdfToObject(o);
+      entry.first = _rdfToObject(o, options.useNativeTypes);
       continue;
     }
 
@@ -1733,13 +1741,13 @@ Processor.prototype.fromRDF = function(statements, options, callback) {
     }
 
     // convert to @type unless options indicate to treat rdf:type as property
-    if(p === RDF_TYPE && !options.notType) {
+    if(p === RDF_TYPE && !options.useRdfType) {
       // add value of object as @type
       jsonld.addValue(value, '@type', o.nominalValue, {propertyIsArray: true});
     }
     else {
       // add property to value as needed
-      var object = _rdfToObject(o);
+      var object = _rdfToObject(o, options.useNativeTypes);
       jsonld.addValue(value, p, object, {propertyIsArray: true});
 
       // a bnode might be the beginning of a list, so add it to the list map
@@ -1956,33 +1964,33 @@ function _toRDF(element, namer, subject, property, graph, callback) {
       if(_isBoolean(value) || _isNumber(value)) {
         // convert to XSD datatype
         if(_isBoolean(value)) {
-          value = String(value);
+          value = value.toString();
           datatype = datatype || XSD_BOOLEAN;
         }
         else if(_isDouble(value)) {
-          // printf('%1.15e') equivalent
-          value = value.toExponential(15).replace(
-            /(e(?:\+|-))([0-9])$/, '$10$2');
+          // canonical double representation
+          value = value.toExponential(15).replace(/(\d)0*e\+?/, '$1E');
           datatype = datatype || XSD_DOUBLE;
         }
         else {
-          value = String(value);
+          value = value.toFixed(0);
           datatype = datatype || XSD_INTEGER;
         }
       }
+
+      // default to xsd:string datatype
+      datatype = datatype || XSD_STRING;
 
       var object = {
         nominalValue: value,
         interfaceName: 'LiteralNode'
       };
 
-      if(datatype !== null) {
-        object.datatype = {
-          nominalValue: datatype,
-          interfaceName: 'IRI'
-        };
-      }
-      else if('@language' in element) {
+      object.datatype = {
+        nominalValue: datatype,
+        interfaceName: 'IRI'
+      };
+      if('@language' in element && datatype === XSD_STRING) {
         object.language = element['@language'];
       }
 
@@ -2097,10 +2105,11 @@ function _toRDF(element, namer, subject, property, graph, callback) {
  * Converts an RDF statement object to a JSON-LD object.
  *
  * @param o the RDF statement object to convert.
+ * @param useNativeTypes true to output native types, false not to.
  *
  * @return the JSON-LD object.
  */
-function _rdfToObject(o) {
+function _rdfToObject(o, useNativeTypes) {
   // convert empty list
   if(o.interfaceName === 'IRI' && o.nominalValue === RDF_NIL) {
     return {'@list': []};
@@ -2116,22 +2125,39 @@ function _rdfToObject(o) {
 
   // add datatype
   if('datatype' in o) {
-    /*
     var type = o.datatype.nominalValue;
-    // use native datatypes for certain xsd types
-    if(type === XSD_BOOLEAN) {
-      rval = !(rval['@value'] === 'false' || rval['@value'] === '0');
+    if(useNativeTypes) {
+      // use native datatypes for certain xsd types
+      if(type === XSD_BOOLEAN) {
+        if(rval['@value'] === 'true') {
+          rval['@value'] = true;
+        }
+        else if(rval['@value'] === 'false') {
+          rval['@value'] = false;
+        }
+      }
+      else if(_isNumeric(rval['@value'])) {
+        if(type === XSD_INTEGER) {
+          var i = parseInt(rval['@value']);
+          if(i.toFixed(0) === rval['@value']) {
+            rval['@value'] = i;
+          }
+        }
+        else if(type === XSD_DOUBLE) {
+          rval['@value'] = parseFloat(rval['@value']);
+        }
+      }
+      // do not add xsd:string type
+      if(type !== XSD_STRING) {
+        rval['@type'] = type;
+      }
     }
-    else if(type === XSD_INTEGER) {
-      rval = parseInt(rval['@value']);
+    else {
+      rval['@type'] = type;
     }
-    else if(type === XSD_DOUBLE) {
-      rval = parseFloat(rval['@value']);
-    }*/
-    rval['@type'] = o.datatype.nominalValue;
   }
   // add language
-  else if('language' in o) {
+  if('language' in o) {
     rval['@language'] = o.language;
   }
 
@@ -3121,6 +3147,19 @@ function _compactIri(ctx, iri, value) {
     }
   }
 
+  // no matching terms, use @vocab if available
+  if(terms.length === 0 && ctx['@vocab']) {
+    // determine if vocab is a prefix of the iri
+    var vocab = ctx['@vocab'];
+    if(iri.indexOf(vocab) === 0) {
+      // use suffix as relative iri if it is not a term in the active context
+      var suffix = iri.substr(vocab.length);
+      if(!(suffix in ctx.mappings)) {
+        return suffix;
+      }
+    }
+  }
+
   // no term matches, add possible CURIEs
   if(terms.length === 0) {
     for(var term in ctx.mappings) {
@@ -3142,7 +3181,7 @@ function _compactIri(ctx, iri, value) {
     }
   }
 
-  // no matching terms
+  // no matching terms,
   if(terms.length === 0) {
     // use iri
     return iri;
@@ -3193,6 +3232,30 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
   var value = ctx[key];
 
   if(_isKeyword(key)) {
+    // support @vocab
+    if(key === '@vocab') {
+      if(value !== null && !_isString(value)) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; the value of "@vocab" in a ' +
+          '@context must be a string or null.',
+          'jsonld.SyntaxError', {context: ctx});
+      }
+      if(!_isAbsoluteIri(value)) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; the value of "@vocab" in a ' +
+          '@context must be an absolute IRI.',
+          'jsonld.SyntaxError', {context: ctx});
+      }
+      if(value === null) {
+        delete activeCtx['@vocab'];
+      }
+      else {
+        activeCtx['@vocab'] = value;
+      }
+      defined[key] = true;
+      return;
+    }
+
     // only @language is permitted
     if(key !== '@language') {
       throw new JsonLdError(
@@ -3421,8 +3484,14 @@ function _expandContextIri(activeCtx, ctx, value, base, defined) {
     return value;
   }
 
+  // prepend vocab
+  if(ctx['@vocab']) {
+    value = _prependBase(ctx['@vocab'], value);
+  }
   // prepend base
-  value = _prependBase(base, value);
+  else {
+    value = _prependBase(base, value);
+  }
 
   // value must now be an absolute IRI
   if(!_isAbsoluteIri(value)) {
@@ -3487,8 +3556,12 @@ function _expandTerm(ctx, term, base) {
     return term;
   }
 
+  // use vocab
+  if(ctx['@vocab']) {
+    term = _prependBase(ctx['@vocab'], term);
+  }
   // prepend base to term
-  if(!_isUndefined(base)) {
+  else if(!_isUndefined(base)) {
     term = _prependBase(base, term);
   }
 
@@ -3535,7 +3608,8 @@ function _getInitialContext() {
       '@preserve': [],
       '@set': [],
       '@type': [],
-      '@value': []
+      '@value': [],
+      '@vocab': []
     }
   };
 }
@@ -3576,6 +3650,7 @@ function _isKeyword(v, ctx) {
     case '@set':
     case '@type':
     case '@value':
+    case '@vocab':
       return true;
     }
   }
@@ -3680,6 +3755,17 @@ function _isNumber(v) {
  */
 function _isDouble(v) {
   return _isNumber(v) && String(v).indexOf('.') !== -1;
+}
+
+/**
+ * Returns true if the given value is numeric.
+ *
+ * @param v the value to check.
+ *
+ * @return true if the value is numeric, false if not.
+ */
+function _isNumeric(v) {
+  return !isNaN(parseFloat(v)) && isFinite(v);
 }
 
 /**
@@ -4205,7 +4291,7 @@ function _toNQuad(statement, bnode) {
       .replace(/\r/g, '\\r')
       .replace(/\"/g, '\\"');
     quad += '"' + escaped + '"';
-    if('datatype' in o) {
+    if('datatype' in o && o.datatype.nominalValue !== XSD_STRING) {
       quad += '^^<' + o.datatype.nominalValue + '>';
     }
     else if('language' in o) {
