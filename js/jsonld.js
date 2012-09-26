@@ -1983,12 +1983,11 @@ function _toRDF(element, namer, subject, property, graph, callback) {
 
       var object = {
         nominalValue: value,
-        interfaceName: 'LiteralNode'
-      };
-
-      object.datatype = {
-        nominalValue: datatype,
-        interfaceName: 'IRI'
+        interfaceName: 'LiteralNode',
+        datatype: {
+          nominalValue: datatype,
+          interfaceName: 'IRI'
+        }
       };
       if('@language' in element && datatype === XSD_STRING) {
         object.language = element['@language'];
