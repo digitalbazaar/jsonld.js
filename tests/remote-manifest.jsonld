@@ -24,5 +24,10 @@
     "name": "resolve array context",
     "input": "remote-0004-in.jsonld",
     "expect": "remote-0004-out.jsonld"
+  }, {
+    "@type": ["test:TestCase", "jld:ExpandTest"],
+    "name": "resolve relative URL",
+    "input": "remote-0005-in.jsonld",
+    "expect": "remote-0005-out.jsonld"
   }]
 }
