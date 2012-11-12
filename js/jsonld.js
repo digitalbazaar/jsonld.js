@@ -1910,11 +1910,8 @@ function _expandValue(ctx, property, value, base) {
 
   // special-case expand @id and @type (skips '@id' expansion)
   var prop = _expandTerm(ctx, property);
-  if(prop === '@id') {
+  if(prop === '@id' || prop === '@type') {
     rval = _expandTerm(ctx, value, base);
-  }
-  else if(prop === '@type') {
-    rval = _expandTerm(ctx, value);
   }
   else {
     // get type definition from context
