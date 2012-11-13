@@ -1001,8 +1001,14 @@ if(_nodejs) {
   }
 }
 
-// export browser API
-if(_browser) {
+// export AMD API
+if(typeof define === 'function' && define.amd) {
+  define('jsonld', [], function() {
+    return jsonld;
+  });
+}
+// export simple browser API
+else if(_browser) {
   window.jsonld = window.jsonld || jsonld;
 }
 
