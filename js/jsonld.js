@@ -248,6 +248,21 @@ jsonld.expand = function(input) {
 };
 
 /**
+ * Performs JSON-LD flattening.
+ *
+ * @param input the expanded JSON-LD to flatten.
+ * @param callback(err, flattened) called once the operation completes.
+ */
+jsonld.flatten = function(input) {
+  try {
+    callback(null, new Processor().flatten(input));
+  }
+  catch(ex) {
+    return callback(ex);
+  }
+};
+
+/**
  * Performs JSON-LD framing.
  *
  * @param input the JSON-LD input to frame.
@@ -412,7 +427,7 @@ jsonld.objectify = function(input, ctx) {
           if(!_isArray(obj) && !_isObject(obj) && !isid) {
             continue;
           }
-          
+
           if(_isString(obj) && isid) {
             subject[k] = obj = top[obj];
             recurse(obj);
@@ -436,7 +451,7 @@ jsonld.objectify = function(input, ctx) {
       };
       recurse.visited = {};
       recurse(top);
- 
+
       compacted.of_type = {};
       for(var s in top) {
         if (!('@type' in top[s])){
@@ -1572,7 +1587,7 @@ Processor.prototype.expand = function(
  *
  * @return the flattened output.
  */
-Processor.prototype.flatten = function(input, frame) {
+Processor.prototype.flatten = function(input) {
   // produce a map of all subjects and name each bnode
   var namer = new UniqueNamer('_:t');
   var flattened = {};
