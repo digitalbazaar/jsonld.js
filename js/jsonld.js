@@ -253,7 +253,7 @@ jsonld.expand = function(input) {
  * @param input the expanded JSON-LD to flatten.
  * @param callback(err, flattened) called once the operation completes.
  */
-jsonld.flatten = function(input) {
+jsonld.flatten = function(input, callback) {
   try {
     callback(null, new Processor().flatten(input));
   }
