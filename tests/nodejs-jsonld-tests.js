@@ -206,6 +206,12 @@ TestRunner.prototype.run = function(manifests, callback) {
           options.optimize = test.optimize || false;
           jsonld.compact(input, test.context, options, checkResult);
         }
+        else if(type.indexOf('jld:FlattenTest') !== -1) {
+          self.test(test.name);
+          input = _readTestJson(test.input, filepath);
+          test.expect = _readTestJson(test.expect, filepath);
+          jsonld.flatten(input, checkResult);
+        }
         else if(type.indexOf('jld:FrameTest') !== -1) {
           self.test(test.name);
           input = _readTestJson(test.input, filepath);
