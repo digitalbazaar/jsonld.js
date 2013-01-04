@@ -250,16 +250,43 @@ jsonld.expand = function(input) {
 /**
  * Performs JSON-LD flattening.
  *
- * @param input the expanded JSON-LD to flatten.
+ * @param input the JSON-LD to flatten.
+ * @param [options] the options to use:
+ *          [base] the base IRI to use.
+ *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, flattened) called once the operation completes.
  */
-jsonld.flatten = function(input, callback) {
-  try {
-    callback(null, new Processor().flatten(input));
+jsonld.flatten = function(input, options, callback) {
+  // get arguments
+  if(typeof options === 'function') {
+    callback = options;
+    options = {};
   }
-  catch(ex) {
-    return callback(ex);
+
+  // set default options
+  if(!('base' in options)) {
+    options.base = '';
   }
+  if(!('resolver' in options)) {
+    options.resolver = jsonld.urlResolver;
+  }
+
+  // expand input
+  jsonld.expand(input, options, function(err, _input) {
+    if(err) {
+      return callback(new JsonLdError(
+        'Could not expand input before flattening.',
+        'jsonld.FlattenError', {cause: err}));
+    }
+
+    try {
+      // do flattening
+      callback(null, new Processor().flatten(_input));
+    }
+    catch(ex) {
+      return callback(ex);
+    }
+  });
 };
 
 /**
@@ -1590,8 +1617,14 @@ Processor.prototype.expand = function(
 Processor.prototype.flatten = function(input) {
   // produce a map of all subjects and name each bnode
   var namer = new UniqueNamer('_:t');
-  var flattened = {};
-  _flatten(flattened, input, namer);
+  var graphs = {'@default': {}, '@merged': {}};
+  _flatten(input, graphs, '@merged', namer);
+  var merged = graphs['@merged'];
+  var keys = Object.keys(merged).sort();
+  var flattened = [];
+  for(var key in keys) {
+    flattened.push(merged[keys[key]]);
+  }
   return flattened;
 };
 
