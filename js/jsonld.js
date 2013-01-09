@@ -4090,7 +4090,7 @@ function _isAbsoluteIri(v) {
  * @return the cloned value.
  */
 function _clone(value) {
-  if(value !== null && typeof value === 'object') {
+  if(value && typeof value === 'object') {
     var rval = value.constructor();
     for(var i in value) {
       rval[i] = _clone(value[i]);
