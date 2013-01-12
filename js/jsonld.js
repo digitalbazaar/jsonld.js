@@ -239,7 +239,14 @@ jsonld.expand = function(input) {
       if(!_isArray(expanded)) {
         expanded = [expanded];
       }
-      callback(null, expanded);
+      // remove nulls (they represent free-floating nodes)
+      var output = [];
+      for(var i = 0; i < expanded.length; ++i) {
+        if(expanded[i] !== null) {
+          output.push(expanded[i]);
+        }
+      }
+      callback(null, output);
     }
     catch(ex) {
       callback(ex);
@@ -375,8 +382,8 @@ jsonld.frame = function(input, frame) {
 /**
  * Performs JSON-LD objectification.
  *
- * @param input the JSON-LD input to objectify
- * @param ctx the JSON-LD context to apply
+ * @param input the JSON-LD input to objectify.
+ * @param ctx the JSON-LD context to apply.
  * @param [options] the framing options.
  *          [base] the base IRI to use.
  *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
@@ -1494,10 +1501,14 @@ Processor.prototype.expand = function(
       }
 
       // @language must be a string
-      if(prop === '@language' && !_isString(value)) {
-        throw new JsonLdError(
-          'Invalid JSON-LD syntax; "@language" value must not be a string.',
-          'jsonld.SyntaxError', {value: value});
+      if(prop === '@language') {
+        if(!_isString(value)) {
+          throw new JsonLdError(
+            'Invalid JSON-LD syntax; "@language" value must not be a string.',
+            'jsonld.SyntaxError', {value: value});
+        }
+        // ensure language value is lowercase
+        value = value.toLowerCase();
       }
 
       // recurse into @list or @set keeping the active property
@@ -1511,16 +1522,15 @@ Processor.prototype.expand = function(
         }
       }
       else {
-        // update active property and recursively expand value
-        property = key;
-        value = this.expand(ctx, property, value, options, false);
+        // recursively expand value with new active property
+        value = this.expand(ctx, key, value, options, false);
       }
 
       // drop null values if property is not @value (dropped below)
       if(value !== null || prop === '@value') {
         // convert value to @list if container specifies it
         if(prop !== '@list' && !_isList(value)) {
-          var container = jsonld.getContextValue(ctx, property, '@container');
+          var container = jsonld.getContextValue(ctx, key, '@container');
           if(container === '@list') {
             // ensure value is an array
             value = _isArray(value) ? value : [value];
@@ -1556,7 +1566,8 @@ Processor.prototype.expand = function(
     }
 
     // get property count on expanded output
-    var count = Object.keys(rval).length;
+    var keys = Object.keys(rval);
+    var count = keys.length;
 
     // @value must only have @language or @type
     if('@value' in rval) {
@@ -1578,6 +1589,10 @@ Processor.prototype.expand = function(
       else if(rval['@value'] === null) {
         rval = null;
       }
+      // drop @language if @value isn't a string
+      else if('@language' in rval && !_isString(rval['@value'])) {
+        delete rval['@language'];
+      }
     }
     // convert @type to an array
     else if('@type' in rval && !_isArray(rval['@type'])) {
@@ -1596,8 +1611,20 @@ Processor.prototype.expand = function(
         rval = rval['@set'];
       }
     }
-    // drop objects with only @language
-    else if('@language' in rval && count === 1) {
+    else if(count === 1) {
+      // drop objects with only @language
+      if('@language' in rval) {
+        rval = null;
+      }
+      // drop objects with no parent property that generate no triples
+      // (drop free-floating nodes)
+      if(property === null &&
+        _isKeyword(keys[0]) && !('@graph' in rval || '@type' in rval)) {
+        rval = null;
+      }
+    }
+    // drop free-floating empty objects
+    else if(count === 0 && property === null) {
       rval = null;
     }
 
@@ -2129,7 +2156,7 @@ function _expandValue(ctx, property, value, base) {
       // check for language tagging
       else {
         var language = jsonld.getContextValue(ctx, property, '@language');
-        if(language !== null) {
+        if(language !== null && _isString(value)) {
           rval['@language'] = language;
         }
       }
