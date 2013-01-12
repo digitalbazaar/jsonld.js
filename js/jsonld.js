@@ -426,23 +426,23 @@ jsonld.objectify = function(input, ctx) {
       }
       // get graph alias
       var graph = _compactIri(ctx, '@graph');
-      // remove @preserve from results
-      compacted[graph] = _removePreserve(ctx, compacted[graph]); // named graphs?
+      // remove @preserve from results (named graphs?)
+      compacted[graph] = _removePreserve(ctx, compacted[graph]);
 
       var top = compacted[graph][0];
 
       var recurse = function(subject) {
         // can't replace just a string
         if(!_isObject(subject) && !_isArray(subject)) {
-            return;
+          return;
         }
 
         // bottom out recursion on re-visit
-        if (_isObject(subject)) {
-            if(recurse.visited[subject['@id']]) {
-                return;
-            }
-            recurse.visited[subject['@id']] = true;
+        if(_isObject(subject)) {
+          if(recurse.visited[subject['@id']]) {
+            return;
+          }
+          recurse.visited[subject['@id']] = true;
         }
 
         // each array elementt *or* object key
@@ -459,18 +459,19 @@ jsonld.objectify = function(input, ctx) {
             subject[k] = obj = top[obj];
             recurse(obj);
           }
-          else if (_isArray(obj)) {
-            for (var i=0; i<obj.length; i++) {
-              if (_isString(obj[i]) && isid) {
+          else if(_isArray(obj)) {
+            for(var i=0; i<obj.length; i++) {
+              if(_isString(obj[i]) && isid) {
                 obj[i] = top[obj[i]];
-              } else if (_isObject(obj[i]) && '@id' in obj[i]) {
+              }
+              else if(_isObject(obj[i]) && '@id' in obj[i]) {
                 obj[i] = top[obj[i]['@id']];
               }
               recurse(obj[i]);
             }
           }
-          else if (_isObject(obj)) {
-            var sid = obj["@id"];
+          else if(_isObject(obj)) {
+            var sid = obj['@id'];
             subject[k] = obj = top[sid];
             recurse(obj);
           }
@@ -481,21 +482,21 @@ jsonld.objectify = function(input, ctx) {
 
       compacted.of_type = {};
       for(var s in top) {
-        if (!('@type' in top[s])){
+        if(!('@type' in top[s])) {
           continue;
         }
         var types = top[s]['@type'];
-        if (!_isArray(types)){
+        if(!_isArray(types)) {
           types = [types];
         }
-        for (var t in types){
-          if (!(types[t] in compacted.of_type)){
+        for(var t in types) {
+          if(!(types[t] in compacted.of_type)) {
             compacted.of_type[types[t]] = [];
           }
           compacted.of_type[types[t]].push(top[s]);
         }
       }
-     callback(null, compacted);
+      callback(null, compacted);
     });
   });
 };
