@@ -1505,65 +1505,105 @@ Processor.prototype.expand = function(
       if(prop === '@language') {
         if(!_isString(value)) {
           throw new JsonLdError(
-            'Invalid JSON-LD syntax; "@language" value must not be a string.',
+            'Invalid JSON-LD syntax; "@language" value must be a string.',
             'jsonld.SyntaxError', {value: value});
         }
         // ensure language value is lowercase
         value = value.toLowerCase();
       }
 
-      // recurse into @list or @set keeping the active property
-      var isList = (prop === '@list');
-      if(isList || prop === '@set') {
-        value = this.expand(ctx, property, value, options, isList);
-        if(isList && _isList(value)) {
+      // preserve @annotation
+      if(prop === '@annotation') {
+        if(!_isString(value)) {
           throw new JsonLdError(
-            'Invalid JSON-LD syntax; lists of lists are not permitted.',
-            'jsonld.SyntaxError');
+            'Invalid JSON-LD syntax; "@annotation" value must be a string.',
+            'jsonld.SyntaxError', {value: value});
         }
+      }
+
+      var container = jsonld.getContextValue(ctx, key, '@container');
+
+      // handle language map container
+      if(container === '@language') {
+        value = _expandLanguageMap(value);
+      }
+      // handle annotation container
+      else if(container === '@annotation') {
+        value = [];
+        (function _expandAnnotation() {
+          var keys = Object.keys(value).sort();
+          for(var ki = 0; ki < keys.length; ++ki) {
+            var key = keys[ki];
+            var val = value[k];
+            if(!_isArray(val)) {
+              val = [val];
+            }
+            val = this.expand(ctx, property, val, options, false);
+            for(var vi = 0; vi < val.length; ++vi) {
+              var item = val[vi];
+              if(!('@annotation' in item)) {
+                item['@annotation'] = key;
+              }
+              value.push(item);
+            }
+          }
+        })();
       }
       else {
-        // recursively expand value with new active property
-        value = this.expand(ctx, key, value, options, false);
-      }
-
-      // drop null values if property is not @value (dropped below)
-      if(value !== null || prop === '@value') {
-        // convert value to @list if container specifies it
-        if(prop !== '@list' && !_isList(value)) {
-          var container = jsonld.getContextValue(ctx, key, '@container');
-          if(container === '@list') {
-            // ensure value is an array
-            value = _isArray(value) ? value : [value];
-            value = {'@list': value};
+        // recurse into @list or @set keeping the active property
+        var isList = (prop === '@list');
+        if(isList || prop === '@set') {
+          value = this.expand(ctx, property, value, options, isList);
+          if(isList && _isList(value)) {
+            throw new JsonLdError(
+              'Invalid JSON-LD syntax; lists of lists are not permitted.',
+              'jsonld.SyntaxError');
           }
         }
+        else {
+          // recursively expand value with new active property
+          value = this.expand(ctx, key, value, options, false);
+        }
+      }
 
-        // optimize away @id for @type
-        if(prop === '@type') {
-          if(_isSubjectReference(value)) {
-            value = value['@id'];
-          }
-          else if(_isArray(value)) {
-            var val = [];
-            for(var i in value) {
-              var v = value[i];
-              if(_isSubjectReference(v)) {
-                val.push(v['@id']);
-              }
-              else {
-                val.push(v);
-              }
+      // drop null values if property is not @value
+      if(value === null && prop !== '@value') {
+        continue;
+      }
+
+      // convert value to @list if container specifies it
+      if(prop !== '@list' && !_isList(value)) {
+        if(container === '@list') {
+          // ensure value is an array
+          value = _isArray(value) ? value : [value];
+          value = {'@list': value};
+        }
+      }
+
+      // optimize away @id for @type
+      if(prop === '@type') {
+        if(_isSubjectReference(value)) {
+          value = value['@id'];
+        }
+        else if(_isArray(value)) {
+          var val = [];
+          for(var i in value) {
+            var v = value[i];
+            if(_isSubjectReference(v)) {
+              val.push(v['@id']);
             }
-            value = val;
+            else {
+              val.push(v);
+            }
           }
+          value = val;
         }
-
-        // add value, use an array if not @id, @type, @value, or @language
-        var useArray = !(prop === '@id' || prop === '@type' ||
-          prop === '@value' || prop === '@language');
-        jsonld.addValue(rval, prop, value, {propertyIsArray: useArray});
       }
+
+      // add value, use an array if not @id, @type, @value, or @language
+      var useArray = !(prop === '@id' || prop === '@type' ||
+        prop === '@value' || prop === '@language');
+      jsonld.addValue(rval, prop, value, {propertyIsArray: useArray});
     }
 
     // get property count on expanded output
@@ -2157,6 +2197,38 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
 
   return rval;
 };
+
+/**
+ * Expands a language map.
+ *
+ * @param languageMap the language map to expand.
+ *
+ * @return the expanded language map.
+ */
+function _expandLanguageMap(languageMap) {
+  var rval = [];
+  var keys = Object.keys(languageMap).sort();
+  for(var ki = 0; ki < keys.length; ++ki) {
+    var key = keys[ki];
+    var val = languageMap[key];
+    if(!_isArray(val)) {
+      val = [val];
+    }
+    for(var vi = 0; vi < val.length; ++vi) {
+      var item = val[vi];
+      if(!_isString(item)) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; language map values must be strings.',
+          'jsonld.SyntaxError', {languageMap: languageMap});
+      }
+      rval.push({
+        '@value': item,
+        '@language': key.toLowerCase()
+      });
+    }
+  }
+  return rval;
+}
 
 /**
  * Expands the given value by using the coercion and keyword rules in the
