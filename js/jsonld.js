@@ -1258,7 +1258,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
     if(rval.length === 1) {
       // use single element if no container is specified
       var container = jsonld.getContextValue(ctx, property, '@container');
-      if(container !== '@list' && container !== '@set') {
+      if(container === null) {
         rval = rval[0];
       }
     }
@@ -2165,11 +2165,11 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
  * @param ctx the active context to use.
  * @param property the property the value is associated with.
  * @param value the value to expand.
- * @param expandType either '@base' or '@vocab'.
+ * @param relativeTo either '@base' or '@vocab'.
  *
  * @return the expanded value.
  */
-function _expandValue(ctx, property, value, expandType) {
+function _expandValue(ctx, property, value, relativeTo) {
   // nothing to expand
   if(value === null) {
     return null;
@@ -3224,8 +3224,7 @@ function _removePreserve(ctx, input) {
     for(var prop in input) {
       var result = _removePreserve(ctx, input[prop]);
       var container = jsonld.getContextValue(ctx, prop, '@container');
-      if(_isArray(result) && result.length === 1 &&
-        container !== '@set' && container !== '@list') {
+      if(_isArray(result) && result.length === 1 && container === null) {
         result = result[0];
       }
       input[prop] = result;
@@ -3466,11 +3465,11 @@ function _compactIri(ctx, iri, value) {
  * @param activeCtx the current active context.
  * @param ctx the local context being processed.
  * @param key the key in the local context to define the mapping for.
- * @param expandType either '@base' or '@vocab'.
+ * @param relativeTo either '@base' or '@vocab'.
  * @param defined a map of defining/defined keys to detect cycles and prevent
  *          double definitions.
  */
-function _defineContextMapping(activeCtx, ctx, key, expandType, defined) {
+function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
   if(key in defined) {
     // key already defined
     if(defined[key]) {
@@ -3621,10 +3620,11 @@ function _defineContextMapping(activeCtx, ctx, key, expandType, defined) {
 
   if('@container' in value) {
     var container = value['@container'];
-    if(container !== '@list' && container !== '@set') {
+    if(container !== '@list' && container !== '@set' &&
+      container !== '@annotation' && container !== '@language') {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; @context @container value must be ' +
-        '"@list" or "@set".',
+        'one of the following: @list, @set, @annotation, or @language.',
         'jsonld.SyntaxError', {context: ctx});
     }
 
@@ -3666,12 +3666,12 @@ function _defineContextMapping(activeCtx, ctx, key, expandType, defined) {
  * @param activeCtx the current active context.
  * @param ctx the local context being processed.
  * @param value the string value to expand.
- * @param expandType either '@base' or '@vocab'.
+ * @param relativeTo either '@base' or '@vocab'.
  * @param defined a map for tracking cycles in context definitions.
  *
  * @return the expanded value.
  */
-function _expandContextIri(activeCtx, ctx, value, expandType, defined) {
+function _expandContextIri(activeCtx, ctx, value, relativeTo, defined) {
   // dependency not defined, define it
   if(value in ctx && defined[value] !== true) {
     _defineContextMapping(activeCtx, ctx, value, '@vocab', defined);
@@ -3745,11 +3745,11 @@ function _expandContextIri(activeCtx, ctx, value, expandType, defined) {
  *
  * @param ctx the active context to use.
  * @param term the term to expand.
- * @param expandType either '@base' or '@vocab'.
+ * @param relativeTo either '@base' or '@vocab'.
  *
  * @return the expanded term as an absolute IRI.
  */
-function _expandTerm(ctx, term, expandType) {
+function _expandTerm(ctx, term, relativeTo) {
   // nothing to expand
   if(term === null) {
     return null;
@@ -3796,11 +3796,11 @@ function _expandTerm(ctx, term, expandType) {
   }
 
   // use vocab
-  if(expandType === '@vocab' && '@vocab' in ctx) {
+  if(relativeTo === '@vocab' && '@vocab' in ctx) {
     term = ctx['@vocab'] + term;
   }
   // prepend base to term
-  else if(expandType === '@base') {
+  else if(relativeTo === '@base') {
     term = _prependBase(ctx['@base'], term);
   }
 
