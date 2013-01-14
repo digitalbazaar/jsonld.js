@@ -94,7 +94,7 @@ jsonld.compact = function(input, ctx) {
     }
 
     // process context
-    var activeCtx = _getInitialContext();
+    var activeCtx = _getInitialContext(options.base);
     jsonld.processContext(activeCtx, ctx, options, function(err, activeCtx) {
       if(err) {
         return callback(new JsonLdError(
@@ -227,7 +227,7 @@ jsonld.expand = function(input) {
     }
     try {
       // do expansion
-      var ctx = _getInitialContext();
+      var ctx = _getInitialContext(options.base);
       var expanded = new Processor().expand(ctx, null, input, options, false);
 
       // optimize away @graph with no other properties
@@ -844,11 +844,6 @@ jsonld.useUrlResolver = function(type) {
  * @param callback(err, ctx) called once the operation completes.
  */
 jsonld.processContext = function(activeCtx, localCtx) {
-  // return initial context early for null context
-  if(localCtx === null) {
-    return callback(null, _getInitialContext());
-  }
-
   // get arguments
   var options = {};
   var callbackArg = 2;
@@ -864,6 +859,12 @@ jsonld.processContext = function(activeCtx, localCtx) {
   }
   if(!('resolver' in options)) {
     options.resolver = jsonld.urlResolver;
+  }
+
+  // return initial context early for null context
+  if(localCtx === null) {
+    var ctx = _getInitialContext(options.base);
+    return callback(null, ctx);
   }
 
   // resolve URLs in localCtx
@@ -1459,7 +1460,7 @@ Processor.prototype.expand = function(
     var rval = {};
     for(var key in element) {
       // expand property
-      var prop = _expandTerm(ctx, key);
+      var prop = _expandTerm(ctx, key, '@vocab');
 
       // drop non-absolute IRI keys that aren't keywords
       if(!_isAbsoluteIri(prop) && !_isKeyword(prop, ctx)) {
@@ -2069,8 +2070,7 @@ Processor.prototype.toRDF = function(
  *
  * @return the new active context.
  */
-Processor.prototype.processContext = function(
-  activeCtx, localCtx, options) {
+Processor.prototype.processContext = function(activeCtx, localCtx, options) {
   // initialize the resulting context
   var rval = _clone(activeCtx);
 
@@ -2087,7 +2087,7 @@ Processor.prototype.processContext = function(
 
     // reset to initial context
     if(ctx === null) {
-      rval = _getInitialContext();
+      rval = _getInitialContext(options.base);
       continue;
     }
 
@@ -2105,8 +2105,53 @@ Processor.prototype.processContext = function(
 
     // define context mappings for keys in local context
     var defined = {};
+
+    // handle @vocab
+    if('@vocab' in ctx) {
+      var value = ctx['@vocab'];
+      if(value !== null && !_isString(value)) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; the value of "@vocab" in a ' +
+          '@context must be a string or null.',
+          'jsonld.SyntaxError', {context: ctx});
+      }
+      if(!_isAbsoluteIri(value)) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; the value of "@vocab" in a ' +
+          '@context must be an absolute IRI.',
+          'jsonld.SyntaxError', {context: ctx});
+      }
+      if(value === null) {
+        delete rval['@vocab'];
+      }
+      else {
+        rval['@vocab'] = value;
+      }
+      defined['@vocab'] = true;
+    }
+
+    // handle @language
+    if('@language' in ctx) {
+      var value = ctx['@language'];
+      if(value !== null && !_isString(value)) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; the value of "@language" in a ' +
+          '@context must be a string or null.',
+          'jsonld.SyntaxError', {context: ctx});
+      }
+
+      if(value === null) {
+        delete rval['@language'];
+      }
+      else {
+        rval['@language'] = value;
+      }
+      defined['@language'] = true;
+    }
+
+    // process all other keys
     for(var key in ctx) {
-      _defineContextMapping(rval, ctx, key, options.base, defined);
+      _defineContextMapping(rval, ctx, key, '@vocab', defined);
     }
   }
 
@@ -2120,11 +2165,11 @@ Processor.prototype.processContext = function(
  * @param ctx the active context to use.
  * @param property the property the value is associated with.
  * @param value the value to expand.
- * @param base the base IRI to use.
+ * @param expandType either '@base' or '@vocab'.
  *
  * @return the expanded value.
  */
-function _expandValue(ctx, property, value, base) {
+function _expandValue(ctx, property, value, expandType) {
   // nothing to expand
   if(value === null) {
     return null;
@@ -2134,9 +2179,12 @@ function _expandValue(ctx, property, value, base) {
   var rval = value;
 
   // special-case expand @id and @type (skips '@id' expansion)
-  var prop = _expandTerm(ctx, property);
-  if(prop === '@id' || prop === '@type') {
-    rval = _expandTerm(ctx, value, base);
+  var prop = _expandTerm(ctx, property, '@vocab');
+  if(prop === '@id') {
+    rval = _expandTerm(ctx, value, '@base');
+  }
+  else if(prop === '@type') {
+    rval = _expandTerm(ctx, value, '@vocab');
   }
   else {
     // get type definition from context
@@ -2144,7 +2192,7 @@ function _expandValue(ctx, property, value, base) {
 
     // do @id expansion (automatic for @graph)
     if(type === '@id' || prop === '@graph') {
-      rval = {'@id': _expandTerm(ctx, value, base)};
+      rval = {'@id': _expandTerm(ctx, value, '@base')};
     }
     else if(!_isKeyword(prop)) {
       rval = {'@value': value};
@@ -3369,7 +3417,7 @@ function _compactIri(ctx, iri, value) {
   }
 
   // no matching terms, use @vocab if available
-  if(terms.length === 0 && ctx['@vocab']) {
+  if(terms.length === 0 && '@vocab' in ctx) {
     // determine if vocab is a prefix of the iri
     var vocab = ctx['@vocab'];
     if(iri.indexOf(vocab) === 0) {
@@ -3418,11 +3466,11 @@ function _compactIri(ctx, iri, value) {
  * @param activeCtx the current active context.
  * @param ctx the local context being processed.
  * @param key the key in the local context to define the mapping for.
- * @param base the base IRI.
+ * @param expandType either '@base' or '@vocab'.
  * @param defined a map of defining/defined keys to detect cycles and prevent
  *          double definitions.
  */
-function _defineContextMapping(activeCtx, ctx, key, base, defined) {
+function _defineContextMapping(activeCtx, ctx, key, expandType, defined) {
   if(key in defined) {
     // key already defined
     if(defined[key]) {
@@ -3444,7 +3492,7 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
     prefix = key.substr(0, colon);
     if(prefix in ctx) {
       // define parent prefix
-      _defineContextMapping(activeCtx, ctx, prefix, base, defined);
+      _defineContextMapping(activeCtx, ctx, prefix, '@base', defined);
     }
   }
 
@@ -3452,52 +3500,9 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
   var value = ctx[key];
 
   if(_isKeyword(key)) {
-    // support @vocab
-    if(key === '@vocab') {
-      if(value !== null && !_isString(value)) {
-        throw new JsonLdError(
-          'Invalid JSON-LD syntax; the value of "@vocab" in a ' +
-          '@context must be a string or null.',
-          'jsonld.SyntaxError', {context: ctx});
-      }
-      if(!_isAbsoluteIri(value)) {
-        throw new JsonLdError(
-          'Invalid JSON-LD syntax; the value of "@vocab" in a ' +
-          '@context must be an absolute IRI.',
-          'jsonld.SyntaxError', {context: ctx});
-      }
-      if(value === null) {
-        delete activeCtx['@vocab'];
-      }
-      else {
-        activeCtx['@vocab'] = value;
-      }
-      defined[key] = true;
-      return;
-    }
-
-    // only @language is permitted
-    if(key !== '@language') {
-      throw new JsonLdError(
-        'Invalid JSON-LD syntax; keywords cannot be overridden.',
-        'jsonld.SyntaxError', {context: ctx});
-    }
-
-    if(value !== null && !_isString(value)) {
-      throw new JsonLdError(
-        'Invalid JSON-LD syntax; the value of "@language" in a ' +
-        '@context must be a string or null.',
-        'jsonld.SyntaxError', {context: ctx});
-    }
-
-    if(value === null) {
-      delete activeCtx['@language'];
-    }
-    else {
-      activeCtx['@language'] = value;
-    }
-    defined[key] = true;
-    return;
+    throw new JsonLdError(
+      'Invalid JSON-LD syntax; keywords cannot be overridden.',
+      'jsonld.SyntaxError', {context: ctx});
   }
 
   // clear context entry
@@ -3533,7 +3538,7 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
     }
     else {
       // expand value to a full IRI
-      value = _expandContextIri(activeCtx, ctx, value, base, defined);
+      value = _expandContextIri(activeCtx, ctx, value, '@base', defined);
     }
 
     // define/redefine key to expanded IRI/keyword
@@ -3563,22 +3568,31 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
     // expand @id if it is not @type
     if(id !== '@type') {
       // expand @id to full IRI
-      id = _expandContextIri(activeCtx, ctx, id, base, defined);
+      id = _expandContextIri(activeCtx, ctx, id, '@base', defined);
     }
 
     // add @id to mapping
     mapping['@id'] = id;
   }
   else {
-    // non-IRIs *must* define @ids
     if(prefix === null) {
-      throw new JsonLdError(
-        'Invalid JSON-LD syntax; @context terms must define an @id.',
-        'jsonld.SyntaxError', {context: ctx, key: key});
+      // non-IRIs *must* define @ids if @vocab is not available
+      if(!('@vocab' in activeCtx)) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; @context terms must define an @id.',
+          'jsonld.SyntaxError', {context: ctx, key: key});
+      }
+      // prepend vocab to term
+      if('@vocab' in activeCtx) {
+        mapping['@id'] = activeCtx['@vocab'] + key;
+      }
+      // prepend base to term
+      else {
+        mapping['@id'] = _prependBase(activeCtx['@base'], key);
+      }
     }
-
     // set @id based on prefix parent
-    if(prefix in activeCtx.mappings) {
+    else if(prefix in activeCtx.mappings) {
       var suffix = key.substr(colon + 1);
       mapping['@id'] = activeCtx.mappings[prefix]['@id'] + suffix;
     }
@@ -3598,7 +3612,7 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
 
     if(type !== '@id') {
       // expand @type to full IRI
-      type = _expandContextIri(activeCtx, ctx, type, '', defined);
+      type = _expandContextIri(activeCtx, ctx, type, '@vocab', defined);
     }
 
     // add @type to mapping
@@ -3652,15 +3666,15 @@ function _defineContextMapping(activeCtx, ctx, key, base, defined) {
  * @param activeCtx the current active context.
  * @param ctx the local context being processed.
  * @param value the string value to expand.
- * @param base the base IRI.
+ * @param expandType either '@base' or '@vocab'.
  * @param defined a map for tracking cycles in context definitions.
  *
  * @return the expanded value.
  */
-function _expandContextIri(activeCtx, ctx, value, base, defined) {
+function _expandContextIri(activeCtx, ctx, value, expandType, defined) {
   // dependency not defined, define it
   if(value in ctx && defined[value] !== true) {
-    _defineContextMapping(activeCtx, ctx, value, base, defined);
+    _defineContextMapping(activeCtx, ctx, value, '@vocab', defined);
   }
 
   // recurse if value is a term
@@ -3670,7 +3684,7 @@ function _expandContextIri(activeCtx, ctx, value, base, defined) {
     if(value === id) {
       return value;
     }
-    return _expandContextIri(activeCtx, ctx, id, base, defined);
+    return _expandContextIri(activeCtx, ctx, id, '@base', defined);
   }
 
   // split value into prefix:suffix
@@ -3691,13 +3705,13 @@ function _expandContextIri(activeCtx, ctx, value, base, defined) {
 
     // dependency not defined, define it
     if(prefix in ctx && defined[prefix] !== true) {
-      _defineContextMapping(activeCtx, ctx, prefix, base, defined);
+      _defineContextMapping(activeCtx, ctx, prefix, '@base', defined);
     }
 
     // recurse if prefix is defined
     if(prefix in activeCtx.mappings) {
       var id = activeCtx.mappings[prefix]['@id'];
-      return _expandContextIri(activeCtx, ctx, id, base, defined) + suffix;
+      return _expandContextIri(activeCtx, ctx, id, '@base', defined) + suffix;
     }
 
     // consider value an absolute IRI
@@ -3705,12 +3719,12 @@ function _expandContextIri(activeCtx, ctx, value, base, defined) {
   }
 
   // prepend vocab
-  if(ctx['@vocab']) {
-    value = _prependBase(ctx['@vocab'], value);
+  if('@vocab' in activeCtx) {
+    value = activeCtx['@vocab'] + value;
   }
   // prepend base
   else {
-    value = _prependBase(base, value);
+    value = _prependBase(activeCtx['@base'], value);
   }
 
   // value must now be an absolute IRI
@@ -3731,11 +3745,11 @@ function _expandContextIri(activeCtx, ctx, value, base, defined) {
  *
  * @param ctx the active context to use.
  * @param term the term to expand.
- * @param base the base IRI to use if a relative IRI is detected.
+ * @param expandType either '@base' or '@vocab'.
  *
  * @return the expanded term as an absolute IRI.
  */
-function _expandTerm(ctx, term, base) {
+function _expandTerm(ctx, term, expandType) {
   // nothing to expand
   if(term === null) {
     return null;
@@ -3748,7 +3762,12 @@ function _expandTerm(ctx, term, base) {
     if(term === id) {
       return term;
     }
-    return _expandTerm(ctx, id, base);
+    return _expandTerm(ctx, id, '@base');
+  }
+
+  // keywords need no expanding (aliasing already handled by now)
+  if(_isKeyword(term)) {
+    return term;
   }
 
   // split term into prefix:suffix
@@ -3769,7 +3788,7 @@ function _expandTerm(ctx, term, base) {
 
     // the term's prefix has a mapping, so it is a CURIE
     if(prefix in ctx.mappings) {
-      return _expandTerm(ctx, ctx.mappings[prefix]['@id'], base) + suffix;
+      return _expandTerm(ctx, ctx.mappings[prefix]['@id'], '@base') + suffix;
     }
 
     // consider term an absolute IRI
@@ -3777,12 +3796,12 @@ function _expandTerm(ctx, term, base) {
   }
 
   // use vocab
-  if(ctx['@vocab']) {
-    term = _prependBase(ctx['@vocab'], term);
+  if(expandType === '@vocab' && '@vocab' in ctx) {
+    term = ctx['@vocab'] + term;
   }
   // prepend base to term
-  else if(!_isUndefined(base)) {
-    term = _prependBase(base, term);
+  else if(expandType === '@base') {
+    term = _prependBase(ctx['@base'], term);
   }
 
   return term;
@@ -3797,6 +3816,9 @@ function _expandTerm(ctx, term, base) {
  * @return the absolute IRI.
  */
 function _prependBase(base, iri) {
+  if(!base) {
+    return iri;
+  }
   if(iri === '' || iri.indexOf('#') === 0) {
     return base + iri;
   }
@@ -3809,10 +3831,13 @@ function _prependBase(base, iri) {
 /**
  * Gets the initial context.
  *
+ * @param base the document base IRI.
+ *
  * @return the initial context.
  */
-function _getInitialContext() {
+function _getInitialContext(base) {
   return {
+    '@base': base || '',
     mappings: {},
     keywords: {
       '@context': [],
