@@ -1423,6 +1423,8 @@ Processor.prototype.compact = function(ctx, property, element, options) {
  */
 Processor.prototype.expand = function(
   ctx, property, element, options, propertyIsList) {
+  var self = this;
+
   if(typeof element === 'undefined') {
     throw new JsonLdError(
       'Invalid JSON-LD syntax; undefined element.',
@@ -1434,7 +1436,7 @@ Processor.prototype.expand = function(
     var rval = [];
     for(var i in element) {
       // expand element
-      var e = this.expand(ctx, property, element[i], options, propertyIsList);
+      var e = self.expand(ctx, property, element[i], options, propertyIsList);
       if(_isArray(e) && propertyIsList) {
         // lists of lists are illegal
         throw new JsonLdError(
@@ -1453,7 +1455,7 @@ Processor.prototype.expand = function(
   if(_isObject(element)) {
     // if element has a context, process it
     if('@context' in element) {
-      ctx = this.processContext(ctx, element['@context'], options);
+      ctx = self.processContext(ctx, element['@context'], options);
       delete element['@context'];
     }
 
@@ -1529,31 +1531,32 @@ Processor.prototype.expand = function(
       }
       // handle annotation container
       else if(container === '@annotation') {
-        value = [];
-        (function _expandAnnotation() {
+        value = (function _expandAnnotation() {
+          var rval = [];
           var keys = Object.keys(value).sort();
           for(var ki = 0; ki < keys.length; ++ki) {
             var key = keys[ki];
-            var val = value[k];
+            var val = value[key];
             if(!_isArray(val)) {
               val = [val];
             }
-            val = this.expand(ctx, property, val, options, false);
+            val = self.expand(ctx, key, val, options, false);
             for(var vi = 0; vi < val.length; ++vi) {
               var item = val[vi];
               if(!('@annotation' in item)) {
                 item['@annotation'] = key;
               }
-              value.push(item);
+              rval.push(item);
             }
           }
+          return rval;
         })();
       }
       else {
         // recurse into @list or @set keeping the active property
         var isList = (prop === '@list');
         if(isList || prop === '@set') {
-          value = this.expand(ctx, property, value, options, isList);
+          value = self.expand(ctx, property, value, options, isList);
           if(isList && _isList(value)) {
             throw new JsonLdError(
               'Invalid JSON-LD syntax; lists of lists are not permitted.',
@@ -1562,7 +1565,7 @@ Processor.prototype.expand = function(
         }
         else {
           // recursively expand value with new active property
-          value = this.expand(ctx, key, value, options, false);
+          value = self.expand(ctx, key, value, options, false);
         }
       }
 
@@ -1600,8 +1603,10 @@ Processor.prototype.expand = function(
         }
       }
 
-      // add value, use an array if not @id, @type, @value, or @language
-      var useArray = !(prop === '@id' || prop === '@type' ||
+      // add value, use an array if not @annotation, @id, @type, @value, or
+      // @language
+      var useArray = !(prop === '@annotation' ||
+        prop === '@id' || prop === '@type' ||
         prop === '@value' || prop === '@language');
       jsonld.addValue(rval, prop, value, {propertyIsArray: useArray});
     }
@@ -1610,13 +1615,18 @@ Processor.prototype.expand = function(
     var keys = Object.keys(rval);
     var count = keys.length;
 
-    // @value must only have @language or @type
     if('@value' in rval) {
+      // do not count @annotation
+      if('@annotation' in rval) {
+        count -= 1;
+      }
+      // @value must only have @language or @type
       if((count === 2 && !('@type' in rval) && !('@language' in rval)) ||
         count > 2) {
         throw new JsonLdError(
-          'Invalid JSON-LD syntax; an element containing "@value" must have ' +
-          'at most one other property which can be "@type" or "@language".',
+          'Invalid JSON-LD syntax; an element containing "@value" may only ' +
+          'have an "@annotation" property and at most one other property ' +
+          'which can be "@type" or "@language".',
           'jsonld.SyntaxError', {element: rval});
       }
       // value @type must be a string
@@ -3925,6 +3935,7 @@ function _getInitialContext(base) {
     '@base': base || '',
     mappings: {},
     keywords: {
+      '@annotation': [],
       '@context': [],
       '@container': [],
       '@default': [],
@@ -3966,6 +3977,7 @@ function _isKeyword(v, ctx) {
   }
   else {
     switch(v) {
+    case '@annotation':
     case '@context':
     case '@container':
     case '@default':
