@@ -1108,7 +1108,7 @@ jsonld.getContextValue = function(ctx, key, type) {
   }
 
   // get specific entry information
-  if(key in ctx.mappings) {
+  if(ctx.mappings[key]) {
     var entry = ctx.mappings[key];
 
     // return whole entry
@@ -1463,7 +1463,7 @@ Processor.prototype.expand = function(
       var prop = _expandTerm(ctx, key, '@vocab');
 
       // drop non-absolute IRI keys that aren't keywords
-      if(!_isAbsoluteIri(prop) && !_isKeyword(prop, ctx)) {
+      if(prop === null || !_isAbsoluteIri(prop) && !_isKeyword(prop, ctx)) {
         continue;
       }
 
@@ -2149,20 +2149,20 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
     // handle @vocab
     if('@vocab' in ctx) {
       var value = ctx['@vocab'];
-      if(value !== null && !_isString(value)) {
+      if(value === null) {
+        delete rval['@vocab'];
+      }
+      else if(!_isString(value)) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; the value of "@vocab" in a ' +
           '@context must be a string or null.',
           'jsonld.SyntaxError', {context: ctx});
       }
-      if(!_isAbsoluteIri(value)) {
+      else if(!_isAbsoluteIri(value)) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; the value of "@vocab" in a ' +
           '@context must be an absolute IRI.',
           'jsonld.SyntaxError', {context: ctx});
-      }
-      if(value === null) {
-        delete rval['@vocab'];
       }
       else {
         rval['@vocab'] = value;
@@ -2173,15 +2173,14 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
     // handle @language
     if('@language' in ctx) {
       var value = ctx['@language'];
-      if(value !== null && !_isString(value)) {
+      if(value === null) {
+        delete rval['@language'];
+      }
+      else if(!_isString(value)) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; the value of "@language" in a ' +
           '@context must be a string or null.',
           'jsonld.SyntaxError', {context: ctx});
-      }
-
-      if(value === null) {
-        delete rval['@language'];
       }
       else {
         rval['@language'] = value;
@@ -3445,7 +3444,7 @@ function _compactIri(ctx, iri, value) {
   for(var term in ctx.mappings) {
     // skip terms with non-matching iris
     var entry = ctx.mappings[term];
-    if(entry['@id'] !== iri) {
+    if(!entry || entry['@id'] !== iri) {
       continue;
     }
     // skip @set containers for @lists
@@ -3509,7 +3508,7 @@ function _compactIri(ctx, iri, value) {
       }
       // skip entries with @ids that are not partial matches
       var entry = ctx.mappings[term];
-      if(entry['@id'] === iri || iri.indexOf(entry['@id']) !== 0) {
+      if(!entry || entry['@id'] === iri || iri.indexOf(entry['@id']) !== 0) {
         continue;
       }
 
@@ -3578,15 +3577,15 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
 
   // clear context entry
   if(value === null || (_isObject(value) && value['@id'] === null)) {
-    if(key in activeCtx.mappings) {
+    if(activeCtx.mappings[key]) {
       // if key is a keyword alias, remove it
       var kw = activeCtx.mappings[key]['@id'];
       if(_isKeyword(kw)) {
         var aliases = activeCtx.keywords[kw];
         aliases.splice(aliases.indexOf(key), 1);
       }
-      delete activeCtx.mappings[key];
     }
+    activeCtx.mappings[key] = null;
     defined[key] = true;
     return;
   }
@@ -3718,7 +3717,7 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
   }
 
   // merge onto parent mapping if one exists for a prefix
-  if(prefix !== null && prefix in activeCtx.mappings) {
+  if(prefix !== null && activeCtx.mappings[prefix]) {
     var child = mapping;
     mapping = _clone(activeCtx.mappings[prefix]);
     for(var k in child) {
@@ -3749,9 +3748,16 @@ function _expandContextIri(activeCtx, ctx, value, relativeTo, defined) {
     _defineContextMapping(activeCtx, ctx, value, '@vocab', defined);
   }
 
+  var mapping = activeCtx.mappings[value];
+
+  // value is explicitly ignored
+  if(mapping === null) {
+    return null;
+  }
+
   // recurse if value is a term
-  if(value in activeCtx.mappings) {
-    var id = activeCtx.mappings[value]['@id'];
+  if(mapping) {
+    var id = mapping['@id'];
     // value is already an absolute IRI
     if(value === id) {
       return value;
@@ -3781,7 +3787,7 @@ function _expandContextIri(activeCtx, ctx, value, relativeTo, defined) {
     }
 
     // recurse if prefix is defined
-    if(prefix in activeCtx.mappings) {
+    if(activeCtx.mappings[prefix]) {
       var id = activeCtx.mappings[prefix]['@id'];
       return _expandContextIri(activeCtx, ctx, id, '@base', defined) + suffix;
     }
@@ -3827,9 +3833,16 @@ function _expandTerm(ctx, term, relativeTo) {
     return null;
   }
 
+  var mapping = ctx.mappings[term];
+
+  // term is explicitly ignored
+  if(mapping === null) {
+    return null;
+  }
+
   // the term has a mapping, so it is a plain term
-  if(term in ctx.mappings) {
-    var id = ctx.mappings[term]['@id'];
+  if(mapping) {
+    var id = mapping['@id'];
     // term is already an absolute IRI
     if(term === id) {
       return term;
@@ -3859,7 +3872,7 @@ function _expandTerm(ctx, term, relativeTo) {
     }
 
     // the term's prefix has a mapping, so it is a CURIE
-    if(prefix in ctx.mappings) {
+    if(ctx.mappings[prefix]) {
       return _expandTerm(ctx, ctx.mappings[prefix]['@id'], '@base') + suffix;
     }
 
