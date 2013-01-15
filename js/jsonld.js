@@ -1462,7 +1462,7 @@ Processor.prototype.expand = function(
     var rval = {};
     for(var key in element) {
       // expand property
-      var prop = _expandTerm(ctx, key, '@vocab');
+      var prop = _expandTerm(ctx, key, {vocab: true});
 
       // drop non-absolute IRI keys that aren't keywords
       if(prop === null || !_isAbsoluteIri(prop) && !_isKeyword(prop, ctx)) {
@@ -2246,7 +2246,9 @@ function _expandLanguageMap(languageMap) {
  * @param ctx the active context to use.
  * @param property the property the value is associated with.
  * @param value the value to expand.
- * @param relativeTo either '@base' or '@vocab'.
+ * @param relativeTo options for how to resolve relative IRIs:
+ *          base: true to resolve against the base IRI, false not to.
+ *          vocab: true to concatenate after @vocab, false not to.
  *
  * @return the expanded value.
  */
@@ -2260,12 +2262,12 @@ function _expandValue(ctx, property, value, relativeTo) {
   var rval = value;
 
   // special-case expand @id and @type (skips '@id' expansion)
-  var prop = _expandTerm(ctx, property, '@vocab');
+  var prop = _expandTerm(ctx, property, {vocab: true});
   if(prop === '@id') {
-    rval = _expandTerm(ctx, value, '@base');
+    rval = _expandTerm(ctx, value, {base: true});
   }
   else if(prop === '@type') {
-    rval = _expandTerm(ctx, value, '@vocab');
+    rval = _expandTerm(ctx, value, {vocab: true, base: true});
   }
   else {
     // get type definition from context
@@ -2273,7 +2275,7 @@ function _expandValue(ctx, property, value, relativeTo) {
 
     // do @id expansion (automatic for @graph)
     if(type === '@id' || prop === '@graph') {
-      rval = {'@id': _expandTerm(ctx, value, '@base')};
+      rval = {'@id': _expandTerm(ctx, value, {base: true})};
     }
     else if(!_isKeyword(prop)) {
       rval = {'@value': value};
@@ -3546,7 +3548,9 @@ function _compactIri(ctx, iri, value) {
  * @param activeCtx the current active context.
  * @param ctx the local context being processed.
  * @param key the key in the local context to define the mapping for.
- * @param relativeTo either '@base' or '@vocab'.
+ * @param relativeTo options for how to resolve relative IRIs:
+ *          base: true to resolve against the base IRI, false not to.
+ *          vocab: true to concatenate after @vocab, false not to.
  * @param defined a map of defining/defined keys to detect cycles and prevent
  *          double definitions.
  */
@@ -3572,7 +3576,7 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
     prefix = key.substr(0, colon);
     if(prefix in ctx) {
       // define parent prefix
-      _defineContextMapping(activeCtx, ctx, prefix, '@base', defined);
+      _defineContextMapping(activeCtx, ctx, prefix, {base: true}, defined);
     }
   }
 
@@ -3618,7 +3622,7 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
     }
     else {
       // expand value to a full IRI
-      value = _expandContextIri(activeCtx, ctx, value, '@base', defined);
+      value = _expandContextIri(activeCtx, ctx, value, {base: true}, defined);
     }
 
     // define/redefine key to expanded IRI/keyword
@@ -3648,7 +3652,7 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
     // expand @id if it is not @type
     if(id !== '@type') {
       // expand @id to full IRI
-      id = _expandContextIri(activeCtx, ctx, id, '@base', defined);
+      id = _expandContextIri(activeCtx, ctx, id, {base: true}, defined);
     }
 
     // add @id to mapping
@@ -3692,7 +3696,8 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
 
     if(type !== '@id') {
       // expand @type to full IRI
-      type = _expandContextIri(activeCtx, ctx, type, '@vocab', defined);
+      type = _expandContextIri(
+        activeCtx, ctx, type, {vocab: true, base: true}, defined);
     }
 
     // add @type to mapping
@@ -3747,7 +3752,9 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
  * @param activeCtx the current active context.
  * @param ctx the local context being processed.
  * @param value the string value to expand.
- * @param relativeTo either '@base' or '@vocab'.
+ * @param relativeTo options for how to resolve relative IRIs:
+ *          base: true to resolve against the base IRI, false not to.
+ *          vocab: true to concatenate after @vocab, false not to.
  * @param defined a map for tracking cycles in context definitions.
  *
  * @return the expanded value.
@@ -3755,7 +3762,7 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
 function _expandContextIri(activeCtx, ctx, value, relativeTo, defined) {
   // dependency not defined, define it
   if(value in ctx && defined[value] !== true) {
-    _defineContextMapping(activeCtx, ctx, value, '@vocab', defined);
+    _defineContextMapping(activeCtx, ctx, value, {vocab: true}, defined);
   }
 
   var mapping = activeCtx.mappings[value];
@@ -3772,7 +3779,7 @@ function _expandContextIri(activeCtx, ctx, value, relativeTo, defined) {
     if(value === id) {
       return value;
     }
-    return _expandContextIri(activeCtx, ctx, id, '@base', defined);
+    return _expandContextIri(activeCtx, ctx, id, {base: true}, defined);
   }
 
   // split value into prefix:suffix
@@ -3793,13 +3800,14 @@ function _expandContextIri(activeCtx, ctx, value, relativeTo, defined) {
 
     // dependency not defined, define it
     if(prefix in ctx && defined[prefix] !== true) {
-      _defineContextMapping(activeCtx, ctx, prefix, '@base', defined);
+      _defineContextMapping(activeCtx, ctx, prefix, {base: true}, defined);
     }
 
     // recurse if prefix is defined
     if(activeCtx.mappings[prefix]) {
       var id = activeCtx.mappings[prefix]['@id'];
-      return _expandContextIri(activeCtx, ctx, id, '@base', defined) + suffix;
+      return _expandContextIri(
+        activeCtx, ctx, id, {base: true}, defined) + suffix;
     }
 
     // consider value an absolute IRI
@@ -3807,11 +3815,11 @@ function _expandContextIri(activeCtx, ctx, value, relativeTo, defined) {
   }
 
   // prepend vocab
-  if('@vocab' in activeCtx) {
+  if(relativeTo.vocab && '@vocab' in activeCtx) {
     value = activeCtx['@vocab'] + value;
   }
   // prepend base
-  else {
+  else if(relativeTo.base) {
     value = _prependBase(activeCtx['@base'], value);
   }
 
@@ -3833,7 +3841,9 @@ function _expandContextIri(activeCtx, ctx, value, relativeTo, defined) {
  *
  * @param ctx the active context to use.
  * @param term the term to expand.
- * @param relativeTo either '@base' or '@vocab'.
+ * @param relativeTo options for how to resolve relative IRIs:
+ *          base: true to resolve against the base IRI, false not to.
+ *          vocab: true to concatenate after @vocab, false not to.
  *
  * @return the expanded term as an absolute IRI.
  */
@@ -3857,7 +3867,7 @@ function _expandTerm(ctx, term, relativeTo) {
     if(term === id) {
       return term;
     }
-    return _expandTerm(ctx, id, '@base');
+    return _expandTerm(ctx, id, {base: true});
   }
 
   // keywords need no expanding (aliasing already handled by now)
@@ -3883,7 +3893,8 @@ function _expandTerm(ctx, term, relativeTo) {
 
     // the term's prefix has a mapping, so it is a CURIE
     if(ctx.mappings[prefix]) {
-      return _expandTerm(ctx, ctx.mappings[prefix]['@id'], '@base') + suffix;
+      return _expandTerm(
+        ctx, ctx.mappings[prefix]['@id'], {base: true}) + suffix;
     }
 
     // consider term an absolute IRI
@@ -3891,11 +3902,11 @@ function _expandTerm(ctx, term, relativeTo) {
   }
 
   // use vocab
-  if(relativeTo === '@vocab' && '@vocab' in ctx) {
+  if(relativeTo.vocab && '@vocab' in ctx) {
     term = ctx['@vocab'] + term;
   }
   // prepend base to term
-  else if(relativeTo === '@base') {
+  else if(relativeTo.base) {
     term = _prependBase(ctx['@base'], term);
   }
 
@@ -3911,16 +3922,76 @@ function _expandTerm(ctx, term, relativeTo) {
  * @return the absolute IRI.
  */
 function _prependBase(base, iri) {
-  if(!base) {
-    return iri;
+  var authority = (base.host || '');
+
+  var rel = jsonld.url.parse(iri);
+  rel.pathname = (rel.pathname || '');
+
+  // per RFC3986 normalize slashes and dots in path
+  var path;
+
+  // IRI contains authority
+  if(rel.href.indexOf('//') === 0) {
+    path = rel.href.substr(2);
+    authority = path.substr(0, path.lastIndexOf('/'));
+    path = path.substr(authority.length);
   }
-  if(iri === '' || iri.indexOf('#') === 0) {
-    return base + iri;
+  // IRI represents an absolue path
+  else if(rel.pathname.indexOf('/') === 0) {
+    path = rel.pathname;
   }
   else {
+    path = base.pathname;
+
     // prepend last directory for base
-    return base.substr(0, base.lastIndexOf('/') + 1) + iri;
+    if(rel.pathname !== '') {
+      path = path.substr(0, path.lastIndexOf('/') + 1) + rel.pathname;
+    }
   }
+
+  var segments = path.split('/');
+
+  // remove '.' and '' (do not remove trailing empty path)
+  segments = segments.filter(function(e, i) {
+    return e !== '.' && (e !== '' || i === segments.length - 1);
+  });
+
+  // remove as many '..' as possible
+  for(var i = 0; i < segments.length;) {
+    var segment = segments[i];
+    if(segment === '..') {
+      // too many reverse dots
+      if(i === 0) {
+        var last = segments[segments.length - 1];
+        if(last !== '..') {
+          segments = [last];
+        }
+        else {
+          segments = [];
+        }
+        break;
+      }
+
+      // remove '..' and previous segment
+      segments.splice(i - 1, 2);
+      i -= 1;
+    }
+    else {
+      i += 1;
+    }
+  }
+
+  path = '/' + segments.join('/');
+
+  // add query and hash
+  if(rel.query) {
+    path += '?' + rel.query;
+  }
+  if(rel.hash) {
+    path += rel.hash;
+  }
+
+  return (base.protocol || '') + '//' + authority + path;
 }
 
 /**
@@ -3932,7 +4003,7 @@ function _prependBase(base, iri) {
  */
 function _getInitialContext(base) {
   return {
-    '@base': base || '',
+    '@base': jsonld.url.parse(base || ''),
     mappings: {},
     keywords: {
       '@annotation': [],
@@ -5256,5 +5327,43 @@ function _defineXMLSerializer() {
 }
 
 } // end _defineXMLSerializer
+
+// define URL parser
+jsonld.url = {};
+if(_nodejs) {
+  jsonld.url.parse = require('url').parse;
+}
+else {
+  // parseUri 1.2.2
+  // (c) Steven Levithan <stevenlevithan.com>
+  // MIT License
+  var parseUri = {};
+  parseUri.options = {
+    key: ['href','protocol','host','userInfo','user','password','hostname','port','relative','path','directory','file','query','hash'],
+    parser: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/
+  };
+  jsonld.url.parse = function(str) {
+    var o = parseUri.options;
+    var m = o.parser.exec(str);
+    var uri = {};
+    var i = 14;
+    while(i--) {
+      uri[o.key[i]] = m[i] || '';
+    }
+    // normalize to node.js API
+    if(uri.host && uri.path === '') {
+      uri.path = '/';
+    }
+    uri.pathname = uri.path;
+    if(uri.query) {
+      uri.path = uri.path + '?' + uri.query;
+    }
+    uri.protocol += ':';
+    if(uri.hash) {
+      uri.hash = '#' + uri.hash;
+    }
+    return uri;
+  };
+}
 
 })();
