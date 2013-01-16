@@ -94,7 +94,7 @@ jsonld.compact = function(input, ctx) {
     }
 
     // process context
-    var activeCtx = _getInitialContext(options.base);
+    var activeCtx = _getInitialContext(options);
     jsonld.processContext(activeCtx, ctx, options, function(err, activeCtx) {
       if(err) {
         return callback(new JsonLdError(
@@ -197,6 +197,8 @@ jsonld.compact = function(input, ctx) {
  * @param input the JSON-LD input to expand.
  * @param [options] the options to use:
  *          [base] the base IRI to use.
+ *          [renameBlankNodes] true to rename blank nodes, false not to,
+ *            defaults to true.
  *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, expanded) called once the operation completes.
  */
@@ -218,6 +220,9 @@ jsonld.expand = function(input) {
   if(!('resolver' in options)) {
     options.resolver = jsonld.urlResolver;
   }
+  if(!('renameBlankNodes' in options)) {
+    options.renameBlankNodes = true;
+  }
 
   // resolve all @context URLs in the input
   input = _clone(input);
@@ -227,7 +232,7 @@ jsonld.expand = function(input) {
     }
     try {
       // do expansion
-      var ctx = _getInitialContext(options.base);
+      var ctx = _getInitialContext(options);
       var expanded = new Processor().expand(ctx, null, input, options, false);
 
       // optimize away @graph with no other properties
@@ -863,7 +868,7 @@ jsonld.processContext = function(activeCtx, localCtx) {
 
   // return initial context early for null context
   if(localCtx === null) {
-    var ctx = _getInitialContext(options.base);
+    var ctx = _getInitialContext(options);
     return callback(null, ctx);
   }
 
@@ -1462,7 +1467,7 @@ Processor.prototype.expand = function(
     var rval = {};
     for(var key in element) {
       // expand property
-      var prop = _expandTerm(ctx, key, {vocab: true});
+      var prop = _expandIri(ctx, key, {vocab: true});
 
       // drop non-absolute IRI keys that aren't keywords
       if(prop === null || !_isAbsoluteIri(prop) && !_isKeyword(prop, ctx)) {
@@ -2122,7 +2127,7 @@ Processor.prototype.toRDF = function(
  */
 Processor.prototype.processContext = function(activeCtx, localCtx, options) {
   // initialize the resulting context
-  var rval = _clone(activeCtx);
+  var rval = activeCtx.clone();
 
   // normalize local context to an array of @context objects
   if(_isObject(localCtx) && '@context' in localCtx &&
@@ -2137,7 +2142,7 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
 
     // reset to initial context
     if(ctx === null) {
-      rval = _getInitialContext(options.base);
+      rval = _getInitialContext(options);
       continue;
     }
 
@@ -2262,12 +2267,12 @@ function _expandValue(ctx, property, value, relativeTo) {
   var rval = value;
 
   // special-case expand @id and @type (skips '@id' expansion)
-  var prop = _expandTerm(ctx, property, {vocab: true});
+  var prop = _expandIri(ctx, property, {vocab: true});
   if(prop === '@id') {
-    rval = _expandTerm(ctx, value, {base: true});
+    rval = _expandIri(ctx, value, {base: true});
   }
   else if(prop === '@type') {
-    rval = _expandTerm(ctx, value, {vocab: true, base: true});
+    rval = _expandIri(ctx, value, {vocab: true, base: true});
   }
   else {
     // get type definition from context
@@ -2275,7 +2280,7 @@ function _expandValue(ctx, property, value, relativeTo) {
 
     // do @id expansion (automatic for @graph)
     if(type === '@id' || prop === '@graph') {
-      rval = {'@id': _expandTerm(ctx, value, {base: true})};
+      rval = {'@id': _expandIri(ctx, value, {base: true})};
     }
     else if(!_isKeyword(prop)) {
       rval = {'@value': value};
@@ -3546,7 +3551,7 @@ function _compactIri(ctx, iri, value) {
  * Defines a context mapping during context processing.
  *
  * @param activeCtx the current active context.
- * @param ctx the local context being processed.
+ * @param localCtx the local context being processed.
  * @param key the key in the local context to define the mapping for.
  * @param relativeTo options for how to resolve relative IRIs:
  *          base: true to resolve against the base IRI, false not to.
@@ -3554,7 +3559,7 @@ function _compactIri(ctx, iri, value) {
  * @param defined a map of defining/defined keys to detect cycles and prevent
  *          double definitions.
  */
-function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
+function _defineContextMapping(activeCtx, localCtx, key, relativeTo, defined) {
   if(key in defined) {
     // key already defined
     if(defined[key]) {
@@ -3563,7 +3568,7 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
     // cycle detected
     throw new JsonLdError(
       'Cyclical context definition detected.',
-      'jsonld.CyclicalContext', {context: ctx, key: key});
+      'jsonld.CyclicalContext', {context: localCtx, key: key});
   }
 
   // now defining key
@@ -3574,19 +3579,19 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
   var prefix = null;
   if(colon !== -1) {
     prefix = key.substr(0, colon);
-    if(prefix in ctx) {
+    if(prefix in localCtx) {
       // define parent prefix
-      _defineContextMapping(activeCtx, ctx, prefix, {base: true}, defined);
+      _defineContextMapping(activeCtx, localCtx, prefix, {base: true}, defined);
     }
   }
 
   // get context key value
-  var value = ctx[key];
+  var value = localCtx[key];
 
   if(_isKeyword(key)) {
     throw new JsonLdError(
       'Invalid JSON-LD syntax; keywords cannot be overridden.',
-      'jsonld.SyntaxError', {context: ctx});
+      'jsonld.SyntaxError', {context: localCtx});
   }
 
   // clear context entry
@@ -3622,7 +3627,7 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
     }
     else {
       // expand value to a full IRI
-      value = _expandContextIri(activeCtx, ctx, value, {base: true}, defined);
+      value = _expandIri(activeCtx, value, {base: true}, localCtx, defined);
     }
 
     // define/redefine key to expanded IRI/keyword
@@ -3635,7 +3640,7 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
     throw new JsonLdError(
       'Invalid JSON-LD syntax; @context property values must be ' +
       'strings or objects.',
-      'jsonld.SyntaxError', {context: ctx});
+      'jsonld.SyntaxError', {context: localCtx});
   }
 
   // create new mapping
@@ -3646,13 +3651,13 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
     if(!_isString(id)) {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; @context @id values must be strings.',
-        'jsonld.SyntaxError', {context: ctx});
+        'jsonld.SyntaxError', {context: localCtx});
     }
 
     // expand @id if it is not @type
     if(id !== '@type') {
       // expand @id to full IRI
-      id = _expandContextIri(activeCtx, ctx, id, {base: true}, defined);
+      id = _expandIri(activeCtx, id, {base: true}, localCtx, defined);
     }
 
     // add @id to mapping
@@ -3664,7 +3669,7 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
       if(!('@vocab' in activeCtx)) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; @context terms must define an @id.',
-          'jsonld.SyntaxError', {context: ctx, key: key});
+          'jsonld.SyntaxError', {context: localCtx, key: key});
       }
       // prepend vocab to term
       if('@vocab' in activeCtx) {
@@ -3691,13 +3696,13 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
     if(!_isString(type)) {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; @context @type values must be strings.',
-        'jsonld.SyntaxError', {context: ctx});
+        'jsonld.SyntaxError', {context: localCtx});
     }
 
     if(type !== '@id') {
       // expand @type to full IRI
-      type = _expandContextIri(
-        activeCtx, ctx, type, {vocab: true, base: true}, defined);
+      type = _expandIri(
+        activeCtx, type, {vocab: true, base: true}, localCtx, defined);
     }
 
     // add @type to mapping
@@ -3711,7 +3716,7 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; @context @container value must be ' +
         'one of the following: @list, @set, @annotation, or @language.',
-        'jsonld.SyntaxError', {context: ctx});
+        'jsonld.SyntaxError', {context: localCtx});
     }
 
     // add @container to mapping
@@ -3724,7 +3729,7 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; @context @language value must be ' +
         'a string or null.',
-        'jsonld.SyntaxError', {context: ctx});
+        'jsonld.SyntaxError', {context: localCtx});
     }
 
     // add @language to mapping
@@ -3733,6 +3738,7 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
 
   // merge onto parent mapping if one exists for a prefix
   if(prefix !== null && activeCtx.mappings[prefix]) {
+    // FIXME: check to see if additional clone is necessary here
     var child = mapping;
     mapping = _clone(activeCtx.mappings[prefix]);
     for(var k in child) {
@@ -3746,23 +3752,28 @@ function _defineContextMapping(activeCtx, ctx, key, relativeTo, defined) {
 }
 
 /**
- * Expands a string value to a full IRI during context processing. It can
- * be assumed that the value is not a keyword.
+ * Expands a string to a full IRI. The string may be a term, a prefix, a
+ * relative IRI, or an absolute IRI. The associated absolute IRI will be
+ * returned.
  *
  * @param activeCtx the current active context.
- * @param ctx the local context being processed.
- * @param value the string value to expand.
+ * @param value the string to expand.
  * @param relativeTo options for how to resolve relative IRIs:
  *          base: true to resolve against the base IRI, false not to.
  *          vocab: true to concatenate after @vocab, false not to.
- * @param defined a map for tracking cycles in context definitions.
+ * @param localCtx the local context being processed (only given if called
+ *          during document processing).
+ * @param defined a map for tracking cycles in context definitions (only given
+ *          if called during document processing).
  *
  * @return the expanded value.
  */
-function _expandContextIri(activeCtx, ctx, value, relativeTo, defined) {
-  // dependency not defined, define it
-  if(value in ctx && defined[value] !== true) {
-    _defineContextMapping(activeCtx, ctx, value, {vocab: true}, defined);
+function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
+  if(localCtx) {
+    // dependency not defined, define it
+    if(value in localCtx && defined[value] !== true) {
+      _defineContextMapping(activeCtx, localCtx, value, {vocab: true}, defined);
+    }
   }
 
   var mapping = activeCtx.mappings[value];
@@ -3779,7 +3790,12 @@ function _expandContextIri(activeCtx, ctx, value, relativeTo, defined) {
     if(value === id) {
       return value;
     }
-    return _expandContextIri(activeCtx, ctx, id, {base: true}, defined);
+    return _expandIri(activeCtx, id, {base: true}, localCtx, defined);
+  }
+
+  // keywords need no expanding (aliasing already handled by now)
+  if(_isKeyword(value)) {
+    return value;
   }
 
   // split value into prefix:suffix
@@ -3790,6 +3806,10 @@ function _expandContextIri(activeCtx, ctx, value, relativeTo, defined) {
 
     // a prefix of '_' indicates a blank node
     if(prefix === '_') {
+      // rename blank node if requested
+      /*if(activeCtx.namer) {
+        value = activeCtx.namer.getName(value);
+      }*/
       return value;
     }
 
@@ -3798,16 +3818,19 @@ function _expandContextIri(activeCtx, ctx, value, relativeTo, defined) {
       return value;
     }
 
-    // dependency not defined, define it
-    if(prefix in ctx && defined[prefix] !== true) {
-      _defineContextMapping(activeCtx, ctx, prefix, {base: true}, defined);
+    if(localCtx) {
+      // dependency not defined, define it
+      if(prefix in localCtx && defined[prefix] !== true) {
+        _defineContextMapping(
+          activeCtx, localCtx, prefix, {base: true}, defined);
+      }
     }
 
     // recurse if prefix is defined
     if(activeCtx.mappings[prefix]) {
       var id = activeCtx.mappings[prefix]['@id'];
-      return _expandContextIri(
-        activeCtx, ctx, id, {base: true}, defined) + suffix;
+      return _expandIri(
+        activeCtx, id, {base: true}, localCtx, defined) + suffix;
     }
 
     // consider value an absolute IRI
@@ -3823,94 +3846,17 @@ function _expandContextIri(activeCtx, ctx, value, relativeTo, defined) {
     value = _prependBase(activeCtx['@base'], value);
   }
 
-  // value must now be an absolute IRI
-  if(!_isAbsoluteIri(value)) {
-    throw new JsonLdError(
-      'Invalid JSON-LD syntax; a @context value does not expand to ' +
-      'an absolute IRI.',
-      'jsonld.SyntaxError', {context: ctx, value: value});
+  if(localCtx) {
+    // value must now be an absolute IRI
+    if(!_isAbsoluteIri(value)) {
+      throw new JsonLdError(
+        'Invalid JSON-LD syntax; a @context value does not expand to ' +
+        'an absolute IRI.',
+        'jsonld.SyntaxError', {context: localCtx, value: value});
+    }
   }
 
   return value;
-}
-
-/**
- * Expands a term into an absolute IRI. The term may be a regular term, a
- * prefix, a relative IRI, or an absolute IRI. In any case, the associated
- * absolute IRI will be returned.
- *
- * @param ctx the active context to use.
- * @param term the term to expand.
- * @param relativeTo options for how to resolve relative IRIs:
- *          base: true to resolve against the base IRI, false not to.
- *          vocab: true to concatenate after @vocab, false not to.
- *
- * @return the expanded term as an absolute IRI.
- */
-function _expandTerm(ctx, term, relativeTo) {
-  // nothing to expand
-  if(term === null) {
-    return null;
-  }
-
-  var mapping = ctx.mappings[term];
-
-  // term is explicitly ignored
-  if(mapping === null) {
-    return null;
-  }
-
-  // the term has a mapping, so it is a plain term
-  if(mapping) {
-    var id = mapping['@id'];
-    // term is already an absolute IRI
-    if(term === id) {
-      return term;
-    }
-    return _expandTerm(ctx, id, {base: true});
-  }
-
-  // keywords need no expanding (aliasing already handled by now)
-  if(_isKeyword(term)) {
-    return term;
-  }
-
-  // split term into prefix:suffix
-  var colon = term.indexOf(':');
-  if(colon !== -1) {
-    var prefix = term.substr(0, colon);
-    var suffix = term.substr(colon + 1);
-
-    // a prefix of '_' indicates a blank node
-    if(prefix === '_') {
-      return term;
-    }
-
-    // a suffix of '//' indicates value is an absolute IRI
-    if(suffix.indexOf('//') === 0) {
-      return term;
-    }
-
-    // the term's prefix has a mapping, so it is a CURIE
-    if(ctx.mappings[prefix]) {
-      return _expandTerm(
-        ctx, ctx.mappings[prefix]['@id'], {base: true}) + suffix;
-    }
-
-    // consider term an absolute IRI
-    return term;
-  }
-
-  // use vocab
-  if(relativeTo.vocab && '@vocab' in ctx) {
-    term = ctx['@vocab'] + term;
-  }
-  // prepend base to term
-  else if(relativeTo.base) {
-    term = _prependBase(ctx['@base'], term);
-  }
-
-  return term;
 }
 
 /**
@@ -3997,13 +3943,19 @@ function _prependBase(base, iri) {
 /**
  * Gets the initial context.
  *
- * @param base the document base IRI.
+ * @param options the options to use.
+ *          base the document base IRI.
  *
  * @return the initial context.
  */
-function _getInitialContext(base) {
+function _getInitialContext(options) {
+  var namer = null;
+  if(options.renameBlankNodes) {
+    namer = new UniqueNamer('_:t');
+  }
+
   return {
-    '@base': jsonld.url.parse(base || ''),
+    '@base': jsonld.url.parse(options.base || ''),
     mappings: {},
     keywords: {
       '@annotation': [],
@@ -4022,6 +3974,16 @@ function _getInitialContext(base) {
       '@type': [],
       '@value': [],
       '@vocab': []
+    },
+    namer: namer,
+    clone: function() {
+      var child = {};
+      child['@base'] = this['@base'];
+      child.keywords = _clone(this.keywords);
+      child.mappings = _clone(this.mappings);
+      child.namer = this.namer;
+      child.clone = this.clone;
+      return child;
     }
   };
 }
@@ -4828,7 +4790,7 @@ jsonld.registerRDFParser('rdfa-api', _parseRdfaApiData);
  *
  * @param prefix the prefix to use ('<prefix><counter>').
  */
-var UniqueNamer = function(prefix) {
+function UniqueNamer(prefix) {
   this.prefix = prefix;
   this.counter = 0;
   this.existing = {};
