@@ -1536,7 +1536,7 @@ Processor.prototype.expand = function(
       }
       // handle annotation container (skip if value is not an object)
       else if(container === '@annotation' && _isObject(value)) {
-        value = (function _expandAnnotation() {
+        value = (function _expandAnnotation(property) {
           var rval = [];
           var keys = Object.keys(value).sort();
           for(var ki = 0; ki < keys.length; ++ki) {
@@ -1545,7 +1545,7 @@ Processor.prototype.expand = function(
             if(!_isArray(val)) {
               val = [val];
             }
-            val = self.expand(ctx, key, val, options, false);
+            val = self.expand(ctx, property, val, options, false);
             for(var vi = 0; vi < val.length; ++vi) {
               var item = val[vi];
               if(!('@annotation' in item)) {
@@ -1555,7 +1555,7 @@ Processor.prototype.expand = function(
             }
           }
           return rval;
-        })();
+        })(key);
       }
       else {
         // recurse into @list or @set keeping the active property
