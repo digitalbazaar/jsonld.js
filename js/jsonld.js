@@ -1558,10 +1558,19 @@ Processor.prototype.expand = function(
         })(key);
       }
       else {
-        // recurse into @list or @set keeping the active property
+        // recurse into @list or @set
         var isList = (prop === '@list');
         if(isList || prop === '@set') {
-          value = self.expand(ctx, property, value, options, isList);
+          var activeProperty;
+          if(isList && (property === null || property === '@graph')) {
+            // use '@list' as the active property for top-level lists
+            activeProperty = '@list';
+          }
+          else {
+            // keep the current active property
+            activeProperty = property;
+          }
+          value = self.expand(ctx, activeProperty, value, options, isList);
           if(isList && _isList(value)) {
             throw new JsonLdError(
               'Invalid JSON-LD syntax; lists of lists are not permitted.',
@@ -1665,24 +1674,25 @@ Processor.prototype.expand = function(
       // optimize away @set
       if('@set' in rval) {
         rval = rval['@set'];
+        keys = Object.keys(rval);
+        count = keys.length;
       }
     }
-    else if(count === 1) {
-      // drop objects with only @language
-      if('@language' in rval) {
-        rval = null;
-      }
+    // drop objects with only @language
+    else if(count === 1 && '@language' in rval) {
+      rval = null;
     }
 
     // drop certain top-level objects
     if(property === null || property === '@graph') {
-      // drop empty object or @value
-      if(count === 0 || '@value' in rval) {
+      // drop empty object or @value not in a list
+      if(count === 0 || ('@value' in rval && !propertyIsList)) {
         rval = null;
       }
-      // drop subjects that generate no triples
+      // drop subjects that generate no triples that are not in a list
       else if(count === 1 && _isKeyword(keys[0]) &&
-        !('@graph' in rval || '@type' in rval)) {
+        !('@graph' in rval || '@type' in rval || '@list' in rval ||
+        propertyIsList)) {
         rval = null;
       }
     }
@@ -2290,7 +2300,9 @@ function _expandValue(activeCtx, property, value, relativeTo) {
     if(type === '@id' || prop === '@graph') {
       rval = {'@id': _expandIri(activeCtx, value, {base: true})};
     }
-    else if(!_isKeyword(prop)) {
+    // do not expand @value, @language, etc. values, but @list is special
+    // and must be processed
+    else if(prop === '@list' || !_isKeyword(prop)) {
       rval = {'@value': value};
 
       // other type
