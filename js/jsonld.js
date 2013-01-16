@@ -1675,7 +1675,7 @@ Processor.prototype.expand = function(
     }
 
     // drop certain top-level objects
-    if(property === null) {
+    if(property === null || property === '@graph') {
       // drop empty object or @value
       if(count === 0 || '@value' in rval) {
         rval = null;
