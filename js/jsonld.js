@@ -1530,12 +1530,12 @@ Processor.prototype.expand = function(
 
       var container = jsonld.getContextValue(ctx, key, '@container');
 
-      // handle language map container
-      if(container === '@language') {
+      // handle language map container (skip if value is not an object)
+      if(container === '@language' && _isObject(value)) {
         value = _expandLanguageMap(value);
       }
-      // handle annotation container
-      else if(container === '@annotation') {
+      // handle annotation container (skip if value is not an object)
+      else if(container === '@annotation' && _isObject(value)) {
         value = (function _expandAnnotation() {
           var rval = [];
           var keys = Object.keys(value).sort();
