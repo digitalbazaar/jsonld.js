@@ -2257,7 +2257,7 @@ function _expandLanguageMap(languageMap) {
  *
  * @return the expanded value.
  */
-function _expandValue(ctx, property, value, relativeTo) {
+function _expandValue(activeCtx, property, value, relativeTo) {
   // nothing to expand
   if(value === null) {
     return null;
@@ -2267,31 +2267,35 @@ function _expandValue(ctx, property, value, relativeTo) {
   var rval = value;
 
   // special-case expand @id and @type (skips '@id' expansion)
-  var prop = _expandIri(ctx, property, {vocab: true});
+  var prop = _expandIri(activeCtx, property, {vocab: true});
   if(prop === '@id') {
-    rval = _expandIri(ctx, value, {base: true});
+    rval = _expandIri(activeCtx, value, {base: true});
   }
   else if(prop === '@type') {
-    rval = _expandIri(ctx, value, {vocab: true, base: true});
+    rval = _expandIri(activeCtx, value, {vocab: true, base: true});
   }
   else {
     // get type definition from context
-    var type = jsonld.getContextValue(ctx, property, '@type');
+    var type = jsonld.getContextValue(activeCtx, property, '@type');
 
     // do @id expansion (automatic for @graph)
     if(type === '@id' || prop === '@graph') {
-      rval = {'@id': _expandIri(ctx, value, {base: true})};
+      rval = {'@id': _expandIri(activeCtx, value, {base: true})};
     }
     else if(!_isKeyword(prop)) {
       rval = {'@value': value};
 
       // other type
       if(type !== null) {
+        // rename blank node if requested
+        if(activeCtx.namer && type.indexOf('_:') === 0) {
+          type = activeCtx.namer.getName(type);
+        }
         rval['@type'] = type;
       }
       // check for language tagging
       else {
-        var language = jsonld.getContextValue(ctx, property, '@language');
+        var language = jsonld.getContextValue(activeCtx, property, '@language');
         if(language !== null && _isString(value)) {
           rval['@language'] = language;
         }
@@ -3807,9 +3811,9 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
     // a prefix of '_' indicates a blank node
     if(prefix === '_') {
       // rename blank node if requested
-      /*if(activeCtx.namer) {
+      if(!localCtx && activeCtx.namer) {
         value = activeCtx.namer.getName(value);
-      }*/
+      }
       return value;
     }
 
@@ -3828,9 +3832,12 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
 
     // recurse if prefix is defined
     if(activeCtx.mappings[prefix]) {
-      var id = activeCtx.mappings[prefix]['@id'];
-      return _expandIri(
-        activeCtx, id, {base: true}, localCtx, defined) + suffix;
+      value = activeCtx.mappings[prefix]['@id'] + suffix;
+      // rename blank node if requested
+      if(value.indexOf('_:') === 0 && activeCtx.namer) {
+        value = activeCtx.namer.getName(value);
+      }
+      return value;
     }
 
     // consider value an absolute IRI
