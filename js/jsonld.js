@@ -1466,7 +1466,7 @@ Processor.prototype.expand = function(
 
     var rval = {};
     for(var key in element) {
-      // expand property
+      // expand next property in element
       var prop = _expandIri(ctx, key, {vocab: true});
 
       // drop non-absolute IRI keys that aren't keywords
@@ -1672,19 +1672,27 @@ Processor.prototype.expand = function(
       if('@language' in rval) {
         rval = null;
       }
-      // drop objects with no parent property that generate no triples
-      // (drop free-floating nodes)
-      if(property === null &&
-        _isKeyword(keys[0]) && !('@graph' in rval || '@type' in rval)) {
+    }
+
+    // drop certain top-level objects
+    if(property === null) {
+      // drop empty object or @value
+      if(count === 0 || '@value' in rval) {
+        rval = null;
+      }
+      // drop subjects that generate no triples
+      else if(count === 1 && _isKeyword(keys[0]) &&
+        !('@graph' in rval || '@type' in rval)) {
         rval = null;
       }
     }
-    // drop free-floating empty objects
-    else if(count === 0 && property === null) {
-      rval = null;
-    }
 
     return rval;
+  }
+
+  // drop top-level scalars
+  if(property === null || property === '@graph') {
+    return null;
   }
 
   // expand element according to value expansion rules
