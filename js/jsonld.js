@@ -3773,6 +3773,11 @@ function _defineContextMapping(activeCtx, localCtx, key, relativeTo, defined) {
  * @return the expanded value.
  */
 function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
+  // nothing to expand
+  if(value === null) {
+    return null;
+  }
+
   if(localCtx) {
     // dependency not defined, define it
     if(value in localCtx && defined[value] !== true) {
