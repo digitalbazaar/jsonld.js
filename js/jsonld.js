@@ -3672,19 +3672,38 @@ function _defineContextMapping(activeCtx, localCtx, key, relativeTo, defined) {
 
   if('@id' in value) {
     var id = value['@id'];
-    if(!_isString(id)) {
+    // handle property generator
+    if(_isArray(id)) {
+      var propertyGenerator = [];
+      var ids = id;
+      for(var i = 0; i < ids.length; ++i) {
+        id = ids[i];
+        if(!_isString(id)) {
+          throw new JsonLdError(
+            'Invalid JSON-LD syntax; property generators must consist of an ' +
+            '@id array containing only strings.',
+            'jsonld.SyntaxError', {context: localCtx});
+        }
+        // expand @id if it is not @type
+        if(id !== '@type') {
+          id = _expandIri(activeCtx, id, {base: true}, localCtx, defined);
+        }
+        propertyGenerator.push(id);
+      }
+      // add sorted property generator as @id in mapping
+      mapping['@id'] = propertyGenerator.sort();
+    }
+    else if(!_isString(id)) {
       throw new JsonLdError(
-        'Invalid JSON-LD syntax; @context @id values must be strings.',
+        'Invalid JSON-LD syntax; a @context @id value must be an array ' +
+        'of strings or a string.',
         'jsonld.SyntaxError', {context: localCtx});
     }
 
-    // expand @id if it is not @type
+    // add @id to mapping, expanding it if it is not @type
     if(id !== '@type') {
-      // expand @id to full IRI
       id = _expandIri(activeCtx, id, {base: true}, localCtx, defined);
     }
-
-    // add @id to mapping
     mapping['@id'] = id;
   }
   else {
@@ -3798,28 +3817,24 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
     return null;
   }
 
-  if(localCtx) {
-    // dependency not defined, define it
-    if(value in localCtx && defined[value] !== true) {
-      _defineContextMapping(activeCtx, localCtx, value, {vocab: true}, defined);
-    }
+  // term dependency not defined, define it
+  if(localCtx && value in localCtx && defined[value] !== true) {
+    _defineContextMapping(activeCtx, localCtx, value, {vocab: true}, defined);
   }
 
   var mapping = activeCtx.mappings[value];
 
-  // value is explicitly ignored
+  // value is explicitly ignored with a null mapping
   if(mapping === null) {
     return null;
   }
 
-  // recurse if value is a term
+  var isAbsolute = false;
+
+  // value is a term
   if(mapping) {
-    var id = mapping['@id'];
-    // value is already an absolute IRI
-    if(value === id) {
-      return value;
-    }
-    return _expandIri(activeCtx, id, {base: true}, localCtx, defined);
+    isAbsolute = true;
+    value = mapping['@id'];
   }
 
   // keywords need no expanding (aliasing already handled by now)
@@ -3830,47 +3845,34 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
   // split value into prefix:suffix
   var colon = value.indexOf(':');
   if(colon !== -1) {
+    isAbsolute = true;
     var prefix = value.substr(0, colon);
     var suffix = value.substr(colon + 1);
 
-    // a prefix of '_' indicates a blank node
-    if(prefix === '_') {
-      // rename blank node if requested
-      if(!localCtx && activeCtx.namer) {
-        value = activeCtx.namer.getName(value);
-      }
-      return value;
-    }
-
-    // a suffix of '//' indicates value is an absolute IRI
-    if(suffix.indexOf('//') === 0) {
-      return value;
-    }
-
-    if(localCtx) {
-      // dependency not defined, define it
-      if(prefix in localCtx && defined[prefix] !== true) {
+    // do not expand blank nodes (prefix of '_') or already-absolute
+    // IRIs (suffix of '//')
+    if(prefix !== '_' && suffix.indexOf('//') !== 0) {
+      // prefix dependency not defined, define it
+      if(localCtx && prefix in localCtx && defined[prefix] !== true) {
         _defineContextMapping(
           activeCtx, localCtx, prefix, {base: true}, defined);
       }
-    }
 
-    // recurse if prefix is defined
-    if(activeCtx.mappings[prefix]) {
-      value = activeCtx.mappings[prefix]['@id'] + suffix;
-      // rename blank node if requested
-      if(value.indexOf('_:') === 0 && activeCtx.namer) {
-        value = activeCtx.namer.getName(value);
+      // prefix is defined
+      if(activeCtx.mappings[prefix]) {
+        value = activeCtx.mappings[prefix]['@id'] + suffix;
       }
-      return value;
     }
-
-    // consider value an absolute IRI
-    return value;
   }
 
+  if(isAbsolute) {
+    // rename blank node if requested
+    if(!localCtx && value.indexOf('_:') === 0 && activeCtx.namer) {
+      value = activeCtx.namer.getName(value);
+    }
+  }
   // prepend vocab
-  if(relativeTo.vocab && '@vocab' in activeCtx) {
+  else if(relativeTo.vocab && '@vocab' in activeCtx) {
     value = activeCtx['@vocab'] + value;
   }
   // prepend base
