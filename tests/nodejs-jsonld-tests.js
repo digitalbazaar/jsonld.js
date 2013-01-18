@@ -58,24 +58,90 @@ TestRunner.prototype.test = function(name) {
   process.stdout.write(line);
 };
 
-TestRunner.prototype.check = function(test, expect, result) {
+TestRunner.prototype.expandedEqual = function(x, y, isList) {
+  if(x === y) {
+    return true;
+  }
+  if(typeof x !== typeof y) {
+    return false;
+  }
+  if(Array.isArray(x)) {
+    if(!Array.isArray(y) || x.length !== y.length) {
+      return false;
+    }
+    var rval = true;
+    if(isList) {
+      // compare in order
+      for(var i = 0; rval && i < x.length; ++i) {
+        rval = this.expandedEqual(x, y, false);
+      }
+    }
+    else {
+      // compare in any order
+      var iso = {};
+      for(var i = 0; rval && i < x.length; ++i) {
+        rval = false;
+        for(var j = 0; !rval && j < y.length; ++j) {
+          if(!(j in iso)) {
+            if(this.expandedEqual(x[i], y[j])) {
+              iso[j] = i;
+              rval = true;
+            }
+          }
+        }
+      }
+      rval = rval && Object.keys(iso).length === x.length;
+    }
+    return rval;
+  }
+  else if(typeof x === 'object') {
+    var xKeys = Object.keys(x).sort();
+    var yKeys = Object.keys(y).sort();
+    if(xKeys.length !== yKeys.length) {
+      return false;
+    }
+
+    for(var key in x) {
+      if(!(key in y)) {
+        return false;
+      }
+      if(!this.expandedEqual(x[key], y[key], key === '@list')) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  return false;
+};
+
+TestRunner.prototype.check = function(test, expect, result, expanded) {
   var line = '';
-  var fail = false;
+  var pass = false;
   try {
     assert.deepEqual(expect, result);
-    line += 'PASS';
-    this.passed += 1;
+    pass = true;
   }
   catch(ex) {
-    line += 'FAIL';
-    fail = true;
-    this.failed += 1;
+    pass = expanded && this.expandedEqual(expect, result);
+  }
+  finally {
+    if(pass) {
+      line += 'PASS';
+      this.passed += 1;
+    }
+    else {
+      line += 'FAIL';
+      this.failed += 1;
+    }
   }
 
   console.log(line);
-  if(fail) {
-    console.log('Expect: ' + util.inspect(expect, false, 10));
-    console.log('Result: ' + util.inspect(result, false, 10));
+  if(!pass) {
+    console.log('Expect:');
+    console.log(JSON.stringify(expect, null, 2));
+    console.log('Result:');
+    console.log(JSON.stringify(result, null, 2));
   }
 };
 
@@ -185,6 +251,21 @@ TestRunner.prototype.run = function(manifests, callback) {
         var options = {
           base: 'http://json-ld.org/test-suite/tests/' + test.input
         };
+
+        // check results
+        var checkResult = function(err, result) {
+          // skip error, go onto next test
+          if(err) {
+            console.log('EXCEPTION');
+            self.failed += 1;
+            outputError(err);
+            return callback();
+          }
+          self.check(
+            test, test.expect, result, type.indexOf('jld:ExpandTest') !== -1);
+          callback();
+        };
+
         if(type.indexOf('jld:NormalizeTest') !== -1) {
           self.test(test.name);
           input = _readTestJson(test.input, filepath);
@@ -241,19 +322,6 @@ TestRunner.prototype.run = function(manifests, callback) {
       }
       catch(ex) {
         callback(ex);
-      }
-
-      // check results
-      function checkResult(err, result) {
-        // skip error, go onto next test
-        if(err) {
-          console.log('EXCEPTION');
-          self.failed += 1;
-          outputError(err);
-          return callback();
-        }
-        self.check(test, test.expect, result);
-        callback();
       }
     }, function(err) {
       if(err) {
