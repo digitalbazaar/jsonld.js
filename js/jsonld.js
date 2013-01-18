@@ -1467,28 +1467,23 @@ Processor.prototype.expand = function(
     var rval = {};
     for(var key in element) {
       var value = element[key];
+      var expandedProperty;
 
       // expand key using property generator
       var mapping = ctx.mappings[key];
       if(mapping && mapping.propertyGenerator) {
-        var expandedProperties = mapping['@id'];
-        value = self.expand(ctx, key, value, options, isList);
-        value = _labelBlankNodes(ctx.namer, value);
-        for(var i = 0; i < expandedProperties.length; ++i) {
-          jsonld.addValue(
-            rval, expandedProperties[i], _clone(value),
-            {propertyIsArray: true});
-        }
-        continue;
+        expandedProperty = mapping['@id'];
       }
-
       // expand key to IRI
-      var expandedProperty = _expandIri(ctx, key, {vocab: true});
+      else {
+        expandedProperty = _expandIri(ctx, key, {vocab: true});
+      }
 
       // drop non-absolute IRI keys that aren't keywords
       if(expandedProperty === null ||
+        (!_isArray(expandedProperty) &&
         !_isAbsoluteIri(expandedProperty) &&
-        !_isKeyword(expandedProperty, ctx)) {
+        !_isKeyword(expandedProperty, ctx))) {
         continue;
       }
 
@@ -1548,6 +1543,7 @@ Processor.prototype.expand = function(
       }
 
       var container = jsonld.getContextValue(ctx, key, '@container');
+      console.log('container for key ' + key + ' is ' + container);
 
       // handle language map container (skip if value is not an object)
       if(container === '@language' && _isObject(value)) {
@@ -1636,13 +1632,24 @@ Processor.prototype.expand = function(
         }
       }
 
-      // add value, use an array if not @annotation, @id, @type, @value, or
-      // @language
-      var useArray =
-        ['@annotation', '@id', '@type', '@value', '@language'].indexOf(
-          expandedProperty) === -1;
-      jsonld.addValue(
-        rval, expandedProperty, value, {propertyIsArray: useArray});
+      // add copy of value for each property from property generator
+      if(_isArray(expandedProperty)) {
+        value = _labelBlankNodes(ctx.namer, value);
+        for(var i = 0; i < expandedProperty.length; ++i) {
+          jsonld.addValue(
+            rval, expandedProperty[i], _clone(value),
+            {propertyIsArray: true});
+        }
+      }
+      // add value for property
+      else {
+        // use an array except for certain keywords
+        var useArray =
+          ['@annotation', '@id', '@type', '@value', '@language'].indexOf(
+            expandedProperty) === -1;
+        jsonld.addValue(
+          rval, expandedProperty, value, {propertyIsArray: useArray});
+      }
     }
 
     // get property count on expanded output
