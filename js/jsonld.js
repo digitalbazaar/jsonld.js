@@ -1543,7 +1543,6 @@ Processor.prototype.expand = function(
       }
 
       var container = jsonld.getContextValue(ctx, key, '@container');
-      console.log('container for key ' + key + ' is ' + container);
 
       // handle language map container (skip if value is not an object)
       if(container === '@language' && _isObject(value)) {
@@ -1692,10 +1691,11 @@ Processor.prototype.expand = function(
     }
     // handle @set and @list
     else if('@set' in rval || '@list' in rval) {
-      if(count !== 1) {
+      if(count > 1 && (count !== 2 && '@annotation' in rval)) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; if an element has the property "@set" ' +
-          'or "@list", then it must be its only property.',
+          'or "@list", then it can have at most one other property that is ' +
+          '"@annotation".',
           'jsonld.SyntaxError', {element: rval});
       }
       // optimize away @set
