@@ -1466,34 +1466,52 @@ Processor.prototype.expand = function(
 
     var rval = {};
     for(var key in element) {
-      // expand next property in element
-      var prop = _expandIri(ctx, key, {vocab: true});
+      var value = element[key];
+
+      // expand key using property generator
+      var mapping = ctx.mappings[key];
+      if(mapping && mapping.propertyGenerator) {
+        var expandedProperties = mapping['@id'];
+        value = self.expand(ctx, key, value, options, isList);
+        value = _labelBlankNodes(ctx.namer, value);
+        for(var i = 0; i < expandedProperties.length; ++i) {
+          jsonld.addValue(
+            rval, expandedProperties[i], _clone(value),
+            {propertyIsArray: true});
+        }
+        continue;
+      }
+
+      // expand key to IRI
+      var expandedProperty = _expandIri(ctx, key, {vocab: true});
 
       // drop non-absolute IRI keys that aren't keywords
-      if(prop === null || !_isAbsoluteIri(prop) && !_isKeyword(prop, ctx)) {
+      if(expandedProperty === null ||
+        !_isAbsoluteIri(expandedProperty) &&
+        !_isKeyword(expandedProperty, ctx)) {
         continue;
       }
 
       // if value is null and property is not @value, continue
-      var value = element[key];
-      if(value === null && prop !== '@value') {
+      if(value === null && expandedProperty !== '@value') {
         continue;
       }
 
       // syntax error if @id is not a string
-      if(prop === '@id' && !_isString(value)) {
+      if(expandedProperty === '@id' && !_isString(value)) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; "@id" value must a string.',
           'jsonld.SyntaxError', {value: value});
       }
 
       // validate @type value
-      if(prop === '@type') {
+      if(expandedProperty === '@type') {
         _validateTypeValue(value);
       }
 
       // @graph must be an array or an object
-      if(prop === '@graph' && !(_isObject(value) || _isArray(value))) {
+      if(expandedProperty === '@graph' &&
+        !(_isObject(value) || _isArray(value))) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; "@value" value must not be an ' +
           'object or an array.',
@@ -1501,7 +1519,8 @@ Processor.prototype.expand = function(
       }
 
       // @value must not be an object or an array
-      if(prop === '@value' && (_isObject(value) || _isArray(value))) {
+      if(expandedProperty === '@value' &&
+        (_isObject(value) || _isArray(value))) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; "@value" value must not be an ' +
           'object or an array.',
@@ -1509,7 +1528,7 @@ Processor.prototype.expand = function(
       }
 
       // @language must be a string
-      if(prop === '@language') {
+      if(expandedProperty === '@language') {
         if(!_isString(value)) {
           throw new JsonLdError(
             'Invalid JSON-LD syntax; "@language" value must be a string.',
@@ -1520,7 +1539,7 @@ Processor.prototype.expand = function(
       }
 
       // preserve @annotation
-      if(prop === '@annotation') {
+      if(expandedProperty === '@annotation') {
         if(!_isString(value)) {
           throw new JsonLdError(
             'Invalid JSON-LD syntax; "@annotation" value must be a string.',
@@ -1559,8 +1578,8 @@ Processor.prototype.expand = function(
       }
       else {
         // recurse into @list or @set
-        var isList = (prop === '@list');
-        if(isList || prop === '@set') {
+        var isList = (expandedProperty === '@list');
+        if(isList || expandedProperty === '@set') {
           var activeProperty;
           if(isList && (property === null || property === '@graph')) {
             // use '@list' as the active property for top-level lists
@@ -1578,18 +1597,18 @@ Processor.prototype.expand = function(
           }
         }
         else {
-          // recursively expand value with new active property
+          // recursively expand value with key as new active property
           value = self.expand(ctx, key, value, options, false);
         }
       }
 
       // drop null values if property is not @value
-      if(value === null && prop !== '@value') {
+      if(value === null && expandedProperty !== '@value') {
         continue;
       }
 
       // convert value to @list if container specifies it
-      if(prop !== '@list' && !_isList(value)) {
+      if(expandedProperty !== '@list' && !_isList(value)) {
         if(container === '@list') {
           // ensure value is an array
           value = _isArray(value) ? value : [value];
@@ -1598,7 +1617,7 @@ Processor.prototype.expand = function(
       }
 
       // optimize away @id for @type
-      if(prop === '@type') {
+      if(expandedProperty === '@type') {
         if(_isSubjectReference(value)) {
           value = value['@id'];
         }
@@ -1619,10 +1638,11 @@ Processor.prototype.expand = function(
 
       // add value, use an array if not @annotation, @id, @type, @value, or
       // @language
-      var useArray = !(prop === '@annotation' ||
-        prop === '@id' || prop === '@type' ||
-        prop === '@value' || prop === '@language');
-      jsonld.addValue(rval, prop, value, {propertyIsArray: useArray});
+      var useArray =
+        ['@annotation', '@id', '@type', '@value', '@language'].indexOf(
+          expandedProperty) === -1;
+      jsonld.addValue(
+        rval, expandedProperty, value, {propertyIsArray: useArray});
     }
 
     // get property count on expanded output
@@ -2260,6 +2280,46 @@ function _expandLanguageMap(languageMap) {
     }
   }
   return rval;
+}
+
+/**
+ * Labels the blank nodes in the given value using the given UniqueNamer.
+ *
+ * @param namer the UniqueNamer to use.
+ * @param value the value with blank nodes to rename.
+ *
+ * @return a copy of value with renamed blank nodes.
+ */
+function _labelBlankNodes(namer, value) {
+  if(value && typeof value === 'object') {
+    if(_isArray(value)) {
+      var rval = [];
+      for(var i = 0; i < value.length; ++i) {
+        rval[i] = _labelBlankNodes(namer, value[i]);
+      }
+      return rval;
+    }
+
+    // recursively apply to @list
+    var rval = {};
+    if('@list' in value) {
+      rval['@list'] = _labelBlankNodes(namer, value['@list']);
+      return rval;
+    }
+
+    // recursively apply to all keys
+    var keys = Object.keys(value).sort();
+    for(var i in keys) {
+      var key = keys[i];
+      rval[key] = _labelBlankNodes(namer, value[key]);
+    }
+    // rename blank node
+    if(_isBlankNode(rval)) {
+      rval['@id'] = namer.getName(rval['@id']);
+    }
+    return rval;
+  }
+  return value;
 }
 
 /**
@@ -3669,11 +3729,20 @@ function _defineContextMapping(activeCtx, localCtx, key, relativeTo, defined) {
 
   // create new mapping
   var mapping = {};
+  mapping.propertyGenerator = false;
 
   if('@id' in value) {
     var id = value['@id'];
     // handle property generator
     if(_isArray(id)) {
+      if(activeCtx.namer === null) {
+        throw new JsonLdError(
+          'Incompatible JSON-LD options; a property generator was found ' +
+          'in the @context, but blank node renaming has been disabled; ' +
+          'it must be enabled to use property generators.',
+          'jsonld.OptionsError', {context: localCtx});
+      }
+
       var propertyGenerator = [];
       var ids = id;
       for(var i = 0; i < ids.length; ++i) {
@@ -3692,6 +3761,7 @@ function _defineContextMapping(activeCtx, localCtx, key, relativeTo, defined) {
       }
       // add sorted property generator as @id in mapping
       mapping['@id'] = propertyGenerator.sort();
+      mapping.propertyGenerator = true;
     }
     else if(!_isString(id)) {
       throw new JsonLdError(
@@ -3699,12 +3769,13 @@ function _defineContextMapping(activeCtx, localCtx, key, relativeTo, defined) {
         'of strings or a string.',
         'jsonld.SyntaxError', {context: localCtx});
     }
-
-    // add @id to mapping, expanding it if it is not @type
-    if(id !== '@type') {
-      id = _expandIri(activeCtx, id, {base: true}, localCtx, defined);
+    else {
+      // add @id to mapping, expanding it if it is not @type
+      if(id !== '@type') {
+        id = _expandIri(activeCtx, id, {base: true}, localCtx, defined);
+      }
+      mapping['@id'] = id;
     }
-    mapping['@id'] = id;
   }
   else {
     if(prefix === null) {
@@ -3817,12 +3888,20 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
     return null;
   }
 
-  // term dependency not defined, define it
+  // define term dependency if not defined
   if(localCtx && value in localCtx && defined[value] !== true) {
     _defineContextMapping(activeCtx, localCtx, value, {vocab: true}, defined);
   }
 
   var mapping = activeCtx.mappings[value];
+
+  // term dependency cannot be a property generator
+  if(localCtx && mapping && mapping.propertyGenerator) {
+    throw new JsonLdError(
+      'Invalid JSON-LD syntax; a term definition cannot have a property ' +
+      'generator as a dependency.',
+      'jsonld.SyntaxError', {context: localCtx, value: value});
+  }
 
   // value is explicitly ignored with a null mapping
   if(mapping === null) {
@@ -3832,7 +3911,7 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
   var isAbsolute = false;
 
   // value is a term
-  if(mapping) {
+  if(mapping && !mapping.propertyGenerator) {
     isAbsolute = true;
     value = mapping['@id'];
   }
@@ -3858,8 +3937,9 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
           activeCtx, localCtx, prefix, {base: true}, defined);
       }
 
-      // prefix is defined
-      if(activeCtx.mappings[prefix]) {
+      // use mapping if prefix is defined and not a property generator
+      mapping = activeCtx.mappings[prefix];
+      if(mapping && !mapping.propertyGenerator) {
         value = activeCtx.mappings[prefix]['@id'] + suffix;
       }
     }
@@ -4031,6 +4111,9 @@ function _getInitialContext(options) {
  * @return true if the value is a keyword, false if not.
  */
 function _isKeyword(v, ctx) {
+  if(!_isString(v)) {
+    return false;
+  }
   if(ctx) {
     if(v in ctx.keywords) {
       return true;
@@ -4296,7 +4379,7 @@ function _isBlankNode(v) {
  * @return true if the value is an absolute IRI, false if not.
  */
 function _isAbsoluteIri(v) {
-  return v.indexOf(':') !== -1;
+  return _isString(v) && v.indexOf(':') !== -1;
 }
 
 /**
@@ -4314,9 +4397,7 @@ function _clone(value) {
     }
     return rval;
   }
-  else {
-    return value;
-  }
+  return value;
 }
 
 /**
