@@ -240,18 +240,25 @@ jsonld.expand = function(input) {
         Object.keys(expanded).length === 1) {
         expanded = expanded['@graph'];
       }
+      else if(expanded === null) {
+        expanded = [];
+      }
+      else if(_isArray(expanded)) {
+        // remove nulls (they represent free-floating nodes)
+        var output = [];
+        for(var i = 0; i < expanded.length; ++i) {
+          if(expanded[i] !== null) {
+            output.push(expanded[i]);
+          }
+        }
+        expanded = output;
+      }
+
       // normalize to an array
       if(!_isArray(expanded)) {
         expanded = [expanded];
       }
-      // remove nulls (they represent free-floating nodes)
-      var output = [];
-      for(var i = 0; i < expanded.length; ++i) {
-        if(expanded[i] !== null) {
-          output.push(expanded[i]);
-        }
-      }
-      callback(null, output);
+      callback(null, expanded);
     }
     catch(ex) {
       callback(ex);
