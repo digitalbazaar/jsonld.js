@@ -1284,8 +1284,11 @@ Processor.prototype.compact = function(ctx, property, element, options) {
       // if @value is the only key
       if(Object.keys(element).length === 1) {
         // if there is no default language or @value is not a string,
+        // or the property has a mapping with a null @language,
         // return value of @value
-        if(!('@language' in ctx) || !_isString(element['@value'])) {
+        if(!('@language' in ctx) || !_isString(element['@value']) ||
+          (ctx.mappings[property] &&
+          ctx.mappings[property]['@language'] === null)) {
           return element['@value'];
         }
         // return full element, alias @value
@@ -1368,7 +1371,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
       }
 
       // recusively process array values
-      for(var i in value) {
+      for(var i = 0; i < value.length; ++i) {
         var v = value[i];
         var isList = _isList(v);
 
@@ -1404,10 +1407,10 @@ Processor.prototype.compact = function(ctx, property, element, options) {
           v = val;
         }
 
-        // if @container is @set or @list or value is an empty array, use
-        // an array when adding value
+        // use an array if: @container is @set or @list , value is an empty
+        // array, or key is @graph
         var isArray = (container === '@set' || container === '@list' ||
-          (_isArray(v) && v.length === 0));
+          (_isArray(v) && v.length === 0) || key === '@graph');
 
         // add compact value
         jsonld.addValue(rval, prop, v, {propertyIsArray: isArray});
@@ -3434,100 +3437,44 @@ function _compareShortestLeast(a, b) {
   else if(b.length < a.length) {
     return 1;
   }
-  return (a < b) ? -1 : ((a > b) ? 1 : 0);
+  else if(a === b) {
+    return 0;
+  }
+  return (a.length === b.length && a < b) ? -1 : 1;
 }
 
 /**
- * Ranks a term that is possible choice for compacting an IRI associated with
- * the given value.
+ * Picks the preferred compaction term from the given inverse context entry.
  *
- * @param ctx the active context.
- * @param term the term to rank.
- * @param value the associated value.
+ * @param entry the inverse context entry.
+ * @param container the preferred container.
+ * @param typeOrLanguage either '@type' or '@language'.
+ * @param value the preferred value for '@type' or '@language'.
  *
- * @return the term rank.
+ * @return the preferred term.
  */
-function _rankTerm(ctx, term, value) {
-  // no term restrictions for a null value
+function _pickPreferredTerm(entry, container, typeOrLanguage, value) {
   if(value === null) {
-    return 3;
+    value = '@null';
   }
-
-  // get context entry for term
-  var entry = ctx.mappings[term];
-  var hasType = ('@type' in entry);
-  var hasLanguage = ('@language' in entry);
-  var hasDefaultLanguage = ('@language' in ctx);
-
-  // @list rank is the sum of its values' ranks
-  if(_isList(value)) {
-    var list = value['@list'];
-    if(list.length === 0) {
-      return (entry['@container'] === '@list') ? 1 : 0;
-    }
-    // sum term ranks for each list value
-    var sum = 0;
-    for(var i in list) {
-      sum += _rankTerm(ctx, term, list[i]);
-    }
-    return sum;
-  }
-
-  // Note: Value must be an object that is a @value or subject/reference.
-
-  if(_isValue(value)) {
-    // value has a @type
-    if('@type' in value) {
-      // @types match
-      if(value['@type'] === entry['@type']) {
-        return 3;
-      }
-      return (!hasType && !hasLanguage) ? 1 : 0;
-    }
-
-    // rank non-string value
-    if(!_isString(value['@value'])) {
-      return (!hasType && !hasLanguage) ? 2 : 1;
-    }
-
-    // value has no @type or @language
-    if(!('@language' in value)) {
-      // entry @language is specifically null or no @type, @language, or
-      // default
-      if(entry['@language'] === null ||
-        (!hasType && !hasLanguage && !hasDefaultLanguage)) {
-        return 3;
-      }
-      return 0;
-    }
-
-    // @languages match or entry has no @type or @language but default
-    // @language matches
-    if((value['@language'] === entry['@language']) ||
-      (!hasType && !hasLanguage && value['@language'] === ctx['@language'])) {
-      return 3;
-    }
-    return (!hasType && !hasLanguage) ? 1 : 0;
-  }
-
-  // value must be a subject/reference
-  if(entry['@type'] === '@id') {
-    return 3;
-  }
-  return (!hasType && !hasLanguage) ? 1 : 0;
+  return (
+    entry[container][typeOrLanguage][value] ||
+    entry[container][typeOrLanguage]['@none'] ||
+    entry['@none'][typeOrLanguage][value] ||
+    entry['@none'][typeOrLanguage]['@none']);
 }
 
 /**
  * Compacts an IRI or keyword into a term or prefix if it can be. If the
  * IRI has an associated value it may be passed.
  *
- * @param ctx the active context to use.
+ * @param activeCtx the active context to use.
  * @param iri the IRI to compact.
  * @param value the value to check or null.
  *
  * @return the compacted term, prefix, keyword alias, or the original IRI.
  */
-function _compactIri(ctx, iri, value) {
+function _compactIri(activeCtx, iri, value) {
   // can't compact null
   if(iri === null) {
     return iri;
@@ -3536,14 +3483,8 @@ function _compactIri(ctx, iri, value) {
   // term is a keyword
   if(_isKeyword(iri)) {
     // return alias if available
-    var aliases = ctx.keywords[iri];
-    if(aliases.length > 0) {
-      return aliases[0];
-    }
-    else {
-      // no alias, keep original keyword
-      return iri;
-    }
+    var aliases = activeCtx.keywords[iri];
+    return (aliases.length > 0) ? aliases[0] : iri;
   }
 
   // default value to null
@@ -3551,98 +3492,138 @@ function _compactIri(ctx, iri, value) {
     value = null;
   }
 
-  // find all possible term matches
-  var terms = [];
-  var highest = 0;
-  var listContainer = false;
-  var isList = _isList(value);
-  for(var term in ctx.mappings) {
-    // skip terms with non-matching iris
-    var entry = ctx.mappings[term];
-    if(!entry || entry['@id'] !== iri) {
-      continue;
-    }
-    // skip @set containers for @lists
-    if(isList && entry['@container'] === '@set') {
-      continue;
-    }
-    // skip @list containers for non-@lists
-    if(!isList && entry['@container'] === '@list' && value !== null) {
-      continue;
-    }
-    // for @lists, if listContainer is set, skip non-list containers
-    if(isList && listContainer && entry['@container'] !== '@list') {
-      continue;
-    }
+  // use inverse context to pick a term
+  var inverseCtx = activeCtx.getInverse();
+  var defaultLanguage = activeCtx['@language'] || '@none';
 
-    // rank term
-    var rank = _rankTerm(ctx, term, value);
-    if(rank > 0) {
-      // add 1 to rank if container is a @set
-      if(entry['@container'] === '@set') {
-        rank += 1;
-      }
+  if(iri in inverseCtx) {
+    var term = null;
+    var entry = inverseCtx[iri];
 
-      // for @lists, give preference to @list containers
-      if(isList && !listContainer && entry['@container'] === '@list') {
-        listContainer = true;
-        terms.length = 0;
-        highest = rank;
-        terms.push(term);
-      }
-      // only push match if rank meets current threshold
-      else if(rank >= highest) {
-        if(rank > highest) {
-          terms.length = 0;
-          highest = rank;
+    // choose the most specific term that works for all elements in @list
+    if(_isList(value)) {
+      var list = value['@list'];
+      var listLanguage = (list.length === 0) ? defaultLanguage : null;
+      var listType = null;
+      for(var i = 0; i < list.length; ++i) {
+        var item = list[i];
+        var itemLanguage = '@none';
+        var itemType = '@none';
+        if(_isValue(item)) {
+          if('@language' in item) {
+            itemLanguage = ('@language' in item) ?
+              (item['@language'] || '@null') : defaultLanguage;
+          }
+          else if('@type' in item) {
+            itemType = item['@type'];
+          }
+          // plain literal
+          else {
+            itemLanguage = '@null';
+          }
         }
-        terms.push(term);
+        if(listLanguage === null) {
+          listLanguage = itemLanguage;
+        }
+        else if(itemLanguage !== listLanguage && _isValue(item)) {
+          listLanguage = '@none';
+        }
+        if(listType === null) {
+          listType = itemType;
+        }
+        else if(itemType !== listType) {
+          listType = '@none';
+        }
+        // there are different languages and types in the list, so choose
+        // the most generic term, no need to keep iterating the list
+        if(listLanguage === '@none' && listType === '@none') {
+          break;
+        }
       }
+      listLanguage = listLanguage || '@none';
+      listType = listType || '@none';
+      if(listType !== '@none') {
+        term = _pickPreferredTerm(entry, '@list', '@type', listType);
+      }
+      else {
+        term = _pickPreferredTerm(entry, '@list', '@language', listLanguage);
+      }
+    }
+    else if(_isValue(value)) {
+      if('@language' in value) {
+        term = _pickPreferredTerm(
+          entry, '@set', '@language', value['@language']);
+      }
+      else if('@type' in value) {
+        term = _pickPreferredTerm(
+          entry, '@set', '@type', value['@type']);
+      }
+      // plain literal
+      else {
+        term = _pickPreferredTerm(entry, '@set', '@language', '@null');
+      }
+    }
+    else {
+      term = _pickPreferredTerm(entry, '@set', '@type', '@id');
+    }
+
+    if(term !== null) {
+      return term;
     }
   }
 
   // no matching terms, use @vocab if available
-  if(terms.length === 0 && '@vocab' in ctx) {
+  if('@vocab' in activeCtx) {
     // determine if vocab is a prefix of the iri
-    var vocab = ctx['@vocab'];
+    var vocab = activeCtx['@vocab'];
     if(iri.indexOf(vocab) === 0) {
       // use suffix as relative iri if it is not a term in the active context
       var suffix = iri.substr(vocab.length);
-      if(!(suffix in ctx.mappings)) {
+      if(!(suffix in activeCtx.mappings)) {
         return suffix;
       }
     }
   }
 
-  // no term matches, add possible CURIEs
-  if(terms.length === 0) {
-    for(var term in ctx.mappings) {
-      // skip terms with colons, they can't be prefixes
-      if(term.indexOf(':') !== -1) {
-        continue;
-      }
-      // skip entries with @ids that are not partial matches
-      var entry = ctx.mappings[term];
-      if(!entry || entry['@id'] === iri || iri.indexOf(entry['@id']) !== 0) {
-        continue;
-      }
+  // no term or @vocab match, check for possible CURIEs
+  var choice = null;
+  for(var term in activeCtx.mappings) {
+    // skip terms with colons, they can't be prefixes
+    if(term.indexOf(':') !== -1) {
+      continue;
+    }
+    // FIXME: handle property generators
+    // skip entries with @ids that are not partial matches
+    var entry = activeCtx.mappings[term];
+    if(!entry || entry.propertyGenerator ||
+      entry['@id'] === iri || iri.indexOf(entry['@id']) !== 0) {
+      continue;
+    }
 
-      // add CURIE as term if it has no mapping
-      var curie = term + ':' + iri.substr(entry['@id'].length);
-      if(!(curie in ctx.mappings)) {
-        terms.push(curie);
-      }
+    // a CURIE is usable if:
+    // 1. it has no mapping, OR
+    // 2. value is null, which means we're not compacting an @value, AND
+    //   the mapping matches the IRI)
+    var curie = term + ':' + iri.substr(entry['@id'].length);
+    var isUsableCurie = (!(curie in activeCtx.mappings) ||
+      (value === null && activeCtx.mappings[curie] &&
+      activeCtx.mappings[curie]['@id'] === iri));
+
+    // select curie if it is shorter or the same length but lexicographically
+    // less than the current choice
+    if(isUsableCurie && (choice === null ||
+      _compareShortestLeast(curie, choice) < 0)) {
+      choice = curie;
     }
   }
 
-  // no matching terms, use iri
-  if(terms.length === 0) {
-    return iri;
+  // return chosen curie
+  if(choice !== null) {
+    return choice;
   }
 
-  // return shortest and lexicographically-least term
-  terms.sort(_compareShortestLeast);
-  return terms[0];
+  // no compaction options, return IRI as is
+  return iri;
 }
 
 /**
@@ -4068,6 +4049,16 @@ function _prependBase(base, iri) {
   return (base.protocol || '') + '//' + authority + path;
 }
 
+/** Shared "no term" selection object. */
+var _sharedNoTermSelection = {
+  '@language': {
+    '@none': null
+  },
+  '@type': {
+    '@none': null
+  }
+};
+
 /**
  * Gets the initial context.
  *
@@ -4104,6 +4095,14 @@ function _getInitialContext(options) {
       '@vocab': []
     },
     namer: namer,
+    inverse: null,
+    getInverse: function() {
+      if(this.inverse) {
+        return this.inverse;
+      }
+      this.inverse = _createInverseContext(this);
+      return this.inverse;
+    },
     clone: function() {
       var child = {};
       child['@base'] = this['@base'];
@@ -4111,9 +4110,123 @@ function _getInitialContext(options) {
       child.mappings = _clone(this.mappings);
       child.namer = this.namer;
       child.clone = this.clone;
+      child.inverse = null;
+      child.getInverse = this.getInverse;
       return child;
     }
   };
+
+  /**
+   * Generates an inverse context for use in the compaction algorithm.
+   *
+   * @param activeCtx the active context to create the inverse context from.
+   *
+   * @return the inverse context.
+   */
+  function _createInverseContext(activeCtx) {
+    var inverse = {};
+
+    // if the new term is shorter or lexicographically less than the
+    // old term, it is preferred
+    function _isPreferredTerm(newTerm, oldTerm) {
+      if(oldTerm === null) {
+        return true;
+      }
+      return _compareShortestLeast(newTerm, oldTerm) === -1;
+    }
+
+    var shared = _sharedNoTermSelection;
+
+    // handle default language
+    var defaultLanguage = activeCtx['@language'] || '@none';
+    if(defaultLanguage !== '@none') {
+      shared = {
+        '@language': {
+          '@none': null
+        },
+        '@type': {
+          '@none': null
+        }
+      };
+      shared['@language'][defaultLanguage] = null;
+    };
+
+    // for each mapping in the context, create the term selections
+    var mappings = activeCtx.mappings;
+    for(var term in mappings) {
+      var mapping = mappings[term];
+      if(mapping === null) {
+        continue;
+      }
+      if(mapping.propertyGenerator) {
+        // FIXME: handle property generator
+      }
+      else {
+        var iri = mapping['@id'];
+        var entry = inverse[iri];
+
+        // initialize entry
+        if(!entry) {
+          inverse[iri] = entry = {};
+          var containers = [
+            '@annotation', '@language', '@list', '@none', '@set'];
+          for(var i = 0; i < containers.length; ++i) {
+            entry[containers[i]] = shared;
+          }
+        }
+
+        // add term selection where it applies
+        var container = mapping['@container'] || '@none';
+
+        // replace shared entry for term
+        if(entry[container] === shared) {
+          entry[container] = {
+            '@language': {
+              '@none': null
+            },
+            '@type': {
+              '@none': null
+            }
+          };
+          entry[container]['@language'][defaultLanguage] = null;
+        }
+        entry = entry[container];
+
+        // consider updating @language entry if @type is not specified
+        if(!('@type' in mapping)) {
+          // if a @language is specified or a default language is set, update
+          // the specific @language entry
+          if(('@language' in mapping) || defaultLanguage !== '@none') {
+            var language = ('@language' in mapping) ?
+              (mapping['@language'] || '@null') : defaultLanguage;
+            var oldTerm = entry['@language'][language] || null;
+            if(_isPreferredTerm(term, oldTerm)) {
+              entry['@language'][language] = term;
+            }
+          }
+
+          // update @none entry if no @language is specified
+          if(!('@language' in mapping)) {
+            oldTerm = entry['@language']['@none'];
+            if(_isPreferredTerm(term, oldTerm)) {
+              entry['@language']['@none'] = term;
+            }
+          }
+        }
+
+        // consider updating @type entry if @language is not specified
+        if(!('@language' in mapping)) {
+          var type = mapping['@type'] || '@none';
+          var oldTerm = entry['@type'][type] || null;
+          if(_isPreferredTerm(term, oldTerm)) {
+            entry['@type'][type] = term;
+          }
+        }
+      }
+    }
+
+    return inverse;
+  }
 }
 
 /**
