@@ -1249,19 +1249,19 @@ var Processor = function() {};
  * Recursively compacts an element using the given active context. All values
  * must be in expanded form before this method is called.
  *
- * @param ctx the active context to use.
+ * @param activeCtx the active context to use.
  * @param property the property that points to the element, null for none.
  * @param element the element to compact.
  * @param options the compaction options.
  *
  * @return the compacted value.
  */
-Processor.prototype.compact = function(ctx, property, element, options) {
+Processor.prototype.compact = function(activeCtx, property, element, options) {
   // recursively compact array
   if(_isArray(element)) {
     var rval = [];
     for(var i in element) {
-      var e = this.compact(ctx, property, element[i], options);
+      var e = this.compact(activeCtx, property, element[i], options);
       // drop null values
       if(e !== null) {
         rval.push(e);
@@ -1269,7 +1269,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
     }
     if(rval.length === 1) {
       // use single element if no container is specified
-      var container = jsonld.getContextValue(ctx, property, '@container');
+      var container = jsonld.getContextValue(activeCtx, property, '@container');
       if(container === null) {
         rval = rval[0];
       }
@@ -1286,20 +1286,20 @@ Processor.prototype.compact = function(ctx, property, element, options) {
         // if there is no default language or @value is not a string,
         // or the property has a mapping with a null @language,
         // return value of @value
-        if(!('@language' in ctx) || !_isString(element['@value']) ||
-          (ctx.mappings[property] &&
-          ctx.mappings[property]['@language'] === null)) {
+        if(!('@language' in activeCtx) || !_isString(element['@value']) ||
+          (activeCtx.mappings[property] &&
+          activeCtx.mappings[property]['@language'] === null)) {
           return element['@value'];
         }
         // return full element, alias @value
         var rval = {};
-        rval[_compactIri(ctx, '@value')] = element['@value'];
+        rval[_compactIri(activeCtx, '@value')] = element['@value'];
         return rval;
       }
 
       // get type and language context rules
-      var type = jsonld.getContextValue(ctx, property, '@type');
-      var language = jsonld.getContextValue(ctx, property, '@language');
+      var type = jsonld.getContextValue(activeCtx, property, '@type');
+      var language = jsonld.getContextValue(activeCtx, property, '@language');
 
       // matching @type specified in context, compact element
       if(type !== null &&
@@ -1315,23 +1315,23 @@ Processor.prototype.compact = function(ctx, property, element, options) {
         var rval = {};
         // compact @type IRI
         if('@type' in element) {
-          rval[_compactIri(ctx, '@type')] =
-            _compactIri(ctx, element['@type'], null, {base: true, vocab: true});
+          rval[_compactIri(activeCtx, '@type')] = _compactIri(
+            activeCtx, element['@type'], null, {base: true, vocab: true});
         }
         // alias @language
         else if('@language' in element) {
-          rval[_compactIri(ctx, '@language')] = element['@language'];
+          rval[_compactIri(activeCtx, '@language')] = element['@language'];
         }
-        rval[_compactIri(ctx, '@value')] = element['@value'];
+        rval[_compactIri(activeCtx, '@value')] = element['@value'];
         return rval;
       }
     }
 
     // compact subject references
     if(_isSubjectReference(element)) {
-      var type = jsonld.getContextValue(ctx, property, '@type');
+      var type = jsonld.getContextValue(activeCtx, property, '@type');
       if(type === '@id' || property === '@graph') {
-        return _compactIri(ctx, element['@id'], null, {base: true});
+        return _compactIri(activeCtx, element['@id'], null, {base: true});
       }
     }
 
@@ -1345,20 +1345,20 @@ Processor.prototype.compact = function(ctx, property, element, options) {
         // compact single @id
         if(_isString(value)) {
           value = _compactIri(
-            ctx, value, null, {base: true, vocab: (key === '@type')});
+            activeCtx, value, null, {base: true, vocab: (key === '@type')});
         }
         // value must be a @type array
         else {
           var types = [];
           for(var i in value) {
             types.push(_compactIri(
-              ctx, value[i], null, {base: true, vocab: true}));
+              activeCtx, value[i], null, {base: true, vocab: true}));
           }
           value = types;
         }
 
         // compact property and add value
-        var prop = _compactIri(ctx, key, null, {vocab: true});
+        var prop = _compactIri(activeCtx, key, null, {vocab: true});
         var isArray = (_isArray(value) && value.length === 0);
         jsonld.addValue(rval, prop, value, {propertyIsArray: isArray});
         continue;
@@ -1368,7 +1368,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
 
       // preserve empty arrays
       if(value.length === 0) {
-        var prop = _compactIri(ctx, key, null, {vocab: true});
+        var prop = _compactIri(activeCtx, key, null, {vocab: true});
         jsonld.addValue(rval, prop, [], {propertyIsArray: true});
       }
 
@@ -1378,7 +1378,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
         var isList = _isList(v);
 
         // compact property
-        var prop = _compactIri(ctx, key, v, {vocab: true});
+        var prop = _compactIri(activeCtx, key, v, {vocab: true});
 
         // remove @list for recursion (will be re-added if necessary)
         if(isList) {
@@ -1386,7 +1386,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
         }
 
         // recursively compact value
-        v = this.compact(ctx, prop, v, options);
+        v = this.compact(activeCtx, prop, v, options);
 
         // ensure @list value is an array
         if(isList && !_isArray(v)) {
@@ -1394,7 +1394,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
         }
 
         // get container type for property
-        var container = jsonld.getContextValue(ctx, prop, '@container');
+        var container = jsonld.getContextValue(activeCtx, prop, '@container');
 
         // handle @list
         if(isList && container !== '@list') {
@@ -1408,7 +1408,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
               'jsonld.SyntaxError');
           }
           // reintroduce @list keyword
-          var kwlist = _compactIri(ctx, '@list');
+          var kwlist = _compactIri(activeCtx, '@list');
           var val = {};
           val[kwlist] = v;
           v = val;
@@ -1435,7 +1435,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
  * the element will be removed. All context URLs must have been resolved
  * before calling this method.
  *
- * @param ctx the context to use.
+ * @param activeCtx the context to use.
  * @param property the property for the element, null for none.
  * @param element the element to expand.
  * @param options the expansion options.
@@ -1444,7 +1444,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
  * @return the expanded value.
  */
 Processor.prototype.expand = function(
-  ctx, property, element, options, propertyIsList) {
+  activeCtx, property, element, options, propertyIsList) {
   var self = this;
 
   if(typeof element === 'undefined') {
@@ -1458,7 +1458,8 @@ Processor.prototype.expand = function(
     var rval = [];
     for(var i in element) {
       // expand element
-      var e = self.expand(ctx, property, element[i], options, propertyIsList);
+      var e = self.expand(
+        activeCtx, property, element[i], options, propertyIsList);
       if(_isArray(e) && propertyIsList) {
         // lists of lists are illegal
         throw new JsonLdError(
@@ -1477,7 +1478,7 @@ Processor.prototype.expand = function(
   if(_isObject(element)) {
     // if element has a context, process it
     if('@context' in element) {
-      ctx = self.processContext(ctx, element['@context'], options);
+      activeCtx = self.processContext(activeCtx, element['@context'], options);
       delete element['@context'];
     }
 
@@ -1487,20 +1488,20 @@ Processor.prototype.expand = function(
       var expandedProperty;
 
       // expand key using property generator
-      var mapping = ctx.mappings[key];
+      var mapping = activeCtx.mappings[key];
       if(mapping && mapping.propertyGenerator) {
         expandedProperty = mapping['@id'];
       }
       // expand key to IRI
       else {
-        expandedProperty = _expandIri(ctx, key, {vocab: true});
+        expandedProperty = _expandIri(activeCtx, key, {vocab: true});
       }
 
       // drop non-absolute IRI keys that aren't keywords
       if(expandedProperty === null ||
         (!_isArray(expandedProperty) &&
         !_isAbsoluteIri(expandedProperty) &&
-        !_isKeyword(expandedProperty, ctx))) {
+        !_isKeyword(expandedProperty, activeCtx))) {
         continue;
       }
 
@@ -1559,7 +1560,7 @@ Processor.prototype.expand = function(
         }
       }
 
-      var container = jsonld.getContextValue(ctx, key, '@container');
+      var container = jsonld.getContextValue(activeCtx, key, '@container');
 
       // handle language map container (skip if value is not an object)
       if(container === '@language' && _isObject(value)) {
@@ -1576,7 +1577,7 @@ Processor.prototype.expand = function(
             if(!_isArray(val)) {
               val = [val];
             }
-            val = self.expand(ctx, property, val, options, false);
+            val = self.expand(activeCtx, property, val, options, false);
             for(var vi = 0; vi < val.length; ++vi) {
               var item = val[vi];
               if(!('@annotation' in item)) {
@@ -1601,7 +1602,8 @@ Processor.prototype.expand = function(
             // keep the current active property
             activeProperty = property;
           }
-          value = self.expand(ctx, activeProperty, value, options, isList);
+          value = self.expand(
+            activeCtx, activeProperty, value, options, isList);
           if(isList && _isList(value)) {
             throw new JsonLdError(
               'Invalid JSON-LD syntax; lists of lists are not permitted.',
@@ -1610,7 +1612,7 @@ Processor.prototype.expand = function(
         }
         else {
           // recursively expand value with key as new active property
-          value = self.expand(ctx, key, value, options, false);
+          value = self.expand(activeCtx, key, value, options, false);
         }
       }
 
@@ -1650,7 +1652,7 @@ Processor.prototype.expand = function(
 
       // add copy of value for each property from property generator
       if(_isArray(expandedProperty)) {
-        value = _labelBlankNodes(ctx.namer, value);
+        value = _labelBlankNodes(activeCtx.namer, value);
         for(var i = 0; i < expandedProperty.length; ++i) {
           jsonld.addValue(
             rval, expandedProperty[i], _clone(value),
@@ -1750,7 +1752,7 @@ Processor.prototype.expand = function(
   }
 
   // expand element according to value expansion rules
-  return _expandValue(ctx, property, element, options.base);
+  return _expandValue(activeCtx, property, element, options.base);
 };
 
 /**
