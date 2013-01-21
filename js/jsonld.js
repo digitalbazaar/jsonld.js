@@ -1316,7 +1316,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
         // compact @type IRI
         if('@type' in element) {
           rval[_compactIri(ctx, '@type')] =
-            _compactIri(ctx, element['@type']);
+            _compactIri(ctx, element['@type'], null, {base: true, vocab: true});
         }
         // alias @language
         else if('@language' in element) {
@@ -1331,7 +1331,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
     if(_isSubjectReference(element)) {
       var type = jsonld.getContextValue(ctx, property, '@type');
       if(type === '@id' || property === '@graph') {
-        return _compactIri(ctx, element['@id']);
+        return _compactIri(ctx, element['@id'], null, {base: true});
       }
     }
 
@@ -1344,19 +1344,21 @@ Processor.prototype.compact = function(ctx, property, element, options) {
       if(key === '@id' || key === '@type') {
         // compact single @id
         if(_isString(value)) {
-          value = _compactIri(ctx, value);
+          value = _compactIri(
+            ctx, value, null, {base: true, vocab: (key === '@type')});
         }
         // value must be a @type array
         else {
           var types = [];
           for(var i in value) {
-            types.push(_compactIri(ctx, value[i]));
+            types.push(_compactIri(
+              ctx, value[i], null, {base: true, vocab: true}));
           }
           value = types;
         }
 
         // compact property and add value
-        var prop = _compactIri(ctx, key);
+        var prop = _compactIri(ctx, key, null, {vocab: true});
         var isArray = (_isArray(value) && value.length === 0);
         jsonld.addValue(rval, prop, value, {propertyIsArray: isArray});
         continue;
@@ -1366,7 +1368,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
 
       // preserve empty arrays
       if(value.length === 0) {
-        var prop = _compactIri(ctx, key);
+        var prop = _compactIri(ctx, key, null, {vocab: true});
         jsonld.addValue(rval, prop, [], {propertyIsArray: true});
       }
 
@@ -1376,7 +1378,7 @@ Processor.prototype.compact = function(ctx, property, element, options) {
         var isList = _isList(v);
 
         // compact property
-        var prop = _compactIri(ctx, key, v);
+        var prop = _compactIri(ctx, key, v, {vocab: true});
 
         // remove @list for recursion (will be re-added if necessary)
         if(isList) {
@@ -3476,10 +3478,13 @@ function _pickPreferredTerm(entry, container, typeOrLanguage, value) {
  * @param activeCtx the active context to use.
  * @param iri the IRI to compact.
  * @param value the value to check or null.
+ * @param relativeTo options for how to compact IRIs:
+ *          base: true to compact against the base IRI, false not to.
+ *          vocab: true to split after @vocab, false not to.
  *
  * @return the compacted term, prefix, keyword alias, or the original IRI.
  */
-function _compactIri(activeCtx, iri, value) {
+function _compactIri(activeCtx, iri, value, relativeTo) {
   // can't compact null
   if(iri === null) {
     return iri;
@@ -3496,6 +3501,7 @@ function _compactIri(activeCtx, iri, value) {
   if(_isUndefined(value)) {
     value = null;
   }
+  relativeTo = relativeTo || {};
 
   // use inverse context to pick a term
   var inverseCtx = activeCtx.getInverse();
@@ -3578,7 +3584,7 @@ function _compactIri(activeCtx, iri, value) {
   }
 
   // no matching terms, use @vocab if available
-  if('@vocab' in activeCtx) {
+  if(relativeTo.vocab && '@vocab' in activeCtx) {
     // determine if vocab is a prefix of the iri
     var vocab = activeCtx['@vocab'];
     if(iri.indexOf(vocab) === 0) {
