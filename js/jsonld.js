@@ -1386,6 +1386,11 @@ Processor.prototype.compact = function(ctx, property, element, options) {
         // recursively compact value
         v = this.compact(ctx, prop, v, options);
 
+        // ensure @list value is an array
+        if(isList && !_isArray(v)) {
+          v = [v];
+        }
+
         // get container type for property
         var container = jsonld.getContextValue(ctx, prop, '@container');
 
