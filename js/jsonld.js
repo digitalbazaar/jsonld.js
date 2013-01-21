@@ -3583,20 +3583,7 @@ function _compactIri(activeCtx, iri, value, relativeTo) {
     }
   }
 
-  // no matching terms, use @vocab if available
-  if(relativeTo.vocab && '@vocab' in activeCtx) {
-    // determine if vocab is a prefix of the iri
-    var vocab = activeCtx['@vocab'];
-    if(iri.indexOf(vocab) === 0) {
-      // use suffix as relative iri if it is not a term in the active context
-      var suffix = iri.substr(vocab.length);
-      if(!(suffix in activeCtx.mappings)) {
-        return suffix;
-      }
-    }
-  }
-
-  // no term or @vocab match, check for possible CURIEs
+  // no term match, check for possible CURIEs
   var choice = null;
   for(var term in activeCtx.mappings) {
     // skip terms with colons, they can't be prefixes
@@ -3633,7 +3620,20 @@ function _compactIri(activeCtx, iri, value, relativeTo) {
     return choice;
   }
 
-  // no compaction options, return IRI as is
+  // no matching terms or curies, use @vocab if available
+  if(relativeTo.vocab && '@vocab' in activeCtx) {
+    // determine if vocab is a prefix of the iri
+    var vocab = activeCtx['@vocab'];
+    if(iri.indexOf(vocab) === 0) {
+      // use suffix as relative iri if it is not a term in the active context
+      var suffix = iri.substr(vocab.length);
+      if(!(suffix in activeCtx.mappings)) {
+        return suffix;
+      }
+    }
+  }
+
+  // no compaction choices, return IRI as is
   return iri;
 }
 
@@ -3792,13 +3792,7 @@ function _defineContextMapping(activeCtx, localCtx, key, relativeTo, defined) {
           'jsonld.SyntaxError', {context: localCtx, key: key});
       }
       // prepend vocab to term
-      if('@vocab' in activeCtx) {
-        mapping['@id'] = activeCtx['@vocab'] + key;
-      }
-      // prepend base to term
-      else {
-        mapping['@id'] = _prependBase(activeCtx['@base'], key);
-      }
+      mapping['@id'] = activeCtx['@vocab'] + key;
     }
     // set @id based on prefix parent
     else if(prefix in activeCtx.mappings) {
