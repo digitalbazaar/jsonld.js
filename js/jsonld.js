@@ -1250,7 +1250,8 @@ var Processor = function() {};
  * must be in expanded form before this method is called.
  *
  * @param activeCtx the active context to use.
- * @param property the property that points to the element, null for none.
+ * @param property the compact property that points to the element, null for
+ *          none.
  * @param element the element to compact.
  * @param options the compaction options.
  *
@@ -1261,10 +1262,10 @@ Processor.prototype.compact = function(activeCtx, property, element, options) {
   if(_isArray(element)) {
     var rval = [];
     for(var i in element) {
-      var e = this.compact(activeCtx, property, element[i], options);
-      // drop null values
-      if(e !== null) {
-        rval.push(e);
+      // compact, dropping any null values
+      var compacted = this.compact(activeCtx, property, element[i], options);
+      if(compacted !== null) {
+        rval.push(compacted);
       }
     }
     if(rval.length === 1) {
@@ -1281,56 +1282,71 @@ Processor.prototype.compact = function(activeCtx, property, element, options) {
   if(_isObject(element)) {
     // element is a @value
     if(_isValue(element)) {
-      // if @value is the only key
-      if(Object.keys(element).length === 1) {
-        // if there is no default language or @value is not a string,
-        // or the property has a mapping with a null @language,
-        // return value of @value
-        if(!('@language' in activeCtx) || !_isString(element['@value']) ||
-          (activeCtx.mappings[property] &&
-          activeCtx.mappings[property]['@language'] === null)) {
-          return element['@value'];
-        }
-        // return full element, alias @value
-        var rval = {};
-        rval[_compactIri(activeCtx, '@value')] = element['@value'];
-        return rval;
-      }
-
-      // get type and language context rules
+      // get context rules
       var type = jsonld.getContextValue(activeCtx, property, '@type');
       var language = jsonld.getContextValue(activeCtx, property, '@language');
+      var container = jsonld.getContextValue(activeCtx, property, '@container');
 
-      // matching @type specified in context, compact element
-      if(type !== null &&
-        ('@type' in element) && element['@type'] === type) {
+      // whether or not the element has an @annotation that must be preserved
+      var preserveAnnotation = (('@annotation' in element) &&
+        container !== '@annotation');
+
+      // matching @type specified in context and there's no @annotation
+      // to preserve, compact element
+      if(type !== null && element['@type'] === type && !preserveAnnotation) {
         return element['@value'];
       }
-      // matching @language specified in context, compact element
-      else if(language !== null &&
-        ('@language' in element) && element['@language'] === language) {
+      // matching @language specified in context and there's no @annotation
+      // to preserve, compact element
+      else if(language !== null && element['@language'] === language &&
+        !preserveAnnotation) {
         return element['@value'];
       }
-      else {
-        var rval = {};
-        // compact @type IRI
-        if('@type' in element) {
-          rval[_compactIri(activeCtx, '@type')] = _compactIri(
-            activeCtx, element['@type'], null, {base: true, vocab: true});
-        }
-        // alias @language
-        else if('@language' in element) {
-          rval[_compactIri(activeCtx, '@language')] = element['@language'];
-        }
-        rval[_compactIri(activeCtx, '@value')] = element['@value'];
-        return rval;
+
+      // return just the value of @value if all are true:
+      // 1. @value is the only key or @annotation isn't being preserved
+      // 2. there is no default language or @value is not a string or
+      //   the property has a mapping with a null @language
+      var keyCount = Object.keys(element).length;
+      var isValueOnlyKey = (keyCount === 1 ||
+        (keyCount === 2 && ('@annotation' in element) && !preserveAnnotation));
+      var hasDefaultLanguage = ('@language' in activeCtx);
+      var isValueString = _isString(element['@value']);
+      var hasNullMapping = (activeCtx.mappings[property] &&
+        activeCtx.mappings[property]['@language'] === null);
+      if(isValueOnlyKey &&
+        (!hasDefaultLanguage || !isValueString || hasNullMapping)) {
+        return element['@value'];
       }
+
+      var rval = {};
+
+      // alias @value
+      rval[_compactIri(activeCtx, '@value')] = element['@value'];
+
+      // compact @type IRI
+      if('@type' in element) {
+        rval[_compactIri(activeCtx, '@type')] = _compactIri(
+          activeCtx, element['@type'], null, {base: true, vocab: true});
+      }
+      // alias @language
+      else if('@language' in element) {
+        rval[_compactIri(activeCtx, '@language')] = element['@language'];
+      }
+
+      // preserve @annotation
+      if(preserveAnnotation) {
+        rval[_compactIri(activeCtx, '@annotation')] = element['@annotation'];
+      }
+
+      return rval;
     }
 
     // compact subject references
     if(_isSubjectReference(element)) {
+      var expandedProperty = _expandIri(activeCtx, property);
       var type = jsonld.getContextValue(activeCtx, property, '@type');
-      if(type === '@id' || property === '@graph') {
+      if(type === '@id' || expandedProperty === '@graph') {
         return _compactIri(activeCtx, element['@id'], null, {base: true});
       }
     }
@@ -1357,10 +1373,25 @@ Processor.prototype.compact = function(activeCtx, property, element, options) {
           value = types;
         }
 
-        // compact property and add value
-        var prop = _compactIri(activeCtx, key, null, {vocab: true});
+        // use keyword alias and add value
+        var alias = _compactIri(activeCtx, key);
         var isArray = (_isArray(value) && value.length === 0);
-        jsonld.addValue(rval, prop, value, {propertyIsArray: isArray});
+        jsonld.addValue(rval, alias, value, {propertyIsArray: isArray});
+        continue;
+      }
+
+      // handle @annotation property
+      if(key === '@annotation') {
+        // drop @annotation if inside an @annotation container
+        var container = jsonld.getContextValue(
+          activeCtx, property, '@container');
+        if(container === '@annotation') {
+          continue;
+        }
+
+        // use keyword alias and add value
+        var alias = _compactIri(activeCtx, key);
+        jsonld.addValue(rval, alias, value);
         continue;
       }
 
@@ -1368,38 +1399,50 @@ Processor.prototype.compact = function(activeCtx, property, element, options) {
 
       // preserve empty arrays
       if(value.length === 0) {
-        var prop = _compactIri(activeCtx, key, null, {vocab: true});
-        jsonld.addValue(rval, prop, [], {propertyIsArray: true});
+        var term = _compactIri(activeCtx, key, null, {vocab: true});
+        jsonld.addValue(rval, term, [], {propertyIsArray: true});
       }
 
       // recusively process array values
       for(var i = 0; i < value.length; ++i) {
-        var v = value[i];
-        var isList = _isList(v);
+        var expanded = value[i];
 
-        // compact property
-        var prop = _compactIri(activeCtx, key, v, {vocab: true});
+        // compact property and get container type
+        var term = _compactIri(activeCtx, key, expanded, {vocab: true});
+        var container = jsonld.getContextValue(activeCtx, term, '@container');
 
-        // remove @list for recursion (will be re-added if necessary)
+        // get @list value if appropriate
+        var isList = _isList(expanded);
+        var list = null;
         if(isList) {
-          v = v['@list'];
+          list = expanded['@list'];
         }
 
         // recursively compact value
-        v = this.compact(activeCtx, prop, v, options);
-
-        // ensure @list value is an array
-        if(isList && !_isArray(v)) {
-          v = [v];
-        }
-
-        // get container type for property
-        var container = jsonld.getContextValue(activeCtx, prop, '@container');
+        var compacted = this.compact(
+          activeCtx, term, isList ? list : expanded, options);
 
         // handle @list
-        if(isList && container !== '@list') {
-          // handle messy @list compaction
-          if(prop in rval && options.strict) {
+        if(isList) {
+          // ensure @list value is an array
+          if(!_isArray(compacted)) {
+            compacted = [compacted];
+          }
+
+          if(container !== '@list') {
+            // wrap using @list alias
+            var wrapper = {};
+            wrapper[_compactIri(activeCtx, '@list')] = compacted;
+            compacted = wrapper;
+
+            // include @annotation from expanded @list, if any
+            if('@annotation' in expanded) {
+              compacted[_compactIri(activeCtx, '@annotation')] =
+                expanded['@annotation'];
+            }
+          }
+          // can't use @list container for more than 1 list
+          else if(term in rval) {
             throw new JsonLdError(
               'JSON-LD compact error; property has a "@list" @container ' +
               'rule but there is more than a single @list that matches ' +
@@ -1407,22 +1450,42 @@ Processor.prototype.compact = function(activeCtx, property, element, options) {
               'unwanted items into the list.',
               'jsonld.SyntaxError');
           }
-          // reintroduce @list keyword
-          var kwlist = _compactIri(activeCtx, '@list');
-          var val = {};
-          val[kwlist] = v;
-          v = val;
         }
 
-        // use an array if: @container is @set or @list , value is an empty
-        // array, or key is @graph
-        var isArray = (container === '@set' || container === '@list' ||
-          (_isArray(v) && v.length === 0) || key === '@graph');
+        // handle language and annotation maps
+        if(container === '@language' || container === '@annotation') {
+          // get or create the map object
+          var mapObject;
+          if(term in rval) {
+            mapObject = rval[term];
+          }
+          else {
+            rval[term] = mapObject = {};
+          }
 
-        // add compact value
-        jsonld.addValue(rval, prop, v, {propertyIsArray: isArray});
+          // if container is a language map, simplify compacted value to
+          // a simple string
+          if(container === '@language' && _isValue(compacted)) {
+            compacted = compacted['@value'];
+          }
+
+          // add compact value to map object using key from expanded value
+          // based on the container type
+          jsonld.addValue(mapObject, expanded[container], compacted);
+        }
+        else {
+          // use an array if: @container is @set or @list , value is an empty
+          // array, or key is @graph
+          var isArray = (container === '@set' || container === '@list' ||
+            (_isArray(compacted) && compacted.length === 0) ||
+            key === '@graph');
+
+          // add compact value
+          jsonld.addValue(rval, term, compacted, {propertyIsArray: isArray});
+        }
       }
     }
+
     return rval;
   }
 
@@ -3456,21 +3519,23 @@ function _compareShortestLeast(a, b) {
  * Picks the preferred compaction term from the given inverse context entry.
  *
  * @param entry the inverse context entry.
- * @param container the preferred container.
+ * @param containers the preferred containers.
  * @param typeOrLanguage either '@type' or '@language'.
  * @param value the preferred value for '@type' or '@language'.
  *
  * @return the preferred term.
  */
-function _pickPreferredTerm(entry, container, typeOrLanguage, value) {
+function _pickPreferredTerm(entry, containers, typeOrLanguage, value) {
+  containers.push('@none');
   if(value === null) {
     value = '@null';
   }
-  return (
-    entry[container][typeOrLanguage][value] ||
-    entry[container][typeOrLanguage]['@none'] ||
-    entry['@none'][typeOrLanguage][value] ||
-    entry['@none'][typeOrLanguage]['@none']);
+  var term = null;
+  for(var i = 0; term === null && i < containers.length; ++i) {
+    var e = entry[containers[i]][typeOrLanguage];
+    term = e[value] || e['@none'];
+  }
+  return term;
 }
 
 /**
@@ -3513,8 +3578,18 @@ function _compactIri(activeCtx, iri, value, relativeTo) {
     var term = null;
     var entry = inverseCtx[iri];
 
+    // prefer @annotation if available in value
+    var containers = [];
+    if(_isObject(value) && '@annotation' in value) {
+      containers.push('@annotation');
+    }
+
     // choose the most specific term that works for all elements in @list
     if(_isList(value)) {
+      // only select @list containers if @annotation is NOT in value
+      if(!('@annotation' in value)) {
+        containers.push('@list');
+      }
       var list = value['@list'];
       var listLanguage = (list.length === 0) ? defaultLanguage : null;
       var listType = null;
@@ -3556,28 +3631,32 @@ function _compactIri(activeCtx, iri, value, relativeTo) {
       listLanguage = listLanguage || '@none';
       listType = listType || '@none';
       if(listType !== '@none') {
-        term = _pickPreferredTerm(entry, '@list', '@type', listType);
+        term = _pickPreferredTerm(entry, containers, '@type', listType);
       }
       else {
-        term = _pickPreferredTerm(entry, '@list', '@language', listLanguage);
+        term = _pickPreferredTerm(
+          entry, containers, '@language', listLanguage);
       }
     }
     else if(_isValue(value)) {
       if('@language' in value) {
+        containers.splice(-1, 0, '@language', '@set');
         term = _pickPreferredTerm(
-          entry, '@set', '@language', value['@language']);
+          entry, containers, '@language', value['@language']);
       }
       else if('@type' in value) {
-        term = _pickPreferredTerm(
-          entry, '@set', '@type', value['@type']);
+        containers.push('@set');
+        term = _pickPreferredTerm(entry, containers, '@type', value['@type']);
       }
       // plain literal
       else {
-        term = _pickPreferredTerm(entry, '@set', '@language', '@null');
+        containers.push('@set');
+        term = _pickPreferredTerm(entry, containers, '@language', '@null');
       }
     }
     else {
-      term = _pickPreferredTerm(entry, '@set', '@type', '@id');
+      containers.push('@set');
+      term = _pickPreferredTerm(entry, containers, '@type', '@id');
     }
 
     if(term !== null) {
