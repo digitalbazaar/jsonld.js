@@ -266,7 +266,12 @@ TestRunner.prototype.run = function(manifests, callback) {
           callback();
         };
 
-        if(type.indexOf('jld:NormalizeTest') !== -1) {
+        if(type.indexOf('jld:ApiErrorTest') !== -1) {
+          util.log('Skipping test "' + test.name + '" of type: ' +
+            JSON.stringify(type));
+          return callback();
+        }
+        else if(type.indexOf('jld:NormalizeTest') !== -1) {
           self.test(test.name);
           input = _readTestJson(test.input, filepath);
           test.expect = _readTestNQuads(test.expect, filepath);
