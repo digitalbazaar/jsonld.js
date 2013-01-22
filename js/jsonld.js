@@ -3518,22 +3518,60 @@ function _compareShortestLeast(a, b) {
 /**
  * Picks the preferred compaction term from the given inverse context entry.
  *
+ * @param activeCtx the active context.
+ * @param value the value to pick the term for.
  * @param entry the inverse context entry.
  * @param containers the preferred containers.
  * @param typeOrLanguage either '@type' or '@language'.
- * @param value the preferred value for '@type' or '@language'.
+ * @param typeOrLanguageValue the preferred value for '@type' or '@language'.
  *
  * @return the preferred term.
  */
-function _pickPreferredTerm(entry, containers, typeOrLanguage, value) {
+function _pickPreferredTerm(
+  activeCtx, value, entry, containers, typeOrLanguage, typeOrLanguageValue) {
   containers.push('@none');
-  if(value === null) {
-    value = '@null';
+  if(typeOrLanguageValue === null) {
+    typeOrLanguageValue = '@null';
   }
+  // options for the value of @type or @language
+  var options = [typeOrLanguageValue, '@none'];
   var term = null;
-  for(var i = 0; term === null && i < containers.length; ++i) {
-    var e = entry[containers[i]][typeOrLanguage];
-    term = e[value] || e['@none'];
+  for(var ci = 0; term === null && ci < containers.length; ++ci) {
+    // if container not available in entry, skip it
+    var container = containers[ci];
+    if(!(container in entry)) {
+      continue;
+    }
+
+    var typeOrLanguageEntry = entry[container][typeOrLanguage];
+    for(var oi = 0; oi < options.length; ++oi) {
+      // if option not available in entry, skip it
+      var option = options[oi];
+      if(!(option in typeOrLanguageEntry)) {
+        continue;
+      }
+
+      // option in entry, see if a property generator or term matches
+      var e = typeOrLanguageEntry[option];
+      if(_isSubject(value) && e.propertyGenerators) {
+        for(var pi = 0; pi < e.propertyGenerators.length; ++pi) {
+          var propertyGenerator = e.propertyGenerators[pi];
+          var iris = activeCtx.mappings[propertyGenerator]['@id'];
+          var hasIri = true;
+          for(var ii = 0; hasIri && ii < iris.length; ++ii) {
+            hasIri = (iris[ii] in value);
+          }
+          if(hasIri) {
+            term = propertyGenerator;
+          }
+        }
+      }
+
+      // no matching property generator, use a simple term instead
+      if(term === null) {
+        term = e.term;
+      }
+    }
   }
   return term;
 }
@@ -3584,6 +3622,10 @@ function _compactIri(activeCtx, iri, value, relativeTo) {
       containers.push('@annotation');
     }
 
+    // defaults for term selection based on type/language
+    var typeOrLanguage = '@language';
+    var typeOrLanguageValue = '@null';
+
     // choose the most specific term that works for all elements in @list
     if(_isList(value)) {
       // only select @list containers if @annotation is NOT in value
@@ -3631,34 +3673,34 @@ function _compactIri(activeCtx, iri, value, relativeTo) {
       listLanguage = listLanguage || '@none';
       listType = listType || '@none';
       if(listType !== '@none') {
-        term = _pickPreferredTerm(entry, containers, '@type', listType);
+        typeOrLanguage = '@type';
+        typeOrLanguageValue = listType;
       }
       else {
-        term = _pickPreferredTerm(
-          entry, containers, '@language', listLanguage);
-      }
-    }
-    else if(_isValue(value)) {
-      if('@language' in value) {
-        containers.splice(-1, 0, '@language', '@set');
-        term = _pickPreferredTerm(
-          entry, containers, '@language', value['@language']);
-      }
-      else if('@type' in value) {
-        containers.push('@set');
-        term = _pickPreferredTerm(entry, containers, '@type', value['@type']);
-      }
-      // plain literal
-      else {
-        containers.push('@set');
-        term = _pickPreferredTerm(entry, containers, '@language', '@null');
+        typeOrLanguageValue = listLanguage;
       }
     }
     else {
+      if(_isValue(value)) {
+        if('@language' in value) {
+          containers.push('@language');
+          typeOrLanguageValue = value['@language'];
+        }
+        else if('@type' in value) {
+          typeOrLanguage = '@type';
+          typeOrLanguageValue = value['@type'];
+        }
+      }
+      else {
+        typeOrLanguage = '@type';
+        typeOrLanguageValue = '@id';
+      }
       containers.push('@set');
-      term = _pickPreferredTerm(entry, containers, '@type', '@id');
     }
 
+    // do term selection
+    term = _pickPreferredTerm(
+      activeCtx, value, entry, containers, typeOrLanguage, typeOrLanguageValue);
     if(term !== null) {
       return term;
     }
@@ -3716,6 +3758,53 @@ function _compactIri(activeCtx, iri, value, relativeTo) {
 
   // no compaction choices, return IRI as is
   return iri;
+}
+
+/**
+ * Compares two property generator values for equivalence.
+ *
+ * @param v1 the first value.
+ * @param v2 the second value.
+ *
+ * @return true if the values are equivalent, false if not.
+ */
+function _propertyGeneratorValuesEqual(v1, v2) {
+  if(v1 === v2) {
+    return true;
+  }
+  if(typeof v1 !== typeof v2) {
+    return false;
+  }
+  if(_isArray(v1)) {
+    if(!_isArray(v2)) {
+      return false;
+    }
+    if(v1.length !== v2.length) {
+      return false;
+    }
+    for(var i = 0; i < v1.length; ++i) {
+      if(!_propertyGeneratorValuesEqual(v1[i], v2[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+  else if(_isObject(v1)) {
+    if(Object.keys(v1).length !== Object.keys(v2).length) {
+      return false;
+    }
+    for(var key in v1) {
+      if(!(key in v2)) {
+        return false;
+      }
+      if(!_propertyGeneratorValuesEqual(v1[key], v2[key])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  return false;
 }
 
 /**
@@ -4138,10 +4227,14 @@ function _prependBase(base, iri) {
 /** Shared "no term" selection object. */
 var _sharedNoTermSelection = {
   '@language': {
-    '@none': null
+    '@none': {
+      term: null
+    }
   },
   '@type': {
-    '@none': null
+    '@none': {
+      term: null
+    }
   }
 };
 
@@ -4228,13 +4321,17 @@ function _getInitialContext(options) {
     if(defaultLanguage !== '@none') {
       shared = {
         '@language': {
-          '@none': null
+          '@none': {
+            term: null
+          }
         },
         '@type': {
-          '@none': null
+          '@none': {
+            term: null
+          }
         }
       };
-      shared['@language'][defaultLanguage] = null;
+      shared['@language'][defaultLanguage] = {term: null};
     };
 
     // for each mapping in the context, create the term selections
@@ -4253,28 +4350,27 @@ function _getInitialContext(options) {
 
         // initialize entry
         if(!entry) {
-          inverse[iri] = entry = {};
-          var containers = [
-            '@annotation', '@language', '@list', '@none', '@set'];
-          for(var i = 0; i < containers.length; ++i) {
-            entry[containers[i]] = shared;
-          }
+          inverse[iri] = entry = {'@none': shared};
         }
 
         // add term selection where it applies
         var container = mapping['@container'] || '@none';
 
-        // replace shared entry for term
-        if(entry[container] === shared) {
+        // add new/replace shared entry for term
+        if(!entry[container] || entry[container] === shared) {
           entry[container] = {
             '@language': {
-              '@none': null
+              '@none': {
+                term: null
+              }
             },
             '@type': {
-              '@none': null
+              '@none': {
+                term: null
+              }
             }
           };
-          entry[container]['@language'][defaultLanguage] = null;
+          entry[container]['@language'][defaultLanguage] = {term: null};
         }
         entry = entry[container];
 
@@ -4285,17 +4381,34 @@ function _getInitialContext(options) {
           if(('@language' in mapping) || defaultLanguage !== '@none') {
             var language = ('@language' in mapping) ?
               (mapping['@language'] || '@null') : defaultLanguage;
-            var oldTerm = entry['@language'][language] || null;
-            if(_isPreferredTerm(term, oldTerm)) {
-              entry['@language'][language] = term;
+            if(mapping.propertyGenerator) {
+              _addPreferredPropertyGenerator(
+                activeCtx, entry['@language'], language, term);
+            }
+            else {
+              if(!(language in entry['@language'])) {
+                entry['@language'][language] = {term: term};
+              }
+              else {
+                var oldTerm = entry['@language'][language].term;
+                if(_isPreferredTerm(term, oldTerm)) {
+                  entry['@language'][language].term = term;
+                }
+              }
             }
           }
 
           // update @none entry if no @language is specified
           if(!('@language' in mapping)) {
-            oldTerm = entry['@language']['@none'];
-            if(_isPreferredTerm(term, oldTerm)) {
-              entry['@language']['@none'] = term;
+            if(mapping.propertyGenerator) {
+              _addPreferredPropertyGenerator(
+                activeCtx, entry['@language'], language, term);
+            }
+            else {
+              oldTerm = entry['@language']['@none'].term;
+              if(_isPreferredTerm(term, oldTerm)) {
+                entry['@language']['@none'].term = term;
+              }
             }
           }
         }
@@ -4303,15 +4416,79 @@ function _getInitialContext(options) {
         // consider updating @type entry if @language is not specified
         if(!('@language' in mapping)) {
           var type = mapping['@type'] || '@none';
-          var oldTerm = entry['@type'][type] || null;
-          if(_isPreferredTerm(term, oldTerm)) {
-            entry['@type'][type] = term;
+          if(mapping.propertyGenerator) {
+            _addPreferredPropertyGenerator(
+              activeCtx, entry['@type'], type, term);
+          }
+          // add simple term
+          else {
+            if(!(type in entry['@type'])) {
+              entry['@type'][type] = {term: term};
+            }
+            else {
+              var oldTerm = entry['@type'][type].term;
+              if(_isPreferredTerm(term, oldTerm)) {
+                entry['@type'][type].term = term;
+              }
+            }
           }
         }
       }
     }
 
     return inverse;
+  }
+
+  /**
+   * Adds a property generator to the list of preferred property generators
+   * if it is preferred over any existing ones. A property generator will
+   * be preferred over a matching one if its term is shorter or is the
+   * same length and is lexicographically less.
+   *
+   * @param activeCtx the active context.
+   * @param entry the inverse context typeOrLanguage entry to add to.
+   * @param typeOrLanguageValue the key in the entry to add to.
+   * @param pg the property generator to add.
+   */
+  function _addPreferredPropertyGenerator(
+    activeCtx, entry, typeOrLanguageValue, pg) {
+    var e = entry[typeOrLanguageValue];
+
+    // add first property generator
+    if(!e) {
+      entry[typeOrLanguageValue] = {
+        term: null,
+        propertyGenerators: [pg]
+      };
+      return;
+    }
+    if(!('propertyGenerators' in e)) {
+      e.propertyGenerators = [pg];
+      return;
+    }
+
+    // add to existing list of property generators if preferred
+    var preferred = true;
+    for(var pi = 0; pi < e.propertyGenerators.length; ++pi) {
+      // compare IRIs, if they are the same, the new generator is only
+      // preferred if it is shorter or the same length and lexicographically
+      // less
+      var oldPg = e.propertyGenerators[pi];
+      var oldIris = activeCtx.mappings[oldPg]['@id'];
+      var iris = activeCtx.mappings[pg]['@id'];
+      if(oldIris.length !== iris.length) {
+        continue;
+      }
+      var match = true;
+      for(var ii = 0; match && ii < iris.length; ++ii) {
+        if(iris[ii] !== oldIris[ii]) {
+          match = false;
+        }
+      }
+      if(match) {
+        preferred = (_compareShortestLeast(pg, oldPg) < 0);
+      }
+    }
   }
 }
 
