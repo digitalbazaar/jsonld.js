@@ -1301,75 +1301,9 @@ Processor.prototype.compact = function(activeCtx, property, element, options) {
 
   // recursively compact object
   if(_isObject(element)) {
-    // element is a @value
-    if(_isValue(element)) {
-      // get context rules
-      var type = jsonld.getContextValue(activeCtx, property, '@type');
-      var language = jsonld.getContextValue(activeCtx, property, '@language');
-      var container = jsonld.getContextValue(activeCtx, property, '@container');
-
-      // whether or not the element has an @annotation that must be preserved
-      var preserveAnnotation = (('@annotation' in element) &&
-        container !== '@annotation');
-
-      // matching @type specified in context and there's no @annotation
-      // to preserve, compact element
-      if(type !== null && element['@type'] === type && !preserveAnnotation) {
-        return element['@value'];
-      }
-      // matching @language specified in context and there's no @annotation
-      // to preserve, compact element
-      else if(language !== null && element['@language'] === language &&
-        !preserveAnnotation) {
-        return element['@value'];
-      }
-
-      // return just the value of @value if all are true:
-      // 1. @value is the only key or @annotation isn't being preserved
-      // 2. there is no default language or @value is not a string or
-      //   the property has a mapping with a null @language
-      var keyCount = Object.keys(element).length;
-      var isValueOnlyKey = (keyCount === 1 ||
-        (keyCount === 2 && ('@annotation' in element) && !preserveAnnotation));
-      var hasDefaultLanguage = ('@language' in activeCtx);
-      var isValueString = _isString(element['@value']);
-      var hasNullMapping = (activeCtx.mappings[property] &&
-        activeCtx.mappings[property]['@language'] === null);
-      if(isValueOnlyKey &&
-        (!hasDefaultLanguage || !isValueString || hasNullMapping)) {
-        return element['@value'];
-      }
-
-      var rval = {};
-
-      // alias @value
-      rval[_compactIri(activeCtx, '@value')] = element['@value'];
-
-      // compact @type IRI
-      if('@type' in element) {
-        rval[_compactIri(activeCtx, '@type')] = _compactIri(
-          activeCtx, element['@type'], null, {base: true, vocab: true});
-      }
-      // alias @language
-      else if('@language' in element) {
-        rval[_compactIri(activeCtx, '@language')] = element['@language'];
-      }
-
-      // preserve @annotation
-      if(preserveAnnotation) {
-        rval[_compactIri(activeCtx, '@annotation')] = element['@annotation'];
-      }
-
-      return rval;
-    }
-
-    // compact subject references
-    if(_isSubjectReference(element)) {
-      var expandedProperty = _expandIri(activeCtx, property);
-      var type = jsonld.getContextValue(activeCtx, property, '@type');
-      if(type === '@id' || expandedProperty === '@graph') {
-        return _compactIri(activeCtx, element['@id'], null, {base: true});
-      }
+    // do value compaction on @values and subject references
+    if(_isValue(element) || _isSubjectReference(element)) {
+      return _compactValue(activeCtx, property, element);
     }
 
     // shallow copy element and arrays so keys and values can be removed
@@ -2503,8 +2437,7 @@ function _expandValue(activeCtx, property, value, relativeTo) {
     // do not expand @value, @language, etc. values, but @list is special
     // and must be processed
     else if(prop === '@list' || !_isKeyword(prop)) {
-      rval = {'@value': value};
-
+      rval = {};
       // other type
       if(type !== null) {
         // rename blank node if requested
@@ -2520,6 +2453,7 @@ function _expandValue(activeCtx, property, value, relativeTo) {
           rval['@language'] = language;
         }
       }
+      rval['@value'] = value;
     }
   }
 
@@ -2804,7 +2738,6 @@ function _makeLinkedList(value) {
     e[RDF_REST] = [tail];
     tail = e;
   }
-
   return tail;
 }
 
@@ -3823,6 +3756,94 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
 
   // no compaction choices, return IRI as is
   return iri;
+}
+
+/**
+ * Performs value compaction on an object with '@value' or '@id' as the only
+ * property.
+ *
+ * @param activeCtx the active context.
+ * @param property the compact property that points to the element.
+ * @param element the element to compact.
+ *
+ * @return the compaction result.
+ */
+function _compactValue(activeCtx, property, element) {
+  // element is a @value
+  if(_isValue(element)) {
+    // get context rules
+    var type = jsonld.getContextValue(activeCtx, property, '@type');
+    var language = jsonld.getContextValue(activeCtx, property, '@language');
+    var container = jsonld.getContextValue(activeCtx, property, '@container');
+
+    // whether or not the element has an @annotation that must be preserved
+    var preserveAnnotation = (('@annotation' in element) &&
+      container !== '@annotation');
+
+    // matching @type specified in context and there's no @annotation
+    // to preserve, compact element
+    if(type !== null && element['@type'] === type && !preserveAnnotation) {
+      return element['@value'];
+    }
+    // matching @language specified in context and there's no @annotation
+    // to preserve, compact element
+    else if(language !== null && element['@language'] === language &&
+      !preserveAnnotation) {
+      return element['@value'];
+    }
+
+    // return just the value of @value if all are true:
+    // 1. @value is the only key or @annotation isn't being preserved
+    // 2. there is no default language or @value is not a string or
+    //   the property has a mapping with a null @language
+    var keyCount = Object.keys(element).length;
+    var isValueOnlyKey = (keyCount === 1 ||
+      (keyCount === 2 && ('@annotation' in element) && !preserveAnnotation));
+    var hasDefaultLanguage = ('@language' in activeCtx);
+    var isValueString = _isString(element['@value']);
+    var hasNullMapping = (activeCtx.mappings[property] &&
+      activeCtx.mappings[property]['@language'] === null);
+    if(isValueOnlyKey &&
+      (!hasDefaultLanguage || !isValueString || hasNullMapping)) {
+      return element['@value'];
+    }
+
+    var rval = {};
+
+    // preserve @annotation
+    if(preserveAnnotation) {
+      rval[_compactIri(activeCtx, '@annotation')] = element['@annotation'];
+    }
+
+    // compact @type IRI
+    if('@type' in element) {
+      rval[_compactIri(activeCtx, '@type')] = _compactIri(
+        activeCtx, element['@type'], null, {base: true, vocab: true});
+    }
+    // alias @language
+    else if('@language' in element) {
+      rval[_compactIri(activeCtx, '@language')] = element['@language'];
+    }
+
+    // alias @value
+    rval[_compactIri(activeCtx, '@value')] = element['@value'];
+
+    return rval;
+  }
+
+  // element is a subject reference
+  var expandedProperty = _expandIri(activeCtx, property);
+  var type = jsonld.getContextValue(activeCtx, property, '@type');
+  var term = _compactIri(activeCtx, element['@id'], null, {base: true});
+
+  // compact to scalar
+  if(type === '@id' || expandedProperty === '@graph') {
+    return term;
+  }
+
+  var rval = {};
+  rval[_compactIri(activeCtx, '@id')] = term;
+  return rval;
 }
 
 /**
