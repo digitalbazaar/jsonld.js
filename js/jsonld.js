@@ -1531,7 +1531,9 @@ Processor.prototype.expand = function(
     }
 
     var rval = {};
-    for(var key in element) {
+    var keys = Object.keys(element).sort();
+    for(var ki = 0; ki < keys.length; ++ki) {
+      var key = keys[ki];
       var value = element[key];
       var expandedProperty;
 
@@ -1685,8 +1687,8 @@ Processor.prototype.expand = function(
         }
         else if(_isArray(value)) {
           var val = [];
-          for(var i in value) {
-            var v = value[i];
+          for(var vi = 0; vi < value.length; ++vi) {
+            var v = value[vi];
             if(_isSubjectReference(v)) {
               val.push(v['@id']);
             }
@@ -1719,7 +1721,7 @@ Processor.prototype.expand = function(
     }
 
     // get property count on expanded output
-    var keys = Object.keys(rval);
+    keys = Object.keys(rval);
     var count = keys.length;
 
     if('@value' in rval) {
