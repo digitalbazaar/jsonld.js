@@ -262,7 +262,9 @@ TestRunner.prototype.run = function(manifests, callback) {
             return callback();
           }
           self.check(
-            test, test.expect, result, type.indexOf('jld:ExpandTest') !== -1);
+            test, test.expect, result,
+            type.indexOf('jld:ExpandTest') !== -1 ||
+            type.indexOf('jld:FlattenTest') !== -1);
           callback();
         };
 
@@ -296,7 +298,7 @@ TestRunner.prototype.run = function(manifests, callback) {
           self.test(test.name);
           input = _readTestJson(test.input, filepath);
           test.expect = _readTestJson(test.expect, filepath);
-          jsonld.flatten(input, checkResult);
+          jsonld.flatten(input, null, options, checkResult);
         }
         else if(type.indexOf('jld:FrameTest') !== -1) {
           self.test(test.name);

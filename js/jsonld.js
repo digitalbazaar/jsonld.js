@@ -270,12 +270,13 @@ jsonld.expand = function(input) {
  * Performs JSON-LD flattening.
  *
  * @param input the JSON-LD to flatten.
+ * @param context the context to use to compact the flattened output, or null.
  * @param [options] the options to use:
  *          [base] the base IRI to use.
  *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, flattened) called once the operation completes.
  */
-jsonld.flatten = function(input, options, callback) {
+jsonld.flatten = function(input, context, options, callback) {
   // get arguments
   if(typeof options === 'function') {
     callback = options;
@@ -300,11 +301,30 @@ jsonld.flatten = function(input, options, callback) {
 
     try {
       // do flattening
-      callback(null, new Processor().flatten(_input));
+      var flattened = new Processor().flatten(_input);
     }
     catch(ex) {
       return callback(ex);
     }
+
+    if(context === null) {
+      return callback(null, flattened);
+    }
+
+    // compact result (force @graph option to true)
+    options.graph = true;
+    jsonld.compact(flattened, ctx, options, function(err, compacted, ctx) {
+      if(err) {
+        return callback(new JsonLdError(
+          'Could not compact flattened output.',
+          'jsonld.FlattenError', {cause: err}));
+      }
+      // get graph alias
+      var graph = _compactIri(ctx, '@graph');
+      // remove @preserve from results
+      compacted[graph] = _removePreserve(ctx, compacted[graph]);
+      callback(null, compacted);
+    });
   });
 };
 
@@ -1815,13 +1835,40 @@ Processor.prototype.expand = function(
 Processor.prototype.flatten = function(input) {
   // produce a map of all subjects and name each bnode
   var namer = new UniqueNamer('_:t');
-  var graphs = {'@default': {}, '@merged': {}};
-  _flatten(input, graphs, '@merged', namer);
-  var merged = graphs['@merged'];
-  var keys = Object.keys(merged).sort();
+  var graphs = {'@default': {}};
+  _createNodeMap(input, graphs, '@default', namer);
+
+  // add all non-default graphs to default graph
+  var defaultGraph = graphs['@default'];
+  for(var graphName in graphs) {
+    if(graphName === '@default') {
+      continue;
+    }
+    var subject = defaultGraph[graphName];
+    if(!subject) {
+      defaultGraph[graphName] = subject = {
+        '@id': graphName,
+        '@graph': []
+      };
+    }
+    else if(!('@graph' in subject)) {
+      subject['@graph'] = [];
+    }
+    var graph = subject['@graph'];
+    var nodeMap = graphs[graphName];
+    var ids = Object.keys(nodeMap).sort();
+    for(var ii = 0; ii < ids.length; ++ii) {
+      var id = ids[ii];
+      graph.push(nodeMap[id]);
+    }
+  }
+
+  // produce flattened output
   var flattened = [];
-  for(var key in keys) {
-    flattened.push(merged[keys[key]]);
+  var keys = Object.keys(defaultGraph).sort();
+  for(var ki = 0; ki < keys.length; ++ki) {
+    var key = keys[ki];
+    flattened.push(defaultGraph[key]);
   }
   return flattened;
 };
@@ -1844,9 +1891,9 @@ Processor.prototype.frame = function(input, frame, options) {
 
   // produce a map of all graphs and name each bnode
   var namer = new UniqueNamer('_:t');
-  _flatten(input, state.graphs, '@default', namer);
+  _createNodeMap(input, state.graphs, '@default', namer);
   namer = new UniqueNamer('_:t');
-  _flatten(input, state.graphs, '@merged', namer);
+  _createNodeMap(input, state.graphs, '@merged', namer);
   // FIXME: currently uses subjects from @merged graph only
   state.subjects = state.graphs['@merged'];
 
@@ -2959,7 +3006,8 @@ function _getAdjacentBlankNodeName(node, id) {
 }
 
 /**
- * Recursively flattens the subjects in the given JSON-LD expanded input.
+ * Recursively flattens the subjects in the given JSON-LD expanded input
+ * into a node map.
  *
  * @param input the JSON-LD expanded input.
  * @param graphs a map of graph name to subject map.
@@ -2968,17 +3016,40 @@ function _getAdjacentBlankNodeName(node, id) {
  * @param name the name assigned to the current input if it is a bnode.
  * @param list the list to append to, null for none.
  */
-function _flatten(input, graphs, graph, namer, name, list) {
+function _createNodeMap(input, graphs, graph, namer, name, list) {
   // recurse through array
   if(_isArray(input)) {
     for(var i in input) {
-      _flatten(input[i], graphs, graph, namer, undefined, list);
+      _createNodeMap(input[i], graphs, graph, namer, undefined, list);
     }
     return;
   }
 
-  // add non-object or value
-  if(!_isObject(input) || _isValue(input)) {
+  // add non-object to list
+  if(!_isObject(input)) {
+    if(list) {
+      list.push(input);
+    }
+    return;
+  }
+
+  // add entries for @type
+  if('@type' in input) {
+    var types = input['@type'];
+    if(!_isArray(types)) {
+      types = [types];
+    }
+    for(var ti = 0; ti < types.length; ++ti) {
+      var type = types[ti];
+      var id = (type.indexOf('_:') === 0) ? namer.getName(type) : type;
+      if(!(id in graphs[graph])) {
+        graphs[graph][id] = {'@id': id};
+      }
+    }
+  }
+
+  // add values to list
+  if(_isValue(input)) {
     if(list) {
       list.push(input);
     }
@@ -3001,36 +3072,40 @@ function _flatten(input, graphs, graph, namer, name, list) {
   var subjects = graphs[graph];
   var subject = subjects[name] = subjects[name] || {};
   subject['@id'] = name;
-  var props = Object.keys(input).sort();
-  for(var p in props) {
-    var prop = props[p];
+  var properties = Object.keys(input).sort();
+  for(var pi = 0; pi < properties.length; ++pi) {
+    var property = properties[pi];
 
     // skip @id
-    if(prop === '@id') {
+    if(property === '@id') {
       continue;
     }
 
     // recurse into graph
-    if(prop === '@graph') {
+    if(property === '@graph') {
       // add graph subjects map entry
       if(!(name in graphs)) {
         graphs[name] = {};
       }
       var g = (graph === '@merged') ? graph : name;
-      _flatten(input[prop], graphs, g, namer);
+      _createNodeMap(input[property], graphs, g, namer);
       continue;
     }
 
     // copy non-@type keywords
-    if(prop !== '@type' && _isKeyword(prop)) {
-      subject[prop] = input[prop];
+    if(property !== '@type' && _isKeyword(property)) {
+      subject[property] = input[property];
       continue;
     }
 
-    // iterate over objects
-    var objects = input[prop];
-    for(var i in objects) {
-      var o = objects[i];
+    // iterate over objects (ensure property is added for empty arrays)
+    var objects = input[property];
+    if(objects.length === 0) {
+      jsonld.addValue(subject, property, [], {propertyIsArray: true});
+      continue;
+    }
+    for(var oi = 0; oi < objects.length; ++oi) {
+      var o = objects[oi];
 
       // handle embedded subject or subject reference
       if(_isSubject(o) || _isSubjectReference(o)) {
@@ -3038,23 +3113,21 @@ function _flatten(input, graphs, graph, namer, name, list) {
         var id = _isBlankNode(o) ? namer.getName(o['@id']) : o['@id'];
 
         // add reference and recurse
-        jsonld.addValue(subject, prop, {'@id': id}, {propertyIsArray: true});
-        _flatten(o, graphs, graph, namer, id);
+        jsonld.addValue(
+          subject, property, {'@id': id}, {propertyIsArray: true});
+        _createNodeMap(o, graphs, graph, namer, id);
       }
+      // handle @list
+      else if(_isList(o)) {
+        var _list = [];
+        _createNodeMap(o['@list'], graphs, graph, namer, name, _list);
+        o = {'@list': _list};
+        jsonld.addValue(subject, property, o, {propertyIsArray: true});
+      }
+      // handle @value
       else {
-        // recurse into list
-        if(_isList(o)) {
-          var _list = [];
-          _flatten(o['@list'], graphs, graph, namer, name, _list);
-          o = {'@list': _list};
-        }
-        // special-handle @type IRIs
-        else if(prop === '@type' && o.indexOf('_:') === 0) {
-          o = namer.getName(o);
-        }
-
-        // add non-subject
-        jsonld.addValue(subject, prop, o, {propertyIsArray: true});
+        _createNodeMap(o, graphs, graph, namer, name);
+        jsonld.addValue(subject, property, o, {propertyIsArray: true});
       }
     }
   }
@@ -4232,7 +4305,6 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
  */
 function _prependBase(base, iri) {
   var authority = (base.host || '');
-
   var rel = jsonld.url.parse(iri);
   rel.pathname = (rel.pathname || '');
 
@@ -4316,9 +4388,10 @@ function _getInitialContext(options) {
   if(options.renameBlankNodes) {
     namer = new UniqueNamer('_:t');
   }
-
+  var base = jsonld.url.parse(options.base || '');
+  base.pathname = base.pathname || '';
   return {
-    '@base': jsonld.url.parse(options.base || ''),
+    '@base': base,
     mappings: {},
     keywords: {
       '@annotation': [],
