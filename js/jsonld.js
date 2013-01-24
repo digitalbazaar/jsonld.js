@@ -2711,8 +2711,9 @@ function _rdfToObject(o, useNativeTypes) {
           rval['@value'] = parseFloat(rval['@value']);
         }
       }
-      // do not add xsd:string type
-      if(type !== XSD_STRING) {
+      // do not add native type
+      if([XSD_BOOLEAN, XSD_INTEGER, XSD_DOUBLE, XSD_STRING]
+        .indexOf(type) === -1) {
         rval['@type'] = type;
       }
     }
