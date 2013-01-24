@@ -4548,7 +4548,7 @@ function _getInitialContext(options) {
           e.propertyGenerators.push(term);
         }
       }
-      else {
+      else if(e.term === null) {
         e.term = term;
       }
     }
