@@ -199,6 +199,8 @@ jsonld.compact = function(input, ctx) {
  *          [base] the base IRI to use.
  *          [renameBlankNodes] true to rename blank nodes, false not to,
  *            defaults to true.
+ *          [keepFreeFloatingNodes] true to keep free-floating nodes,
+ *            false not to, defaults to false.
  *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, expanded) called once the operation completes.
  */
@@ -222,6 +224,9 @@ jsonld.expand = function(input) {
   }
   if(!('renameBlankNodes' in options)) {
     options.renameBlankNodes = true;
+  }
+  if(!('keepFreeFloatingNodes' in options)) {
+    options.keepFreeFloatingNodes = false;
   }
 
   // resolve all @context URLs in the input
@@ -370,7 +375,7 @@ jsonld.frame = function(input, frame) {
   var ctx = frame['@context'] || {};
 
   // expand input
-  jsonld.expand(input, options, function(err, _input) {
+  jsonld.expand(input, options, function(err, expanded) {
     if(err) {
       return callback(new JsonLdError(
         'Could not expand input before framing.',
@@ -378,7 +383,9 @@ jsonld.frame = function(input, frame) {
     }
 
     // expand frame
-    jsonld.expand(frame, options, function(err, _frame) {
+    var opts = _clone(options);
+    opts.keepFreeFloatingNodes = true;
+    jsonld.expand(frame, opts, function(err, expandedFrame) {
       if(err) {
         return callback(new JsonLdError(
           'Could not expand frame before framing.',
@@ -387,15 +394,15 @@ jsonld.frame = function(input, frame) {
 
       try {
         // do framing
-        var framed = new Processor().frame(_input, _frame, options);
+        var framed = new Processor().frame(expanded, expandedFrame, options);
       }
       catch(ex) {
         return callback(ex);
       }
 
       // compact result (force @graph option to true)
-      options.graph = true;
-      jsonld.compact(framed, ctx, options, function(err, compacted, ctx) {
+      opts.graph = true;
+      jsonld.compact(framed, ctx, opts, function(err, compacted, ctx) {
         if(err) {
           return callback(new JsonLdError(
             'Could not compact framed output.',
@@ -1800,7 +1807,8 @@ Processor.prototype.expand = function(
     }
 
     // drop certain top-level objects
-    if(property === null || property === '@graph') {
+    if(!options.keepFreeFloatingNodes &&
+      (property === null || property === '@graph')) {
       // drop empty object or @value not in a list
       if(count === 0 || ('@value' in rval && !propertyIsList)) {
         rval = null;
@@ -1890,16 +1898,14 @@ Processor.prototype.frame = function(input, frame, options) {
   };
 
   // produce a map of all graphs and name each bnode
-  var namer = new UniqueNamer('_:t');
-  _createNodeMap(input, state.graphs, '@default', namer);
+  // FIXME: currently uses subjects from @merged graph only
   namer = new UniqueNamer('_:t');
   _createNodeMap(input, state.graphs, '@merged', namer);
-  // FIXME: currently uses subjects from @merged graph only
   state.subjects = state.graphs['@merged'];
 
   // frame the subjects
   var framed = [];
-  _frame(state, Object.keys(state.subjects), frame, framed, null);
+  _frame(state, Object.keys(state.subjects).sort(), frame, framed, null);
   return framed;
 };
 
