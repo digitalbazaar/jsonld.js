@@ -327,8 +327,9 @@ jsonld.flatten = function(input, context, options, callback) {
       return callback(null, flattened);
     }
 
-    // compact result (force @graph option to true)
+    // compact result (force @graph option to true, skip expansion)
     options.graph = true;
+    options.skipExpansion = true;
     jsonld.compact(flattened, ctx, options, function(err, compacted, ctx) {
       if(err) {
         return callback(new JsonLdError(
@@ -474,8 +475,9 @@ jsonld.objectify = function(input, ctx) {
       return callback(ex);
     }
 
-    // compact result (force @graph option to true)
+    // compact result (force @graph option to true, skip expansion)
     options.graph = true;
+    options.skipExpansion = true;
     jsonld.compact(flattened, ctx, options, function(err, compacted, ctx) {
       if(err) {
         return callback(new JsonLdError(
