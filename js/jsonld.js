@@ -50,6 +50,8 @@ var jsonld = {};
  *          [strict] use strict mode (default: true).
  *          [optimize] true to optimize the compaction (default: false).
  *          [graph] true to always output a top-level graph (default: false).
+ *          [skipExpansion] true to assume the input is expanded and skip
+ *            expansion, false not to, defaults to false.
  *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, compacted, ctx) called once the operation completes.
  */
@@ -81,12 +83,22 @@ jsonld.compact = function(input, ctx) {
   if(!('graph' in options)) {
     options.graph = false;
   }
+  if(!('skipExpansion' in options)) {
+    options.skipExpansion = false;
+  }
   if(!('resolver' in options)) {
     options.resolver = jsonld.urlResolver;
   }
 
+  var expand = function(input, options, callback) {
+    if(options.skipExpansion) {
+      return callback(null, input);
+    }
+    jsonld.expand(input, options, callback);
+  };
+
   // expand input then do compaction
-  jsonld.expand(input, options, function(err, expanded) {
+  expand(input, options, function(err, expanded) {
     if(err) {
       return callback(new JsonLdError(
         'Could not expand input before compaction.',
@@ -109,9 +121,8 @@ jsonld.compact = function(input, ctx) {
         }
 
         // do compaction
-        input = expanded;
         var compacted = new Processor().compact(
-          activeCtx, null, input, options);
+          activeCtx, null, expanded, options);
         cleanup(null, compacted, activeCtx, options);
       }
       catch(ex) {
@@ -400,8 +411,9 @@ jsonld.frame = function(input, frame) {
         return callback(ex);
       }
 
-      // compact result (force @graph option to true)
+      // compact result (force @graph option to true, skip expansion)
       opts.graph = true;
+      opts.skipExpansion = true;
       jsonld.compact(framed, ctx, opts, function(err, compacted, ctx) {
         if(err) {
           return callback(new JsonLdError(
@@ -3351,7 +3363,10 @@ function _frame(state, subjects, frame, parent, property) {
           if('@default' in next) {
             preserve = _clone(next['@default']);
           }
-          output[prop] = {'@preserve': preserve};
+          if(!_isArray(preserve)) {
+            preserve = [preserve];
+          }
+          output[prop] = [{'@preserve': [preserve]}];
         }
       }
 
