@@ -799,6 +799,47 @@ jsonld.ContextCache.prototype.set = function(url, ctx) {
 };
 
 /**
+ * Creates an active context cache.
+ *
+ * @param size the maximum size of the cache.
+ */
+jsonld.ActiveContextCache = function(size) {
+  this.order = [];
+  this.cache = {};
+  this.size = size || 100;
+};
+jsonld.ActiveContextCache.prototype.get = function(activeCtx, localCtx) {
+  var key1 = JSON.stringify(activeCtx);
+  var key2 = JSON.stringify(localCtx);
+  var level1 = this.cache[key1];
+  if(level1 && key2 in level1) {
+    return level1[key2];
+  }
+  return null;
+};
+jsonld.ActiveContextCache.prototype.set = function(
+  activeCtx, localCtx, result) {
+  if(this.order.length === this.size) {
+    var entry = this.order.shift();
+    delete this.cache[entry.activeCtx][entry.localCtx];
+  }
+  var key1 = JSON.stringify(activeCtx);
+  var key2 = JSON.stringify(localCtx);
+  this.order.push({activeCtx: key1, localCtx: key2});
+  if(!(key1 in this.cache)) {
+    this.cache[key1] = {};
+  }
+  this.cache[key1][key2] = result;
+};
+
+/**
+ * Default JSON-LD cache.
+ */
+jsonld.cache = {
+  activeCtx: new jsonld.ActiveContextCache()
+};
+
+/**
  * URL resolvers.
  */
 jsonld.urlResolvers = {};
@@ -2293,8 +2334,18 @@ Processor.prototype.toRDF = function(
  * @return the new active context.
  */
 Processor.prototype.processContext = function(activeCtx, localCtx, options) {
+  var rval = null;
+
+  // get context from cache if available
+  if(jsonld.cache.activeCtx) {
+    rval = jsonld.cache.activeCtx.get(activeCtx, localCtx);
+    if(rval) {
+      return rval;
+    }
+  }
+
   // initialize the resulting context
-  var rval = activeCtx.clone();
+  rval = activeCtx.clone();
 
   // normalize local context to an array of @context objects
   if(_isObject(localCtx) && '@context' in localCtx &&
@@ -2374,6 +2425,11 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
     for(var key in ctx) {
       _defineContextMapping(rval, ctx, key, '@vocab', defined);
     }
+  }
+
+  // cache result
+  if(jsonld.cache.activeCtx) {
+    jsonld.cache.activeCtx.set(activeCtx, localCtx, rval);
   }
 
   return rval;
@@ -4420,35 +4476,27 @@ function _getInitialContext(options) {
     },
     namer: namer,
     inverse: null,
-    getInverse: function() {
-      if(this.inverse) {
-        return this.inverse;
-      }
-      this.inverse = _createInverseContext(this);
-      return this.inverse;
-    },
-    clone: function() {
-      var child = {};
-      child['@base'] = this['@base'];
-      child.keywords = _clone(this.keywords);
-      child.mappings = _clone(this.mappings);
-      child.namer = this.namer;
-      child.clone = this.clone;
-      child.inverse = null;
-      child.getInverse = this.getInverse;
-      return child;
-    }
+    getInverse: _createInverseContext,
+    clone: _cloneActiveContext
   };
 
   /**
-   * Generates an inverse context for use in the compaction algorithm.
+   * Generates an inverse context for use in the compaction algorithm, if
+   * not already generated for the given active context.
    *
    * @param activeCtx the active context to create the inverse context from.
    *
    * @return the inverse context.
    */
   function _createInverseContext(activeCtx) {
-    var inverse = {};
+    if(!activeCtx) {
+      activeCtx = this;
+    }
+    // lazily create inverse
+    if(activeCtx.inverse) {
+      return activeCtx.inverse;
+    }
+    var inverse = activeCtx.inverse = {};
 
     // handle default language
     var defaultLanguage = activeCtx['@language'] || '@none';
@@ -4558,6 +4606,23 @@ function _getInitialContext(options) {
         e.term = term;
       }
     }
+  }
+
+  /**
+   * Clones an active context, creating a child active context.
+   *
+   * @return a clone (child) of the active context.
+   */
+  function _cloneActiveContext() {
+    var child = {};
+    child['@base'] = this['@base'];
+    child.keywords = _clone(this.keywords);
+    child.mappings = _clone(this.mappings);
+    child.namer = this.namer;
+    child.clone = this.clone;
+    child.inverse = null;
+    child.getInverse = this.getInverse;
+    return child;
   }
 }
 
