@@ -1583,6 +1583,11 @@ Processor.prototype.expand = function(
       'jsonld.SyntaxError');
   }
 
+  // nothing to expand
+  if(element === null) {
+    return null;
+  }
+
   // recursively expand array
   if(_isArray(element)) {
     var rval = [];
