@@ -1603,7 +1603,12 @@ Processor.prototype.expand = function(
       }
       // drop null values
       else if(e !== null) {
-        rval.push(e);
+        if(_isArray(e)) {
+          rval = rval.concat(e);
+        }
+        else {
+          rval.push(e);
+        }
       }
     }
     return rval;
