@@ -1595,7 +1595,7 @@ Processor.prototype.expand = function(
       // expand element
       var e = self.expand(
         activeCtx, activeProperty, element[i], options, insideList);
-      if((_isArray(e) || _isList(e)) && insideList) {
+      if(insideList && (_isArray(e) || _isList(e))) {
         // lists of lists are illegal
         throw new JsonLdError(
           'Invalid JSON-LD syntax; lists of lists are not permitted.',
