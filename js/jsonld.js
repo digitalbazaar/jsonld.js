@@ -1885,7 +1885,7 @@ Processor.prototype.expand = function(
   }
 
   // expand element according to value expansion rules
-  return _expandValue(activeCtx, activeProperty, element, options.base);
+  return _expandValue(activeCtx, activeProperty, element);
 };
 
 /**
@@ -2528,13 +2528,10 @@ function _labelBlankNodes(namer, value) {
  * @param ctx the active context to use.
  * @param property the property the value is associated with.
  * @param value the value to expand.
- * @param relativeTo options for how to resolve relative IRIs:
- *          base: true to resolve against the base IRI, false not to.
- *          vocab: true to concatenate after @vocab, false not to.
  *
  * @return the expanded value.
  */
-function _expandValue(activeCtx, property, value, relativeTo) {
+function _expandValue(activeCtx, property, value) {
   // nothing to expand
   if(value === null) {
     return null;
