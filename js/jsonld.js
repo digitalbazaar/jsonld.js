@@ -1566,7 +1566,7 @@ Processor.prototype.compact = function(activeCtx, property, element, options) {
  * before calling this method.
  *
  * @param activeCtx the context to use.
- * @param property the property for the element, null for none.
+ * @param activeProperty the property for the element, null for none.
  * @param element the element to expand.
  * @param options the expansion options.
  * @param propertyIsList true if the property is a list, false if not.
@@ -1574,7 +1574,7 @@ Processor.prototype.compact = function(activeCtx, property, element, options) {
  * @return the expanded value.
  */
 Processor.prototype.expand = function(
-  activeCtx, property, element, options, propertyIsList) {
+  activeCtx, activeProperty, element, options, propertyIsList) {
   var self = this;
 
   if(typeof element === 'undefined') {
@@ -1589,8 +1589,8 @@ Processor.prototype.expand = function(
     for(var i in element) {
       // expand element
       var e = self.expand(
-        activeCtx, property, element[i], options, propertyIsList);
-      if(_isArray(e) && propertyIsList) {
+        activeCtx, activeProperty, element[i], options, propertyIsList);
+      if((_isArray(e) || _isList(e)) && propertyIsList) {
         // lists of lists are illegal
         throw new JsonLdError(
           'Invalid JSON-LD syntax; lists of lists are not permitted.',
@@ -1700,7 +1700,7 @@ Processor.prototype.expand = function(
       }
       // handle annotation container (skip if value is not an object)
       else if(container === '@annotation' && _isObject(value)) {
-        value = (function _expandAnnotation(property) {
+        value = (function _expandAnnotation(activeProperty) {
           var rval = [];
           var keys = Object.keys(value).sort();
           for(var ki = 0; ki < keys.length; ++ki) {
@@ -1709,7 +1709,7 @@ Processor.prototype.expand = function(
             if(!_isArray(val)) {
               val = [val];
             }
-            val = self.expand(activeCtx, property, val, options, false);
+            val = self.expand(activeCtx, activeProperty, val, options, false);
             for(var vi = 0; vi < val.length; ++vi) {
               var item = val[vi];
               if(!('@annotation' in item)) {
@@ -1725,17 +1725,12 @@ Processor.prototype.expand = function(
         // recurse into @list or @set
         var isList = (expandedProperty === '@list');
         if(isList || expandedProperty === '@set') {
-          var activeProperty;
-          if(isList && (property === null || property === '@graph')) {
-            // use '@list' as the active property for top-level lists
-            activeProperty = '@list';
-          }
-          else {
-            // keep the current active property
-            activeProperty = property;
+          var nextActiveProperty = activeProperty;
+          if(isList && activeProperty === '@graph') {
+            nextActiveProperty = null;
           }
           value = self.expand(
-            activeCtx, activeProperty, value, options, isList);
+            activeCtx, nextActiveProperty, value, options, isList);
           if(isList && _isList(value)) {
             throw new JsonLdError(
               'Invalid JSON-LD syntax; lists of lists are not permitted.',
@@ -1861,17 +1856,16 @@ Processor.prototype.expand = function(
       rval = null;
     }
 
-    // drop certain top-level objects
-    if(!options.keepFreeFloatingNodes &&
-      (property === null || property === '@graph')) {
-      // drop empty object or @value not in a list
-      if(count === 0 || ('@value' in rval && !propertyIsList)) {
+    // drop certain top-level objects that do not occur in lists
+    if(!options.keepFreeFloatingNodes && !propertyIsList &&
+      (activeProperty === null || activeProperty === '@graph')) {
+      // drop empty object or top-level @value
+      if(count === 0 || ('@value' in rval)) {
         rval = null;
       }
-      // drop subjects that generate no triples that are not in a list
+      // drop subjects that generate no triples
       else if(count === 1 && _isKeyword(keys[0]) &&
-        !('@graph' in rval || '@type' in rval || '@list' in rval ||
-        propertyIsList)) {
+        !('@graph' in rval || '@type' in rval || '@list' in rval)) {
         rval = null;
       }
     }
@@ -1879,13 +1873,14 @@ Processor.prototype.expand = function(
     return rval;
   }
 
-  // drop top-level scalars
-  if(property === null || property === '@graph') {
+  // drop top-level scalars that are not in lists
+  if(!propertyIsList &&
+    (activeProperty === null || activeProperty === '@graph')) {
     return null;
   }
 
   // expand element according to value expansion rules
-  return _expandValue(activeCtx, property, element, options.base);
+  return _expandValue(activeCtx, activeProperty, element, options.base);
 };
 
 /**
@@ -2544,11 +2539,11 @@ function _expandValue(activeCtx, property, value, relativeTo) {
   var rval = value;
 
   // special-case expand @id and @type (skips '@id' expansion)
-  var prop = _expandIri(activeCtx, property, {vocab: true});
-  if(prop === '@id') {
+  var expandedProperty = _expandIri(activeCtx, property, {vocab: true});
+  if(expandedProperty === '@id') {
     rval = _expandIri(activeCtx, value, {base: true});
   }
-  else if(prop === '@type') {
+  else if(expandedProperty === '@type') {
     rval = _expandIri(activeCtx, value, {vocab: true, base: true});
   }
   else {
@@ -2556,12 +2551,11 @@ function _expandValue(activeCtx, property, value, relativeTo) {
     var type = jsonld.getContextValue(activeCtx, property, '@type');
 
     // do @id expansion (automatic for @graph)
-    if(type === '@id' || prop === '@graph') {
+    if(type === '@id' || expandedProperty === '@graph') {
       rval = {'@id': _expandIri(activeCtx, value, {base: true})};
     }
-    // do not expand @value, @language, etc. values, but @list is special
-    // and must be processed
-    else if(prop === '@list' || !_isKeyword(prop)) {
+    // do not expand keyword values
+    else if(!_isKeyword(expandedProperty)) {
       rval = {};
       // other type
       if(type !== null) {
