@@ -1569,12 +1569,12 @@ Processor.prototype.compact = function(activeCtx, property, element, options) {
  * @param activeProperty the property for the element, null for none.
  * @param element the element to expand.
  * @param options the expansion options.
- * @param propertyIsList true if the property is a list, false if not.
+ * @param insideList true if the element is a list, false if not.
  *
  * @return the expanded value.
  */
 Processor.prototype.expand = function(
-  activeCtx, activeProperty, element, options, propertyIsList) {
+  activeCtx, activeProperty, element, options, insideList) {
   var self = this;
 
   if(typeof element === 'undefined') {
@@ -1589,8 +1589,8 @@ Processor.prototype.expand = function(
     for(var i in element) {
       // expand element
       var e = self.expand(
-        activeCtx, activeProperty, element[i], options, propertyIsList);
-      if((_isArray(e) || _isList(e)) && propertyIsList) {
+        activeCtx, activeProperty, element[i], options, insideList);
+      if((_isArray(e) || _isList(e)) && insideList) {
         // lists of lists are illegal
         throw new JsonLdError(
           'Invalid JSON-LD syntax; lists of lists are not permitted.',
@@ -1857,7 +1857,7 @@ Processor.prototype.expand = function(
     }
 
     // drop certain top-level objects that do not occur in lists
-    if(!options.keepFreeFloatingNodes && !propertyIsList &&
+    if(!options.keepFreeFloatingNodes && !insideList &&
       (activeProperty === null || activeProperty === '@graph')) {
       // drop empty object or top-level @value
       if(count === 0 || ('@value' in rval)) {
@@ -1874,7 +1874,7 @@ Processor.prototype.expand = function(
   }
 
   // drop top-level scalars that are not in lists
-  if(!propertyIsList &&
+  if(!insideList &&
     (activeProperty === null || activeProperty === '@graph')) {
     return null;
   }
