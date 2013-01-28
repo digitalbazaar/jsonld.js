@@ -1641,9 +1641,9 @@ Processor.prototype.expand = function(
 
       // drop non-absolute IRI keys that aren't keywords
       if(expandedProperty === null ||
-        (!_isArray(expandedProperty) &&
-        !_isAbsoluteIri(expandedProperty) &&
-        !_isKeyword(expandedProperty, activeCtx))) {
+        !(_isArray(expandedProperty) ||
+        _isAbsoluteIri(expandedProperty) ||
+        _isKeyword(expandedProperty, activeCtx))) {
         continue;
       }
 
