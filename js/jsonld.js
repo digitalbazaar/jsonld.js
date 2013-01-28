@@ -1628,6 +1628,7 @@ Processor.prototype.expand = function(
       var key = keys[ki];
       var value = element[key];
       var expandedProperty;
+      var expandedValue;
 
       // expand key using property generator
       var mapping = activeCtx.mappings[key];
@@ -1644,11 +1645,6 @@ Processor.prototype.expand = function(
         !(_isArray(expandedProperty) ||
         _isAbsoluteIri(expandedProperty) ||
         _isKeyword(expandedProperty, activeCtx))) {
-        continue;
-      }
-
-      // if value is null and property is not @value, continue
-      if(value === null && expandedProperty !== '@value') {
         continue;
       }
 
@@ -1690,7 +1686,7 @@ Processor.prototype.expand = function(
             'jsonld.SyntaxError', {value: value});
         }
         // ensure language value is lowercase
-        value = value.toLowerCase();
+        expandedValue = value.toLowerCase();
       }
 
       // preserve @annotation
@@ -1706,11 +1702,11 @@ Processor.prototype.expand = function(
 
       // handle language map container (skip if value is not an object)
       if(container === '@language' && _isObject(value)) {
-        value = _expandLanguageMap(value);
+        expandedValue = _expandLanguageMap(value);
       }
       // handle annotation container (skip if value is not an object)
       else if(container === '@annotation' && _isObject(value)) {
-        value = (function _expandAnnotation(activeProperty) {
+        expandedValue = (function _expandAnnotation(activeProperty) {
           var rval = [];
           var keys = Object.keys(value).sort();
           for(var ki = 0; ki < keys.length; ++ki) {
@@ -1739,7 +1735,7 @@ Processor.prototype.expand = function(
           if(isList && activeProperty === '@graph') {
             nextActiveProperty = null;
           }
-          value = self.expand(
+          expandedValue = self.expand(
             activeCtx, nextActiveProperty, value, options, isList);
           if(isList && _isList(value)) {
             throw new JsonLdError(
@@ -1749,33 +1745,33 @@ Processor.prototype.expand = function(
         }
         else {
           // recursively expand value with key as new active property
-          value = self.expand(activeCtx, key, value, options, false);
+          expandedValue = self.expand(activeCtx, key, value, options, false);
         }
       }
 
       // drop null values if property is not @value
-      if(value === null && expandedProperty !== '@value') {
+      if(expandedValue === null && expandedProperty !== '@value') {
         continue;
       }
 
       // convert value to @list if container specifies it
-      if(expandedProperty !== '@list' && !_isList(value)) {
+      if(expandedProperty !== '@list' && !_isList(expandedValue)) {
         if(container === '@list') {
           // ensure value is an array
-          value = _isArray(value) ? value : [value];
-          value = {'@list': value};
+          expandedValue = _isArray(value) ? expandedValue : [expandedValue];
+          expandedValue = {'@list': expandedValue};
         }
       }
 
       // optimize away @id for @type
       if(expandedProperty === '@type') {
         if(_isSubjectReference(value)) {
-          value = value['@id'];
+          expandedValue = expandedValue['@id'];
         }
-        else if(_isArray(value)) {
+        else if(_isArray(expandedValue)) {
           var val = [];
-          for(var vi = 0; vi < value.length; ++vi) {
-            var v = value[vi];
+          for(var vi = 0; vi < expandedValue.length; ++vi) {
+            var v = expandedValue[vi];
             if(_isSubjectReference(v)) {
               val.push(v['@id']);
             }
@@ -1783,16 +1779,16 @@ Processor.prototype.expand = function(
               val.push(v);
             }
           }
-          value = val;
+          expandedValue = val;
         }
       }
 
       // add copy of value for each property from property generator
       if(_isArray(expandedProperty)) {
-        value = _labelBlankNodes(activeCtx.namer, value);
+        expandedValue = _labelBlankNodes(activeCtx.namer, expandedValue);
         for(var i = 0; i < expandedProperty.length; ++i) {
           jsonld.addValue(
-            rval, expandedProperty[i], _clone(value),
+            rval, expandedProperty[i], _clone(expandedValue),
             {propertyIsArray: true});
         }
       }
@@ -1803,7 +1799,7 @@ Processor.prototype.expand = function(
           ['@annotation', '@id', '@type', '@value', '@language'].indexOf(
             expandedProperty) === -1;
         jsonld.addValue(
-          rval, expandedProperty, value, {propertyIsArray: useArray});
+          rval, expandedProperty, expandedValue, {propertyIsArray: useArray});
       }
     }
 
