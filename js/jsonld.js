@@ -1737,7 +1737,7 @@ Processor.prototype.expand = function(
           }
           expandedValue = self.expand(
             activeCtx, nextActiveProperty, value, options, isList);
-          if(isList && _isList(value)) {
+          if(isList && _isList(expandedValue)) {
             throw new JsonLdError(
               'Invalid JSON-LD syntax; lists of lists are not permitted.',
               'jsonld.SyntaxError');
@@ -1754,18 +1754,19 @@ Processor.prototype.expand = function(
         continue;
       }
 
-      // convert value to @list if container specifies it
+      // convert expanded value to @list if container specifies it
       if(expandedProperty !== '@list' && !_isList(expandedValue)) {
         if(container === '@list') {
-          // ensure value is an array
-          expandedValue = _isArray(value) ? expandedValue : [expandedValue];
+          // ensure expanded value is an array
+          expandedValue = (_isArray(expandedValue) ?
+            expandedValue : [expandedValue]);
           expandedValue = {'@list': expandedValue};
         }
       }
 
       // optimize away @id for @type
       if(expandedProperty === '@type') {
-        if(_isSubjectReference(value)) {
+        if(_isSubjectReference(expandedValue)) {
           expandedValue = expandedValue['@id'];
         }
         else if(_isArray(expandedValue)) {
