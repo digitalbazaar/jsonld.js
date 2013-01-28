@@ -1763,26 +1763,6 @@ Processor.prototype.expand = function(
         expandedValue = {'@list': expandedValue};
       }
 
-      // optimize away @id for @type
-      if(expandedProperty === '@type') {
-        if(_isSubjectReference(expandedValue)) {
-          expandedValue = expandedValue['@id'];
-        }
-        else if(_isArray(expandedValue)) {
-          var val = [];
-          for(var vi = 0; vi < expandedValue.length; ++vi) {
-            var v = expandedValue[vi];
-            if(_isSubjectReference(v)) {
-              val.push(v['@id']);
-            }
-            else {
-              val.push(v);
-            }
-          }
-          expandedValue = val;
-        }
-      }
-
       // add copy of value for each property from property generator
       if(_isArray(expandedProperty)) {
         expandedValue = _labelBlankNodes(activeCtx.namer, expandedValue);
