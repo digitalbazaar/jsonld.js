@@ -1865,9 +1865,9 @@ Processor.prototype.expand = function(
   }
 
   // drop top-level scalars that are not in lists
-  var expandedActiveProperty = _expandIri(activeCtx, activeProperty);
   if(!insideList &&
-    (activeProperty === null || expandedActiveProperty === '@graph')) {
+    (activeProperty === null ||
+    _expandIri(activeCtx, activeProperty) === '@graph')) {
     return null;
   }
 
@@ -2512,13 +2512,13 @@ function _labelBlankNodes(namer, element) {
  * Expands the given value by using the coercion and keyword rules in the
  * given context.
  *
- * @param ctx the active context to use.
- * @param key the key the value is associated with.
+ * @param activeCtx the active context to use.
+ * @param activeProperty the active property the value is associated with.
  * @param value the value to expand.
  *
  * @return the expanded value.
  */
-function _expandValue(activeCtx, key, value) {
+function _expandValue(activeCtx, activeProperty, value) {
   // nothing to expand
   if(value === null) {
     return null;
@@ -2528,7 +2528,7 @@ function _expandValue(activeCtx, key, value) {
   var rval = value;
 
   // special-case expand @id and @type (skips '@id' expansion)
-  var expandedProperty = _expandIri(activeCtx, key, {vocab: true});
+  var expandedProperty = _expandIri(activeCtx, activeProperty, {vocab: true});
   if(expandedProperty === '@id') {
     rval = _expandIri(activeCtx, value, {base: true});
   }
@@ -2537,7 +2537,7 @@ function _expandValue(activeCtx, key, value) {
   }
   else {
     // get type definition from context
-    var type = jsonld.getContextValue(activeCtx, key, '@type');
+    var type = jsonld.getContextValue(activeCtx, activeProperty, '@type');
 
     // do @id expansion (automatic for @graph)
     if(type === '@id' || expandedProperty === '@graph') {
@@ -2556,7 +2556,8 @@ function _expandValue(activeCtx, key, value) {
       }
       // check for language tagging
       else {
-        var language = jsonld.getContextValue(activeCtx, key, '@language');
+        var language = jsonld.getContextValue(
+          activeCtx, activeProperty, '@language');
         if(language !== null && _isString(value)) {
           rval['@language'] = language;
         }
@@ -3901,18 +3902,20 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
  * property.
  *
  * @param activeCtx the active context.
- * @param key the compacted property that points to the element.
+ * @param activeProperty the active property that points to the element.
  * @param element the element to compact.
  *
  * @return the compaction result.
  */
-function _compactValue(activeCtx, key, element) {
+function _compactValue(activeCtx, activeProperty, element) {
   // element is a @value
   if(_isValue(element)) {
     // get context rules
-    var type = jsonld.getContextValue(activeCtx, key, '@type');
-    var language = jsonld.getContextValue(activeCtx, key, '@language');
-    var container = jsonld.getContextValue(activeCtx, key, '@container');
+    var type = jsonld.getContextValue(activeCtx, activeProperty, '@type');
+    var language = jsonld.getContextValue(
+      activeCtx, activeProperty, '@language');
+    var container = jsonld.getContextValue(
+      activeCtx, activeProperty, '@container');
 
     // whether or not the element has an @annotation that must be preserved
     var preserveAnnotation = (('@annotation' in element) &&
@@ -3939,8 +3942,8 @@ function _compactValue(activeCtx, key, element) {
       (keyCount === 2 && ('@annotation' in element) && !preserveAnnotation));
     var hasDefaultLanguage = ('@language' in activeCtx);
     var isValueString = _isString(element['@value']);
-    var hasNullMapping = (activeCtx.mappings[key] &&
-      activeCtx.mappings[key]['@language'] === null);
+    var hasNullMapping = (activeCtx.mappings[activeProperty] &&
+      activeCtx.mappings[activeProperty]['@language'] === null);
     if(isValueOnlyKey &&
       (!hasDefaultLanguage || !isValueString || hasNullMapping)) {
       return element['@value'];
@@ -3970,8 +3973,8 @@ function _compactValue(activeCtx, key, element) {
   }
 
   // element is a subject reference
-  var expandedProperty = _expandIri(activeCtx, key);
-  var type = jsonld.getContextValue(activeCtx, key, '@type');
+  var expandedProperty = _expandIri(activeCtx, activeProperty);
+  var type = jsonld.getContextValue(activeCtx, activeProperty, '@type');
   var term = _compactIri(activeCtx, element['@id'], null, {base: true});
 
   // compact to scalar
@@ -3990,20 +3993,20 @@ function _compactValue(activeCtx, key, element) {
  *
  * @param activeCtx the active context.
  * @param element the element to remove duplicates from.
- * @param key the key that is being mapped to a property generator.
+ * @param expandedProperty the property to map to a property generator.
  * @param value the value to compare against when duplicate checking.
  * @param term the property generator term.
  */
 function _findAndRemovePropertyGeneratorDuplicates(
-  activeCtx, element, key, value, term) {
+  activeCtx, element, expandedProperty, value, term) {
   // get property generator IRIs
   var iris = activeCtx.mappings[term]['@id'];
 
-  // for each IRI that isn't 'key', remove a single duplicate from element,
-  // if found
+  // for each IRI that isn't 'expandedProperty', remove a single duplicate
+  // from element, if found
   for(var i = 0; i < iris.length; ++i) {
     var iri = iris[i];
-    if(iri === key) {
+    if(iri === expandedProperty) {
       continue;
     }
     var prospects = element[iri];
