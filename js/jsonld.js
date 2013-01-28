@@ -1612,6 +1612,9 @@ Processor.prototype.expand = function(
       delete element['@context'];
     }
 
+    // expand the active property
+    var expandedActiveProperty = _expandIri(activeCtx, activeProperty);
+
     var rval = {};
     var keys = Object.keys(element).sort();
     for(var ki = 0; ki < keys.length; ++ki) {
@@ -1722,7 +1725,7 @@ Processor.prototype.expand = function(
         var isList = (expandedProperty === '@list');
         if(isList || expandedProperty === '@set') {
           var nextActiveProperty = activeProperty;
-          if(isList && activeProperty === '@graph') {
+          if(isList && expandedActiveProperty === '@graph') {
             nextActiveProperty = null;
           }
           expandedValue = self.expand(
@@ -1838,7 +1841,7 @@ Processor.prototype.expand = function(
 
     // drop certain top-level objects that do not occur in lists
     if(!options.keepFreeFloatingNodes && !insideList &&
-      (activeProperty === null || activeProperty === '@graph')) {
+      (activeProperty === null || expandedActiveProperty === '@graph')) {
       // drop empty object or top-level @value
       if(count === 0 || ('@value' in rval)) {
         rval = null;
@@ -1862,8 +1865,9 @@ Processor.prototype.expand = function(
   }
 
   // drop top-level scalars that are not in lists
+  var expandedActiveProperty = _expandIri(activeCtx, activeProperty);
   if(!insideList &&
-    (activeProperty === null || activeProperty === '@graph')) {
+    (activeProperty === null || expandedActiveProperty === '@graph')) {
     return null;
   }
 
