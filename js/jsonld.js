@@ -4029,43 +4029,43 @@ function _findAndRemovePropertyGeneratorDuplicates(
  *
  * @param activeCtx the current active context.
  * @param localCtx the local context being processed.
- * @param key the key in the local context to define the mapping for.
+ * @param term the term in the local context to define the mapping for.
  * @param relativeTo options for how to resolve relative IRIs:
  *          base: true to resolve against the base IRI, false not to.
  *          vocab: true to concatenate after @vocab, false not to.
  * @param defined a map of defining/defined keys to detect cycles and prevent
  *          double definitions.
  */
-function _createTermDefinition(activeCtx, localCtx, key, relativeTo, defined) {
-  if(key in defined) {
-    // key already defined
-    if(defined[key]) {
+function _createTermDefinition(activeCtx, localCtx, term, relativeTo, defined) {
+  if(term in defined) {
+    // term already defined
+    if(defined[term]) {
       return;
     }
     // cycle detected
     throw new JsonLdError(
       'Cyclical context definition detected.',
-      'jsonld.CyclicalContext', {context: localCtx, key: key});
+      'jsonld.CyclicalContext', {context: localCtx, term: term});
   }
 
-  // now defining key
-  defined[key] = false;
+  // now defining term
+  defined[term] = false;
 
-  // if key has a prefix, define it first
-  var colon = key.indexOf(':');
+  // if term has a prefix, define it first
+  var colon = term.indexOf(':');
   var prefix = null;
   if(colon !== -1) {
-    prefix = key.substr(0, colon);
+    prefix = term.substr(0, colon);
     if(prefix in localCtx) {
       // define parent prefix
       _createTermDefinition(activeCtx, localCtx, prefix, {base: true}, defined);
     }
   }
 
-  // get context key value
-  var value = localCtx[key];
+  // get context term value
+  var value = localCtx[term];
 
-  if(_isKeyword(key)) {
+  if(_isKeyword(term)) {
     throw new JsonLdError(
       'Invalid JSON-LD syntax; keywords cannot be overridden.',
       'jsonld.SyntaxError', {context: localCtx});
@@ -4073,16 +4073,16 @@ function _createTermDefinition(activeCtx, localCtx, key, relativeTo, defined) {
 
   // clear context entry
   if(value === null || (_isObject(value) && value['@id'] === null)) {
-    if(activeCtx.mappings[key]) {
-      // if key is a keyword alias, remove it
-      var kw = activeCtx.mappings[key]['@id'];
+    if(activeCtx.mappings[term]) {
+      // if term is a keyword alias, remove it
+      var kw = activeCtx.mappings[term]['@id'];
       if(_isKeyword(kw)) {
         var aliases = activeCtx.keywords[kw];
-        aliases.splice(aliases.indexOf(key), 1);
+        aliases.splice(aliases.indexOf(term), 1);
       }
     }
-    activeCtx.mappings[key] = null;
-    defined[key] = true;
+    activeCtx.mappings[term] = null;
+    defined[term] = true;
     return;
   }
 
@@ -4095,10 +4095,10 @@ function _createTermDefinition(activeCtx, localCtx, key, relativeTo, defined) {
           'jsonld.SyntaxError');
       }
 
-      // uniquely add key as a keyword alias and resort
+      // uniquely add term as a keyword alias and resort
       var aliases = activeCtx.keywords[value];
-      if(aliases.indexOf(key) === -1) {
-        aliases.push(key);
+      if(aliases.indexOf(term) === -1) {
+        aliases.push(term);
         aliases.sort(_compareShortestLeast);
       }
     }
@@ -4107,9 +4107,9 @@ function _createTermDefinition(activeCtx, localCtx, key, relativeTo, defined) {
       value = _expandIri(activeCtx, value, {base: true}, localCtx, defined);
     }
 
-    // define/redefine key to expanded IRI/keyword
-    activeCtx.mappings[key] = {'@id': value};
-    defined[key] = true;
+    // define/redefine term to expanded IRI/keyword
+    activeCtx.mappings[term] = {'@id': value};
+    defined[term] = true;
     return;
   }
 
@@ -4176,19 +4176,19 @@ function _createTermDefinition(activeCtx, localCtx, key, relativeTo, defined) {
       if(!('@vocab' in activeCtx)) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; @context terms must define an @id.',
-          'jsonld.SyntaxError', {context: localCtx, key: key});
+          'jsonld.SyntaxError', {context: localCtx, term: term});
       }
       // prepend vocab to term
-      mapping['@id'] = activeCtx['@vocab'] + key;
+      mapping['@id'] = activeCtx['@vocab'] + term;
     }
     // set @id based on prefix parent
     else if(prefix in activeCtx.mappings) {
-      var suffix = key.substr(colon + 1);
+      var suffix = term.substr(colon + 1);
       mapping['@id'] = activeCtx.mappings[prefix]['@id'] + suffix;
     }
-    // key is an absolute IRI
+    // term is an absolute IRI
     else {
-      mapping['@id'] = key;
+      mapping['@id'] = term;
     }
   }
 
@@ -4247,9 +4247,9 @@ function _createTermDefinition(activeCtx, localCtx, key, relativeTo, defined) {
     }
   }
 
-  // define key mapping
-  activeCtx.mappings[key] = mapping;
-  defined[key] = true;
+  // define term mapping
+  activeCtx.mappings[term] = mapping;
+  defined[term] = true;
 }
 
 /**
