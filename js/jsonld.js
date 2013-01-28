@@ -2424,7 +2424,7 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
 
     // process all other keys
     for(var key in ctx) {
-      _defineContextMapping(rval, ctx, key, '@vocab', defined);
+      _createTermDefinition(rval, ctx, key, '@vocab', defined);
     }
   }
 
@@ -4025,7 +4025,7 @@ function _findAndRemovePropertyGeneratorDuplicates(
 }
 
 /**
- * Defines a context mapping during context processing.
+ * Creates a term definition during context processing.
  *
  * @param activeCtx the current active context.
  * @param localCtx the local context being processed.
@@ -4036,7 +4036,7 @@ function _findAndRemovePropertyGeneratorDuplicates(
  * @param defined a map of defining/defined keys to detect cycles and prevent
  *          double definitions.
  */
-function _defineContextMapping(activeCtx, localCtx, key, relativeTo, defined) {
+function _createTermDefinition(activeCtx, localCtx, key, relativeTo, defined) {
   if(key in defined) {
     // key already defined
     if(defined[key]) {
@@ -4058,7 +4058,7 @@ function _defineContextMapping(activeCtx, localCtx, key, relativeTo, defined) {
     prefix = key.substr(0, colon);
     if(prefix in localCtx) {
       // define parent prefix
-      _defineContextMapping(activeCtx, localCtx, prefix, {base: true}, defined);
+      _createTermDefinition(activeCtx, localCtx, prefix, {base: true}, defined);
     }
   }
 
@@ -4277,7 +4277,7 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
 
   // define term dependency if not defined
   if(localCtx && value in localCtx && defined[value] !== true) {
-    _defineContextMapping(activeCtx, localCtx, value, {vocab: true}, defined);
+    _createTermDefinition(activeCtx, localCtx, value, {vocab: true}, defined);
   }
 
   var mapping = activeCtx.mappings[value];
@@ -4320,7 +4320,7 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
     if(prefix !== '_' && suffix.indexOf('//') !== 0) {
       // prefix dependency not defined, define it
       if(localCtx && prefix in localCtx && defined[prefix] !== true) {
-        _defineContextMapping(
+        _createTermDefinition(
           activeCtx, localCtx, prefix, {base: true}, defined);
       }
 
