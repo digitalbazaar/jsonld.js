@@ -1788,28 +1788,32 @@ Processor.prototype.expand = function(
     var count = keys.length;
 
     if('@value' in rval) {
-      // do not count @annotation
-      if('@annotation' in rval) {
-        count -= 1;
-      }
       // @value must only have @language or @type
-      if((count === 2 && !('@type' in rval) && !('@language' in rval)) ||
-        count > 2) {
+      if('@type' in rval && '@language' in rval) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; an element containing "@value" may not ' +
+          'contain both "@type" and "@language".',
+          'jsonld.SyntaxError', {element: rval});
+      }
+      var validCount = count - 1;
+      if('@type' in rval) {
+        validCount -= 1;
+      }
+      if('@annotation' in rval) {
+        validCount -= 1;
+      }
+      if('@language' in rval) {
+        validCount -= 1;
+      }
+      if(validCount !== 0) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; an element containing "@value" may only ' +
           'have an "@annotation" property and at most one other property ' +
           'which can be "@type" or "@language".',
           'jsonld.SyntaxError', {element: rval});
       }
-      // value @type must be a string
-      if('@type' in rval && !_isString(rval['@type'])) {
-        throw new JsonLdError(
-          'Invalid JSON-LD syntax; the "@type" value of an element ' +
-          'containing "@value" must be a string.',
-          'jsonld.SyntaxError', {element: rval});
-      }
       // drop null @values
-      else if(rval['@value'] === null) {
+      if(rval['@value'] === null) {
         rval = null;
       }
       // drop @language if @value isn't a string
@@ -1849,10 +1853,18 @@ Processor.prototype.expand = function(
       if(count === 0 || ('@value' in rval)) {
         rval = null;
       }
-      // drop subjects that generate no triples
-      else if(count === 1 && _isKeyword(keys[0]) &&
-        !('@graph' in rval || '@type' in rval || '@list' in rval)) {
-        rval = null;
+      else {
+        // drop subjects that generate no triples
+        var hasTriples = false;
+        for(var ki = 0; !hasTriples && ki < keys.length; ++ki) {
+          if(!_isKeyword(keys[ki]) ||
+            ['@graph', '@type', '@list'].indexOf(keys[ki]) !== -1) {
+            hasTriples = true;
+          }
+        }
+        if(!hasTriples) {
+          rval = null;
+        }
       }
     }
 
@@ -2466,32 +2478,32 @@ function _expandLanguageMap(languageMap) {
  * Labels the blank nodes in the given value using the given UniqueNamer.
  *
  * @param namer the UniqueNamer to use.
- * @param value the value with blank nodes to rename.
+ * @param element the element with blank nodes to rename.
  *
  * @return a copy of value with renamed blank nodes.
  */
-function _labelBlankNodes(namer, value) {
-  if(value && typeof value === 'object') {
-    if(_isArray(value)) {
+function _labelBlankNodes(namer, element) {
+  if(element && typeof element === 'object') {
+    if(_isArray(element)) {
       var rval = [];
-      for(var i = 0; i < value.length; ++i) {
-        rval[i] = _labelBlankNodes(namer, value[i]);
+      for(var i = 0; i < element.length; ++i) {
+        rval[i] = _labelBlankNodes(namer, element[i]);
       }
       return rval;
     }
 
     // recursively apply to @list
     var rval = {};
-    if('@list' in value) {
-      rval['@list'] = _labelBlankNodes(namer, value['@list']);
+    if('@list' in element) {
+      rval['@list'] = _labelBlankNodes(namer, element['@list']);
       return rval;
     }
 
     // recursively apply to all keys
-    var keys = Object.keys(value).sort();
+    var keys = Object.keys(element).sort();
     for(var i in keys) {
       var key = keys[i];
-      rval[key] = _labelBlankNodes(namer, value[key]);
+      rval[key] = _labelBlankNodes(namer, element[key]);
     }
     // rename blank node
     if(_isBlankNode(rval)) {
@@ -2499,7 +2511,7 @@ function _labelBlankNodes(namer, value) {
     }
     return rval;
   }
-  return value;
+  return element;
 }
 
 /**
