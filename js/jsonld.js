@@ -4234,6 +4234,9 @@ function _createTermDefinition(activeCtx, localCtx, term, relativeTo, defined) {
     }
 
     // add @language to mapping
+    if(language !== null) {
+      language = language.toLowerCase();
+    }
     mapping['@language'] = language;
   }
 
