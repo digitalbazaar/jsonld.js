@@ -1755,13 +1755,12 @@ Processor.prototype.expand = function(
       }
 
       // convert expanded value to @list if container specifies it
-      if(expandedProperty !== '@list' && !_isList(expandedValue)) {
-        if(container === '@list') {
-          // ensure expanded value is an array
-          expandedValue = (_isArray(expandedValue) ?
-            expandedValue : [expandedValue]);
-          expandedValue = {'@list': expandedValue};
-        }
+      if(expandedProperty !== '@list' && !_isList(expandedValue) &&
+        container === '@list') {
+        // ensure expanded value is an array
+        expandedValue = (_isArray(expandedValue) ?
+          expandedValue : [expandedValue]);
+        expandedValue = {'@list': expandedValue};
       }
 
       // optimize away @id for @type
