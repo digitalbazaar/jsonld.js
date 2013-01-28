@@ -1353,27 +1353,26 @@ var Processor = function() {};
  * must be in expanded form before this method is called.
  *
  * @param activeCtx the active context to use.
- * @param property the compact property that points to the element, null for
- *          none.
+ * @param key the compact key that points to the element, null for none.
  * @param element the element to compact.
  * @param options the compaction options.
  *
  * @return the compacted value.
  */
-Processor.prototype.compact = function(activeCtx, property, element, options) {
+Processor.prototype.compact = function(activeCtx, key, element, options) {
   // recursively compact array
   if(_isArray(element)) {
     var rval = [];
     for(var i in element) {
       // compact, dropping any null values
-      var compacted = this.compact(activeCtx, property, element[i], options);
+      var compacted = this.compact(activeCtx, key, element[i], options);
       if(compacted !== null) {
         rval.push(compacted);
       }
     }
     if(rval.length === 1) {
       // use single element if no container is specified
-      var container = jsonld.getContextValue(activeCtx, property, '@container');
+      var container = jsonld.getContextValue(activeCtx, key, '@container');
       if(container === null) {
         rval = rval[0];
       }
@@ -1385,18 +1384,18 @@ Processor.prototype.compact = function(activeCtx, property, element, options) {
   if(_isObject(element)) {
     // do value compaction on @values and subject references
     if(_isValue(element) || _isSubjectReference(element)) {
-      return _compactValue(activeCtx, property, element);
+      return _compactValue(activeCtx, key, element);
     }
 
     // shallow copy element and arrays so keys and values can be removed
     // during property generator compaction
     var shallow = {};
-    for(var key in element) {
-      if(_isArray(element[key])) {
-        shallow[key] = element[key].slice();
+    for(var expandedKey in element) {
+      if(_isArray(element[expandedKey])) {
+        shallow[expandedKey] = element[expandedKey].slice();
       }
       else {
-        shallow[key] = element[key];
+        shallow[expandedKey] = element[expandedKey];
       }
     }
     element = shallow;
@@ -1405,21 +1404,22 @@ Processor.prototype.compact = function(activeCtx, property, element, options) {
     var keys = Object.keys(element).sort();
     var rval = {};
     while(keys.length > 0) {
-      var key = keys.shift();
+      var expandedKey = keys.shift();
 
       // skip key if removed during property generator duplicate handling
-      if(!(key in element)) {
+      if(!(expandedKey in element)) {
         continue;
       }
 
-      var value = element[key];
+      var value = element[expandedKey];
 
       // compact @id and @type(s)
-      if(key === '@id' || key === '@type') {
+      if(expandedKey === '@id' || expandedKey === '@type') {
         // compact single @id
         if(_isString(value)) {
           value = _compactIri(
-            activeCtx, value, null, {base: true, vocab: (key === '@type')});
+            activeCtx, value, null,
+            {base: true, vocab: (expandedKey === '@type')});
         }
         // value must be a @type array
         else {
@@ -1432,23 +1432,22 @@ Processor.prototype.compact = function(activeCtx, property, element, options) {
         }
 
         // use keyword alias and add value
-        var alias = _compactIri(activeCtx, key);
+        var alias = _compactIri(activeCtx, expandedKey);
         var isArray = (_isArray(value) && value.length === 0);
         jsonld.addValue(rval, alias, value, {propertyIsArray: isArray});
         continue;
       }
 
       // handle @annotation property
-      if(key === '@annotation') {
+      if(expandedKey === '@annotation') {
         // drop @annotation if inside an @annotation container
-        var container = jsonld.getContextValue(
-          activeCtx, property, '@container');
+        var container = jsonld.getContextValue(activeCtx, key, '@container');
         if(container === '@annotation') {
           continue;
         }
 
         // use keyword alias and add value
-        var alias = _compactIri(activeCtx, key);
+        var alias = _compactIri(activeCtx, expandedKey);
         jsonld.addValue(rval, alias, value);
         continue;
       }
@@ -1457,7 +1456,8 @@ Processor.prototype.compact = function(activeCtx, property, element, options) {
 
       // preserve empty arrays
       if(value.length === 0) {
-        var term = _compactIri(activeCtx, key, null, {vocab: true}, element);
+        var term = _compactIri(
+          activeCtx, expandedKey, null, {vocab: true}, element);
         jsonld.addValue(rval, term, [], {propertyIsArray: true});
       }
 
@@ -1467,7 +1467,7 @@ Processor.prototype.compact = function(activeCtx, property, element, options) {
 
         // compact property and get container type
         var term = _compactIri(
-          activeCtx, key, expanded, {vocab: true}, element);
+          activeCtx, expandedKey, expanded, {vocab: true}, element);
         var container = jsonld.getContextValue(activeCtx, term, '@container');
 
         // remove any duplicates that were (presumably) generated by a
@@ -1475,7 +1475,7 @@ Processor.prototype.compact = function(activeCtx, property, element, options) {
         var mapping = activeCtx.mappings[term];
         if(mapping && mapping.propertyGenerator) {
           _findAndRemovePropertyGeneratorDuplicates(
-            activeCtx, element, key, expanded, term);
+            activeCtx, element, expandedKey, expanded, term);
         }
 
         // get @list value if appropriate
@@ -1545,7 +1545,7 @@ Processor.prototype.compact = function(activeCtx, property, element, options) {
           // array, or key is @graph
           var isArray = (container === '@set' || container === '@list' ||
             (_isArray(compacted) && compacted.length === 0) ||
-            key === '@graph');
+            expandedKey === '@graph');
 
           // add compact value
           jsonld.addValue(rval, term, compacted, {propertyIsArray: isArray});
@@ -1627,45 +1627,45 @@ Processor.prototype.expand = function(
     for(var ki = 0; ki < keys.length; ++ki) {
       var key = keys[ki];
       var value = element[key];
-      var expandedProperty;
+      var expandedKey;
 
       // expand key using property generator
       var mapping = activeCtx.mappings[key];
       if(mapping && mapping.propertyGenerator) {
-        expandedProperty = mapping['@id'];
+        expandedKey = mapping['@id'];
       }
       // expand key to IRI
       else {
-        expandedProperty = _expandIri(activeCtx, key, {vocab: true});
+        expandedKey = _expandIri(activeCtx, key, {vocab: true});
       }
 
       // drop non-absolute IRI keys that aren't keywords
-      if(expandedProperty === null ||
-        (!_isArray(expandedProperty) &&
-        !_isAbsoluteIri(expandedProperty) &&
-        !_isKeyword(expandedProperty, activeCtx))) {
+      if(expandedKey === null ||
+        (!_isArray(expandedKey) &&
+        !_isAbsoluteIri(expandedKey) &&
+        !_isKeyword(expandedKey, activeCtx))) {
         continue;
       }
 
       // if value is null and property is not @value, continue
-      if(value === null && expandedProperty !== '@value') {
+      if(value === null && expandedKey !== '@value') {
         continue;
       }
 
       // syntax error if @id is not a string
-      if(expandedProperty === '@id' && !_isString(value)) {
+      if(expandedKey === '@id' && !_isString(value)) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; "@id" value must a string.',
           'jsonld.SyntaxError', {value: value});
       }
 
       // validate @type value
-      if(expandedProperty === '@type') {
+      if(expandedKey === '@type') {
         _validateTypeValue(value);
       }
 
       // @graph must be an array or an object
-      if(expandedProperty === '@graph' &&
+      if(expandedKey === '@graph' &&
         !(_isObject(value) || _isArray(value))) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; "@value" value must not be an ' +
@@ -1674,7 +1674,7 @@ Processor.prototype.expand = function(
       }
 
       // @value must not be an object or an array
-      if(expandedProperty === '@value' &&
+      if(expandedKey === '@value' &&
         (_isObject(value) || _isArray(value))) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; "@value" value must not be an ' +
@@ -1683,7 +1683,7 @@ Processor.prototype.expand = function(
       }
 
       // @language must be a string
-      if(expandedProperty === '@language') {
+      if(expandedKey === '@language') {
         if(!_isString(value)) {
           throw new JsonLdError(
             'Invalid JSON-LD syntax; "@language" value must be a string.',
@@ -1694,7 +1694,7 @@ Processor.prototype.expand = function(
       }
 
       // preserve @annotation
-      if(expandedProperty === '@annotation') {
+      if(expandedKey === '@annotation') {
         if(!_isString(value)) {
           throw new JsonLdError(
             'Invalid JSON-LD syntax; "@annotation" value must be a string.',
@@ -1733,8 +1733,8 @@ Processor.prototype.expand = function(
       }
       else {
         // recurse into @list or @set
-        var isList = (expandedProperty === '@list');
-        if(isList || expandedProperty === '@set') {
+        var isList = (expandedKey === '@list');
+        if(isList || expandedKey === '@set') {
           var nextActiveProperty = activeProperty;
           if(isList && activeProperty === '@graph') {
             nextActiveProperty = null;
@@ -1754,12 +1754,12 @@ Processor.prototype.expand = function(
       }
 
       // drop null values if property is not @value
-      if(value === null && expandedProperty !== '@value') {
+      if(value === null && expandedKey !== '@value') {
         continue;
       }
 
       // convert value to @list if container specifies it
-      if(expandedProperty !== '@list' && !_isList(value)) {
+      if(expandedKey !== '@list' && !_isList(value)) {
         if(container === '@list') {
           // ensure value is an array
           value = _isArray(value) ? value : [value];
@@ -1768,7 +1768,7 @@ Processor.prototype.expand = function(
       }
 
       // optimize away @id for @type
-      if(expandedProperty === '@type') {
+      if(expandedKey === '@type') {
         if(_isSubjectReference(value)) {
           value = value['@id'];
         }
@@ -1788,11 +1788,11 @@ Processor.prototype.expand = function(
       }
 
       // add copy of value for each property from property generator
-      if(_isArray(expandedProperty)) {
+      if(_isArray(expandedKey)) {
         value = _labelBlankNodes(activeCtx.namer, value);
-        for(var i = 0; i < expandedProperty.length; ++i) {
+        for(var i = 0; i < expandedKey.length; ++i) {
           jsonld.addValue(
-            rval, expandedProperty[i], _clone(value),
+            rval, expandedKey[i], _clone(value),
             {propertyIsArray: true});
         }
       }
@@ -1801,9 +1801,9 @@ Processor.prototype.expand = function(
         // use an array except for certain keywords
         var useArray =
           ['@annotation', '@id', '@type', '@value', '@language'].indexOf(
-            expandedProperty) === -1;
+            expandedKey) === -1;
         jsonld.addValue(
-          rval, expandedProperty, value, {propertyIsArray: useArray});
+          rval, expandedKey, value, {propertyIsArray: useArray});
       }
     }
 
@@ -2531,12 +2531,12 @@ function _labelBlankNodes(namer, value) {
  * given context.
  *
  * @param ctx the active context to use.
- * @param property the property the value is associated with.
+ * @param key the key the value is associated with.
  * @param value the value to expand.
  *
  * @return the expanded value.
  */
-function _expandValue(activeCtx, property, value) {
+function _expandValue(activeCtx, key, value) {
   // nothing to expand
   if(value === null) {
     return null;
@@ -2546,23 +2546,23 @@ function _expandValue(activeCtx, property, value) {
   var rval = value;
 
   // special-case expand @id and @type (skips '@id' expansion)
-  var expandedProperty = _expandIri(activeCtx, property, {vocab: true});
-  if(expandedProperty === '@id') {
+  var expandedKey = _expandIri(activeCtx, key, {vocab: true});
+  if(expandedKey === '@id') {
     rval = _expandIri(activeCtx, value, {base: true});
   }
-  else if(expandedProperty === '@type') {
+  else if(expandedKey === '@type') {
     rval = _expandIri(activeCtx, value, {vocab: true, base: true});
   }
   else {
     // get type definition from context
-    var type = jsonld.getContextValue(activeCtx, property, '@type');
+    var type = jsonld.getContextValue(activeCtx, key, '@type');
 
     // do @id expansion (automatic for @graph)
-    if(type === '@id' || expandedProperty === '@graph') {
+    if(type === '@id' || expandedKey === '@graph') {
       rval = {'@id': _expandIri(activeCtx, value, {base: true})};
     }
     // do not expand keyword values
-    else if(!_isKeyword(expandedProperty)) {
+    else if(!_isKeyword(expandedKey)) {
       rval = {};
       // other type
       if(type !== null) {
@@ -2574,7 +2574,7 @@ function _expandValue(activeCtx, property, value) {
       }
       // check for language tagging
       else {
-        var language = jsonld.getContextValue(activeCtx, property, '@language');
+        var language = jsonld.getContextValue(activeCtx, key, '@language');
         if(language !== null && _isString(value)) {
           rval['@language'] = language;
         }
@@ -3919,18 +3919,18 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
  * property.
  *
  * @param activeCtx the active context.
- * @param property the compact property that points to the element.
+ * @param key the compacted property that points to the element.
  * @param element the element to compact.
  *
  * @return the compaction result.
  */
-function _compactValue(activeCtx, property, element) {
+function _compactValue(activeCtx, key, element) {
   // element is a @value
   if(_isValue(element)) {
     // get context rules
-    var type = jsonld.getContextValue(activeCtx, property, '@type');
-    var language = jsonld.getContextValue(activeCtx, property, '@language');
-    var container = jsonld.getContextValue(activeCtx, property, '@container');
+    var type = jsonld.getContextValue(activeCtx, key, '@type');
+    var language = jsonld.getContextValue(activeCtx, key, '@language');
+    var container = jsonld.getContextValue(activeCtx, key, '@container');
 
     // whether or not the element has an @annotation that must be preserved
     var preserveAnnotation = (('@annotation' in element) &&
@@ -3951,14 +3951,14 @@ function _compactValue(activeCtx, property, element) {
     // return just the value of @value if all are true:
     // 1. @value is the only key or @annotation isn't being preserved
     // 2. there is no default language or @value is not a string or
-    //   the property has a mapping with a null @language
+    //   the key has a mapping with a null @language
     var keyCount = Object.keys(element).length;
     var isValueOnlyKey = (keyCount === 1 ||
       (keyCount === 2 && ('@annotation' in element) && !preserveAnnotation));
     var hasDefaultLanguage = ('@language' in activeCtx);
     var isValueString = _isString(element['@value']);
-    var hasNullMapping = (activeCtx.mappings[property] &&
-      activeCtx.mappings[property]['@language'] === null);
+    var hasNullMapping = (activeCtx.mappings[key] &&
+      activeCtx.mappings[key]['@language'] === null);
     if(isValueOnlyKey &&
       (!hasDefaultLanguage || !isValueString || hasNullMapping)) {
       return element['@value'];
@@ -3988,12 +3988,12 @@ function _compactValue(activeCtx, property, element) {
   }
 
   // element is a subject reference
-  var expandedProperty = _expandIri(activeCtx, property);
-  var type = jsonld.getContextValue(activeCtx, property, '@type');
+  var expandedKey = _expandIri(activeCtx, key);
+  var type = jsonld.getContextValue(activeCtx, key, '@type');
   var term = _compactIri(activeCtx, element['@id'], null, {base: true});
 
   // compact to scalar
-  if(type === '@id' || expandedProperty === '@graph') {
+  if(type === '@id' || expandedKey === '@graph') {
     return term;
   }
 
