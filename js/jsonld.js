@@ -2417,7 +2417,7 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
           'jsonld.SyntaxError', {context: ctx});
       }
       else {
-        rval['@language'] = value;
+        rval['@language'] = value.toLowerCase();
       }
       defined['@language'] = true;
     }
