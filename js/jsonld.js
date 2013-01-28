@@ -2424,7 +2424,7 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
 
     // process all other keys
     for(var key in ctx) {
-      _createTermDefinition(rval, ctx, key, '@vocab', defined);
+      _createTermDefinition(rval, ctx, key, {vocab: true}, defined);
     }
   }
 
