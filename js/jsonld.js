@@ -4124,6 +4124,12 @@ function _createTermDefinition(activeCtx, localCtx, term, relativeTo, defined) {
   var mapping = {};
   mapping.propertyGenerator = false;
 
+  // merge onto parent mapping if one exists for a prefix
+  if(prefix !== null && activeCtx.mappings[prefix]) {
+    // FIXME: check to see if additional clone is necessary here
+    mapping = _clone(activeCtx.mappings[prefix]);
+  }
+
   if('@id' in value) {
     var id = value['@id'];
     // handle property generator
