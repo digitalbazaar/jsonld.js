@@ -4315,25 +4315,27 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
     return rval;
   }
 
-  // split value into prefix:suffix
-  var colon = rval.indexOf(':');
-  if(colon !== -1) {
-    isAbsolute = true;
-    var prefix = rval.substr(0, colon);
-    var suffix = rval.substr(colon + 1);
+  if(!isAbsolute) {
+    // split value into prefix:suffix
+    var colon = rval.indexOf(':');
+    if(colon !== -1) {
+      isAbsolute = true;
+      var prefix = rval.substr(0, colon);
+      var suffix = rval.substr(colon + 1);
 
-    // do not expand blank nodes (prefix of '_') or already-absolute
-    // IRIs (suffix of '//')
-    if(prefix !== '_' && suffix.indexOf('//') !== 0) {
-      // prefix dependency not defined, define it
-      if(localCtx && prefix in localCtx && defined[prefix] !== true) {
-        _createTermDefinition(activeCtx, localCtx, prefix, defined);
-      }
+      // do not expand blank nodes (prefix of '_') or already-absolute
+      // IRIs (suffix of '//')
+      if(prefix !== '_' && suffix.indexOf('//') !== 0) {
+        // prefix dependency not defined, define it
+        if(localCtx && prefix in localCtx && defined[prefix] !== true) {
+          _createTermDefinition(activeCtx, localCtx, prefix, defined);
+        }
 
-      // use mapping if prefix is defined and not a property generator
-      mapping = activeCtx.mappings[prefix];
-      if(mapping && !mapping.propertyGenerator) {
-        rval = activeCtx.mappings[prefix]['@id'] + suffix;
+        // use mapping if prefix is defined and not a property generator
+        mapping = activeCtx.mappings[prefix];
+        if(mapping && !mapping.propertyGenerator) {
+          rval = activeCtx.mappings[prefix]['@id'] + suffix;
+        }
       }
     }
   }
