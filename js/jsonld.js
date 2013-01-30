@@ -2524,47 +2524,47 @@ function _expandValue(activeCtx, activeProperty, value) {
     return null;
   }
 
-  // default to simple string return value
-  var rval = value;
-
   // special-case expand @id and @type (skips '@id' expansion)
   var expandedProperty = _expandIri(activeCtx, activeProperty, {vocab: true});
   if(expandedProperty === '@id') {
-    rval = _expandIri(activeCtx, value, {base: true});
+    return _expandIri(activeCtx, value, {base: true});
   }
   else if(expandedProperty === '@type') {
-    rval = _expandIri(activeCtx, value, {vocab: true, base: true});
+    return _expandIri(activeCtx, value, {vocab: true, base: true});
   }
-  else {
-    // get type definition from context
-    var type = jsonld.getContextValue(activeCtx, activeProperty, '@type');
 
-    // do @id expansion (automatic for @graph)
-    if(type === '@id' || expandedProperty === '@graph') {
-      rval = {'@id': _expandIri(activeCtx, value, {base: true})};
+  // get type definition from context
+  var type = jsonld.getContextValue(activeCtx, activeProperty, '@type');
+
+  // do @id expansion (automatic for @graph)
+  if(type === '@id' || expandedProperty === '@graph') {
+    return {'@id': _expandIri(activeCtx, value, {base: true})};
+  }
+
+  // do not expand keyword values
+  if(_isKeyword(expandedProperty)) {
+    return value;
+  }
+
+  rval = {};
+
+  // other type
+  if(type !== null) {
+    // rename blank node if requested
+    if(activeCtx.namer && type.indexOf('_:') === 0) {
+      type = activeCtx.namer.getName(type);
     }
-    // do not expand keyword values
-    else if(!_isKeyword(expandedProperty)) {
-      rval = {};
-      // other type
-      if(type !== null) {
-        // rename blank node if requested
-        if(activeCtx.namer && type.indexOf('_:') === 0) {
-          type = activeCtx.namer.getName(type);
-        }
-        rval['@type'] = type;
-      }
-      // check for language tagging
-      else {
-        var language = jsonld.getContextValue(
-          activeCtx, activeProperty, '@language');
-        if(language !== null && _isString(value)) {
-          rval['@language'] = language;
-        }
-      }
-      rval['@value'] = value;
+    rval['@type'] = type;
+  }
+  // check for language tagging
+  else {
+    var language = jsonld.getContextValue(
+      activeCtx, activeProperty, '@language');
+    if(language !== null && _isString(value)) {
+      rval['@language'] = language;
     }
   }
+  rval['@value'] = value;
 
   return rval;
 }
