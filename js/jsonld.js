@@ -2424,7 +2424,7 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
 
     // process all other keys
     for(var key in ctx) {
-      _createTermDefinition(rval, ctx, key, {vocab: true}, defined);
+      _createTermDefinition(rval, ctx, key, defined);
     }
   }
 
@@ -4030,13 +4030,10 @@ function _findAndRemovePropertyGeneratorDuplicates(
  * @param activeCtx the current active context.
  * @param localCtx the local context being processed.
  * @param term the term in the local context to define the mapping for.
- * @param relativeTo options for how to resolve relative IRIs:
- *          base: true to resolve against the base IRI, false not to.
- *          vocab: true to concatenate after @vocab, false not to.
  * @param defined a map of defining/defined keys to detect cycles and prevent
  *          double definitions.
  */
-function _createTermDefinition(activeCtx, localCtx, term, relativeTo, defined) {
+function _createTermDefinition(activeCtx, localCtx, term, defined) {
   if(term in defined) {
     // term already defined
     if(defined[term]) {
@@ -4058,7 +4055,7 @@ function _createTermDefinition(activeCtx, localCtx, term, relativeTo, defined) {
     prefix = term.substr(0, colon);
     if(prefix in localCtx) {
       // define parent prefix
-      _createTermDefinition(activeCtx, localCtx, prefix, {base: true}, defined);
+      _createTermDefinition(activeCtx, localCtx, prefix, defined);
     }
   }
 
@@ -4286,7 +4283,7 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
 
   // define term dependency if not defined
   if(localCtx && value in localCtx && defined[value] !== true) {
-    _createTermDefinition(activeCtx, localCtx, value, {vocab: true}, defined);
+    _createTermDefinition(activeCtx, localCtx, value, defined);
   }
 
   var mapping = activeCtx.mappings[value];
@@ -4329,8 +4326,7 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
     if(prefix !== '_' && suffix.indexOf('//') !== 0) {
       // prefix dependency not defined, define it
       if(localCtx && prefix in localCtx && defined[prefix] !== true) {
-        _createTermDefinition(
-          activeCtx, localCtx, prefix, {base: true}, defined);
+        _createTermDefinition(activeCtx, localCtx, prefix, defined);
       }
 
       // use mapping if prefix is defined and not a property generator
