@@ -2556,11 +2556,11 @@ function _expandValue(activeCtx, activeProperty, value) {
     }
     rval['@type'] = type;
   }
-  // check for language tagging
-  else {
+  // check for language tagging for strings
+  else if(_isString(value)) {
     var language = jsonld.getContextValue(
       activeCtx, activeProperty, '@language');
-    if(language !== null && _isString(value)) {
+    if(language !== null) {
       rval['@language'] = language;
     }
   }
