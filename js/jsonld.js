@@ -4288,17 +4288,17 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
 
   var mapping = activeCtx.mappings[value];
 
+  // value is explicitly ignored with a null mapping
+  if(mapping === null) {
+    return null;
+  }
+
   // term dependency cannot be a property generator
   if(localCtx && mapping && mapping.propertyGenerator) {
     throw new JsonLdError(
       'Invalid JSON-LD syntax; a term definition cannot have a property ' +
       'generator as a dependency.',
       'jsonld.SyntaxError', {context: localCtx, value: value});
-  }
-
-  // value is explicitly ignored with a null mapping
-  if(mapping === null) {
-    return null;
   }
 
   var isAbsolute = false;
