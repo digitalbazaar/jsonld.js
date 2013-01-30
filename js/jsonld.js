@@ -4302,24 +4302,25 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
   }
 
   var isAbsolute = false;
+  var rval = value;
 
   // value is a term
   if(mapping && !mapping.propertyGenerator) {
     isAbsolute = true;
-    value = mapping['@id'];
+    rval = mapping['@id'];
   }
 
   // keywords need no expanding (aliasing already handled by now)
-  if(_isKeyword(value)) {
-    return value;
+  if(_isKeyword(rval)) {
+    return rval;
   }
 
   // split value into prefix:suffix
-  var colon = value.indexOf(':');
+  var colon = rval.indexOf(':');
   if(colon !== -1) {
     isAbsolute = true;
-    var prefix = value.substr(0, colon);
-    var suffix = value.substr(colon + 1);
+    var prefix = rval.substr(0, colon);
+    var suffix = rval.substr(colon + 1);
 
     // do not expand blank nodes (prefix of '_') or already-absolute
     // IRIs (suffix of '//')
@@ -4332,7 +4333,7 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
       // use mapping if prefix is defined and not a property generator
       mapping = activeCtx.mappings[prefix];
       if(mapping && !mapping.propertyGenerator) {
-        value = activeCtx.mappings[prefix]['@id'] + suffix;
+        rval = activeCtx.mappings[prefix]['@id'] + suffix;
       }
     }
   }
@@ -4340,22 +4341,22 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
   relativeTo = relativeTo || {};
   if(isAbsolute) {
     // rename blank node if requested
-    if(!localCtx && value.indexOf('_:') === 0 && activeCtx.namer) {
-      value = activeCtx.namer.getName(value);
+    if(!localCtx && rval.indexOf('_:') === 0 && activeCtx.namer) {
+      rval = activeCtx.namer.getName(rval);
     }
   }
   // prepend vocab
   else if(relativeTo.vocab && '@vocab' in activeCtx) {
-    value = activeCtx['@vocab'] + value;
+    rval = activeCtx['@vocab'] + rval;
   }
   // prepend base
   else if(relativeTo.base) {
-    value = _prependBase(activeCtx['@base'], value);
+    rval = _prependBase(activeCtx['@base'], rval);
   }
 
   if(localCtx) {
     // value must now be an absolute IRI
-    if(!_isAbsoluteIri(value)) {
+    if(!_isAbsoluteIri(rval)) {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; a @context value does not expand to ' +
         'an absolute IRI.',
@@ -4363,7 +4364,7 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
     }
   }
 
-  return value;
+  return rval;
 }
 
 /**
