@@ -1238,7 +1238,7 @@ var _rdfParsers = {};
  *
  * @param contentType the content-type for the parser.
  * @param parser(input) the parser function (takes a string as a parameter
- *           and returns an array of RDF statements).
+ *          and returns an array of RDF statements).
  */
 jsonld.registerRDFParser = function(contentType, parser) {
   _rdfParsers[contentType] = parser;
@@ -1343,26 +1343,30 @@ var Processor = function() {};
  * must be in expanded form before this method is called.
  *
  * @param activeCtx the active context to use.
- * @param key the compact key that points to the element, null for none.
+ * @param activeProperty the compacted property assoicated with the element
+ *          to compact, null for none.
  * @param element the element to compact.
  * @param options the compaction options.
  *
  * @return the compacted value.
  */
-Processor.prototype.compact = function(activeCtx, key, element, options) {
+Processor.prototype.compact = function(
+  activeCtx, activeProperty, element, options) {
   // recursively compact array
   if(_isArray(element)) {
     var rval = [];
     for(var i in element) {
       // compact, dropping any null values
-      var compacted = this.compact(activeCtx, key, element[i], options);
+      var compacted = this.compact(
+        activeCtx, activeProperty, element[i], options);
       if(compacted !== null) {
         rval.push(compacted);
       }
     }
     if(rval.length === 1) {
       // use single element if no container is specified
-      var container = jsonld.getContextValue(activeCtx, key, '@container');
+      var container = jsonld.getContextValue(
+        activeCtx, activeProperty, '@container');
       if(container === null) {
         rval = rval[0];
       }
@@ -1374,7 +1378,7 @@ Processor.prototype.compact = function(activeCtx, key, element, options) {
   if(_isObject(element)) {
     // do value compaction on @values and subject references
     if(_isValue(element) || _isSubjectReference(element)) {
-      return _compactValue(activeCtx, key, element);
+      return _compactValue(activeCtx, activeProperty, element);
     }
 
     // shallow copy element and arrays so keys and values can be removed
@@ -1431,7 +1435,8 @@ Processor.prototype.compact = function(activeCtx, key, element, options) {
       // handle @annotation property
       if(expandedProperty === '@annotation') {
         // drop @annotation if inside an @annotation container
-        var container = jsonld.getContextValue(activeCtx, key, '@container');
+        var container = jsonld.getContextValue(
+          activeCtx, activeProperty, '@container');
         if(container === '@annotation') {
           continue;
         }
