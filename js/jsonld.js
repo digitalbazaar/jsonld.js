@@ -1397,8 +1397,8 @@ Processor.prototype.compact = function(
     // process element keys in order
     var keys = Object.keys(element).sort();
     var rval = {};
-    while(keys.length > 0) {
-      var expandedProperty = keys.shift();
+    for(var ki = 0; ki < keys.length; ++ki) {
+      var expandedProperty = keys[ki];
 
       // skip key if removed during property generator duplicate handling
       if(!(expandedProperty in element)) {
@@ -1418,9 +1418,9 @@ Processor.prototype.compact = function(
         // value must be a @type array
         else {
           var types = [];
-          for(var i in value) {
+          for(var vi = 0; vi < value.length; ++vi) {
             types.push(_compactIri(
-              activeCtx, value[i], null, {base: true, vocab: true}));
+              activeCtx, value[vi], null, {base: true, vocab: true}));
           }
           value = types;
         }
@@ -1457,8 +1457,8 @@ Processor.prototype.compact = function(
       }
 
       // recusively process array values
-      while(value.length > 0) {
-        var expanded = value.shift();
+      for(var vi = 0; vi < value.length; ++vi) {
+        var expanded = value[vi];
 
         // compact property and get container type
         var term = _compactIri(
