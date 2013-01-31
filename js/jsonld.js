@@ -1419,12 +1419,11 @@ Processor.prototype.compact = function(
         }
         // expanded value must be a @type array
         else {
-          var types = [];
+          compactedValue = [];
           for(var vi = 0; vi < expandedValue.length; ++vi) {
-            types.push(_compactIri(
+            compactedValue.push(_compactIri(
               activeCtx, expandedValue[vi], null, {base: true, vocab: true}));
           }
-          compactedValue = types;
         }
 
         // use keyword alias and add value
