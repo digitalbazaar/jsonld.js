@@ -4068,9 +4068,6 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
     }
   }
 
-  // get context term value
-  var value = localCtx[term];
-
   if(_isKeyword(term)) {
     throw new JsonLdError(
       'Invalid JSON-LD syntax; keywords cannot be overridden.',
@@ -4085,6 +4082,9 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
       aliases.splice(aliases.indexOf(term), 1);
     }
   }
+
+  // get context term value
+  var value = localCtx[term];
 
   // clear context entry
   if(value === null || (_isObject(value) && value['@id'] === null)) {
