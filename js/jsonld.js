@@ -1138,8 +1138,8 @@ jsonld.removeValue = function(subject, property, value, options) {
  *
  * 1. They are both primitives of the same type and value.
  * 2. They are both @values with the same @value, @type, @language,
- *   and @annotation, OR
- * 3. They are both @lists with the same @list and @annotation, OR
+ *   and @index, OR
+ * 3. They are both @lists with the same @list and @index, OR
  * 4. They both have @ids they are the same.
  *
  * @param v1 the first value.
@@ -1158,13 +1158,13 @@ jsonld.compareValues = function(v1, v2) {
     v1['@value'] === v2['@value'] &&
     v1['@type'] === v2['@type'] &&
     v1['@language'] === v2['@language'] &&
-    v1['@annotation'] === v2['@annotation']) {
+    v1['@index'] === v2['@index']) {
     return true;
   }
 
   // 3. equal @lists
   if(_isList(v1) && _isList(v2)) {
-    if(v1['@annotation'] !== v2['@annotation']) {
+    if(v1['@index'] !== v2['@index']) {
       return false;
     }
     var list1 = v1['@list'];
@@ -1434,12 +1434,12 @@ Processor.prototype.compact = function(
         continue;
       }
 
-      // handle @annotation property
-      if(expandedProperty === '@annotation') {
-        // drop @annotation if inside an @annotation container
+      // handle @index property
+      if(expandedProperty === '@index') {
+        // drop @index if inside an @index container
         var container = jsonld.getContextValue(
           activeCtx, activeProperty, '@container');
-        if(container === '@annotation') {
+        if(container === '@index') {
           continue;
         }
 
@@ -1500,10 +1500,10 @@ Processor.prototype.compact = function(
             wrapper[_compactIri(activeCtx, '@list')] = compactedItem;
             compactedItem = wrapper;
 
-            // include @annotation from expanded @list, if any
-            if('@annotation' in expandedItem) {
-              compactedItem[_compactIri(activeCtx, '@annotation')] =
-                expandedItem['@annotation'];
+            // include @index from expanded @list, if any
+            if('@index' in expandedItem) {
+              compactedItem[_compactIri(activeCtx, '@index')] =
+                expandedItem['@index'];
             }
           }
           // can't use @list container for more than 1 list
@@ -1517,8 +1517,8 @@ Processor.prototype.compact = function(
           }
         }
 
-        // handle language and annotation maps
-        if(container === '@language' || container === '@annotation') {
+        // handle language and index maps
+        if(container === '@language' || container === '@index') {
           // get or create the map object
           var mapObject;
           if(activeProperty in rval) {
@@ -1691,11 +1691,11 @@ Processor.prototype.expand = function(
         expandedValue = value.toLowerCase();
       }
 
-      // preserve @annotation
-      if(expandedProperty === '@annotation') {
+      // preserve @index
+      if(expandedProperty === '@index') {
         if(!_isString(value)) {
           throw new JsonLdError(
-            'Invalid JSON-LD syntax; "@annotation" value must be a string.',
+            'Invalid JSON-LD syntax; "@index" value must be a string.',
             'jsonld.SyntaxError', {value: value});
         }
       }
@@ -1706,9 +1706,9 @@ Processor.prototype.expand = function(
       if(container === '@language' && _isObject(value)) {
         expandedValue = _expandLanguageMap(value);
       }
-      // handle annotation container (skip if value is not an object)
-      else if(container === '@annotation' && _isObject(value)) {
-        expandedValue = (function _expandAnnotation(activeProperty) {
+      // handle index container (skip if value is not an object)
+      else if(container === '@index' && _isObject(value)) {
+        expandedValue = (function _expandIndexMap(activeProperty) {
           var rval = [];
           var keys = Object.keys(value).sort();
           for(var ki = 0; ki < keys.length; ++ki) {
@@ -1720,8 +1720,8 @@ Processor.prototype.expand = function(
             val = self.expand(activeCtx, activeProperty, val, options, false);
             for(var vi = 0; vi < val.length; ++vi) {
               var item = val[vi];
-              if(!('@annotation' in item)) {
-                item['@annotation'] = key;
+              if(!('@index' in item)) {
+                item['@index'] = key;
               }
               rval.push(item);
             }
@@ -1778,7 +1778,7 @@ Processor.prototype.expand = function(
       else {
         // use an array except for certain keywords
         var useArray =
-          ['@annotation', '@id', '@type', '@value', '@language'].indexOf(
+          ['@index', '@id', '@type', '@value', '@language'].indexOf(
             expandedProperty) === -1;
         jsonld.addValue(
           rval, expandedProperty, expandedValue, {propertyIsArray: useArray});
@@ -1801,7 +1801,7 @@ Processor.prototype.expand = function(
       if('@type' in rval) {
         validCount -= 1;
       }
-      if('@annotation' in rval) {
+      if('@index' in rval) {
         validCount -= 1;
       }
       if('@language' in rval) {
@@ -1810,7 +1810,7 @@ Processor.prototype.expand = function(
       if(validCount !== 0) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; an element containing "@value" may only ' +
-          'have an "@annotation" property and at most one other property ' +
+          'have an "@index" property and at most one other property ' +
           'which can be "@type" or "@language".',
           'jsonld.SyntaxError', {element: rval});
       }
@@ -1829,11 +1829,11 @@ Processor.prototype.expand = function(
     }
     // handle @set and @list
     else if('@set' in rval || '@list' in rval) {
-      if(count > 1 && (count !== 2 && '@annotation' in rval)) {
+      if(count > 1 && (count !== 2 && '@index' in rval)) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; if an element has the property "@set" ' +
           'or "@list", then it can have at most one other property that is ' +
-          '"@annotation".',
+          '"@index".',
           'jsonld.SyntaxError', {element: rval});
       }
       // optimize away @set
@@ -3761,10 +3761,10 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
     var term = null;
     var entry = inverseCtx[iri];
 
-    // prefer @annotation if available in value
+    // prefer @index if available in value
     var containers = [];
-    if(_isObject(value) && '@annotation' in value) {
-      containers.push('@annotation');
+    if(_isObject(value) && '@index' in value) {
+      containers.push('@index');
     }
 
     // defaults for term selection based on type/language
@@ -3773,8 +3773,8 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
 
     // choose the most specific term that works for all elements in @list
     if(_isList(value)) {
-      // only select @list containers if @annotation is NOT in value
-      if(!('@annotation' in value)) {
+      // only select @list containers if @index is NOT in value
+      if(!('@index' in value)) {
         containers.push('@list');
       }
       var list = value['@list'];
@@ -3926,29 +3926,29 @@ function _compactValue(activeCtx, activeProperty, element) {
     var container = jsonld.getContextValue(
       activeCtx, activeProperty, '@container');
 
-    // whether or not the element has an @annotation that must be preserved
-    var preserveAnnotation = (('@annotation' in element) &&
-      container !== '@annotation');
+    // whether or not the element has an @index that must be preserved
+    var preserveIndex = (('@index' in element) &&
+      container !== '@index');
 
-    // matching @type specified in context and there's no @annotation
+    // matching @type specified in context and there's no @index
     // to preserve, compact element
-    if(type !== null && element['@type'] === type && !preserveAnnotation) {
+    if(type !== null && element['@type'] === type && !preserveIndex) {
       return element['@value'];
     }
-    // matching @language specified in context and there's no @annotation
+    // matching @language specified in context and there's no @index
     // to preserve, compact element
     else if(language !== null && element['@language'] === language &&
-      !preserveAnnotation) {
+      !preserveIndex) {
       return element['@value'];
     }
 
     // return just the value of @value if all are true:
-    // 1. @value is the only key or @annotation isn't being preserved
+    // 1. @value is the only key or @index isn't being preserved
     // 2. there is no default language or @value is not a string or
     //   the key has a mapping with a null @language
     var keyCount = Object.keys(element).length;
     var isValueOnlyKey = (keyCount === 1 ||
-      (keyCount === 2 && ('@annotation' in element) && !preserveAnnotation));
+      (keyCount === 2 && ('@index' in element) && !preserveIndex));
     var hasDefaultLanguage = ('@language' in activeCtx);
     var isValueString = _isString(element['@value']);
     var hasNullMapping = (activeCtx.mappings[activeProperty] &&
@@ -3960,9 +3960,9 @@ function _compactValue(activeCtx, activeProperty, element) {
 
     var rval = {};
 
-    // preserve @annotation
-    if(preserveAnnotation) {
-      rval[_compactIri(activeCtx, '@annotation')] = element['@annotation'];
+    // preserve @index
+    if(preserveIndex) {
+      rval[_compactIri(activeCtx, '@index')] = element['@index'];
     }
 
     // compact @type IRI
@@ -4077,16 +4077,17 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
       'jsonld.SyntaxError', {context: localCtx});
   }
 
+  // if term is a keyword alias, remove it
+  if(activeCtx.mappings[term]) {
+    var kw = activeCtx.mappings[term]['@id'];
+    if(_isKeyword(kw)) {
+      var aliases = activeCtx.keywords[kw];
+      aliases.splice(aliases.indexOf(term), 1);
+    }
+  }
+
   // clear context entry
   if(value === null || (_isObject(value) && value['@id'] === null)) {
-    if(activeCtx.mappings[term]) {
-      // if term is a keyword alias, remove it
-      var kw = activeCtx.mappings[term]['@id'];
-      if(_isKeyword(kw)) {
-        var aliases = activeCtx.keywords[kw];
-        aliases.splice(aliases.indexOf(term), 1);
-      }
-    }
     activeCtx.mappings[term] = null;
     defined[term] = true;
     return;
@@ -4225,10 +4226,10 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
   if('@container' in value) {
     var container = value['@container'];
     if(container !== '@list' && container !== '@set' &&
-      container !== '@annotation' && container !== '@language') {
+      container !== '@index' && container !== '@language') {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; @context @container value must be ' +
-        'one of the following: @list, @set, @annotation, or @language.',
+        'one of the following: @list, @set, @index, or @language.',
         'jsonld.SyntaxError', {context: localCtx});
     }
 
@@ -4477,7 +4478,7 @@ function _getInitialContext(options) {
     '@base': base,
     mappings: {},
     keywords: {
-      '@annotation': [],
+      '@index': [],
       '@context': [],
       '@container': [],
       '@default': [],
@@ -4671,7 +4672,7 @@ function _isKeyword(v, ctx) {
   }
   else {
     switch(v) {
-    case '@annotation':
+    case '@index':
     case '@context':
     case '@container':
     case '@default':
