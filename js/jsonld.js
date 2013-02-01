@@ -3786,8 +3786,7 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
         var itemType = '@none';
         if(_isValue(item)) {
           if('@language' in item) {
-            itemLanguage = ('@language' in item) ?
-              (item['@language'] || '@null') : defaultLanguage;
+            itemLanguage = item['@language'] || '@null';
           }
           else if('@type' in item) {
             itemType = item['@type'];
