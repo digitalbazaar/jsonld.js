@@ -3778,15 +3778,15 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
         containers.push('@list');
       }
       var list = value['@list'];
-      var listLanguage = (list.length === 0) ? defaultLanguage : null;
-      var listType = null;
+      var commonLanguage = (list.length === 0) ? defaultLanguage : null;
+      var commonType = null;
       for(var i = 0; i < list.length; ++i) {
         var item = list[i];
         var itemLanguage = '@none';
         var itemType = '@none';
         if(_isValue(item)) {
           if('@language' in item) {
-            itemLanguage = item['@language'] || '@null';
+            itemLanguage = item['@language'];
           }
           else if('@type' in item) {
             itemType = item['@type'];
@@ -3796,32 +3796,32 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
             itemLanguage = '@null';
           }
         }
-        if(listLanguage === null) {
-          listLanguage = itemLanguage;
+        if(commonLanguage === null) {
+          commonLanguage = itemLanguage;
         }
-        else if(itemLanguage !== listLanguage && _isValue(item)) {
-          listLanguage = '@none';
+        else if(itemLanguage !== commonLanguage && _isValue(item)) {
+          commonLanguage = '@none';
         }
-        if(listType === null) {
-          listType = itemType;
+        if(commonType === null) {
+          commonType = itemType;
         }
-        else if(itemType !== listType) {
-          listType = '@none';
+        else if(itemType !== commonType) {
+          commonType = '@none';
         }
         // there are different languages and types in the list, so choose
         // the most generic term, no need to keep iterating the list
-        if(listLanguage === '@none' && listType === '@none') {
+        if(commonLanguage === '@none' && commonType === '@none') {
           break;
         }
       }
-      listLanguage = listLanguage || '@none';
-      listType = listType || '@none';
-      if(listType !== '@none') {
+      commonLanguage = commonLanguage || '@none';
+      commonType = commonType || '@none';
+      if(commonType !== '@none') {
         typeOrLanguage = '@type';
-        typeOrLanguageValue = listType;
+        typeOrLanguageValue = commonType;
       }
       else {
-        typeOrLanguageValue = listLanguage;
+        typeOrLanguageValue = commonLanguage;
       }
     }
     else {
