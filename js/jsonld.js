@@ -3857,7 +3857,6 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
     if(term.indexOf(':') !== -1) {
       continue;
     }
-    // FIXME: handle property generators
     // skip entries with @ids that are not partial matches
     var entry = activeCtx.mappings[term];
     if(!entry || entry.propertyGenerator ||
