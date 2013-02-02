@@ -3677,12 +3677,7 @@ function _selectTerm(
       continue;
     }
 
-    // if type/language entry not available, continue
     var typeOrLanguageEntry = entry[container][typeOrLanguage];
-    if(!typeOrLanguageEntry) {
-      continue;
-    }
-
     for(var oi = 0; term === null && oi < options.length; ++oi) {
       // if type/language option not available in entry, continue
       var option = options[oi];
