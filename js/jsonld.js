@@ -3660,7 +3660,7 @@ function _compareShortestLeast(a, b) {
  *
  * @return the preferred term.
  */
-function _pickPreferredTerm(
+function _selectTerm(
   activeCtx, value, parent, entry, containers,
   typeOrLanguage, typeOrLanguageValue) {
   containers.push('@none');
@@ -3842,7 +3842,7 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
     }
 
     // do term selection
-    var term = _pickPreferredTerm(
+    var term = _selectTerm(
       activeCtx, value, parent, entry, containers,
       typeOrLanguage, typeOrLanguageValue);
     if(term !== null) {
@@ -4071,8 +4071,8 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
       'jsonld.SyntaxError', {context: localCtx});
   }
 
-  // if term is a keyword alias, remove it
   if(activeCtx.mappings[term]) {
+    // if term is a keyword alias, remove it
     var kw = activeCtx.mappings[term]['@id'];
     if(_isKeyword(kw)) {
       var aliases = activeCtx.keywords[kw];
