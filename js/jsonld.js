@@ -3651,9 +3651,9 @@ function _compareShortestLeast(a, b) {
  * Picks the preferred compaction term from the given inverse context entry.
  *
  * @param activeCtx the active context.
+ * @param iri the IRI to pick the term for.
  * @param value the value to pick the term for.
  * @param parent the parent of the value (required for property generators).
- * @param entry the inverse context entry.
  * @param containers the preferred containers.
  * @param typeOrLanguage either '@type' or '@language'.
  * @param typeOrLanguageValue the preferred value for '@type' or '@language'.
@@ -3661,7 +3661,7 @@ function _compareShortestLeast(a, b) {
  * @return the preferred term.
  */
 function _selectTerm(
-  activeCtx, value, parent, entry, containers,
+  activeCtx, iri, value, parent, containers,
   typeOrLanguage, typeOrLanguageValue) {
   containers.push('@none');
   if(typeOrLanguageValue === null) {
@@ -3670,27 +3670,28 @@ function _selectTerm(
   // options for the value of @type or @language
   var options = [typeOrLanguageValue, '@none'];
   var term = null;
+  var containerMap = activeCtx.inverse[iri];
   for(var ci = 0; term === null && ci < containers.length; ++ci) {
-    // if container not available in entry, continue
+    // if container not available in the map, continue
     var container = containers[ci];
-    if(!(container in entry)) {
+    if(!(container in containerMap)) {
       continue;
     }
 
-    var typeOrLanguageEntry = entry[container][typeOrLanguage];
+    var typeOrLanguageMap = containerMap[container][typeOrLanguage];
     for(var oi = 0; term === null && oi < options.length; ++oi) {
-      // if type/language option not available in entry, continue
+      // if type/language option not available in the map, continue
       var option = options[oi];
-      if(!(option in typeOrLanguageEntry)) {
+      if(!(option in typeOrLanguageMap)) {
         continue;
       }
 
-      var e = typeOrLanguageEntry[option];
+      var termInfo = typeOrLanguageMap[option];
 
       // see if a property generator matches
-      if(_isSubject(parent) && e.propertyGenerators) {
-        for(var pi = 0; pi < e.propertyGenerators.length; ++pi) {
-          var propertyGenerator = e.propertyGenerators[pi];
+      if(_isSubject(parent) && termInfo.propertyGenerators) {
+        for(var pi = 0; pi < termInfo.propertyGenerators.length; ++pi) {
+          var propertyGenerator = termInfo.propertyGenerators[pi];
           var iris = activeCtx.mappings[propertyGenerator]['@id'];
           var match = true;
           for(var ii = 0; match && ii < iris.length; ++ii) {
@@ -3705,7 +3706,7 @@ function _selectTerm(
 
       // no matching property generator, use a simple term instead
       if(term === null) {
-        term = e.term;
+        term = termInfo.term;
       }
     }
   }
@@ -3753,8 +3754,6 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
   var defaultLanguage = activeCtx['@language'] || '@none';
 
   if(iri in inverseCtx) {
-    var entry = inverseCtx[iri];
-
     // prefer @index if available in value
     var containers = [];
     if(_isObject(value) && '@index' in value) {
@@ -3838,8 +3837,8 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
 
     // do term selection
     var term = _selectTerm(
-      activeCtx, value, parent, entry, containers,
-      typeOrLanguage, typeOrLanguageValue);
+      activeCtx, iri, value, parent,
+      containers, typeOrLanguage, typeOrLanguageValue);
     if(term !== null) {
       return term;
     }
@@ -3853,9 +3852,9 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
       continue;
     }
     // skip entries with @ids that are not partial matches
-    var entry = activeCtx.mappings[term];
-    if(!entry || entry.propertyGenerator ||
-      entry['@id'] === iri || iri.indexOf(entry['@id']) !== 0) {
+    var definition = activeCtx.mappings[term];
+    if(!definition || definition.propertyGenerator ||
+      definition['@id'] === iri || iri.indexOf(definition['@id']) !== 0) {
       continue;
     }
 
@@ -3863,7 +3862,7 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
     // 1. it has no mapping, OR
     // 2. value is null, which means we're not compacting an @value, AND
     //   the mapping matches the IRI)
-    var curie = term + ':' + iri.substr(entry['@id'].length);
+    var curie = term + ':' + iri.substr(definition['@id'].length);
     var isUsableCurie = (!(curie in activeCtx.mappings) ||
       (value === null && activeCtx.mappings[curie] &&
       activeCtx.mappings[curie]['@id'] === iri));
