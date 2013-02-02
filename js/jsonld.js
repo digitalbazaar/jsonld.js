@@ -3678,15 +3678,15 @@ function _selectTerm(
       continue;
     }
 
-    var typeOrLanguageMap = containerMap[container][typeOrLanguage];
+    var typeOrLanguageValueMap = containerMap[container][typeOrLanguage];
     for(var oi = 0; term === null && oi < options.length; ++oi) {
       // if type/language option not available in the map, continue
       var option = options[oi];
-      if(!(option in typeOrLanguageMap)) {
+      if(!(option in typeOrLanguageValueMap)) {
         continue;
       }
 
-      var termInfo = typeOrLanguageMap[option];
+      var termInfo = typeOrLanguageValueMap[option];
 
       // see if a property generator matches
       if(_isSubject(parent) && termInfo.propertyGenerators) {
