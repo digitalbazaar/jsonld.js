@@ -3890,7 +3890,7 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
   if(relativeTo.vocab && '@vocab' in activeCtx) {
     // determine if vocab is a prefix of the iri
     var vocab = activeCtx['@vocab'];
-    if(iri.indexOf(vocab) === 0) {
+    if(iri.indexOf(vocab) === 0 && iri !== vocab) {
       // use suffix as relative iri if it is not a term in the active context
       var suffix = iri.substr(vocab.length);
       if(!(suffix in activeCtx.mappings)) {
