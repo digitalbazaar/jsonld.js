@@ -3758,7 +3758,6 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
   var defaultLanguage = activeCtx['@language'] || '@none';
 
   if(iri in inverseCtx) {
-    var term = null;
     var entry = inverseCtx[iri];
 
     // prefer @index if available in value
@@ -3843,7 +3842,7 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
     }
 
     // do term selection
-    term = _pickPreferredTerm(
+    var term = _pickPreferredTerm(
       activeCtx, value, parent, entry, containers,
       typeOrLanguage, typeOrLanguageValue);
     if(term !== null) {
