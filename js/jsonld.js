@@ -2482,15 +2482,18 @@ function _expandLanguageMap(languageMap) {
  *
  * @param namer the UniqueNamer to use.
  * @param element the element with blank nodes to rename.
+ * @param isId true if the given element is an @id (or @type).
+ *
+ * @return the element.
  */
-function _labelBlankNodes(namer, element) {
+function _labelBlankNodes(namer, element, isId) {
   if(_isArray(element)) {
     for(var i = 0; i < element.length; ++i) {
-      _labelBlankNodes(namer, element[i]);
+      element[i] = _labelBlankNodes(namer, element[i], isId);
     }
   }
   else if(_isList(element)) {
-    _labelBlankNodes(namer, element['@list']);
+    element['@list'] = _labelBlankNodes(namer, element['@list'], isId);
   }
   else if(_isObject(element)) {
     // rename blank node
@@ -2500,11 +2503,19 @@ function _labelBlankNodes(namer, element) {
 
     // recursively apply to all keys
     var keys = Object.keys(element).sort();
-    for(var i in keys) {
-      var key = keys[i];
-      _labelBlankNodes(namer, element[key]);
+    for(var ki = 0; ki < keys.length; ++ki) {
+      var key = keys[ki];
+      if(key !== '@id') {
+        element[key] = _labelBlankNodes(namer, element[key], key === '@type');
+      }
     }
   }
+  // rename blank node identifier
+  else if(_isString(element) && isId && element.indexOf('_:') === 0) {
+    element = namer.getName(element);
+  }
+
+  return element;
 }
 
 /**
