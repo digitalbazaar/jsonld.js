@@ -248,8 +248,13 @@ jsonld.expand = function(input) {
     }
     try {
       // do expansion
-      var ctx = _getInitialContext(options);
-      var expanded = new Processor().expand(ctx, null, input, options, false);
+      var activeCtx = _getInitialContext(options);
+      var expanded = new Processor().expand(
+        activeCtx, null, input, options, false);
+
+      // FIXME: blank nodes must all be renamed if any were renamed
+      // during expansion ... otherwise there may be conflicts
+      //_labelBlankNodes(activeCtx.namer, expanded);
 
       // optimize away @graph with no other properties
       if(_isObject(expanded) && ('@graph' in expanded) &&
@@ -947,8 +952,7 @@ jsonld.processContext = function(activeCtx, localCtx) {
 
   // return initial context early for null context
   if(localCtx === null) {
-    var ctx = _getInitialContext(options);
-    return callback(null, ctx);
+    return callback(null, _getInitialContext(options));
   }
 
   // resolve URLs in localCtx
@@ -2368,9 +2372,10 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
   for(var i in ctxs) {
     var ctx = ctxs[i];
 
-    // reset to initial context
+    // reset to initial context, keeping namer
     if(ctx === null) {
       rval = _getInitialContext(options);
+      rval.namer = activeCtx.namer;
       continue;
     }
 
