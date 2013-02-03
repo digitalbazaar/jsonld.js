@@ -1767,7 +1767,7 @@ Processor.prototype.expand = function(
 
       // add copy of value for each property from property generator
       if(_isArray(expandedProperty)) {
-        expandedValue = _labelBlankNodes(activeCtx.namer, expandedValue);
+        _labelBlankNodes(activeCtx.namer, expandedValue);
         for(var i = 0; i < expandedProperty.length; ++i) {
           jsonld.addValue(
             rval, expandedProperty[i], _clone(expandedValue),
@@ -2482,39 +2482,29 @@ function _expandLanguageMap(languageMap) {
  *
  * @param namer the UniqueNamer to use.
  * @param element the element with blank nodes to rename.
- *
- * @return a copy of value with renamed blank nodes.
  */
 function _labelBlankNodes(namer, element) {
-  if(element && typeof element === 'object') {
-    if(_isArray(element)) {
-      var rval = [];
-      for(var i = 0; i < element.length; ++i) {
-        rval[i] = _labelBlankNodes(namer, element[i]);
-      }
-      return rval;
+  if(_isArray(element)) {
+    for(var i = 0; i < element.length; ++i) {
+      _labelBlankNodes(namer, element[i]);
     }
-
-    // recursively apply to @list
-    var rval = {};
-    if('@list' in element) {
-      rval['@list'] = _labelBlankNodes(namer, element['@list']);
-      return rval;
+  }
+  else if(_isList(element)) {
+    _labelBlankNodes(namer, element['@list']);
+  }
+  else if(_isObject(element)) {
+    // rename blank node
+    if(_isBlankNode(element)) {
+      element['@id'] = namer.getName(element['@id']);
     }
 
     // recursively apply to all keys
     var keys = Object.keys(element).sort();
     for(var i in keys) {
       var key = keys[i];
-      rval[key] = _labelBlankNodes(namer, element[key]);
+      _labelBlankNodes(namer, element[key]);
     }
-    // rename blank node
-    if(_isBlankNode(rval)) {
-      rval['@id'] = namer.getName(rval['@id']);
-    }
-    return rval;
   }
-  return element;
 }
 
 /**
