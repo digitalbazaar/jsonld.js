@@ -4553,16 +4553,15 @@ function _getInitialContext(options) {
 
         // consider updating @language entry if @type is not specified
         if(!('@type' in mapping)) {
-          // if a @language is specified or a default language is set, update
-          // the specific @language entry
-          if(('@language' in mapping) || defaultLanguage !== '@none') {
-            var language = ('@language' in mapping) ?
-              (mapping['@language'] || '@null') : defaultLanguage;
+          // if a @language is specified, update its specific entry
+          if('@language' in mapping) {
+            var language = mapping['@language'] || '@null';
             _addPreferredTerm(mapping, term, entry['@language'], language);
           }
-
-          // update @none entry if no @language is specified
-          if(!('@language' in mapping)) {
+          // add an entry for the default language and for no @language
+          else {
+            _addPreferredTerm(
+              mapping, term, entry['@language'], defaultLanguage);
             _addPreferredTerm(mapping, term, entry['@language'], '@none');
           }
         }
