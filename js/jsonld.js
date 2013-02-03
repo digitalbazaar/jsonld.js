@@ -4547,7 +4547,9 @@ function _getInitialContext(options) {
             '@language': {},
             '@type': {}
           };
-          entry[container]['@language'][defaultLanguage] = {term: null};
+          entry[container]['@language'][defaultLanguage] = {
+            term: null, propertyGenerators: []
+          };
         }
         entry = entry[container];
 
@@ -4587,27 +4589,15 @@ function _getInitialContext(options) {
    */
   function _addPreferredTerm(mapping, term, entry, typeOrLanguageValue) {
     if(!(typeOrLanguageValue in entry)) {
-      if(mapping.propertyGenerator) {
-        entry[typeOrLanguageValue] = {term: null, propertyGenerators: [term]};
-      }
-      else {
-        entry[typeOrLanguageValue] = {term: term};
-      }
+      entry[typeOrLanguageValue] = {term: null, propertyGenerators: []};
     }
-    else {
-      var e = entry[typeOrLanguageValue];
-      if(mapping.propertyGenerator) {
-        if(!('propertyGenerators' in e)) {
-          e.propertyGenerators = [term];
-          return;
-        }
-        else {
-          e.propertyGenerators.push(term);
-        }
-      }
-      else if(e.term === null) {
-        e.term = term;
-      }
+
+    var e = entry[typeOrLanguageValue];
+    if(mapping.propertyGenerator) {
+      e.propertyGenerators.push(term);
+    }
+    else if(e.term === null) {
+      e.term = term;
     }
   }
 
