@@ -3903,13 +3903,13 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
  *
  * @param activeCtx the active context.
  * @param activeProperty the active property that points to the element.
- * @param element the element to compact.
+ * @param value the value to compact.
  *
  * @return the compaction result.
  */
-function _compactValue(activeCtx, activeProperty, element) {
-  // element is a @value
-  if(_isValue(element)) {
+function _compactValue(activeCtx, activeProperty, value) {
+  // value is a @value
+  if(_isValue(value)) {
     // get context rules
     var type = jsonld.getContextValue(activeCtx, activeProperty, '@type');
     var language = jsonld.getContextValue(
@@ -3917,65 +3917,65 @@ function _compactValue(activeCtx, activeProperty, element) {
     var container = jsonld.getContextValue(
       activeCtx, activeProperty, '@container');
 
-    // whether or not the element has an @index that must be preserved
-    var preserveIndex = (('@index' in element) &&
+    // whether or not the value has an @index that must be preserved
+    var preserveIndex = (('@index' in value) &&
       container !== '@index');
 
     // matching @type specified in context and there's no @index
-    // to preserve, compact element
-    if(type !== null && element['@type'] === type && !preserveIndex) {
-      return element['@value'];
+    // to preserve, compact value
+    if(type !== null && value['@type'] === type && !preserveIndex) {
+      return value['@value'];
     }
     // matching @language specified in context and there's no @index
-    // to preserve, compact element
-    else if(language !== null && element['@language'] === language &&
+    // to preserve, compact value
+    else if(language !== null && value['@language'] === language &&
       !preserveIndex) {
-      return element['@value'];
+      return value['@value'];
     }
 
     // return just the value of @value if all are true:
     // 1. @value is the only key or @index isn't being preserved
     // 2. there is no default language or @value is not a string or
     //   the key has a mapping with a null @language
-    var keyCount = Object.keys(element).length;
+    var keyCount = Object.keys(value).length;
     var isValueOnlyKey = (keyCount === 1 ||
-      (keyCount === 2 && ('@index' in element) && !preserveIndex));
+      (keyCount === 2 && ('@index' in value) && !preserveIndex));
     var hasDefaultLanguage = ('@language' in activeCtx);
-    var isValueString = _isString(element['@value']);
+    var isValueString = _isString(value['@value']);
     var hasNullMapping = (activeCtx.mappings[activeProperty] &&
       activeCtx.mappings[activeProperty]['@language'] === null);
     if(isValueOnlyKey &&
       (!hasDefaultLanguage || !isValueString || hasNullMapping)) {
-      return element['@value'];
+      return value['@value'];
     }
 
     var rval = {};
 
     // preserve @index
     if(preserveIndex) {
-      rval[_compactIri(activeCtx, '@index')] = element['@index'];
+      rval[_compactIri(activeCtx, '@index')] = value['@index'];
     }
 
     // compact @type IRI
-    if('@type' in element) {
+    if('@type' in value) {
       rval[_compactIri(activeCtx, '@type')] = _compactIri(
-        activeCtx, element['@type'], null, {base: true, vocab: true});
+        activeCtx, value['@type'], null, {base: true, vocab: true});
     }
     // alias @language
-    else if('@language' in element) {
-      rval[_compactIri(activeCtx, '@language')] = element['@language'];
+    else if('@language' in value) {
+      rval[_compactIri(activeCtx, '@language')] = value['@language'];
     }
 
     // alias @value
-    rval[_compactIri(activeCtx, '@value')] = element['@value'];
+    rval[_compactIri(activeCtx, '@value')] = value['@value'];
 
     return rval;
   }
 
-  // element is a subject reference
+  // value is a subject reference
   var expandedProperty = _expandIri(activeCtx, activeProperty);
   var type = jsonld.getContextValue(activeCtx, activeProperty, '@type');
-  var term = _compactIri(activeCtx, element['@id'], null, {base: true});
+  var term = _compactIri(activeCtx, value['@id'], null, {base: true});
 
   // compact to scalar
   if(type === '@id' || expandedProperty === '@graph') {
