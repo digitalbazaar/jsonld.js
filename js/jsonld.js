@@ -2596,126 +2596,8 @@ function _expandValue(activeCtx, activeProperty, value) {
  *          last statement as null.
  */
 function _toRDF(element, namer, subject, property, graph, callback) {
-  if(_isObject(element)) {
-    // convert @value to object
-    if(_isValue(element)) {
-      var value = element['@value'];
-      var datatype = element['@type'] || null;
-      if(_isBoolean(value) || _isNumber(value)) {
-        // convert to XSD datatype
-        if(_isBoolean(value)) {
-          value = value.toString();
-          datatype = datatype || XSD_BOOLEAN;
-        }
-        else if(_isDouble(value)) {
-          // canonical double representation
-          value = value.toExponential(15).replace(/(\d)0*e\+?/, '$1E');
-          datatype = datatype || XSD_DOUBLE;
-        }
-        else {
-          value = value.toFixed(0);
-          datatype = datatype || XSD_INTEGER;
-        }
-      }
-
-      // default to xsd:string datatype
-      datatype = datatype || XSD_STRING;
-
-      var object = {
-        nominalValue: value,
-        interfaceName: 'LiteralNode',
-        datatype: {
-          nominalValue: datatype,
-          interfaceName: 'IRI'
-        }
-      };
-      if('@language' in element && datatype === XSD_STRING) {
-        object.language = element['@language'];
-      }
-
-      // emit literal
-      var statement = {
-        subject: _clone(subject),
-        property: _clone(property),
-        object: object
-      };
-      if(graph !== null) {
-        statement.name = graph;
-      }
-      return callback(null, statement);
-    }
-
-    // convert @list
-    if(_isList(element)) {
-      var list = _makeLinkedList(element);
-      return _toRDF(list, namer, subject, property, graph, callback);
-    }
-
-    // Note: element must be a subject
-
-    // get subject @id (generate one if it is a bnode)
-    var isBnode = _isBlankNode(element);
-    var id = isBnode ? namer.getName(element['@id']) : element['@id'];
-
-    // create object
-    var object = {
-      nominalValue: id,
-      interfaceName: isBnode ? 'BlankNode' : 'IRI'
-    };
-
-    // emit statement if subject isn't null
-    if(subject !== null) {
-      var statement = {
-        subject: _clone(subject),
-        property: _clone(property),
-        object: _clone(object)
-      };
-      if(graph !== null) {
-        statement.name = graph;
-      }
-      callback(null, statement);
-    }
-
-    // set new active subject to object
-    subject = object;
-
-    // recurse over subject properties in order
-    var props = Object.keys(element).sort();
-    for(var pi in props) {
-      var prop = props[pi];
-      var e = element[prop];
-
-      // convert @type to rdf:type
-      if(prop === '@type') {
-        prop = RDF_TYPE;
-      }
-
-      // recurse into @graph
-      if(prop === '@graph') {
-        _toRDF(e, namer, null, null, subject, callback);
-        continue;
-      }
-
-      // skip keywords
-      if(_isKeyword(prop)) {
-        continue;
-      }
-
-      // create new active property
-      property = {
-        nominalValue: prop,
-        interfaceName: 'IRI'
-      };
-
-      // recurse into value
-      _toRDF(e, namer, subject, property, graph, callback);
-    }
-
-    return;
-  }
-
+  // recurse into arrays
   if(_isArray(element)) {
-    // recurse into arrays
     for(var i in element) {
       _toRDF(element[i], namer, subject, property, graph, callback);
     }
@@ -2737,6 +2619,120 @@ function _toRDF(element, namer, subject, property, graph, callback) {
       statement.name = graph;
     }
     return callback(null, statement);
+  }
+
+  // convert @list
+  if(_isList(element)) {
+    var list = _makeLinkedList(element);
+    return _toRDF(list, namer, subject, property, graph, callback);
+  }
+
+  // convert @value to object
+  if(_isValue(element)) {
+    var value = element['@value'];
+    var datatype = element['@type'] || null;
+    if(_isBoolean(value) || _isNumber(value)) {
+      // convert to XSD datatype
+      if(_isBoolean(value)) {
+        value = value.toString();
+        datatype = datatype || XSD_BOOLEAN;
+      }
+      else if(_isDouble(value)) {
+        // canonical double representation
+        value = value.toExponential(15).replace(/(\d)0*e\+?/, '$1E');
+        datatype = datatype || XSD_DOUBLE;
+      }
+      else {
+        value = value.toFixed(0);
+        datatype = datatype || XSD_INTEGER;
+      }
+    }
+
+    // default to xsd:string datatype
+    datatype = datatype || XSD_STRING;
+
+    var object = {
+      nominalValue: value,
+      interfaceName: 'LiteralNode',
+      datatype: {
+        nominalValue: datatype,
+        interfaceName: 'IRI'
+      }
+    };
+    if('@language' in element && datatype === XSD_STRING) {
+      object.language = element['@language'];
+    }
+
+    // emit literal
+    var statement = {
+      subject: _clone(subject),
+      property: _clone(property),
+      object: object
+    };
+    if(graph !== null) {
+      statement.name = graph;
+    }
+    return callback(null, statement);
+  }
+
+  // Note: element must be a subject
+
+  // get subject @id (generate one if it is a bnode)
+  var isBnode = _isBlankNode(element);
+  var id = isBnode ? namer.getName(element['@id']) : element['@id'];
+
+  // create object
+  var object = {
+    nominalValue: id,
+    interfaceName: isBnode ? 'BlankNode' : 'IRI'
+  };
+
+  // emit statement if subject isn't null
+  if(subject !== null) {
+    var statement = {
+      subject: _clone(subject),
+      property: _clone(property),
+      object: _clone(object)
+    };
+    if(graph !== null) {
+      statement.name = graph;
+    }
+    callback(null, statement);
+  }
+
+  // set new active subject to object
+  subject = object;
+
+  // recurse over subject properties in order
+  var props = Object.keys(element).sort();
+  for(var pi in props) {
+    var prop = props[pi];
+    var e = element[prop];
+
+    // convert @type to rdf:type
+    if(prop === '@type') {
+      prop = RDF_TYPE;
+    }
+
+    // recurse into @graph
+    if(prop === '@graph') {
+      _toRDF(e, namer, null, null, subject, callback);
+      continue;
+    }
+
+    // skip keywords
+    if(_isKeyword(prop)) {
+      continue;
+    }
+
+    // create new active property
+    property = {
+      nominalValue: prop,
+      interfaceName: 'IRI'
+    };
+
+    // recurse into value
+    _toRDF(e, namer, subject, property, graph, callback);
   }
 }
 
