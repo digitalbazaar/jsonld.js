@@ -3926,9 +3926,10 @@ function _compactValue(activeCtx, activeProperty, value) {
     if(type !== null && value['@type'] === type && !preserveIndex) {
       return value['@value'];
     }
+
     // matching @language specified in context and there's no @index
     // to preserve, compact value
-    else if(language !== null && value['@language'] === language &&
+    if(language !== null && value['@language'] === language &&
       !preserveIndex) {
       return value['@value'];
     }
