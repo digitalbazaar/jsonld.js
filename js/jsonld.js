@@ -4544,16 +4544,8 @@ function _getInitialContext(options) {
         // add new entry
         if(!entry[container]) {
           entry[container] = {
-            '@language': {
-              '@none': {
-                term: null
-              }
-            },
-            '@type': {
-              '@none': {
-                term: null
-              }
-            }
+            '@language': {},
+            '@type': {}
           };
           entry[container]['@language'][defaultLanguage] = {term: null};
         }
