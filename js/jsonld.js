@@ -252,9 +252,11 @@ jsonld.expand = function(input) {
       var expanded = new Processor().expand(
         activeCtx, null, input, options, false);
 
-      // FIXME: blank nodes must all be renamed if any were renamed
+      // blank nodes must all be renamed if any were renamed
       // during expansion ... otherwise there may be conflicts
-      //_labelBlankNodes(activeCtx.namer, expanded);
+      /*if(activeCtx.namer && activeCtx.namer.counter > 0) {
+        _labelBlankNodes(activeCtx.namer, expanded);
+      }*/
 
       // optimize away @graph with no other properties
       if(_isObject(expanded) && ('@graph' in expanded) &&
@@ -822,7 +824,12 @@ jsonld.ActiveContextCache.prototype.get = function(activeCtx, localCtx) {
   var key2 = JSON.stringify(localCtx);
   var level1 = this.cache[key1];
   if(level1 && key2 in level1) {
-    return level1[key2];
+    // copy cached active context, ensure namer is cloned, reuse inverse
+    var cached = level1[key2];
+    var copy = cached.clone();
+    copy.namer = copy.namer.clone();
+    copy.inverse = cached.inverse;
+    return copy;
   }
   return null;
 };
