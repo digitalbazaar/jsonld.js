@@ -824,12 +824,8 @@ jsonld.ActiveContextCache.prototype.get = function(activeCtx, localCtx) {
   var key2 = JSON.stringify(localCtx);
   var level1 = this.cache[key1];
   if(level1 && key2 in level1) {
-    // copy cached active context, ensure namer is cloned, reuse inverse
-    var cached = level1[key2];
-    var copy = cached.clone();
-    copy.namer = copy.namer.clone();
-    copy.inverse = cached.inverse;
-    return copy;
+    // get shareable copy of cached active context
+    return level1[key2].share();
   }
   return null;
 };
@@ -4493,7 +4489,8 @@ function _getInitialContext(options) {
     namer: namer,
     inverse: null,
     getInverse: _createInverseContext,
-    clone: _cloneActiveContext
+    clone: _cloneActiveContext,
+    share: _shareActiveContext
   };
 
   /**
@@ -4610,16 +4607,37 @@ function _getInitialContext(options) {
    *
    * @return a clone (child) of the active context.
    */
-  function _cloneActiveContext() {
+  function _cloneActiveContext(shallow) {
     var child = {};
     child['@base'] = this['@base'];
     child.keywords = _clone(this.keywords);
     child.mappings = _clone(this.mappings);
     child.namer = this.namer;
     child.clone = this.clone;
+    child.share = this.share;
     child.inverse = null;
     child.getInverse = this.getInverse;
     return child;
+  }
+
+  /**
+   * Returns a copy of this active context that can be shared between
+   * different processing algorithms. This method only copies the parts
+   * of the active context that can't be shared.
+   *
+   * @return a shareable copy of this active context.
+   */
+  function _shareActiveContext() {
+    var rval = {};
+    rval['@base'] = this['@base'];
+    rval.keywords = this.keywords;
+    rval.mappings = this.mappings;
+    rval.namer = this.namer.clone();
+    rval.clone = this.clone;
+    rval.share = this.share;
+    rval.inverse = rval.inverse;
+    rval.getInverse = this.getInverse;
+    return rval;
   }
 }
 
