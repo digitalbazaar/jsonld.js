@@ -2631,21 +2631,20 @@ function _toRDF(element, namer, subject, property, graph, callback) {
   if(_isValue(element)) {
     var value = element['@value'];
     var datatype = element['@type'] || null;
-    if(_isBoolean(value) || _isNumber(value)) {
-      // convert to XSD datatype
-      if(_isBoolean(value)) {
-        value = value.toString();
-        datatype = datatype || XSD_BOOLEAN;
-      }
-      else if(_isDouble(value)) {
-        // canonical double representation
-        value = value.toExponential(15).replace(/(\d)0*e\+?/, '$1E');
-        datatype = datatype || XSD_DOUBLE;
-      }
-      else {
-        value = value.toFixed(0);
-        datatype = datatype || XSD_INTEGER;
-      }
+
+    // convert to XSD datatypes as appropriate
+    if(_isBoolean(value)) {
+      value = value.toString();
+      datatype = datatype || XSD_BOOLEAN;
+    }
+    else if(_isDouble(value)) {
+      // canonical double representation
+      value = value.toExponential(15).replace(/(\d)0*e\+?/, '$1E');
+      datatype = datatype || XSD_DOUBLE;
+    }
+    else if(_isNumber(value)) {
+      value = value.toFixed(0);
+      datatype = datatype || XSD_INTEGER;
     }
 
     // default to xsd:string datatype
