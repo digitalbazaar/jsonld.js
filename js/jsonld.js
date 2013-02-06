@@ -3693,7 +3693,7 @@ function _selectTerm(
       var termInfo = typeOrLanguageValueMap[option];
 
       // see if a property generator matches
-      if(_isObject(parent) && termInfo.propertyGenerators) {
+      if(_isObject(parent)) {
         for(var pi = 0; pi < termInfo.propertyGenerators.length; ++pi) {
           var propertyGenerator = termInfo.propertyGenerators[pi];
           var iris = activeCtx.mappings[propertyGenerator]['@id'];
