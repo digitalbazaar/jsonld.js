@@ -4247,16 +4247,6 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
     mapping['@language'] = language;
   }
 
-  // merge onto parent mapping if one exists for a prefix
-  if(prefix !== null && activeCtx.mappings[prefix]) {
-    // FIXME: check to see if additional clone is necessary here
-    var child = mapping;
-    mapping = _clone(activeCtx.mappings[prefix]);
-    for(var k in child) {
-      mapping[k] = child[k];
-    }
-  }
-
   // define term mapping
   activeCtx.mappings[term] = mapping;
   defined[term] = true;
