@@ -4263,9 +4263,9 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
  *          base: true to resolve against the base IRI, false not to.
  *          vocab: true to concatenate after @vocab, false not to.
  * @param localCtx the local context being processed (only given if called
- *          during document processing).
+ *          during context processing).
  * @param defined a map for tracking cycles in context definitions (only given
- *          if called during document processing).
+ *          if called during context processing).
  *
  * @return the expanded value.
  */
