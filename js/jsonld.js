@@ -3648,7 +3648,7 @@ function _compareShortestLeast(a, b) {
   else if(a === b) {
     return 0;
   }
-  return (a.length === b.length && a < b) ? -1 : 1;
+  return (a < b) ? -1 : 1;
 }
 
 /**
