@@ -3698,8 +3698,11 @@ function _selectTerm(
           var propertyGenerator = termInfo.propertyGenerators[pi];
           var iris = activeCtx.mappings[propertyGenerator]['@id'];
           var match = true;
-          for(var ii = 0; match && ii < iris.length; ++ii) {
-            match = (iris[ii] in parent);
+          for(var ii = 0; ii < iris.length; ++ii) {
+            if(!(iris[ii] in parent)) {
+              match = false;
+              break;
+            }
           }
           if(match) {
             term = propertyGenerator;
