@@ -3909,7 +3909,7 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
  * property.
  *
  * @param activeCtx the active context.
- * @param activeProperty the active property that points to the element.
+ * @param activeProperty the active property that points to the value.
  * @param value the value to compact.
  *
  * @return the compaction result.
