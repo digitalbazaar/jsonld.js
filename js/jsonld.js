@@ -4677,7 +4677,6 @@ function _isKeyword(v, ctx) {
   }
   else {
     switch(v) {
-    case '@index':
     case '@context':
     case '@container':
     case '@default':
@@ -4685,6 +4684,7 @@ function _isKeyword(v, ctx) {
     case '@explicit':
     case '@graph':
     case '@id':
+    case '@index':
     case '@language':
     case '@list':
     case '@omitDefault':
