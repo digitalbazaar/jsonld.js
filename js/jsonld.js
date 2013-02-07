@@ -329,16 +329,12 @@ jsonld.flatten = function(input, ctx, options, callback) {
     // compact result (force @graph option to true, skip expansion)
     options.graph = true;
     options.skipExpansion = true;
-    jsonld.compact(flattened, ctx, options, function(err, compacted, ctx) {
+    jsonld.compact(flattened, ctx, options, function(err, compacted) {
       if(err) {
         return callback(new JsonLdError(
           'Could not compact flattened output.',
           'jsonld.FlattenError', {cause: err}));
       }
-      // get graph alias
-      var graph = _compactIri(ctx, '@graph');
-      // remove @preserve from results
-      compacted[graph] = _removePreserve(ctx, compacted[graph]);
       callback(null, compacted);
     });
   });
