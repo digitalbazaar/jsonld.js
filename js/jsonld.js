@@ -1861,7 +1861,8 @@ Processor.prototype.expand = function(
     }
 
     // drop certain top-level objects that do not occur in lists
-    if(!options.keepFreeFloatingNodes && !insideList &&
+    if(_isObject(rval) &&
+      !options.keepFreeFloatingNodes && !insideList &&
       (activeProperty === null || expandedActiveProperty === '@graph')) {
       // drop empty object or top-level @value
       if(count === 0 || ('@value' in rval)) {
