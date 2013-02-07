@@ -1662,7 +1662,7 @@ Processor.prototype.expand = function(
       if(expandedProperty === null ||
         !(_isArray(expandedProperty) ||
         _isAbsoluteIri(expandedProperty) ||
-        _isKeyword(expandedProperty, activeCtx))) {
+        _isKeyword(expandedProperty))) {
         continue;
       }
 
@@ -4653,48 +4653,34 @@ function _getInitialContext(options) {
 }
 
 /**
- * Returns whether or not the given value is a keyword (or a keyword alias).
+ * Returns whether or not the given value is a keyword.
  *
  * @param v the value to check.
- * @param [ctx] the active context to check against.
  *
  * @return true if the value is a keyword, false if not.
  */
-function _isKeyword(v, ctx) {
+function _isKeyword(v) {
   if(!_isString(v)) {
     return false;
   }
-  if(ctx) {
-    if(v in ctx.keywords) {
-      return true;
-    }
-    for(var key in ctx.keywords) {
-      var aliases = ctx.keywords[key];
-      if(aliases.indexOf(v) !== -1) {
-        return true;
-      }
-    }
-  }
-  else {
-    switch(v) {
-    case '@context':
-    case '@container':
-    case '@default':
-    case '@embed':
-    case '@explicit':
-    case '@graph':
-    case '@id':
-    case '@index':
-    case '@language':
-    case '@list':
-    case '@omitDefault':
-    case '@preserve':
-    case '@set':
-    case '@type':
-    case '@value':
-    case '@vocab':
-      return true;
-    }
+  switch(v) {
+  case '@context':
+  case '@container':
+  case '@default':
+  case '@embed':
+  case '@explicit':
+  case '@graph':
+  case '@id':
+  case '@index':
+  case '@language':
+  case '@list':
+  case '@omitDefault':
+  case '@preserve':
+  case '@set':
+  case '@type':
+  case '@value':
+  case '@vocab':
+    return true;
   }
   return false;
 }
