@@ -1704,7 +1704,7 @@ Processor.prototype.expand = function(
             'jsonld.SyntaxError', {value: value});
         }
         // ensure language value is lowercase
-        expandedValue = value.toLowerCase();
+        value = value.toLowerCase();
       }
 
       // preserve @index
