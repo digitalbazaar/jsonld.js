@@ -4480,7 +4480,6 @@ function _getInitialContext(options) {
     '@base': base,
     mappings: {},
     keywords: {
-      '@index': [],
       '@context': [],
       '@container': [],
       '@default': [],
@@ -4488,6 +4487,7 @@ function _getInitialContext(options) {
       '@explicit': [],
       '@graph': [],
       '@id': [],
+      '@index': [],
       '@language': [],
       '@list': [],
       '@omitDefault': [],
