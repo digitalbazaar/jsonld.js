@@ -1874,9 +1874,9 @@ Processor.prototype.expand = function(
       else {
         // drop subjects that generate no triples
         var hasTriples = false;
+        var ignore = ['@graph', '@type', '@list'];
         for(var ki = 0; !hasTriples && ki < keys.length; ++ki) {
-          if(!_isKeyword(keys[ki]) ||
-            ['@graph', '@type', '@list'].indexOf(keys[ki]) !== -1) {
+          if(!_isKeyword(keys[ki]) || ignore.indexOf(keys[ki]) !== -1) {
             hasTriples = true;
           }
         }
