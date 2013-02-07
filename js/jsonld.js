@@ -1359,7 +1359,7 @@ var Processor = function() {};
  * must be in expanded form before this method is called.
  *
  * @param activeCtx the active context to use.
- * @param activeProperty the compacted property assoicated with the element
+ * @param activeProperty the compacted property associated with the element
  *          to compact, null for none.
  * @param element the element to compact.
  * @param options the compaction options.
