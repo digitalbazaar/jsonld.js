@@ -4618,7 +4618,7 @@ function _getInitialContext(options) {
    *
    * @return a clone (child) of the active context.
    */
-  function _cloneActiveContext(shallow) {
+  function _cloneActiveContext() {
     var child = {};
     child['@base'] = this['@base'];
     child.keywords = _clone(this.keywords);
