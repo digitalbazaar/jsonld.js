@@ -4640,7 +4640,10 @@ function _getInitialContext(options) {
     rval['@base'] = this['@base'];
     rval.keywords = this.keywords;
     rval.mappings = this.mappings;
-    rval.namer = this.namer.clone();
+    rval.namer = null;
+    if(this.namer) {
+      rval.namer = this.namer.clone();
+    }
     rval.clone = this.clone;
     rval.share = this.share;
     rval.inverse = this.inverse;
