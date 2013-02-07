@@ -4508,14 +4508,11 @@ function _getInitialContext(options) {
    * Generates an inverse context for use in the compaction algorithm, if
    * not already generated for the given active context.
    *
-   * @param activeCtx the active context to create the inverse context from.
-   *
    * @return the inverse context.
    */
-  function _createInverseContext(activeCtx) {
-    if(!activeCtx) {
-      activeCtx = this;
-    }
+  function _createInverseContext() {
+    var activeCtx = this;
+
     // lazily create inverse
     if(activeCtx.inverse) {
       return activeCtx.inverse;
