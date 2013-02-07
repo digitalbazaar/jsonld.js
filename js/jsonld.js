@@ -242,7 +242,7 @@ jsonld.expand = function(input) {
 
   // resolve all @context URLs in the input
   input = _clone(input);
-  _resolveContextUrls(input, options.resolver, function(err, input) {
+  _resolveContextUrls(input, options, function(err, input) {
     if(err) {
       return callback(err);
     }
@@ -253,7 +253,9 @@ jsonld.expand = function(input) {
         activeCtx, null, input, options, false);
 
       // blank nodes must all be renamed if any were renamed
-      // during expansion ... otherwise there may be conflicts
+      // during expansion ... otherwise there may be conflicts, this
+      // also means tracking all bnodes in case renaming must occur
+      // to avoid double-renaming
       /*if(activeCtx.namer && activeCtx.namer.counter > 0) {
         _labelBlankNodes(activeCtx.namer, expanded);
       }*/
@@ -773,7 +775,7 @@ jsonld.toRDF = function(input) {
  */
 jsonld.urlResolver = function(url, callback) {
   return callback(new JsonLdError(
-    'Could not resolve @context URL. URL resolution not implemented.',
+    'Could not resolve @context URL. URL derefencing not implemented.',
     'jsonld.ContextUrlError'));
 };
 
@@ -886,6 +888,7 @@ jsonld.urlResolvers['jquery'] = function($) {
  */
 jsonld.urlResolvers['node'] = function() {
   var request = require('request');
+  var http = require('http');
   var cache = new jsonld.ContextCache();
   return function(url, callback) {
     var ctx = cache.get(url);
@@ -893,6 +896,12 @@ jsonld.urlResolvers['node'] = function() {
       return callback(null, ctx);
     }
     request(url, function(err, res, body) {
+      if(!err && res.statusCode >= 400) {
+        var statusText = http.STATUS_CODES[res.statusCode];
+        err = new JsonLdError(
+          'URL could not be dereferenced: ' + statusText,
+          'jsonld.InvalidUrl', {url: url, httpStatusCode: res.statusCode});
+      }
       if(!err) {
         cache.set(url, body);
       }
@@ -963,7 +972,7 @@ jsonld.processContext = function(activeCtx, localCtx) {
   if(_isObject(localCtx) && !('@context' in localCtx)) {
     localCtx = {'@context': localCtx};
   }
-  _resolveContextUrls(localCtx, options.resolver, function(err, ctx) {
+  _resolveContextUrls(localCtx, options, function(err, ctx) {
     if(err) {
       return callback(err);
     }
@@ -4372,6 +4381,15 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
  * @return the absolute IRI.
  */
 function _prependBase(base, iri) {
+  // already an absolute IRI
+  if(iri.indexOf(':') !== -1) {
+    return iri;
+  }
+
+  if(_isString(base)) {
+    base = jsonld.url.parse(base || '');
+    base.pathname = base.pathname || '';
+  }
   var authority = (base.host || '');
   var rel = jsonld.url.parse(iri);
   rel.pathname = (rel.pathname || '');
@@ -4938,21 +4956,22 @@ function _clone(value) {
  * @param urls a map of URLs (url => false/@contexts).
  * @param replace true to replace the URLs in the given input with the
  *           @contexts from the urls map, false not to.
+ * @param base the base IRI to use to resolve relative IRIs.
  *
  * @return true if new URLs to resolve were found, false if not.
  */
-function _findContextUrls(input, urls, replace) {
+function _findContextUrls(input, urls, replace, base) {
   var count = Object.keys(urls).length;
   if(_isArray(input)) {
     for(var i in input) {
-      _findContextUrls(input[i], urls, replace);
+      _findContextUrls(input[i], urls, replace, base);
     }
     return (count < Object.keys(urls).length);
   }
   else if(_isObject(input)) {
     for(var key in input) {
       if(key !== '@context') {
-        _findContextUrls(input[key], urls, replace);
+        _findContextUrls(input[key], urls, replace, base);
         continue;
       }
 
@@ -4965,6 +4984,7 @@ function _findContextUrls(input, urls, replace) {
         for(var i = 0; i < length; ++i) {
           var _ctx = ctx[i];
           if(_isString(_ctx)) {
+            _ctx = _prependBase(base, _ctx);
             // replace w/@context if requested
             if(replace) {
               _ctx = urls[_ctx];
@@ -4987,6 +5007,7 @@ function _findContextUrls(input, urls, replace) {
       }
       // string @context
       else if(_isString(ctx)) {
+        ctx = _prependBase(base, ctx);
         // replace w/@context if requested
         if(replace) {
           input[key] = urls[ctx];
@@ -5008,16 +5029,18 @@ function _findContextUrls(input, urls, replace) {
  * with the JSON @context found at that URL.
  *
  * @param input the JSON-LD input with possible contexts.
- * @param resolver(url, callback(err, jsonCtx)) the URL resolver to use.
+ * @param options the options to use:
+ *          resolver(url, callback(err, jsonCtx)) the URL resolver to use.
  * @param callback(err, input) called once the operation completes.
  */
-function _resolveContextUrls(input, resolver, callback) {
+function _resolveContextUrls(input, options, callback) {
   // if any error occurs during URL resolution, quit
   var error = null;
   var regex = /(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
 
   // recursive resolver
-  var resolve = function(input, cycles, resolver, callback) {
+  var resolver = options.resolver;
+  var resolve = function(input, cycles, resolver, base, callback) {
     if(Object.keys(cycles).length > MAX_CONTEXT_URLS) {
       error = new JsonLdError(
         'Maximum number of @context URLs exceeded.',
@@ -5031,12 +5054,12 @@ function _resolveContextUrls(input, resolver, callback) {
     // finished will be called once the URL queue is empty
     var finished = function() {
       // replace all URLs in the input
-      _findContextUrls(input, urls, true);
+      _findContextUrls(input, urls, true, base);
       callback(null, input);
     };
 
     // find all URLs in the given input
-    if(!_findContextUrls(input, urls, false)) {
+    if(!_findContextUrls(input, urls, false, base)) {
       // no new URLs in input
       finished();
     }
@@ -5086,10 +5109,19 @@ function _resolveContextUrls(input, resolver, callback) {
           }
 
           // ensure ctx is an object
-          if(err || !_isObject(ctx)) {
+          if(err) {
             err = new JsonLdError(
-              'URL does not resolve to a valid JSON-LD object.',
-              'jsonld.InvalidUrl', {url: url});
+              'Derefencing a URL did not result in a valid JSON-LD object. ' +
+              'Possible causes are an inaccessible URL perhaps due to ' +
+              'a same-origin policy (ensure the server uses CORS if you are ' +
+              'using client-side JavaScript) or a non-JSON response.',
+              'jsonld.InvalidUrl', {url: url, cause: err});
+          }
+          else if(!_isObject(ctx)) {
+            err = new JsonLdError(
+              'Derefencing a URL did not result in a JSON object. The ' +
+              'response was valid JSON, but it was not a JSON object.',
+              'jsonld.InvalidUrl', {url: url, cause: err});
           }
           if(err) {
             error = err;
@@ -5102,7 +5134,7 @@ function _resolveContextUrls(input, resolver, callback) {
           }
 
           // recurse
-          resolve(ctx, _cycles, resolver, function(err, ctx) {
+          resolve(ctx, _cycles, resolver, url, function(err, ctx) {
             if(err) {
               return callback(err);
             }
@@ -5116,7 +5148,7 @@ function _resolveContextUrls(input, resolver, callback) {
       }(queue[i]));
     }
   };
-  resolve(input, {}, resolver, callback);
+  resolve(input, {}, resolver, options.base, callback);
 }
 
 // define js 1.8.5 Object.keys method if not present
