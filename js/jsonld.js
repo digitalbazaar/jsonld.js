@@ -285,13 +285,13 @@ jsonld.expand = function(input) {
  * Performs JSON-LD flattening.
  *
  * @param input the JSON-LD to flatten.
- * @param context the context to use to compact the flattened output, or null.
+ * @param ctx the context to use to compact the flattened output, or null.
  * @param [options] the options to use:
  *          [base] the base IRI to use.
  *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
  * @param callback(err, flattened) called once the operation completes.
  */
-jsonld.flatten = function(input, context, options, callback) {
+jsonld.flatten = function(input, ctx, options, callback) {
   // get arguments
   if(typeof options === 'function') {
     callback = options;
@@ -322,7 +322,7 @@ jsonld.flatten = function(input, context, options, callback) {
       return callback(ex);
     }
 
-    if(context === null) {
+    if(ctx === null) {
       return callback(null, flattened);
     }
 
