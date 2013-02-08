@@ -137,10 +137,15 @@ jsonld.compact = function(input, ctx) {
       return callback(err);
     }
 
-    // if compacted is an array with 1 entry, remove array unless
-    // graph option is set
-    if(!options.graph && _isArray(compacted) && compacted.length === 1) {
-      compacted = compacted[0];
+    if(!options.graph && _isArray(compacted)) {
+      // simplify to a single item
+      if(compacted.length === 1) {
+        compacted = compacted[0];
+      }
+      // simplify to an empty object
+      else if(compacted.length === 0) {
+        compacted = {};
+      }
     }
     // always use array if graph option is on
     else if(options.graph && _isObject(compacted)) {

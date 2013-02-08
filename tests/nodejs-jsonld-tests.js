@@ -120,6 +120,7 @@ TestRunner.prototype.check = function(test, expect, result, expanded) {
   var pass = false;
   try {
     assert.deepEqual(expect, result);
+    assert.equal(expect.constructor, result.constructor);
     pass = true;
   }
   catch(ex) {
