@@ -18,3 +18,4 @@ function CORS(req, res, next) {
 }
 
 server.listen(8000);
+console.log('Remote context test server running...');

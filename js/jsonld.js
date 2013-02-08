@@ -861,13 +861,26 @@ jsonld.urlResolvers = {};
 
 /**
  * The built-in jquery URL resolver.
+ *
+ * @param $ the jquery instance to use.
+ * @param options the options to use:
+ *          secure: require all URLs to use HTTPS.
+ *
+ * @return the jquery URL resolver.
  */
-jsonld.urlResolvers['jquery'] = function($) {
+jsonld.urlResolvers['jquery'] = function($, options) {
   var cache = new jsonld.ContextCache();
   return function(url, callback) {
     var ctx = cache.get(url);
     if(ctx !== null) {
       return callback(null, ctx);
+    }
+    options = options || {};
+    if(options.secure && url.indexOf('https') !== 0) {
+      return callback(new JsonLdError(
+        'URL could not be dereferenced; secure mode is enabled and ' +
+        'the URL\'s scheme is not "https".',
+        'jsonld.InvalidUrl', {url: url}));
     }
     $.ajax({
       url: url,
@@ -886,8 +899,13 @@ jsonld.urlResolvers['jquery'] = function($) {
 
 /**
  * The built-in node URL resolver.
+ *
+ * @param options the optionst o use:
+ *          secure: require all URLs to use HTTPS.
+ *
+ * @return the node URL resolver.
  */
-jsonld.urlResolvers['node'] = function() {
+jsonld.urlResolvers['node'] = function(options) {
   var request = require('request');
   var http = require('http');
   var cache = new jsonld.ContextCache();
@@ -895,6 +913,13 @@ jsonld.urlResolvers['node'] = function() {
     var ctx = cache.get(url);
     if(ctx !== null) {
       return callback(null, ctx);
+    }
+    options = options || {};
+    if(options.secure && url.indexOf('https') !== 0) {
+      return callback(new JsonLdError(
+        'URL could not be dereferenced; secure mode is enabled and ' +
+        'the URL\'s scheme is not "https".',
+        'jsonld.InvalidUrl', {url: url}));
     }
     request(url, function(err, res, body) {
       if(!err && res.statusCode >= 400) {
@@ -933,7 +958,6 @@ jsonld.useUrlResolver = function(type) {
   jsonld.urlResolver = jsonld.urlResolvers[type].apply(
     jsonld, Array.prototype.slice.call(arguments, 1));
 };
-
 
 /**
  * Processes a local context, resolving any URLs as necessary, and returns a
