@@ -3376,7 +3376,7 @@ function _frame(state, subjects, frame, parent, property) {
           if(!_isArray(preserve)) {
             preserve = [preserve];
           }
-          output[prop] = [{'@preserve': [preserve]}];
+          output[prop] = [{'@preserve': preserve}];
         }
       }
 
