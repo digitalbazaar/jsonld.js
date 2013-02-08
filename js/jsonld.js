@@ -4400,7 +4400,7 @@ function _prependBase(base, iri) {
     authority = path.substr(0, path.lastIndexOf('/'));
     path = path.substr(authority.length);
   }
-  // IRI represents an absolue path
+  // IRI represents an absolute path
   else if(rel.pathname.indexOf('/') === 0) {
     path = rel.pathname;
   }
