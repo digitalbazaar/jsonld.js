@@ -1,7 +1,7 @@
 var express = require('express');
 var path = require('path');
 
-var server = express.createServer();
+var server = express();
 
 server.configure(function() {
   server.use(express.methodOverride());
