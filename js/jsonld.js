@@ -1495,7 +1495,7 @@ Processor.prototype.compact = function(
       // preserve empty arrays
       if(expandedValue.length === 0) {
         var activeProperty = _compactIri(
-          activeCtx, expandedProperty, null, {vocab: true}, element);
+          activeCtx, expandedProperty, [], {vocab: true}, element);
         jsonld.addValue(rval, activeProperty, [], {propertyIsArray: true});
       }
 
@@ -3734,9 +3734,29 @@ function _selectTerm(
           var iris = activeCtx.mappings[propertyGenerator]['@id'];
           var match = true;
           for(var ii = 0; ii < iris.length; ++ii) {
+            if(iris[ii] === iri) {
+              continue;
+            }
+            match = false;
             if(!(iris[ii] in parent)) {
-              match = false;
               break;
+            }
+            else {
+              var siblings = parent[iris[ii]];
+
+              // handle empty array case
+              if(siblings.length === 0 &&
+                _isArray(value) && value.length === 0) {
+                match = true;
+              }
+              else {
+                for(var si = 0; si < siblings.length; ++si) {
+                  if(jsonld.compareValues(siblings[si], value)) {
+                    match = true;
+                    break;
+                  }
+                }
+              }
             }
           }
           if(match) {
@@ -3752,6 +3772,7 @@ function _selectTerm(
       }
     }
   }
+
   return term;
 }
 
@@ -3870,7 +3891,7 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
           typeOrLanguageValue = value['@type'];
         }
       }
-      else {
+      else if(_isObject(value)) {
         typeOrLanguage = '@type';
         typeOrLanguageValue = '@id';
       }
@@ -4048,15 +4069,21 @@ function _findAndRemovePropertyGeneratorDuplicates(
       continue;
     }
     var prospects = element[iri];
-    for(var pi = 0; pi < prospects.length; ++pi) {
-      var prospect = prospects[pi];
-      if(jsonld.compareValues(prospect, value)) {
-        // duplicate found, remove it in place
-        prospects.splice(pi, 1);
-        if(prospects.length === 0) {
-          delete element[iri];
+    // handle empty array case
+    if(prospects.length === 0 && _isArray(value) && value.length === 0) {
+      delete element[iri];
+    }
+    else {
+      for(var pi = 0; pi < prospects.length; ++pi) {
+        var prospect = prospects[pi];
+        if(jsonld.compareValues(prospect, value)) {
+          // duplicate found, remove it in place
+          prospects.splice(pi, 1);
+          if(prospects.length === 0) {
+            delete element[iri];
+          }
+          break;
         }
-        break;
       }
     }
   }
