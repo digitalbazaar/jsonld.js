@@ -3741,20 +3741,18 @@ function _selectTerm(
             if(!(iris[ii] in parent)) {
               break;
             }
-            else {
-              var siblings = parent[iris[ii]];
 
-              // handle empty array case
-              if(siblings.length === 0 &&
-                _isArray(value) && value.length === 0) {
-                match = true;
-              }
-              else {
-                for(var si = 0; si < siblings.length; ++si) {
-                  if(jsonld.compareValues(siblings[si], value)) {
-                    match = true;
-                    break;
-                  }
+            // handle empty array case first
+            var siblings = parent[iris[ii]];
+            if(siblings.length === 0 &&
+              _isArray(value) && value.length === 0) {
+              match = true;
+            }
+            else {
+              for(var si = 0; si < siblings.length; ++si) {
+                if(jsonld.compareValues(siblings[si], value)) {
+                  match = true;
+                  break;
                 }
               }
             }
