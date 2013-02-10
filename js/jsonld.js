@@ -3742,18 +3742,21 @@ function _selectTerm(
               break;
             }
 
-            // handle empty array case first
+            // check siblings for a matching value
             var siblings = parent[iris[ii]];
+
+            // handle empty array case first
             if(siblings.length === 0 &&
               _isArray(value) && value.length === 0) {
               match = true;
+              continue;
             }
-            else {
-              for(var si = 0; si < siblings.length; ++si) {
-                if(jsonld.compareValues(siblings[si], value)) {
-                  match = true;
-                  break;
-                }
+
+            // handle other cases
+            for(var si = 0; si < siblings.length; ++si) {
+              if(jsonld.compareValues(siblings[si], value)) {
+                match = true;
+                break;
               }
             }
           }
