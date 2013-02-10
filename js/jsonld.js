@@ -4057,7 +4057,7 @@ function _findPropertyGeneratorDuplicates(
     var prospects = element[iri];
 
     // handle empty array case
-    if(prospects.length === 0 && _isArray(value) && value.length === 0) {
+    if(_isArray(value) && value.length === 0) {
       rval = true;
       if(remove) {
         delete element[iri];
