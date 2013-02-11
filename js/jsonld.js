@@ -257,14 +257,6 @@ jsonld.expand = function(input) {
       var expanded = new Processor().expand(
         activeCtx, null, input, options, false);
 
-      // blank nodes must all be renamed if any were renamed
-      // during expansion ... otherwise there may be conflicts, this
-      // also means tracking all bnodes in case renaming must occur
-      // to avoid double-renaming
-      /*if(activeCtx.namer && activeCtx.namer.counter > 0) {
-        _labelBlankNodes(activeCtx.namer, expanded);
-      }*/
-
       // optimize away @graph with no other properties
       if(_isObject(expanded) && ('@graph' in expanded) &&
         Object.keys(expanded).length === 1) {
@@ -2393,6 +2385,7 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
   if(jsonld.cache.activeCtx) {
     rval = jsonld.cache.activeCtx.get(activeCtx, localCtx);
     if(rval) {
+      rval.namer = activeCtx.namer;
       return rval;
     }
   }
@@ -4696,7 +4689,7 @@ function _getInitialContext(options) {
     rval.mappings = this.mappings;
     rval.namer = null;
     if(this.namer) {
-      rval.namer = this.namer.clone();
+      rval.namer = new UniqueNamer('_:t');
     }
     rval.clone = this.clone;
     rval.share = this.share;
