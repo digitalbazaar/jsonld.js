@@ -1585,7 +1585,7 @@ Processor.prototype.compact = function(
           // array, or key is @graph
           var isArray = (container === '@set' || container === '@list' ||
             (_isArray(compactedItem) && compactedItem.length === 0) ||
-            expandedProperty === '@graph');
+            expandedProperty === '@list' || expandedProperty === '@graph');
 
           // add compact value
           jsonld.addValue(
