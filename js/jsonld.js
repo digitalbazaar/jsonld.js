@@ -4203,17 +4203,15 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
       var ids = id;
       for(var i = 0; i < ids.length; ++i) {
         id = ids[i];
-        if(!_isString(id)) {
+        if(!_isString(id) || id === '@type') {
           throw new JsonLdError(
             'Invalid JSON-LD syntax; property generators must consist of an ' +
-            '@id array containing only strings.',
+            '@id array containing only strings and no string can be "@type".',
             'jsonld.SyntaxError', {context: localCtx});
         }
-        // expand @id if it is not @type
-        if(id !== '@type') {
-          id = _expandIri(activeCtx, id, {base: true}, localCtx, defined);
-        }
-        propertyGenerator.push(id);
+        // expand @id
+        propertyGenerator.push(_expandIri(
+          activeCtx, id, {base: true}, localCtx, defined));
       }
       // add sorted property generator as @id in mapping
       mapping['@id'] = propertyGenerator.sort();
@@ -4226,11 +4224,9 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
         'jsonld.SyntaxError', {context: localCtx});
     }
     else {
-      // add @id to mapping, expanding it if it is not @type
-      if(id !== '@type') {
-        id = _expandIri(activeCtx, id, {base: true}, localCtx, defined);
-      }
-      mapping['@id'] = id;
+      // add @id to mapping
+      mapping['@id'] = _expandIri(
+        activeCtx, id, {base: true}, localCtx, defined);
     }
   }
   else {
