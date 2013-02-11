@@ -1542,7 +1542,7 @@ Processor.prototype.compact = function(
             }
           }
           // can't use @list container for more than 1 list
-          else if(activeProperty in rval) {
+          else if(itemActiveProperty in rval) {
             throw new JsonLdError(
               'JSON-LD compact error; property has a "@list" @container ' +
               'rule but there is more than a single @list that matches ' +
