@@ -2542,7 +2542,7 @@ function _labelBlankNodes(namer, element) {
     for(var ki = 0; ki < keys.length; ++ki) {
       var key = keys[ki];
       if(key !== '@id') {
-        element[key] = _labelBlankNodes(namer, element[key], key === '@type');
+        element[key] = _labelBlankNodes(namer, element[key]);
       }
     }
   }
