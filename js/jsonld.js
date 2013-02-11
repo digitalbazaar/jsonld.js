@@ -1448,14 +1448,14 @@ Processor.prototype.compact = function(
         if(_isString(expandedValue)) {
           compactedValue = _compactIri(
             activeCtx, expandedValue, null,
-            {base: true, vocab: (expandedProperty === '@type')});
+            {vocab: (expandedProperty === '@type')});
         }
         // expanded value must be a @type array
         else {
           compactedValue = [];
           for(var vi = 0; vi < expandedValue.length; ++vi) {
             compactedValue.push(_compactIri(
-              activeCtx, expandedValue[vi], null, {base: true, vocab: true}));
+              activeCtx, expandedValue[vi], null, {vocab: true}));
           }
         }
 
