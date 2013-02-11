@@ -497,7 +497,7 @@ jsonld.objectify = function(input, ctx) {
           recurse.visited[subject['@id']] = true;
         }
 
-        // each array elementt *or* object key
+        // each array element *or* object key
         for(var k in subject) {
           var obj = subject[k];
           var isid = (jsonld.getContextValue(ctx, k, '@type') === '@id');
@@ -2519,18 +2519,17 @@ function _expandLanguageMap(languageMap) {
  *
  * @param namer the UniqueNamer to use.
  * @param element the element with blank nodes to rename.
- * @param isId true if the given element is an @id (or @type).
  *
  * @return the element.
  */
-function _labelBlankNodes(namer, element, isId) {
+function _labelBlankNodes(namer, element) {
   if(_isArray(element)) {
     for(var i = 0; i < element.length; ++i) {
-      element[i] = _labelBlankNodes(namer, element[i], isId);
+      element[i] = _labelBlankNodes(namer, element[i]);
     }
   }
   else if(_isList(element)) {
-    element['@list'] = _labelBlankNodes(namer, element['@list'], isId);
+    element['@list'] = _labelBlankNodes(namer, element['@list']);
   }
   else if(_isObject(element)) {
     // rename blank node
@@ -2546,10 +2545,6 @@ function _labelBlankNodes(namer, element, isId) {
         element[key] = _labelBlankNodes(namer, element[key], key === '@type');
       }
     }
-  }
-  // rename blank node identifier
-  else if(_isString(element) && isId && element.indexOf('_:') === 0) {
-    element = namer.getName(element);
   }
 
   return element;
