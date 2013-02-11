@@ -4573,6 +4573,8 @@ function _getInitialContext(options) {
         continue;
       }
 
+      var container = mapping['@container'] || '@none';
+
       // iterate over every IRI in the mapping
       var ids = mapping['@id'];
       if(!_isArray(ids)) {
@@ -4586,9 +4588,6 @@ function _getInitialContext(options) {
         if(!entry) {
           inverse[iri] = entry = {};
         }
-
-        // add term selection where it applies
-        var container = mapping['@container'] || '@none';
 
         // add new entry
         if(!entry[container]) {
