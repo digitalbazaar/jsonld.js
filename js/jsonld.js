@@ -1654,7 +1654,6 @@ Processor.prototype.expand = function(
     // if element has a context, process it
     if('@context' in element) {
       activeCtx = self.processContext(activeCtx, element['@context'], options);
-      delete element['@context'];
     }
 
     // expand the active property
@@ -1667,6 +1666,11 @@ Processor.prototype.expand = function(
       var value = element[key];
       var expandedProperty;
       var expandedValue;
+
+      // skip @context
+      if(key === '@context') {
+        continue;
+      }
 
       // expand key using property generator
       var mapping = activeCtx.mappings[key];
