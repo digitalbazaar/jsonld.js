@@ -4104,17 +4104,6 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
   // now defining term
   defined[term] = false;
 
-  // if term has a prefix, define it first
-  var colon = term.indexOf(':');
-  var prefix = null;
-  if(colon !== -1) {
-    prefix = term.substr(0, colon);
-    if(prefix in localCtx) {
-      // define parent prefix
-      _createTermDefinition(activeCtx, localCtx, prefix, defined);
-    }
-  }
-
   if(_isKeyword(term)) {
     throw new JsonLdError(
       'Invalid JSON-LD syntax; keywords cannot be overridden.',
@@ -4178,12 +4167,6 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
   var mapping = {};
   mapping.propertyGenerator = false;
 
-  // merge onto parent mapping if one exists for a prefix
-  if(prefix !== null && activeCtx.mappings[prefix]) {
-    // FIXME: check to see if additional clone is necessary here
-    mapping = _clone(activeCtx.mappings[prefix]);
-  }
-
   if('@id' in value) {
     var id = value['@id'];
     // handle property generator
@@ -4227,7 +4210,26 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
     }
   }
   else {
-    if(prefix === null) {
+    // see if the term has a prefix
+    var colon = term.indexOf(':');
+    if(colon !== -1) {
+      var prefix = term.substr(0, colon);
+      if(prefix in localCtx) {
+        // define parent prefix
+        _createTermDefinition(activeCtx, localCtx, prefix, defined);
+      }
+
+      // set @id based on prefix parent
+      if(activeCtx.mappings[prefix]) {
+        var suffix = term.substr(colon + 1);
+        mapping['@id'] = activeCtx.mappings[prefix]['@id'] + suffix;
+      }
+      // term is an absolute IRI
+      else {
+        mapping['@id'] = term;
+      }
+    }
+    else {
       // non-IRIs *must* define @ids if @vocab is not available
       if(!('@vocab' in activeCtx)) {
         throw new JsonLdError(
@@ -4236,15 +4238,6 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
       }
       // prepend vocab to term
       mapping['@id'] = activeCtx['@vocab'] + term;
-    }
-    // set @id based on prefix parent
-    else if(prefix in activeCtx.mappings) {
-      var suffix = term.substr(colon + 1);
-      mapping['@id'] = activeCtx.mappings[prefix]['@id'] + suffix;
-    }
-    // term is an absolute IRI
-    else {
-      mapping['@id'] = term;
     }
   }
 
