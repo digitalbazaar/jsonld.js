@@ -4130,28 +4130,28 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
   }
 
   if(_isString(value)) {
-    if(_isKeyword(value)) {
+    // expand value to a full IRI
+    var id = _expandIri(
+      activeCtx, value, {vocab: true, base: true}, localCtx, defined);
+
+    if(_isKeyword(id)) {
       // disallow aliasing @context and @preserve
-      if(value === '@context' || value === '@preserve') {
+      if(id === '@context' || id === '@preserve') {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; @context and @preserve cannot be aliased.',
           'jsonld.SyntaxError');
       }
 
       // uniquely add term as a keyword alias and resort
-      var aliases = activeCtx.keywords[value];
+      var aliases = activeCtx.keywords[id];
       if(aliases.indexOf(term) === -1) {
         aliases.push(term);
         aliases.sort(_compareShortestLeast);
       }
     }
-    else {
-      // expand value to a full IRI
-      value = _expandIri(activeCtx, value, {base: true}, localCtx, defined);
-    }
 
     // define/redefine term to expanded IRI/keyword
-    activeCtx.mappings[term] = {'@id': value};
+    activeCtx.mappings[term] = {'@id': id};
     defined[term] = true;
     return;
   }
@@ -4182,16 +4182,19 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
       var propertyGenerator = [];
       var ids = id;
       for(var i = 0; i < ids.length; ++i) {
+        // expand @id
         id = ids[i];
-        if(!_isString(id) || id === '@type') {
+        if(_isString(id)) {
+          id = _expandIri(
+            activeCtx, id, {vocab: true, base: true}, localCtx, defined);
+        }
+        if(!_isString(id) || _isKeyword(id)) {
           throw new JsonLdError(
             'Invalid JSON-LD syntax; property generators must consist of an ' +
             '@id array containing only strings and no string can be "@type".',
             'jsonld.SyntaxError', {context: localCtx});
         }
-        // expand @id
-        propertyGenerator.push(_expandIri(
-          activeCtx, id, {base: true}, localCtx, defined));
+        propertyGenerator.push(id);
       }
       // add sorted property generator as @id in mapping
       mapping['@id'] = propertyGenerator.sort();
@@ -4204,9 +4207,9 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
         'jsonld.SyntaxError', {context: localCtx});
     }
     else {
-      // add @id to mapping
+      // expand and add @id mapping
       mapping['@id'] = _expandIri(
-        activeCtx, id, {base: true}, localCtx, defined);
+        activeCtx, id, {vocab: true, base: true}, localCtx, defined);
     }
   }
   else {
