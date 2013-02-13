@@ -4348,11 +4348,12 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
       'jsonld.SyntaxError', {context: localCtx, value: value});
   }
 
+  relativeTo = relativeTo || {};
   var isAbsolute = false;
   var rval = value;
 
   // value is a term
-  if(mapping && !mapping.propertyGenerator) {
+  if(relativeTo.vocab && mapping && !mapping.propertyGenerator) {
     isAbsolute = true;
     rval = mapping['@id'];
   }
@@ -4387,7 +4388,6 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
     }
   }
 
-  relativeTo = relativeTo || {};
   if(isAbsolute) {
     // rename blank node if requested
     if(!localCtx && rval.indexOf('_:') === 0 && activeCtx.namer) {
