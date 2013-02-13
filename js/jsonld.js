@@ -4333,54 +4333,46 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
     _createTermDefinition(activeCtx, localCtx, value, defined);
   }
 
-  var mapping = activeCtx.mappings[value];
-
-  // value is explicitly ignored with a null mapping
-  if(mapping === null) {
-    return null;
-  }
-
-  // term dependency cannot be a property generator
-  if(localCtx && mapping && mapping.propertyGenerator) {
-    throw new JsonLdError(
-      'Invalid JSON-LD syntax; a term definition cannot have a property ' +
-      'generator as a dependency.',
-      'jsonld.SyntaxError', {context: localCtx, value: value});
-  }
-
   relativeTo = relativeTo || {};
-  var isAbsolute = false;
-  var rval = value;
+  var rval = null;
 
-  // value is a term
-  if(relativeTo.vocab && mapping && !mapping.propertyGenerator) {
-    isAbsolute = true;
-    rval = mapping['@id'];
+  if(relativeTo.vocab) {
+    // term dependency cannot be a property generator
+    var mapping = activeCtx.mappings[value];
+    if(localCtx && mapping && mapping.propertyGenerator) {
+      throw new JsonLdError(
+        'Invalid JSON-LD syntax; a term definition cannot have a property ' +
+        'generator as a dependency.',
+        'jsonld.SyntaxError', {context: localCtx, value: value});
+    }
+
+    // value is explicitly ignored with a null mapping
+    if(mapping === null) {
+      return null;
+    }
+
+    if(mapping && !mapping.propertyGenerator) {
+      rval = mapping['@id'];
+    }
   }
 
-  // keywords need no expanding (aliasing already handled by now)
-  if(_isKeyword(rval)) {
-    return rval;
-  }
-
-  if(!isAbsolute) {
+  if(rval === null) {
     // split value into prefix:suffix
-    var colon = rval.indexOf(':');
+    var colon = value.indexOf(':');
     if(colon !== -1) {
-      isAbsolute = true;
-      var prefix = rval.substr(0, colon);
-      var suffix = rval.substr(colon + 1);
+      var prefix = value.substr(0, colon);
+      var suffix = value.substr(colon + 1);
 
       // do not expand blank nodes (prefix of '_') or already-absolute
       // IRIs (suffix of '//')
       if(prefix !== '_' && suffix.indexOf('//') !== 0) {
         // prefix dependency not defined, define it
-        if(localCtx && prefix in localCtx && defined[prefix] !== true) {
+        if(localCtx && prefix in localCtx) {
           _createTermDefinition(activeCtx, localCtx, prefix, defined);
         }
 
         // use mapping if prefix is defined and not a property generator
-        mapping = activeCtx.mappings[prefix];
+        var mapping = activeCtx.mappings[prefix];
         if(mapping && !mapping.propertyGenerator) {
           rval = activeCtx.mappings[prefix]['@id'] + suffix;
         }
@@ -4388,7 +4380,16 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
     }
   }
 
-  if(isAbsolute) {
+  if(rval === null) {
+    rval = value;
+  }
+
+  // keywords need no expanding (aliasing already handled by now)
+  if(_isKeyword(rval)) {
+    return rval;
+  }
+
+  if(_isAbsoluteIri(rval)) {
     // rename blank node if requested
     if(!localCtx && rval.indexOf('_:') === 0 && activeCtx.namer) {
       rval = activeCtx.namer.getName(rval);
