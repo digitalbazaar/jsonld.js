@@ -2588,6 +2588,10 @@ function _expandValue(activeCtx, activeProperty, value) {
   if(type === '@id' || expandedProperty === '@graph') {
     return {'@id': _expandIri(activeCtx, value, {base: true})};
   }
+  // do @id expansion w/vocab
+  if(type === '@vocab') {
+    return {'@id': _expandIri(activeCtx, value, {vocab: true, base: true})};
+  }
 
   // do not expand keyword values
   if(_isKeyword(expandedProperty)) {
