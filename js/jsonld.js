@@ -3709,7 +3709,7 @@ function _selectTerm(
   // options for the value of @type or @language
   var options;
 
-  // determine options for @id based on whether or not it compacts to a term
+  // determine options for @id based on whether or not value compacts to a term
   if(typeOrLanguageValue === '@id' && _isSubjectReference(value)) {
     // try to compact value to a term
     var term = _compactIri(
