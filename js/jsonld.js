@@ -2585,7 +2585,7 @@ function _expandValue(activeCtx, activeProperty, value) {
   var type = jsonld.getContextValue(activeCtx, activeProperty, '@type');
 
   // do @id expansion (automatic for @graph)
-  if(type === '@id' || expandedProperty === '@graph') {
+  if(type === '@id' || (expandedProperty === '@graph' && _isString(value))) {
     return {'@id': _expandIri(activeCtx, value, {base: true})};
   }
   // do @id expansion w/vocab
@@ -3705,8 +3705,28 @@ function _selectTerm(
   if(typeOrLanguageValue === null) {
     typeOrLanguageValue = '@null';
   }
+
   // options for the value of @type or @language
-  var options = [typeOrLanguageValue, '@none'];
+  var options;
+
+  // determine options for @id based on whether or not it compacts to a term
+  if(typeOrLanguageValue === '@id' && _isSubjectReference(value)) {
+    // try to compact value to a term
+    var term = _compactIri(
+      activeCtx, value['@id'], null, {vocab: true, base: true});
+    if(term in activeCtx.mappings) {
+      // prefer @vocab
+      options = ['@vocab', '@id', '@none'];
+    }
+    else {
+      // prefer @id
+      options = ['@id', '@vocab', '@none'];
+    }
+  }
+  else {
+    options = [typeOrLanguageValue, '@none'];
+  }
+
   var term = null;
   var containerMap = activeCtx.inverse[iri];
   for(var ci = 0; term === null && ci < containers.length; ++ci) {
@@ -4013,7 +4033,7 @@ function _compactValue(activeCtx, activeProperty, value) {
   var term = _compactIri(activeCtx, value['@id'], null, {base: true});
 
   // compact to scalar
-  if(type === '@id' || expandedProperty === '@graph') {
+  if(type === '@id' || type === '@vocab' || expandedProperty === '@graph') {
     return term;
   }
 
