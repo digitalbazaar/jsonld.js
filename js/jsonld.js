@@ -3805,11 +3805,10 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
   }
   relativeTo = relativeTo || {};
 
-  // use inverse context to pick a term
-  var inverseCtx = activeCtx.getInverse();
-  var defaultLanguage = activeCtx['@language'] || '@none';
+  // use inverse context to pick a term if iri is relative to vocab
+  if(relativeTo.vocab && iri in activeCtx.getInverse()) {
+    var defaultLanguage = activeCtx['@language'] || '@none';
 
-  if(iri in inverseCtx) {
     // prefer @index if available in value
     var containers = [];
     if(_isObject(value) && '@index' in value) {
@@ -4030,7 +4029,11 @@ function _compactValue(activeCtx, activeProperty, value) {
   // value is a subject reference
   var expandedProperty = _expandIri(activeCtx, activeProperty);
   var type = jsonld.getContextValue(activeCtx, activeProperty, '@type');
-  var term = _compactIri(activeCtx, value['@id'], null, {base: true});
+  var term = _compactIri(
+    activeCtx, value['@id'], null, {
+      vocab: type === '@vocab',
+      base: true
+    });
 
   // compact to scalar
   if(type === '@id' || type === '@vocab' || expandedProperty === '@graph') {
