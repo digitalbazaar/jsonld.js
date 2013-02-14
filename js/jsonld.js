@@ -4351,6 +4351,7 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
       return null;
     }
 
+    // value is a term
     if(mapping && !mapping.propertyGenerator) {
       rval = mapping['@id'];
     }
