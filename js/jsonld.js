@@ -3713,8 +3713,10 @@ function _selectTerm(
   if(typeOrLanguageValue === '@id' && _isSubjectReference(value)) {
     // try to compact value to a term
     var term = _compactIri(
-      activeCtx, value['@id'], null, {vocab: true, base: true});
-    if(term in activeCtx.mappings) {
+      activeCtx, value['@id'], null, {vocab: true});
+    if(term in activeCtx.mappings &&
+      activeCtx.mappings[term] &&
+      activeCtx.mappings[term]['@id'] === value['@id']) {
       // prefer @vocab
       options = ['@vocab', '@id', '@none'];
     }
@@ -3777,7 +3779,6 @@ function _selectTerm(
  * @param iri the IRI to compact.
  * @param value the value to check or null.
  * @param relativeTo options for how to compact IRIs:
- *          base: true to compact against the base IRI, false not to.
  *          vocab: true to split after @vocab, false not to.
  * @param parent the parent element for the value.
  *
@@ -3951,8 +3952,8 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
     }
   }
 
-  // no compaction choices, return IRI as is
-  return iri;
+  // compact IRI relative to base
+  return _removeBase(activeCtx['@base'], iri);
 }
 
 /**
@@ -4013,7 +4014,7 @@ function _compactValue(activeCtx, activeProperty, value) {
     // compact @type IRI
     if('@type' in value) {
       rval[_compactIri(activeCtx, '@type')] = _compactIri(
-        activeCtx, value['@type'], null, {base: true, vocab: true});
+        activeCtx, value['@type'], null, {vocab: true});
     }
     // alias @language
     else if('@language' in value) {
@@ -4029,19 +4030,16 @@ function _compactValue(activeCtx, activeProperty, value) {
   // value is a subject reference
   var expandedProperty = _expandIri(activeCtx, activeProperty);
   var type = jsonld.getContextValue(activeCtx, activeProperty, '@type');
-  var term = _compactIri(
-    activeCtx, value['@id'], null, {
-      vocab: type === '@vocab',
-      base: true
-    });
+  var compacted = _compactIri(
+    activeCtx, value['@id'], null, {vocab: type === '@vocab'});
 
   // compact to scalar
   if(type === '@id' || type === '@vocab' || expandedProperty === '@graph') {
-    return term;
+    return compacted;
   }
 
   var rval = {};
-  rval[_compactIri(activeCtx, '@id')] = term;
+  rval[_compactIri(activeCtx, '@id')] = compacted;
   return rval;
 }
 
@@ -4479,7 +4477,7 @@ function _prependBase(base, iri) {
   else {
     path = base.pathname;
 
-    // prepend last directory for base
+    // use up to last directory for base
     if(rel.pathname !== '') {
       path = path.substr(0, path.lastIndexOf('/') + 1) + rel.pathname;
     }
@@ -4527,7 +4525,68 @@ function _prependBase(base, iri) {
     path += rel.hash;
   }
 
-  return (base.protocol || '') + '//' + authority + path;
+  var rval = (base.protocol || '') + '//';
+  if(base.auth) {
+    rval += base.auth + '@';
+  }
+  rval += authority + path;
+
+  return rval;
+}
+
+/**
+ * Removes a base IRI from the given absolute IRI.
+ *
+ * @param base the base IRI.
+ * @param iri the absolute IRI.
+ *
+ * @return the relative IRI if relative to base, otherwise the absolute IRI.
+ */
+function _removeBase(base, iri) {
+  if(_isString(base)) {
+    base = jsonld.url.parse(base || '');
+    base.pathname = base.pathname || '';
+  }
+
+  // establish base root
+  var root = (base.protocol || '') + '//';
+  if(base.auth) {
+    root += base.auth + '@';
+  }
+  root += (base.host || '');
+
+  // IRI not relative to base
+  if(iri.indexOf(root) !== 0) {
+    return iri;
+  }
+
+  // remove path segments that match
+  var baseSegments = base.pathname.split('/');
+  var iriSegments = iri.substr(root.length).split('/');
+  while(baseSegments.length > 0 && iriSegments.length > 0) {
+    if(baseSegments[0] !== iriSegments[0]) {
+      break;
+    }
+    baseSegments.shift();
+    iriSegments.shift();
+  }
+
+  // use '../' for each non-matching base segment
+  var rval = '';
+  if(baseSegments.length > 0) {
+    // do not count the last segment if it isn't a path (doesn't end in '/')
+    if(base.pathname.indexOf('/', base.pathname.length - 1) === -1) {
+      baseSegments.pop();
+    }
+    for(var i = 0; i < baseSegments.length; ++i) {
+      rval += '../';
+    }
+  }
+
+  // prepend remaining segments
+  rval += iriSegments.join('/');
+
+  return rval;
 }
 
 /**
