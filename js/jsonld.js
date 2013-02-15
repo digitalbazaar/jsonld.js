@@ -2184,7 +2184,8 @@ Processor.prototype.normalize = function(input, options, callback) {
       var nodes = ['subject', 'object', 'name'];
       for(var n in nodes) {
         var node = nodes[n];
-        if(statement[node] && statement[node].interfaceName === 'BlankNode') {
+        if(statement[node] && statement[node].interfaceName === 'BlankNode' &&
+          statement[node].nominalValue.indexOf('_:c14n') !== 0) {
           statement[node].nominalValue = namer.getName(
             statement[node].nominalValue);
         }
