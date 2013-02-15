@@ -762,6 +762,15 @@ jsonld.toRDF = function(input) {
 };
 
 /**
+ * Relabels all blank nodes in the given JSON-LD input.
+ *
+ * @param input the JSON-LD input.
+ */
+jsonld.relabelBlankNodes = function(input) {
+  _labelBlankNodes(new UniqueNamer('_:b', input));
+};
+
+/**
  * The default URL resolver for external @context URLs.
  *
  * @param resolver(url, callback(err, ctx)) the resolver to use.
@@ -1807,7 +1816,7 @@ Processor.prototype.expand = function(
 
       // add copy of value for each property from property generator
       if(_isArray(expandedProperty)) {
-        _labelBlankNodes(activeCtx.namer, expandedValue);
+        expandedValue = _labelBlankNodes(activeCtx.namer, expandedValue);
         for(var i = 0; i < expandedProperty.length; ++i) {
           jsonld.addValue(
             rval, expandedProperty[i], _clone(expandedValue),
@@ -1940,10 +1949,13 @@ Processor.prototype.flatten = function(input) {
 
   // add all non-default graphs to default graph
   var defaultGraph = graphs['@default'];
-  for(var graphName in graphs) {
+  var graphNames = Object.keys(graphs).sort();
+  for(var i = 0; i < graphNames.length; ++i) {
+    var graphName = graphNames[i];
     if(graphName === '@default') {
       continue;
     }
+    var nodeMap = graphs[graphName];
     var subject = defaultGraph[graphName];
     if(!subject) {
       defaultGraph[graphName] = subject = {
@@ -1955,7 +1967,6 @@ Processor.prototype.flatten = function(input) {
       subject['@graph'] = [];
     }
     var graph = subject['@graph'];
-    var nodeMap = graphs[graphName];
     var ids = Object.keys(nodeMap).sort();
     for(var ii = 0; ii < ids.length; ++ii) {
       var id = ids[ii];
@@ -3222,7 +3233,8 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
 
         // add reference and recurse
         jsonld.addValue(
-          subject, property, {'@id': id}, {propertyIsArray: true});
+          subject, property, {'@id': id},
+          {propertyIsArray: true, allowDuplicate: false});
         _createNodeMap(o, graphs, graph, namer, id);
       }
       // handle @list
@@ -3230,12 +3242,15 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
         var _list = [];
         _createNodeMap(o['@list'], graphs, graph, namer, name, _list);
         o = {'@list': _list};
-        jsonld.addValue(subject, property, o, {propertyIsArray: true});
+        jsonld.addValue(
+          subject, property, o,
+          {propertyIsArray: true, allowDuplicate: false});
       }
       // handle @value
       else {
         _createNodeMap(o, graphs, graph, namer, name);
-        jsonld.addValue(subject, property, o, {propertyIsArray: true});
+        jsonld.addValue(
+          subject, property, o, {propertyIsArray: true, allowDuplicate: false});
       }
     }
   }

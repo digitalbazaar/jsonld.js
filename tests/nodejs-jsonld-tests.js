@@ -83,7 +83,7 @@ TestRunner.prototype.expandedEqual = function(x, y, isList) {
         rval = false;
         for(var j = 0; !rval && j < y.length; ++j) {
           if(!(j in iso)) {
-            if(this.expandedEqual(x[i], y[j])) {
+            if(this.expandedEqual(x[i], y[j], false)) {
               iso[j] = i;
               rval = true;
             }
@@ -94,9 +94,9 @@ TestRunner.prototype.expandedEqual = function(x, y, isList) {
     }
     return rval;
   }
-  else if(typeof x === 'object') {
-    var xKeys = Object.keys(x).sort();
-    var yKeys = Object.keys(y).sort();
+  if(typeof x === 'object') {
+    var xKeys = Object.keys(x);
+    var yKeys = Object.keys(y);
     if(xKeys.length !== yKeys.length) {
       return false;
     }
@@ -115,7 +115,7 @@ TestRunner.prototype.expandedEqual = function(x, y, isList) {
   return false;
 };
 
-TestRunner.prototype.check = function(test, expect, result, expanded) {
+TestRunner.prototype.check = function(test, expect, result, type) {
   var line = '';
   var pass = false;
   try {
@@ -124,7 +124,18 @@ TestRunner.prototype.check = function(test, expect, result, expanded) {
     pass = true;
   }
   catch(ex) {
-    pass = expanded && this.expandedEqual(expect, result);
+    var expanded = (
+      type.indexOf('jld:ExpandTest') !== -1 ||
+      type.indexOf('jld:FlattenTest') !== -1);
+    var relabel = (type.indexOf('jld:FlattenTest') !== -1);
+    if(expanded) {
+      // relabel blank nodes
+      if(relabel) {
+        expect = jsonld.relabelBlankNodes(expect);
+        result = jsonld.relabelBlankNodes(result);
+      }
+      pass = this.expandedEqual(expect, result);
+    }
   }
   finally {
     if(pass) {
@@ -262,10 +273,7 @@ TestRunner.prototype.run = function(manifests, callback) {
             outputError(err);
             return callback();
           }
-          self.check(
-            test, test.expect, result,
-            type.indexOf('jld:ExpandTest') !== -1 ||
-            type.indexOf('jld:FlattenTest') !== -1);
+          self.check(test, test.expect, result, type);
           callback();
         };
 
