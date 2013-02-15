@@ -6140,7 +6140,9 @@ return jsonld;
 
 // used to generate a new jsonld API instance
 var factory = function() {
-  return wrapper({});
+  return wrapper(function() {
+    return factory();
+  });
 };
 // the shared global jsonld API instance
 wrapper(factory);
