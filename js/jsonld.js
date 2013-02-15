@@ -2047,8 +2047,8 @@ Processor.prototype.normalize = function(input, options, callback) {
     var nodes = ['subject', 'object', 'name'];
     for(var n in nodes) {
       var node = nodes[n];
-      var id = statement[node].nominalValue;
       if(statement[node] && statement[node].interfaceName === 'BlankNode') {
+        var id = statement[node].nominalValue;
         if(id in bnodes) {
           bnodes[id].statements.push(statement);
         }
