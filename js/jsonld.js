@@ -52,7 +52,7 @@ var jsonld = {};
  *          [graph] true to always output a top-level graph (default: false).
  *          [skipExpansion] true to assume the input is expanded and skip
  *            expansion, false not to, defaults to false.
- *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
+ *          [urlClient(url, callback(err, url, result))] the URL client to use.
  * @param callback(err, compacted, ctx) called once the operation completes.
  */
 jsonld.compact = function(input, ctx) {
@@ -86,8 +86,8 @@ jsonld.compact = function(input, ctx) {
   if(!('skipExpansion' in options)) {
     options.skipExpansion = false;
   }
-  if(!('resolver' in options)) {
-    options.resolver = jsonld.urlResolver;
+  if(!('urlClient' in options)) {
+    options.urlClient = jsonld.urlClient;
   }
 
   var expand = function(input, options, callback) {
@@ -217,7 +217,7 @@ jsonld.compact = function(input, ctx) {
  *            defaults to true.
  *          [keepFreeFloatingNodes] true to keep free-floating nodes,
  *            false not to, defaults to false.
- *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
+ *          [urlClient(url, callback(err, url, result))] the URL client to use.
  * @param callback(err, expanded) called once the operation completes.
  */
 jsonld.expand = function(input) {
@@ -235,8 +235,8 @@ jsonld.expand = function(input) {
   if(!('base' in options)) {
     options.base = '';
   }
-  if(!('resolver' in options)) {
-    options.resolver = jsonld.urlResolver;
+  if(!('urlClient' in options)) {
+    options.urlClient = jsonld.urlClient;
   }
   if(!('renameBlankNodes' in options)) {
     options.renameBlankNodes = true;
@@ -245,9 +245,9 @@ jsonld.expand = function(input) {
     options.keepFreeFloatingNodes = false;
   }
 
-  // resolve all @context URLs in the input
+  // retrieve all @context URLs in the input
   input = _clone(input);
-  _resolveContextUrls(input, options, function(err, input) {
+  _retrieveContextUrls(input, options, function(err, input) {
     if(err) {
       return callback(err);
     }
@@ -285,7 +285,7 @@ jsonld.expand = function(input) {
  * @param ctx the context to use to compact the flattened output, or null.
  * @param [options] the options to use:
  *          [base] the base IRI to use.
- *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
+ *          [urlClient(url, callback(err, url, result))] the URL client to use.
  * @param callback(err, flattened) called once the operation completes.
  */
 jsonld.flatten = function(input, ctx, options, callback) {
@@ -299,8 +299,8 @@ jsonld.flatten = function(input, ctx, options, callback) {
   if(!('base' in options)) {
     options.base = '';
   }
-  if(!('resolver' in options)) {
-    options.resolver = jsonld.urlResolver;
+  if(!('urlClient' in options)) {
+    options.urlClient = jsonld.urlClient;
   }
 
   // expand input
@@ -348,7 +348,7 @@ jsonld.flatten = function(input, ctx, options, callback) {
  *          [explicit] default @explicit flag (default: false).
  *          [omitDefault] default @omitDefault flag (default: false).
  *          [optimize] optimize when compacting (default: false).
- *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
+ *          [urlClient(url, callback(err, url, result))] the URL client to use.
  * @param callback(err, framed) called once the operation completes.
  */
 jsonld.frame = function(input, frame) {
@@ -365,8 +365,8 @@ jsonld.frame = function(input, frame) {
   if(!('base' in options)) {
     options.base = '';
   }
-  if(!('resolver' in options)) {
-    options.resolver = jsonld.urlResolver;
+  if(!('urlClient' in options)) {
+    options.urlClient = jsonld.urlClient;
   }
   if(!('embed' in options)) {
     options.embed = true;
@@ -430,7 +430,7 @@ jsonld.frame = function(input, frame) {
  * @param ctx the JSON-LD context to apply.
  * @param [options] the framing options.
  *          [base] the base IRI to use.
- *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
+ *          [urlClient(url, callback(err, url, result))] the URL client to use.
  * @param callback(err, objectified) called once the operation completes.
  */
 jsonld.objectify = function(input, ctx) {
@@ -447,8 +447,8 @@ jsonld.objectify = function(input, ctx) {
   if(!('base' in options)) {
     options.base = '';
   }
-  if(!('resolver' in options)) {
-    options.resolver = jsonld.urlResolver;
+  if(!('urlClient' in options)) {
+    options.urlClient = jsonld.urlClient;
   }
 
   // expand input
@@ -563,7 +563,7 @@ jsonld.objectify = function(input, ctx) {
  * @param [options] the options to use:
  *          [format] the format if output is a string:
  *            'application/nquads' for N-Quads.
- *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
+ *          [urlClient(url, callback(err, url, result))] the URL client to use.
  * @param callback(err, normalized) called once the operation completes.
  */
 jsonld.normalize = function(input, callback) {
@@ -581,8 +581,8 @@ jsonld.normalize = function(input, callback) {
   if(!('base' in options)) {
     options.base = '';
   }
-  if(!('resolver' in options)) {
-    options.resolver = jsonld.urlResolver;
+  if(!('urlClient' in options)) {
+    options.urlClient = jsonld.urlClient;
   }
 
   // expand input then do normalization
@@ -668,7 +668,7 @@ jsonld.fromRDF = function(statements) {
  *          [collate] true to output all statements at once (in an array
  *            or as a formatted string), false to output one statement at
  *            a time (default).
- *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
+ *          [urlClient(url, callback(err, url, result))] the URL client to use.
  * @param callback(err, statement) called when a statement is output, with the
  *          last statement as null.
  */
@@ -687,8 +687,8 @@ jsonld.toRDF = function(input) {
   if(!('base' in options)) {
     options.base = '';
   }
-  if(!('resolver' in options)) {
-    options.resolver = jsonld.urlResolver;
+  if(!('urlClient' in options)) {
+    options.urlClient = jsonld.urlClient;
   }
   if(!('collate' in options)) {
     options.collate = false;
@@ -771,14 +771,14 @@ jsonld.relabelBlankNodes = function(input) {
 };
 
 /**
- * The default URL resolver for external @context URLs.
+ * The default URL client for external @context URLs.
  *
- * @param resolver(url, callback(err, ctx)) the resolver to use.
+ * @param urlClient(url, callback(err, url, result)) the URL client to use.
  */
-jsonld.urlResolver = function(url, callback) {
+jsonld.urlClient = function(url, callback) {
   return callback(new JsonLdError(
-    'Could not resolve @context URL. URL derefencing not implemented.',
-    'jsonld.ContextUrlError'));
+    'Could not retrieve @context URL. URL derefencing not implemented.',
+    'jsonld.ContextUrlError'), url);
 };
 
 /* Utility API */
@@ -856,32 +856,32 @@ jsonld.cache = {
 };
 
 /**
- * URL resolvers.
+ * URL clients.
  */
-jsonld.urlResolvers = {};
+jsonld.urlClients = {};
 
 /**
- * The built-in jquery URL resolver.
+ * The built-in jquery URL client.
  *
  * @param $ the jquery instance to use.
  * @param options the options to use:
  *          secure: require all URLs to use HTTPS.
  *
- * @return the jquery URL resolver.
+ * @return the jquery URL client.
  */
-jsonld.urlResolvers['jquery'] = function($, options) {
+jsonld.urlClients['jquery'] = function($, options) {
   var cache = new jsonld.ContextCache();
   return function(url, callback) {
     var ctx = cache.get(url);
     if(ctx !== null) {
-      return callback(null, ctx);
+      return callback(null, url, ctx);
     }
     options = options || {};
     if(options.secure && url.indexOf('https') !== 0) {
       return callback(new JsonLdError(
         'URL could not be dereferenced; secure mode is enabled and ' +
         'the URL\'s scheme is not "https".',
-        'jsonld.InvalidUrl', {url: url}));
+        'jsonld.InvalidUrl', {url: url}), url);
     }
     $.ajax({
       url: url,
@@ -889,38 +889,38 @@ jsonld.urlResolvers['jquery'] = function($, options) {
       crossDomain: true,
       success: function(data, textStatus, jqXHR) {
         cache.set(url, data);
-        callback(null, data);
+        callback(null, url, data);
       },
       error: function(jqXHR, textStatus, errorThrown) {
-        callback(errorThrown);
+        callback(errorThrown, url);
       }
     });
   };
 };
 
 /**
- * The built-in node URL resolver.
+ * The built-in node URL client.
  *
  * @param options the optionst o use:
  *          secure: require all URLs to use HTTPS.
  *
- * @return the node URL resolver.
+ * @return the node URL client.
  */
-jsonld.urlResolvers['node'] = function(options) {
+jsonld.urlClients['node'] = function(options) {
   var request = require('request');
   var http = require('http');
   var cache = new jsonld.ContextCache();
   return function(url, callback) {
     var ctx = cache.get(url);
     if(ctx !== null) {
-      return callback(null, ctx);
+      return callback(null, url, ctx);
     }
     options = options || {};
     if(options.secure && url.indexOf('https') !== 0) {
       return callback(new JsonLdError(
         'URL could not be dereferenced; secure mode is enabled and ' +
         'the URL\'s scheme is not "https".',
-        'jsonld.InvalidUrl', {url: url}));
+        'jsonld.InvalidUrl', {url: url}), url);
     }
     request(url, function(err, res, body) {
       if(!err && res.statusCode >= 400) {
@@ -932,31 +932,31 @@ jsonld.urlResolvers['node'] = function(options) {
       if(!err) {
         cache.set(url, body);
       }
-      callback(err, body);
+      callback(err, url, body);
     });
   };
 };
 
 /**
- * Assigns the default URL resolver for external @context URLs to a built-in
+ * Assigns the default URL client for external @context URLs to a built-in
  * default. Supported types currently include: 'jquery'.
  *
- * To use the jquery URL resolver, the 'data' parameter must be a reference
+ * To use the jquery URL client, the 'data' parameter must be a reference
  * to the main jquery object.
  *
  * @param type the type to set.
- * @param [params] the parameters required to use the resolver.
+ * @param [params] the parameters required to use the client.
  */
-jsonld.useUrlResolver = function(type) {
-  if(!(type in jsonld.urlResolvers)) {
+jsonld.useUrlClient = function(type) {
+  if(!(type in jsonld.urlClients)) {
     throw new JsonLdError(
-      'Unknown @context URL resolver type: "' + type + '"',
-      'jsonld.UnknownUrlResolver',
+      'Unknown @context URL client type: "' + type + '"',
+      'jsonld.UnknownUrlClient',
       {type: type});
   }
 
-  // set URL resolver
-  jsonld.urlResolver = jsonld.urlResolvers[type].apply(
+  // set URL client
+  jsonld.urlClient = jsonld.urlClients[type].apply(
     jsonld, Array.prototype.slice.call(arguments, 1));
 };
 
@@ -967,7 +967,7 @@ jsonld.useUrlResolver = function(type) {
  * @param activeCtx the current active context.
  * @param localCtx the local context to process.
  * @param [options] the options to use:
- *          [resolver(url, callback(err, jsonCtx))] the URL resolver to use.
+ *          [urlClient(url, callback(err, url, result))] the URL client to use.
  * @param callback(err, ctx) called once the operation completes.
  */
 jsonld.processContext = function(activeCtx, localCtx) {
@@ -984,8 +984,8 @@ jsonld.processContext = function(activeCtx, localCtx) {
   if(!('base' in options)) {
     options.base = '';
   }
-  if(!('resolver' in options)) {
-    options.resolver = jsonld.urlResolver;
+  if(!('urlClient' in options)) {
+    options.urlClient = jsonld.urlClient;
   }
 
   // return initial context early for null context
@@ -993,12 +993,12 @@ jsonld.processContext = function(activeCtx, localCtx) {
     return callback(null, _getInitialContext(options));
   }
 
-  // resolve URLs in localCtx
+  // retrieve URLs in localCtx
   localCtx = _clone(localCtx);
   if(_isObject(localCtx) && !('@context' in localCtx)) {
     localCtx = {'@context': localCtx};
   }
-  _resolveContextUrls(localCtx, options, function(err, ctx) {
+  _retrieveContextUrls(localCtx, options, function(err, ctx) {
     if(err) {
       return callback(err);
     }
@@ -1302,8 +1302,8 @@ var _browser = !_nodejs;
 // export nodejs API
 if(_nodejs) {
   module.exports = jsonld;
-  // use node URL resolver by default
-  jsonld.useUrlResolver('node');
+  // use node URL client by default
+  jsonld.useUrlClient('node');
 
   // needed for serialization of XML literals
   if(typeof XMLSerializer === 'undefined') {
@@ -1606,7 +1606,7 @@ Processor.prototype.compact = function(
 
 /**
  * Recursively expands an element using the given context. Any context in
- * the element will be removed. All context URLs must have been resolved
+ * the element will be removed. All context URLs must have been retrieved
  * before calling this method.
  *
  * @param activeCtx the context to use.
@@ -2435,7 +2435,7 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
       ctx = ctx['@context'];
     }
 
-    // context must be an object by now, all URLs resolved before this call
+    // context must be an object by now, all URLs retrieved before this call
     if(!_isObject(ctx)) {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; @context must be an object.',
@@ -5095,7 +5095,7 @@ function _clone(value) {
  *           @contexts from the urls map, false not to.
  * @param base the base IRI to use to resolve relative IRIs.
  *
- * @return true if new URLs to resolve were found, false if not.
+ * @return true if new URLs to retrieve were found, false if not.
  */
 function _findContextUrls(input, urls, replace, base) {
   var count = Object.keys(urls).length;
@@ -5161,23 +5161,23 @@ function _findContextUrls(input, urls, replace, base) {
 }
 
 /**
- * Resolves external @context URLs using the given URL resolver. Each
+ * Retrieves external @context URLs using the given URL client. Each
  * instance of @context in the input that refers to a URL will be replaced
  * with the JSON @context found at that URL.
  *
  * @param input the JSON-LD input with possible contexts.
  * @param options the options to use:
- *          resolver(url, callback(err, jsonCtx)) the URL resolver to use.
+ *          urlClient(url, callback(err, url, result)) the URL client to use.
  * @param callback(err, input) called once the operation completes.
  */
-function _resolveContextUrls(input, options, callback) {
+function _retrieveContextUrls(input, options, callback) {
   // if any error occurs during URL resolution, quit
   var error = null;
   var regex = /(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
 
-  // recursive resolver
-  var resolver = options.resolver;
-  var resolve = function(input, cycles, resolver, base, callback) {
+  // recursive URL client
+  var urlClient = options.urlClient;
+  var retrieve = function(input, cycles, urlClient, base, callback) {
     if(Object.keys(cycles).length > MAX_CONTEXT_URLS) {
       error = new JsonLdError(
         'Maximum number of @context URLs exceeded.',
@@ -5185,7 +5185,7 @@ function _resolveContextUrls(input, options, callback) {
       return callback(error);
     }
 
-    // for tracking the URLs to resolve
+    // for tracking the URLs to retrieve
     var urls = {};
 
     // finished will be called once the URL queue is empty
@@ -5201,7 +5201,7 @@ function _resolveContextUrls(input, options, callback) {
       finished();
     }
 
-    // queue all unresolved URLs
+    // queue all unretrieved URLs
     var queue = [];
     for(var url in urls) {
       if(urls[url] === false) {
@@ -5215,7 +5215,7 @@ function _resolveContextUrls(input, options, callback) {
       }
     }
 
-    // resolve URLs in queue
+    // retrieve URLs in queue
     var count = queue.length;
     for(var i in queue) {
       (function(url) {
@@ -5229,7 +5229,7 @@ function _resolveContextUrls(input, options, callback) {
         var _cycles = _clone(cycles);
         _cycles[url] = true;
 
-        resolver(url, function(err, ctx) {
+        urlClient(url, function(err, url, ctx) {
           // short-circuit if there was an error with another URL
           if(error) {
             return;
@@ -5271,7 +5271,7 @@ function _resolveContextUrls(input, options, callback) {
           }
 
           // recurse
-          resolve(ctx, _cycles, resolver, url, function(err, ctx) {
+          retrieve(ctx, _cycles, urlClient, url, function(err, ctx) {
             if(err) {
               return callback(err);
             }
@@ -5285,7 +5285,7 @@ function _resolveContextUrls(input, options, callback) {
       }(queue[i]));
     }
   };
-  resolve(input, {}, resolver, options.base, callback);
+  retrieve(input, {}, urlClient, options.base, callback);
 }
 
 // define js 1.8.5 Object.keys method if not present
