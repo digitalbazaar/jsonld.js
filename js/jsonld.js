@@ -35,8 +35,12 @@
  */
 (function() {
 
-// define jsonld API
-var jsonld = {};
+// determine if in-browser or using node.js
+var _nodejs = (typeof module !== 'undefined');
+var _browser = !_nodejs;
+
+// attaches jsonld API to the given object
+var wrapper = function(jsonld) {
 
 /* Core API */
 
@@ -1295,16 +1299,7 @@ jsonld.unregisterRDFParser = function(contentType) {
   delete _rdfParsers[contentType];
 };
 
-// determine if in-browser or using node.js
-var _nodejs = (typeof module !== 'undefined');
-var _browser = !_nodejs;
-
-// export nodejs API
 if(_nodejs) {
-  module.exports = jsonld;
-  // use node URL client by default
-  jsonld.useUrlClient('node');
-
   // needed for serialization of XML literals
   if(typeof XMLSerializer === 'undefined') {
     var XMLSerializer = null;
@@ -1325,17 +1320,6 @@ if(_nodejs) {
       NOTATION_NODE:12
     };
   }
-}
-
-// export AMD API
-if(typeof define === 'function' && define.amd) {
-  define('jsonld', [], function() {
-    return jsonld;
-  });
-}
-// export simple browser API
-else if(_browser) {
-  window.jsonld = window.jsonld || jsonld;
 }
 
 // constants
@@ -6141,6 +6125,39 @@ else {
     }
     return uri;
   };
+}
+
+if(_nodejs) {
+  // use node URL client by default
+  jsonld.useUrlClient('node');
+}
+
+// end of jsonld API factory
+return jsonld;
+};
+
+// external APIs:
+
+// used to generate a new jsonld API instance
+var factory = function() {
+  return wrapper({});
+};
+// the shared global jsonld API instance
+wrapper(factory);
+
+// export nodejs API
+if(_nodejs) {
+  module.exports = factory;
+}
+// export AMD API
+if(typeof define === 'function' && define.amd) {
+  define('jsonld', [], function() {
+    return factory;
+  });
+}
+// export simple browser API
+else if(_browser) {
+  window.jsonld = window.jsonld || factory;
 }
 
 })();
