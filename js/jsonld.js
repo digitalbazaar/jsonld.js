@@ -1666,7 +1666,8 @@ Processor.prototype.expand = function(
     }
 
     // expand the active property
-    var expandedActiveProperty = _expandIri(activeCtx, activeProperty);
+    var expandedActiveProperty = _expandIri(
+      activeCtx, activeProperty, {vocab: true});
 
     var rval = {};
     var keys = Object.keys(element).sort();
@@ -1908,7 +1909,7 @@ Processor.prototype.expand = function(
       else {
         // drop nodes that generate no triples
         var hasTriples = false;
-        var ignore = ['@graph', '@type', '@list'];
+        var ignore = ['@graph', '@type'];
         for(var ki = 0; !hasTriples && ki < keys.length; ++ki) {
           if(!_isKeyword(keys[ki]) || ignore.indexOf(keys[ki]) !== -1) {
             hasTriples = true;
@@ -1926,7 +1927,7 @@ Processor.prototype.expand = function(
   // drop top-level scalars that are not in lists
   if(!insideList &&
     (activeProperty === null ||
-    _expandIri(activeCtx, activeProperty) === '@graph')) {
+    _expandIri(activeCtx, activeProperty, {vocab: true}) === '@graph')) {
     return null;
   }
 
@@ -4050,7 +4051,7 @@ function _compactValue(activeCtx, activeProperty, value) {
   }
 
   // value is a subject reference
-  var expandedProperty = _expandIri(activeCtx, activeProperty);
+  var expandedProperty = _expandIri(activeCtx, activeProperty, {vocab: true});
   var type = jsonld.getContextValue(activeCtx, activeProperty, '@type');
   var compacted = _compactIri(
     activeCtx, value['@id'], null, {vocab: type === '@vocab'});
