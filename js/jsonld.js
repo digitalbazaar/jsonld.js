@@ -36,8 +36,8 @@
 (function() {
 
 // determine if in-browser or using node.js
-var _nodejs = (typeof module !== 'undefined');
-var _browser = !_nodejs;
+var _nodejs = (typeof module === 'object' && module.exports);
+var _browser = !_nodejs && window;
 
 // attaches jsonld API to the given object
 var wrapper = function(jsonld) {
@@ -6152,7 +6152,7 @@ if(_nodejs) {
   module.exports = factory;
 }
 // export AMD API
-if(typeof define === 'function' && define.amd) {
+else if(typeof define === 'function' && define.amd) {
   define('jsonld', [], function() {
     return factory;
   });
