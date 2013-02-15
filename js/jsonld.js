@@ -1906,7 +1906,7 @@ Processor.prototype.expand = function(
         rval = null;
       }
       else {
-        // drop subjects that generate no triples
+        // drop nodes that generate no triples
         var hasTriples = false;
         var ignore = ['@graph', '@type', '@list'];
         for(var ki = 0; !hasTriples && ki < keys.length; ++ki) {
@@ -3794,6 +3794,7 @@ function _selectTerm(
  * @param iri the IRI to compact.
  * @param value the value to check or null.
  * @param relativeTo options for how to compact IRIs:
+ *          base: true to resolve against the base IRI, false not to.
  *          vocab: true to split after @vocab, false not to.
  * @param parent the parent element for the value.
  *
@@ -3955,20 +3956,26 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
   }
 
   // no matching terms or curies, use @vocab if available
-  if(relativeTo.vocab && '@vocab' in activeCtx) {
-    // determine if vocab is a prefix of the iri
-    var vocab = activeCtx['@vocab'];
-    if(iri.indexOf(vocab) === 0 && iri !== vocab) {
-      // use suffix as relative iri if it is not a term in the active context
-      var suffix = iri.substr(vocab.length);
-      if(!(suffix in activeCtx.mappings)) {
-        return suffix;
+  if(relativeTo.vocab) {
+    if('@vocab' in activeCtx) {
+      // determine if vocab is a prefix of the iri
+      var vocab = activeCtx['@vocab'];
+      if(iri.indexOf(vocab) === 0 && iri !== vocab) {
+        // use suffix as relative iri if it is not a term in the active context
+        var suffix = iri.substr(vocab.length);
+        if(!(suffix in activeCtx.mappings)) {
+          return suffix;
+        }
       }
     }
   }
-
   // compact IRI relative to base
-  return _removeBase(activeCtx['@base'], iri);
+  else {
+    return _removeBase(activeCtx['@base'], iri);
+  }
+
+  // return IRI as is
+  return iri;
 }
 
 /**
