@@ -3,14 +3,14 @@
  *
  * @author Dave Longley
  *
- * Copyright (c) 2011-2012 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2011-2013 Digital Bazaar, Inc. All rights reserved.
  */
 var assert = require('assert');
 var async = require('async');
 var fs = require('fs');
 var path = require('path');
 var util = require('util');
-var jsonld = require('../js/jsonld');
+var jsonld = require('../js/jsonld')();
 
 function TestRunner() {
   // set up groups, add root group
