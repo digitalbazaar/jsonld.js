@@ -2044,11 +2044,11 @@ Processor.prototype.normalize = function(input, options, callback) {
       }
     }
     statements.push(statement);
-    var nodes = ['subject', 'object'];
+    var nodes = ['subject', 'object', 'name'];
     for(var n in nodes) {
       var node = nodes[n];
       var id = statement[node].nominalValue;
-      if(statement[node].interfaceName === 'BlankNode') {
+      if(statement[node] && statement[node].interfaceName === 'BlankNode') {
         if(id in bnodes) {
           bnodes[id].statements.push(statement);
         }
@@ -2181,10 +2181,10 @@ Processor.prototype.normalize = function(input, options, callback) {
     // update bnode names in each statement and serialize
     for(var i in statements) {
       var statement = statements[i];
-      var nodes = ['subject', 'object'];
+      var nodes = ['subject', 'object', 'name'];
       for(var n in nodes) {
         var node = nodes[n];
-        if(statement[node].interfaceName === 'BlankNode') {
+        if(statement[node] && statement[node].interfaceName === 'BlankNode') {
           statement[node].nominalValue = namer.getName(
             statement[node].nominalValue);
         }
