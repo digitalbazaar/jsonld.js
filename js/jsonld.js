@@ -756,7 +756,7 @@ jsonld.toRDF = function(input) {
 
     try {
       // output RDF statements
-      var namer = new UniqueNamer('_:t');
+      var namer = new UniqueNamer('_:b');
       new Processor().toRDF(expanded, namer, null, null, null, callback);
     }
     catch(ex) {
@@ -1928,7 +1928,7 @@ Processor.prototype.expand = function(
  */
 Processor.prototype.flatten = function(input) {
   // produce a map of all subjects and name each bnode
-  var namer = new UniqueNamer('_:t');
+  var namer = new UniqueNamer('_:b');
   var graphs = {'@default': {}};
   _createNodeMap(input, graphs, '@default', namer);
 
@@ -1987,7 +1987,7 @@ Processor.prototype.frame = function(input, frame, options) {
 
   // produce a map of all graphs and name each bnode
   // FIXME: currently uses subjects from @merged graph only
-  namer = new UniqueNamer('_:t');
+  namer = new UniqueNamer('_:b');
   _createNodeMap(input, state.graphs, '@merged', namer);
   state.subjects = state.graphs['@merged'];
 
@@ -2008,7 +2008,7 @@ Processor.prototype.normalize = function(input, options, callback) {
   // map bnodes to RDF statements
   var statements = [];
   var bnodes = {};
-  var namer = new UniqueNamer('_:t');
+  var namer = new UniqueNamer('_:b');
   new Processor().toRDF(input, namer, null, null, null, mapStatements);
 
   // maps bnodes to their statements and then start bnode naming
@@ -2144,7 +2144,7 @@ Processor.prototype.normalize = function(input, options, callback) {
         }
 
         // hash bnode paths
-        var pathNamer = new UniqueNamer('_:t');
+        var pathNamer = new UniqueNamer('_:b');
         pathNamer.getName(bnode);
         _hashPaths(bnode, bnodes, namer, pathNamer,
           function(err, result) {
@@ -4608,7 +4608,7 @@ function _removeBase(base, iri) {
 function _getInitialContext(options) {
   var namer = null;
   if(options.renameBlankNodes) {
-    namer = new UniqueNamer('_:t');
+    namer = new UniqueNamer('_:b');
   }
   var base = jsonld.url.parse(options.base || '');
   base.pathname = base.pathname || '';
@@ -4777,7 +4777,7 @@ function _getInitialContext(options) {
     rval.mappings = this.mappings;
     rval.namer = null;
     if(this.namer) {
-      rval.namer = new UniqueNamer('_:t');
+      rval.namer = new UniqueNamer('_:b');
     }
     rval.clone = this.clone;
     rval.share = this.share;
