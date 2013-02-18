@@ -874,18 +874,18 @@ jsonld.contextLoaders = {};
  * @return the jquery context loader.
  */
 jsonld.contextLoaders['jquery'] = function($, options) {
+  options = options || {};
   var cache = new jsonld.ContextCache();
   return function(url, callback) {
-    var ctx = cache.get(url);
-    if(ctx !== null) {
-      return callback(null, url, ctx);
-    }
-    options = options || {};
     if(options.secure && url.indexOf('https') !== 0) {
       return callback(new JsonLdError(
         'URL could not be dereferenced; secure mode is enabled and ' +
         'the URL\'s scheme is not "https".',
         'jsonld.InvalidUrl', {url: url}), url);
+    }
+    var ctx = cache.get(url);
+    if(ctx !== null) {
+      return callback(null, url, ctx);
     }
     $.ajax({
       url: url,
@@ -895,8 +895,10 @@ jsonld.contextLoaders['jquery'] = function($, options) {
         cache.set(url, data);
         callback(null, url, data);
       },
-      error: function(jqXHR, textStatus, errorThrown) {
-        callback(errorThrown, url);
+      error: function(jqXHR, textStatus, err) {
+        callback(new JsonLdError(
+          'URL could not be dereferenced, an error occurred.',
+          'jsonld.LoadContextError', {url: url, cause: err}), url);
       }
     });
   };
@@ -905,39 +907,79 @@ jsonld.contextLoaders['jquery'] = function($, options) {
 /**
  * The built-in node context loader.
  *
- * @param options the optionst o use:
+ * @param options the options to use:
  *          secure: require all URLs to use HTTPS.
+ *          maxRedirects: the maximum number of redirects to permit, none by
+ *            default.
  *
  * @return the node context loader.
  */
 jsonld.contextLoaders['node'] = function(options) {
+  options = options || {};
+  var maxRedirects = ('maxRedirects' in options) ? options.maxRedirects : -1;
   var request = require('request');
   var http = require('http');
   var cache = new jsonld.ContextCache();
-  return function(url, callback) {
-    var ctx = cache.get(url);
-    if(ctx !== null) {
-      return callback(null, url, ctx);
-    }
-    options = options || {};
+  function loadContext(url, redirects, callback) {
     if(options.secure && url.indexOf('https') !== 0) {
       return callback(new JsonLdError(
         'URL could not be dereferenced; secure mode is enabled and ' +
         'the URL\'s scheme is not "https".',
         'jsonld.InvalidUrl', {url: url}), url);
     }
-    request(url, function(err, res, body) {
-      if(!err && res.statusCode >= 400) {
-        var statusText = http.STATUS_CODES[res.statusCode];
-        err = new JsonLdError(
-          'URL could not be dereferenced: ' + statusText,
-          'jsonld.InvalidUrl', {url: url, httpStatusCode: res.statusCode});
+    var ctx = cache.get(url);
+    if(ctx !== null) {
+      return callback(null, url, ctx);
+    }
+    request({
+      url: url,
+      strictSSL: true,
+      followRedirect: false
+    }, function(err, res, body) {
+      // handle error
+      if(err) {
+        return callback(new JsonLdError(
+          'URL could not be dereferenced, an error occurred.',
+          'jsonld.LoadContextError', {url: url, cause: err}), url);
       }
-      if(!err) {
-        cache.set(url, body);
+      var statusText = http.STATUS_CODES[res.statusCode];
+      if(res.statusCode >= 400) {
+        return callback(new JsonLdError(
+          'URL could not be dereferenced: ' + statusText,
+          'jsonld.InvalidUrl', {url: url, httpStatusCode: res.statusCode}),
+          url);
+      }
+      // handle redirect
+      if(res.statusCode >= 300 && res.statusCode < 400 &&
+        res.headers.location) {
+        if(redirects.length === maxRedirects) {
+          return callback(new JsonLdError(
+            'URL could not be dereferenced; there were too many redirects.',
+            'jsonld.TooManyRedirects',
+            {url: url, httpStatusCode: res.statusCode, redirects: redirects}),
+            url);
+        }
+        if(redirects.indexOf(url) !== -1) {
+          return callback(new JsonLdError(
+            'URL could not be dereferenced; infinite redirection was detected.',
+            'jsonld.InfiniteRedirectDetected',
+            {url: url, httpStatusCode: res.statusCode, redirects: redirects}),
+            url);
+        }
+        redirects.push(url);
+        return loadContext(res.headers.location, redirects, callback);
+      }
+      // cache for each redirected URL
+      redirects.push(url);
+      for(var i = 0; i < redirects.length; ++i) {
+        cache.set(redirects[i], body);
       }
       callback(err, url, body);
     });
+  }
+
+  return function(url, callback) {
+    loadContext(url, [], callback);
   };
 };
 
@@ -5210,7 +5252,7 @@ function _retrieveContextUrls(input, options, callback) {
         var _cycles = _clone(cycles);
         _cycles[url] = true;
 
-        loadContext(url, function(err, url, ctx) {
+        loadContext(url, function(err, finalUrl, ctx) {
           // short-circuit if there was an error with another URL
           if(error) {
             return;
@@ -5232,7 +5274,8 @@ function _retrieveContextUrls(input, options, callback) {
               'Derefencing a URL did not result in a valid JSON-LD object. ' +
               'Possible causes are an inaccessible URL perhaps due to ' +
               'a same-origin policy (ensure the server uses CORS if you are ' +
-              'using client-side JavaScript) or a non-JSON response.',
+              'using client-side JavaScript), too many redirects, or a ' +
+              'non-JSON response.',
               'jsonld.InvalidUrl', {url: url, cause: err});
           }
           else if(!_isObject(ctx)) {

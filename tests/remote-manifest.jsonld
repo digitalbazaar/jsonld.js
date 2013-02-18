@@ -29,5 +29,10 @@
     "name": "resolve relative URL",
     "input": "remote-0005-in.jsonld",
     "expect": "remote-0005-out.jsonld"
+  }, {
+    "@type": ["test:TestCase", "jld:ExpandTest"],
+    "name": "follow redirect",
+    "input": "remote-0006-in.jsonld",
+    "expect": "remote-0006-out.jsonld"
   }]
 }
