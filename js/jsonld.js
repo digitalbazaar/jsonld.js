@@ -56,7 +56,7 @@ var wrapper = function(jsonld) {
  *          [graph] true to always output a top-level graph (default: false).
  *          [skipExpansion] true to assume the input is expanded and skip
  *            expansion, false not to, defaults to false.
- *          [urlClient(url, callback(err, url, result))] the URL client to use.
+ *          [loadContext(url, callback(err, url, result))] the context loader.
  * @param callback(err, compacted, ctx) called once the operation completes.
  */
 jsonld.compact = function(input, ctx) {
@@ -90,8 +90,8 @@ jsonld.compact = function(input, ctx) {
   if(!('skipExpansion' in options)) {
     options.skipExpansion = false;
   }
-  if(!('urlClient' in options)) {
-    options.urlClient = jsonld.urlClient;
+  if(!('loadContext' in options)) {
+    options.loadContext = jsonld.loadContext;
   }
 
   var expand = function(input, options, callback) {
@@ -221,7 +221,7 @@ jsonld.compact = function(input, ctx) {
  *            defaults to true.
  *          [keepFreeFloatingNodes] true to keep free-floating nodes,
  *            false not to, defaults to false.
- *          [urlClient(url, callback(err, url, result))] the URL client to use.
+ *          [loadContext(url, callback(err, url, result))] the context loader.
  * @param callback(err, expanded) called once the operation completes.
  */
 jsonld.expand = function(input) {
@@ -239,8 +239,8 @@ jsonld.expand = function(input) {
   if(!('base' in options)) {
     options.base = '';
   }
-  if(!('urlClient' in options)) {
-    options.urlClient = jsonld.urlClient;
+  if(!('loadContext' in options)) {
+    options.loadContext = jsonld.loadContext;
   }
   if(!('renameBlankNodes' in options)) {
     options.renameBlankNodes = true;
@@ -289,7 +289,7 @@ jsonld.expand = function(input) {
  * @param ctx the context to use to compact the flattened output, or null.
  * @param [options] the options to use:
  *          [base] the base IRI to use.
- *          [urlClient(url, callback(err, url, result))] the URL client to use.
+ *          [loadContext(url, callback(err, url, result))] the context loader.
  * @param callback(err, flattened) called once the operation completes.
  */
 jsonld.flatten = function(input, ctx, options, callback) {
@@ -303,8 +303,8 @@ jsonld.flatten = function(input, ctx, options, callback) {
   if(!('base' in options)) {
     options.base = '';
   }
-  if(!('urlClient' in options)) {
-    options.urlClient = jsonld.urlClient;
+  if(!('loadContext' in options)) {
+    options.loadContext = jsonld.loadContext;
   }
 
   // expand input
@@ -352,7 +352,7 @@ jsonld.flatten = function(input, ctx, options, callback) {
  *          [explicit] default @explicit flag (default: false).
  *          [omitDefault] default @omitDefault flag (default: false).
  *          [optimize] optimize when compacting (default: false).
- *          [urlClient(url, callback(err, url, result))] the URL client to use.
+ *          [loadContext(url, callback(err, url, result))] the context loader.
  * @param callback(err, framed) called once the operation completes.
  */
 jsonld.frame = function(input, frame) {
@@ -369,8 +369,8 @@ jsonld.frame = function(input, frame) {
   if(!('base' in options)) {
     options.base = '';
   }
-  if(!('urlClient' in options)) {
-    options.urlClient = jsonld.urlClient;
+  if(!('loadContext' in options)) {
+    options.loadContext = jsonld.loadContext;
   }
   if(!('embed' in options)) {
     options.embed = true;
@@ -434,7 +434,7 @@ jsonld.frame = function(input, frame) {
  * @param ctx the JSON-LD context to apply.
  * @param [options] the framing options.
  *          [base] the base IRI to use.
- *          [urlClient(url, callback(err, url, result))] the URL client to use.
+ *          [loadContext(url, callback(err, url, result))] the context loader.
  * @param callback(err, objectified) called once the operation completes.
  */
 jsonld.objectify = function(input, ctx) {
@@ -451,8 +451,8 @@ jsonld.objectify = function(input, ctx) {
   if(!('base' in options)) {
     options.base = '';
   }
-  if(!('urlClient' in options)) {
-    options.urlClient = jsonld.urlClient;
+  if(!('loadContext' in options)) {
+    options.loadContext = jsonld.loadContext;
   }
 
   // expand input
@@ -567,7 +567,7 @@ jsonld.objectify = function(input, ctx) {
  * @param [options] the options to use:
  *          [format] the format if output is a string:
  *            'application/nquads' for N-Quads.
- *          [urlClient(url, callback(err, url, result))] the URL client to use.
+ *          [loadContext(url, callback(err, url, result))] the context loader.
  * @param callback(err, normalized) called once the operation completes.
  */
 jsonld.normalize = function(input, callback) {
@@ -585,8 +585,8 @@ jsonld.normalize = function(input, callback) {
   if(!('base' in options)) {
     options.base = '';
   }
-  if(!('urlClient' in options)) {
-    options.urlClient = jsonld.urlClient;
+  if(!('loadContext' in options)) {
+    options.loadContext = jsonld.loadContext;
   }
 
   // expand input then do normalization
@@ -672,7 +672,7 @@ jsonld.fromRDF = function(statements) {
  *          [collate] true to output all statements at once (in an array
  *            or as a formatted string), false to output one statement at
  *            a time (default).
- *          [urlClient(url, callback(err, url, result))] the URL client to use.
+ *          [loadContext(url, callback(err, url, result))] the context loader.
  * @param callback(err, statement) called when a statement is output, with the
  *          last statement as null.
  */
@@ -691,8 +691,8 @@ jsonld.toRDF = function(input) {
   if(!('base' in options)) {
     options.base = '';
   }
-  if(!('urlClient' in options)) {
-    options.urlClient = jsonld.urlClient;
+  if(!('loadContext' in options)) {
+    options.loadContext = jsonld.loadContext;
   }
   if(!('collate' in options)) {
     options.collate = false;
@@ -775,11 +775,11 @@ jsonld.relabelBlankNodes = function(input) {
 };
 
 /**
- * The default URL client for external @context URLs.
+ * The default context loader for external @context URLs.
  *
- * @param urlClient(url, callback(err, url, result)) the URL client to use.
+ * @param loadContext(url, callback(err, url, result)) the context loader.
  */
-jsonld.urlClient = function(url, callback) {
+jsonld.loadContext = function(url, callback) {
   return callback(new JsonLdError(
     'Could not retrieve @context URL. URL derefencing not implemented.',
     'jsonld.ContextUrlError'), url);
@@ -860,20 +860,20 @@ jsonld.cache = {
 };
 
 /**
- * URL clients.
+ * Context loaders.
  */
-jsonld.urlClients = {};
+jsonld.contextLoaders = {};
 
 /**
- * The built-in jquery URL client.
+ * The built-in jquery context loader.
  *
  * @param $ the jquery instance to use.
  * @param options the options to use:
  *          secure: require all URLs to use HTTPS.
  *
- * @return the jquery URL client.
+ * @return the jquery context loader.
  */
-jsonld.urlClients['jquery'] = function($, options) {
+jsonld.contextLoaders['jquery'] = function($, options) {
   var cache = new jsonld.ContextCache();
   return function(url, callback) {
     var ctx = cache.get(url);
@@ -903,14 +903,14 @@ jsonld.urlClients['jquery'] = function($, options) {
 };
 
 /**
- * The built-in node URL client.
+ * The built-in node context loader.
  *
  * @param options the optionst o use:
  *          secure: require all URLs to use HTTPS.
  *
- * @return the node URL client.
+ * @return the node context loader.
  */
-jsonld.urlClients['node'] = function(options) {
+jsonld.contextLoaders['node'] = function(options) {
   var request = require('request');
   var http = require('http');
   var cache = new jsonld.ContextCache();
@@ -942,25 +942,25 @@ jsonld.urlClients['node'] = function(options) {
 };
 
 /**
- * Assigns the default URL client for external @context URLs to a built-in
+ * Assigns the default context loader for external @context URLs to a built-in
  * default. Supported types currently include: 'jquery'.
  *
- * To use the jquery URL client, the 'data' parameter must be a reference
+ * To use the jquery context loader, the 'data' parameter must be a reference
  * to the main jquery object.
  *
  * @param type the type to set.
- * @param [params] the parameters required to use the client.
+ * @param [params] the parameters required to use the context loader.
  */
-jsonld.useUrlClient = function(type) {
-  if(!(type in jsonld.urlClients)) {
+jsonld.useContextLoader = function(type) {
+  if(!(type in jsonld.contextLoaders)) {
     throw new JsonLdError(
-      'Unknown @context URL client type: "' + type + '"',
-      'jsonld.UnknownUrlClient',
+      'Unknown @context loader type: "' + type + '"',
+      'jsonld.UnknownContextLoader',
       {type: type});
   }
 
-  // set URL client
-  jsonld.urlClient = jsonld.urlClients[type].apply(
+  // set context loader
+  jsonld.loadContext = jsonld.contextLoaders[type].apply(
     jsonld, Array.prototype.slice.call(arguments, 1));
 };
 
@@ -971,7 +971,7 @@ jsonld.useUrlClient = function(type) {
  * @param activeCtx the current active context.
  * @param localCtx the local context to process.
  * @param [options] the options to use:
- *          [urlClient(url, callback(err, url, result))] the URL client to use.
+ *          [loadContext(url, callback(err, url, result))] the context loader.
  * @param callback(err, ctx) called once the operation completes.
  */
 jsonld.processContext = function(activeCtx, localCtx) {
@@ -988,8 +988,8 @@ jsonld.processContext = function(activeCtx, localCtx) {
   if(!('base' in options)) {
     options.base = '';
   }
-  if(!('urlClient' in options)) {
-    options.urlClient = jsonld.urlClient;
+  if(!('loadContext' in options)) {
+    options.loadContext = jsonld.loadContext;
   }
 
   // return initial context early for null context
@@ -5145,13 +5145,13 @@ function _findContextUrls(input, urls, replace, base) {
 }
 
 /**
- * Retrieves external @context URLs using the given URL client. Each
+ * Retrieves external @context URLs using the given context loader. Every
  * instance of @context in the input that refers to a URL will be replaced
  * with the JSON @context found at that URL.
  *
  * @param input the JSON-LD input with possible contexts.
  * @param options the options to use:
- *          urlClient(url, callback(err, url, result)) the URL client to use.
+ *          loadContext(url, callback(err, url, result)) the context loader.
  * @param callback(err, input) called once the operation completes.
  */
 function _retrieveContextUrls(input, options, callback) {
@@ -5159,9 +5159,9 @@ function _retrieveContextUrls(input, options, callback) {
   var error = null;
   var regex = /(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
 
-  // recursive URL client
-  var urlClient = options.urlClient;
-  var retrieve = function(input, cycles, urlClient, base, callback) {
+  // recursive context loader
+  var loadContext = options.loadContext;
+  var retrieve = function(input, cycles, loadContext, base, callback) {
     if(Object.keys(cycles).length > MAX_CONTEXT_URLS) {
       error = new JsonLdError(
         'Maximum number of @context URLs exceeded.',
@@ -5213,7 +5213,7 @@ function _retrieveContextUrls(input, options, callback) {
         var _cycles = _clone(cycles);
         _cycles[url] = true;
 
-        urlClient(url, function(err, url, ctx) {
+        loadContext(url, function(err, url, ctx) {
           // short-circuit if there was an error with another URL
           if(error) {
             return;
@@ -5255,7 +5255,7 @@ function _retrieveContextUrls(input, options, callback) {
           }
 
           // recurse
-          retrieve(ctx, _cycles, urlClient, url, function(err, ctx) {
+          retrieve(ctx, _cycles, loadContext, url, function(err, ctx) {
             if(err) {
               return callback(err);
             }
@@ -5269,7 +5269,7 @@ function _retrieveContextUrls(input, options, callback) {
       }(queue[i]));
     }
   };
-  retrieve(input, {}, urlClient, options.base, callback);
+  retrieve(input, {}, loadContext, options.base, callback);
 }
 
 // define js 1.8.5 Object.keys method if not present
@@ -6128,8 +6128,8 @@ else {
 }
 
 if(_nodejs) {
-  // use node URL client by default
-  jsonld.useUrlClient('node');
+  // use node context loader by default
+  jsonld.useContextLoader('node');
 }
 
 // end of jsonld API factory
