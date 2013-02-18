@@ -4691,9 +4691,6 @@ function _getInitialContext(options) {
             '@language': {},
             '@type': {}
           };
-          entry[container]['@language'][defaultLanguage] = {
-            term: null, propertyGenerators: []
-          };
         }
         entry = entry[container];
 
