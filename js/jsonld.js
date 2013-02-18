@@ -3880,7 +3880,7 @@ function _compactIri(activeCtx, iri, value, relativeTo, parent) {
     }
     else {
       if(_isValue(value)) {
-        if('@language' in value) {
+        if('@language' in value && !('@index' in value)) {
           containers.push('@language');
           typeOrLanguageValue = value['@language'];
         }
