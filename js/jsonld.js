@@ -2650,6 +2650,9 @@ function _graphToRDF(graph, namer) {
       }
 
       var items = node[property];
+      if(property === '@type') {
+        property = RDF_TYPE;
+      }
       for(var i = 0; i < items.length; ++i) {
         var item = items[i];
 
@@ -2666,7 +2669,7 @@ function _graphToRDF(graph, namer) {
 
         // RDF predicate
         var predicate = {type: 'IRI'};
-        predicate.value = (property === '@type') ? RDF_TYPE : property;
+        predicate.value = property;
 
         // convert @list to triples
         if(_isList(item)) {
