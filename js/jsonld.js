@@ -2645,14 +2645,14 @@ function _graphToRDF(graph, namer) {
   for(var id in graph) {
     var node = graph[id];
     for(var property in node) {
-      if(property !== '@type' && _isKeyword(property)) {
-        continue;
-      }
-
       var items = node[property];
       if(property === '@type') {
         property = RDF_TYPE;
       }
+      else if(_isKeyword(property)) {
+        continue;
+      }
+
       for(var i = 0; i < items.length; ++i) {
         var item = items[i];
 
