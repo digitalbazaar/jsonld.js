@@ -558,28 +558,24 @@ jsonld.objectify = function(input, ctx) {
 };
 
 /**
- * Performs RDF normalization on the given JSON-LD input. The output is
- * a sorted array of RDF statements unless the 'format' option is used.
+ * Performs RDF dataset normalization on the given JSON-LD input. The output
+ * is an RDF dataset unless the 'format' option is used.
  *
  * @param input the JSON-LD input to normalize.
  * @param [options] the options to use:
  *          [base] the base IRI to use.
- * @param [options] the options to use:
  *          [format] the format if output is a string:
  *            'application/nquads' for N-Quads.
  *          [loadContext(url, callback(err, url, result))] the context loader.
  * @param callback(err, normalized) called once the operation completes.
  */
-jsonld.normalize = function(input, callback) {
+jsonld.normalize = function(input, options, callback) {
   // get arguments
-  var options = {};
-  var callback;
-  var callbackArg = 1;
-  if(arguments.length > 2) {
-    options = arguments[1] || {};
-    callbackArg += 1;
+  if(typeof options === 'function') {
+    callback = options;
+    options = {};
   }
-  callback = arguments[callbackArg];
+  options = options || {};
 
   // set default options
   if(!('base' in options)) {
@@ -589,25 +585,26 @@ jsonld.normalize = function(input, callback) {
     options.loadContext = jsonld.loadContext;
   }
 
-  // expand input then do normalization
-  jsonld.expand(input, options, function(err, expanded) {
+  // convert to RDF dataset then do normalization
+  var opts = _clone(options);
+  delete opts.format;
+  jsonld.toRDF(input, opts, function(err, dataset) {
     if(err) {
       return callback(new JsonLdError(
-        'Could not expand input before normalization.',
+        'Could not convert input to RDF dataset before normalization.',
         'jsonld.NormalizeError', {cause: err}));
     }
 
     // do normalization
-    new Processor().normalize(expanded, options, callback);
+    new Processor().normalize(dataset, options, callback);
   });
 };
 
 /**
- * Converts RDF statements into JSON-LD.
+ * Converts an RDF dataset to JSON-LD.
  *
- * @param statements a serialized string of RDF statements in a format
- *          specified by the format option or an array of the RDF statements
- *          to convert.
+ * @param dataset a serialized string of RDF in a format specified by the
+ *          format option or an RDF dataset to convert.
  * @param [options] the options to use:
  *          [format] the format if input is not an array:
  *            'application/nquads' for N-Quads (default).
@@ -618,16 +615,13 @@ jsonld.normalize = function(input, callback) {
  *
  * @param callback(err, output) called once the operation completes.
  */
-jsonld.fromRDF = function(statements) {
+jsonld.fromRDF = function(dataset, options, callback) {
   // get arguments
-  var options = {};
-  var callback;
-  var callbackArg = 1;
-  if(arguments.length > 2) {
-    options = arguments[1] || {};
-    callbackArg += 1;
+  if(typeof options === 'function') {
+    callback = options;
+    options = {};
   }
-  callback = arguments[callbackArg];
+  options = options || {};
 
   // set default options
   if(!('useRdfType' in options)) {
@@ -637,7 +631,7 @@ jsonld.fromRDF = function(statements) {
     options.useNativeTypes = true;
   }
 
-  if(!('format' in options) && !_isArray(statements)) {
+  if(!('format' in options) && _isString(dataset)) {
     // set default format to nquads
     if(!('format' in options)) {
       options.format = 'application/nquads';
@@ -645,10 +639,10 @@ jsonld.fromRDF = function(statements) {
   }
 
   // handle special format
-  if('format' in options) {
+  if(options.format) {
     // supported formats
     if(options.format in _rdfParsers) {
-      statements = _rdfParsers[options.format](statements);
+      dataset = _rdfParsers[options.format](dataset);
     }
     else {
       throw new JsonLdError(
@@ -658,34 +652,27 @@ jsonld.fromRDF = function(statements) {
   }
 
   // convert from RDF
-  new Processor().fromRDF(statements, options, callback);
+  new Processor().fromRDF(dataset, options, callback);
 };
 
 /**
- * Outputs the RDF statements found in the given JSON-LD object.
+ * Outputs the RDF dataset found in the given JSON-LD object.
  *
  * @param input the JSON-LD input.
  * @param [options] the options to use:
  *          [base] the base IRI to use.
  *          [format] the format to use to output a string:
  *            'application/nquads' for N-Quads (default).
- *          [collate] true to output all statements at once (in an array
- *            or as a formatted string), false to output one statement at
- *            a time (default).
  *          [loadContext(url, callback(err, url, result))] the context loader.
- * @param callback(err, statement) called when a statement is output, with the
- *          last statement as null.
+ * @param callback(err, dataset) called once the operation completes.
  */
-jsonld.toRDF = function(input) {
+jsonld.toRDF = function(input, options, callback) {
   // get arguments
-  var options = {};
-  var callback;
-  var callbackArg = 1;
-  if(arguments.length > 2) {
-    options = arguments[1] || {};
-    callbackArg += 1;
+  if(typeof options === 'function') {
+    callback = options;
+    options = {};
   }
-  callback = arguments[callbackArg];
+  options = options || {};
 
   // set default options
   if(!('base' in options)) {
@@ -693,57 +680,6 @@ jsonld.toRDF = function(input) {
   }
   if(!('loadContext' in options)) {
     options.loadContext = jsonld.loadContext;
-  }
-  if(!('collate' in options)) {
-    options.collate = false;
-  }
-
-  if(options.collate) {
-    // output array/string of statements all at once
-    var statements = [];
-    var collateCallback = callback;
-    callback = function(err, statement) {
-      if(err) {
-        return collateCallback(err);
-      }
-      if(statement !== null) {
-        // do not allow duplicate statements
-        for(var i in statements) {
-          if(_compareRdfStatements(statements[i], statement)) {
-            return;
-          }
-        }
-        statements.push(statement);
-      }
-      else {
-        // if outputting a string, sort and join statements
-        if('format' in options) {
-          statements = statements.sort().join('');
-        }
-        collateCallback(null, statements);
-      }
-    };
-  }
-
-  if('format' in options) {
-    // supported formats
-    if(options.format === 'application/nquads') {
-      var statementCallback = callback;
-      callback = function(err, statement) {
-        if(err) {
-          return statementCallback(err);
-        }
-        if(statement !== null) {
-          statement = _toNQuad(statement);
-        }
-        statementCallback(null, statement);
-      };
-    }
-    else {
-      throw new JsonLdError(
-        'Unknown output format.',
-        'jsonld.UnknownFormat', {format: options.format});
-    }
   }
 
   // expand input
@@ -754,10 +690,23 @@ jsonld.toRDF = function(input) {
         'jsonld.RdfError', {cause: err}));
     }
 
+    // create node map for default graph (and any named graphs)
+    var namer = new UniqueNamer('_:b');
+    var nodeMap = {'@default': {}};
+    _createNodeMap(expanded, nodeMap, '@default', namer);
+
     try {
-      // output RDF statements
-      var namer = new UniqueNamer('_:b');
-      new Processor().toRDF(expanded, namer, null, null, null, callback);
+      // output RDF dataset
+      var dataset = Processor.prototype.toRDF(nodeMap);
+      if(options.format) {
+        if(options.format === 'application/nquads') {
+          return callback(null, _toNQuads(dataset));
+        }
+        throw new JsonLdError(
+          'Unknown output format.',
+          'jsonld.UnknownFormat', {format: options.format});
+      }
+      callback(null, dataset);
     }
     catch(ex) {
       callback(ex);
@@ -786,6 +735,23 @@ jsonld.loadContext = function(url, callback) {
 };
 
 /* Utility API */
+
+// define nextTick
+if(typeof process === 'undefined' || !process.nextTick) {
+  if(typeof setImmediate === 'function') {
+    jsonld.nextTick = function(callback) {
+      setImmediate(callback);
+    };
+  }
+  else {
+    jsonld.nextTick = function(callback) {
+      setTimeout(callback, 0);
+    };
+  }
+}
+else {
+  jsonld.nextTick = process.nextTick;
+}
 
 /**
  * Creates a simple context cache.
@@ -1317,23 +1283,23 @@ jsonld.getContextValue = function(ctx, key, type) {
   return rval;
 };
 
-/** Registered RDF Statement parsers hashed by content-type. */
+/** Registered RDF dataset parsers hashed by content-type. */
 var _rdfParsers = {};
 
 /**
- * Registers an RDF Statement parser by content-type, for use with
+ * Registers an RDF dataset parser by content-type, for use with
  * jsonld.fromRDF.
  *
  * @param contentType the content-type for the parser.
  * @param parser(input) the parser function (takes a string as a parameter
- *          and returns an array of RDF statements).
+ *          and returns an RDF dataset).
  */
 jsonld.registerRDFParser = function(contentType, parser) {
   _rdfParsers[contentType] = parser;
 };
 
 /**
- * Unregisters an RDF Statement parser by content-type.
+ * Unregisters an RDF dataset parser by content-type.
  *
  * @param contentType the content-type for the parser.
  */
@@ -1378,6 +1344,7 @@ var RDF_TYPE = RDF + 'type';
 var RDF_PLAIN_LITERAL = RDF + 'PlainLiteral';
 var RDF_XML_LITERAL = RDF + 'XMLLiteral';
 var RDF_OBJECT = RDF + 'object';
+var RDF_LANGSTRING = RDF + 'langString';
 
 var MAX_CONTEXT_URLS = 10;
 
@@ -2040,50 +2007,52 @@ Processor.prototype.frame = function(input, frame, options) {
 };
 
 /**
- * Performs RDF normalization on the given JSON-LD input.
+ * Performs normalization on the given RDF dataset.
  *
- * @param input the expanded JSON-LD object to normalize.
+ * @param dataset the RDF dataset to normalize.
  * @param options the normalization options.
  * @param callback(err, normalized) called once the operation completes.
  */
-Processor.prototype.normalize = function(input, options, callback) {
-  // map bnodes to RDF statements
-  var statements = [];
+Processor.prototype.normalize = function(dataset, options, callback) {
+  // create quads and map bnodes to their associated quads
+  var quads = [];
   var bnodes = {};
-  var namer = new UniqueNamer('_:b');
-  new Processor().toRDF(input, namer, null, null, null, mapStatements);
-
-  // maps bnodes to their statements and then start bnode naming
-  function mapStatements(err, statement) {
-    if(err) {
-      return callback(err);
+  for(var graphName in dataset) {
+    var triples = dataset[graphName];
+    if(graphName === '@default') {
+      graphName = null;
     }
-    if(statement === null) {
-      // mapping complete, start canonical naming
-      namer = new UniqueNamer('_:c14n');
-      return hashBlankNodes(Object.keys(bnodes));
-    }
-    // add statement and do mapping
-    for(var i in statements) {
-      if(_compareRdfStatements(statements[i], statement)) {
-        return;
-      }
-    }
-    statements.push(statement);
-    var nodes = ['subject', 'object', 'name'];
-    for(var n in nodes) {
-      var node = nodes[n];
-      if(statement[node] && statement[node].interfaceName === 'BlankNode') {
-        var id = statement[node].nominalValue;
-        if(id in bnodes) {
-          bnodes[id].statements.push(statement);
+    for(var ti = 0; ti < triples.length; ++ti) {
+      var quad = triples[ti];
+      if(graphName !== null) {
+        if(graphName.indexOf('_:') === 0) {
+          quad.name = {type: 'blank node', value: graphName};
         }
         else {
-          bnodes[id] = {statements: [statement]};
+          quad.name = {type: 'IRI', value: graphName};
+        }
+      }
+      quads.push(quad);
+
+      var attrs = ['subject', 'object', 'name'];
+      for(var ai = 0; ai < attrs.length; ++ai) {
+        var attr = attrs[ai];
+        if(quad[attr] && quad[attr].type === 'blank node') {
+          var id = quad[attr].value;
+          if(id in bnodes) {
+            bnodes[id].quads.push(quad);
+          }
+          else {
+            bnodes[id] = {quads: [quad]};
+          }
         }
       }
     }
   }
+
+  // mapping complete, start canonical naming
+  var namer = new UniqueNamer('_:c14n');
+  return hashBlankNodes(Object.keys(bnodes));
 
   // generates unique and duplicate hashes for bnodes
   function hashBlankNodes(unnamed) {
@@ -2091,8 +2060,8 @@ Processor.prototype.normalize = function(input, options, callback) {
     var duplicates = {};
     var unique = {};
 
-    // hash statements for each unnamed bnode
-    setTimeout(function() {hashUnnamed(0);}, 0);
+    // hash quads for each unnamed bnode
+    jsonld.nextTick(function() {hashUnnamed(0);});
     function hashUnnamed(i) {
       if(i === unnamed.length) {
         // done, name blank nodes
@@ -2101,7 +2070,7 @@ Processor.prototype.normalize = function(input, options, callback) {
 
       // hash unnamed bnode
       var bnode = unnamed[i];
-      var hash = _hashStatements(bnode, bnodes, namer);
+      var hash = _hashQuads(bnode, bnodes, namer);
 
       // store hash as unique or a duplicate
       if(hash in duplicates) {
@@ -2119,7 +2088,7 @@ Processor.prototype.normalize = function(input, options, callback) {
       }
 
       // hash next unnamed bnode
-      setTimeout(function() {hashUnnamed(i + 1);}, 0);
+      jsonld.nextTick(function() {hashUnnamed(i + 1);});
     }
   }
 
@@ -2128,7 +2097,7 @@ Processor.prototype.normalize = function(input, options, callback) {
     // name unique bnodes in sorted hash order
     var named = false;
     var hashes = Object.keys(unique).sort();
-    for(var i in hashes) {
+    for(var i = 0; i < hashes.length; ++i) {
       var bnode = unique[hashes[i]];
       namer.getName(bnode);
       named = true;
@@ -2200,95 +2169,75 @@ Processor.prototype.normalize = function(input, options, callback) {
     }
   }
 
-  // creates the sorted array of RDF statements
+  // creates the sorted array of RDF quads
   function createArray() {
     var normalized = [];
 
-    // update bnode names in each statement and serialize
-    for(var i in statements) {
-      var statement = statements[i];
-      var nodes = ['subject', 'object', 'name'];
-      for(var n in nodes) {
-        var node = nodes[n];
-        if(statement[node] && statement[node].interfaceName === 'BlankNode' &&
-          statement[node].nominalValue.indexOf('_:c14n') !== 0) {
-          statement[node].nominalValue = namer.getName(
-            statement[node].nominalValue);
+    // update bnode names in each quad and serialize
+    for(var i = 0; i < quads.length; ++i) {
+      var quad = quads[i];
+      var attrs = ['subject', 'object', 'name'];
+      for(var ai = 0; ai < attrs.length; ++ai) {
+        var attr = attrs[ai];
+        if(quad[attr] && quad[attr].type === 'blank node' &&
+          quad[attr].value.indexOf('_:c14n') !== 0) {
+          quad[attr].value = namer.getName(quad[attr].value);
         }
       }
-      normalized.push(_toNQuad(statement));
+      normalized.push(_toNQuad(quad, quad.name ? quad.name.value : null));
     }
 
     // sort normalized output
     normalized.sort();
 
     // handle output format
-    if('format' in options) {
+    if(options.format) {
       if(options.format === 'application/nquads') {
         return callback(null, normalized.join(''));
       }
-      else {
-        return callback(new JsonLdError(
-          'Unknown output format.',
-          'jsonld.UnknownFormat', {format: options.format}));
-      }
+      return callback(new JsonLdError(
+        'Unknown output format.',
+        'jsonld.UnknownFormat', {format: options.format}));
     }
 
-    // output parsed RDF statements
+    // output RDF dataset
     callback(null, _parseNQuads(normalized.join('')));
   }
 };
 
 /**
- * Converts RDF statements into JSON-LD.
+ * Converts an RDF dataset to JSON-LD.
  *
- * @param statements the RDF statements.
+ * @param dataset the RDF dataset.
  * @param options the RDF conversion options.
  * @param callback(err, output) called once the operation completes.
  */
-Processor.prototype.fromRDF = function(statements, options, callback) {
+Processor.prototype.fromRDF = function(dataset, options, callback) {
   // prepare graph map (maps graph name => subjects, lists)
   var defaultGraph = {subjects: {}, listMap: {}};
-  var graphs = {'': defaultGraph};
+  var graphs = {'@default': defaultGraph};
 
-  for(var i in statements) {
-    var statement = statements[i];
+  for(var graphName in dataset) {
+    var triples = dataset[graphName];
+    for(var ti = 0; ti < triples.length; ++ti) {
+      var triple = triples[ti];
 
-    // get subject, property, object, and graph name (default to '')
-    var s = statement.subject.nominalValue;
-    var p = statement.property.nominalValue;
-    var o = statement.object;
-    var name = ('name' in statement) ? statement.name.nominalValue : '';
+      // get subject, predicate, object
+      var s = triple.subject.value;
+      var p = triple.predicate.value;
+      var o = triple.object;
 
-    // create a graph entry as needed
-    var graph;
-    if(!(name in graphs)) {
-      graph = graphs[name] = {subjects: {}, listMap: {}};
-    }
-    else {
-      graph = graphs[name];
-    }
-
-    // handle element in @list
-    if(p === RDF_FIRST) {
-      // create list entry as needed
-      var listMap = graph.listMap;
-      var entry;
-      if(!(s in listMap)) {
-        entry = listMap[s] = {};
+      // create a graph entry as needed
+      var graph;
+      if(!(graphName in graphs)) {
+        graph = graphs[graphName] = {subjects: {}, listMap: {}};
       }
       else {
-        entry = listMap[s];
+        graph = graphs[graphName];
       }
-      // set object value
-      entry.first = _rdfToObject(o, options.useNativeTypes);
-      continue;
-    }
 
-    // handle other element in @list
-    if(p === RDF_REST) {
-      // set next in list
-      if(o.interfaceName === 'BlankNode') {
+      // handle element in @list
+      if(p === RDF_FIRST) {
         // create list entry as needed
         var listMap = graph.listMap;
         var entry;
@@ -2298,56 +2247,75 @@ Processor.prototype.fromRDF = function(statements, options, callback) {
         else {
           entry = listMap[s];
         }
-        entry.rest = o.nominalValue;
+        // set object value
+        entry.first = _RDFToObject(o, options.useNativeTypes);
+        continue;
       }
-      continue;
-    }
 
-    // add graph subject to default graph as needed
-    if(name !== '' && !(name in defaultGraph.subjects)) {
-      defaultGraph.subjects[name] = {'@id': name};
-    }
-
-    // add subject to graph as needed
-    var subjects = graph.subjects;
-    var value;
-    if(!(s in subjects)) {
-      value = subjects[s] = {'@id': s};
-    }
-    // use existing subject value
-    else {
-      value = subjects[s];
-    }
-
-    // convert to @type unless options indicate to treat rdf:type as property
-    if(p === RDF_TYPE && !options.useRdfType) {
-      // add value of object as @type
-      jsonld.addValue(value, '@type', o.nominalValue, {propertyIsArray: true});
-    }
-    else {
-      // add property to value as needed
-      var object = _rdfToObject(o, options.useNativeTypes);
-      jsonld.addValue(value, p, object, {propertyIsArray: true});
-
-      // a bnode might be the beginning of a list, so add it to the list map
-      if(o.interfaceName === 'BlankNode') {
-        var id = object['@id'];
-        var listMap = graph.listMap;
-        var entry;
-        if(!(id in listMap)) {
-          entry = listMap[id] = {};
+      // handle other element in @list
+      if(p === RDF_REST) {
+        // set next in list
+        if(o.type === 'blank node') {
+          // create list entry as needed
+          var listMap = graph.listMap;
+          var entry;
+          if(!(s in listMap)) {
+            entry = listMap[s] = {};
+          }
+          else {
+            entry = listMap[s];
+          }
+          entry.rest = o.value;
         }
-        else {
-          entry = listMap[id];
+        continue;
+      }
+
+      // add graph subject to default graph as needed
+      if(graphName !== '@default' && !(graphName in defaultGraph.subjects)) {
+        defaultGraph.subjects[graphName] = {'@id': graphName};
+      }
+
+      // add subject to graph as needed
+      var subjects = graph.subjects;
+      var value;
+      if(!(s in subjects)) {
+        value = subjects[s] = {'@id': s};
+      }
+      // use existing subject value
+      else {
+        value = subjects[s];
+      }
+
+      // convert to @type unless options indicate to treat rdf:type as property
+      if(p === RDF_TYPE && !options.useRdfType) {
+        // add value of object as @type
+        jsonld.addValue(value, '@type', o.value, {propertyIsArray: true});
+      }
+      else {
+        // add property to value as needed
+        var object = _RDFToObject(o, options.useNativeTypes);
+        jsonld.addValue(value, p, object, {propertyIsArray: true});
+
+        // a bnode might be the beginning of a list, so add it to the list map
+        if(o.type === 'blank node') {
+          var id = object['@id'];
+          var listMap = graph.listMap;
+          var entry;
+          if(!(id in listMap)) {
+            entry = listMap[id] = {};
+          }
+          else {
+            entry = listMap[id];
+          }
+          entry.head = object;
         }
-        entry.head = object;
       }
     }
   }
 
   // build @lists
-  for(var name in graphs) {
-    var graph = graphs[name];
+  for(var graphName in graphs) {
+    var graph = graphs[graphName];
 
     // find list head
     var listMap = graph.listMap;
@@ -2398,20 +2366,23 @@ Processor.prototype.fromRDF = function(statements, options, callback) {
 };
 
 /**
- * Outputs the RDF statements found in the given JSON-LD element.
+ * Adds RDF triples for each graph in the given node map to an RDF dataset.
  *
- * @param element the JSON-LD element.
- * @param namer the UniqueNamer for assigning bnode names.
- * @param subject the active subject.
- * @param property the active property.
- * @param graph the graph name.
- * @param callback(err, statement) called when a statement is output, with the
- *          last statement as null.
+ * @param nodeMap the node map.
+ *
+ * @return the RDF dataset.
  */
-Processor.prototype.toRDF = function(
-  element, namer, subject, property, graph, callback) {
-  _toRDF(element, namer, subject, property, graph, callback);
-  callback(null, null);
+Processor.prototype.toRDF = function(nodeMap) {
+  var namer = new UniqueNamer('_:b');
+  var dataset = {};
+  for(var graphName in nodeMap) {
+    var graph = nodeMap[graphName];
+    if(graphName.indexOf('_:') === 0) {
+      graphName = namer.getName(graphName);
+    }
+    dataset[graphName] = _graphToRDF(graph, namer);
+  }
+  return dataset;
 };
 
 /**
@@ -2661,181 +2632,179 @@ function _expandValue(activeCtx, activeProperty, value) {
 }
 
 /**
- * Recursively outputs the RDF statements found in the given JSON-LD element.
+ * Creates an array of RDF triples for the given graph.
  *
- * @param element the JSON-LD element.
- * @param namer the UniqueNamer for assigning bnode names.
- * @param subject the active subject.
- * @param property the active property.
- * @param graph the graph name.
- * @param callback(err, statement) called when a statement is output, with the
- *          last statement as null.
+ * @param graph the graph to create RDF triples for.
+ * @param namer a UniqueNamer for assigning blank node names.
+ *
+ * @return the array of RDF triples for the given graph.
  */
-function _toRDF(element, namer, subject, property, graph, callback) {
-  // recurse into arrays
-  if(_isArray(element)) {
-    for(var i in element) {
-      _toRDF(element[i], namer, subject, property, graph, callback);
-    }
-    return;
-  }
+function _graphToRDF(graph, namer) {
+  var rval = [];
 
-  // element must be an rdf:type IRI (@values covered above)
-  if(_isString(element)) {
-    // emit IRI
-    var statement = {
-      subject: _clone(subject),
-      property: _clone(property),
-      object: {
-        nominalValue: element,
-        interfaceName: 'IRI'
+  for(var id in graph) {
+    var node = graph[id];
+    for(var property in node) {
+      if(property !== '@type' && _isKeyword(property)) {
+        continue;
       }
-    };
-    if(graph !== null) {
-      statement.name = graph;
-    }
-    return callback(null, statement);
-  }
 
-  // convert @list
-  if(_isList(element)) {
-    var list = _makeLinkedList(element);
-    return _toRDF(list, namer, subject, property, graph, callback);
-  }
+      var items = node[property];
+      for(var i = 0; i < items.length; ++i) {
+        var item = items[i];
 
-  // convert @value to object
-  if(_isValue(element)) {
-    var value = element['@value'];
-    var datatype = element['@type'] || null;
+        // RDF subject
+        var subject = {};
+        if(id.indexOf('_:') === 0) {
+          subject.type = 'blank node';
+          subject.value = namer.getName(id);
+        }
+        else {
+          subject.type = 'IRI';
+          subject.value = id;
+        }
 
-    // convert to XSD datatypes as appropriate
-    if(_isBoolean(value)) {
-      value = value.toString();
-      datatype = datatype || XSD_BOOLEAN;
-    }
-    else if(_isDouble(value)) {
-      // canonical double representation
-      value = value.toExponential(15).replace(/(\d)0*e\+?/, '$1E');
-      datatype = datatype || XSD_DOUBLE;
-    }
-    else if(_isNumber(value)) {
-      value = value.toFixed(0);
-      datatype = datatype || XSD_INTEGER;
-    }
+        // RDF predicate
+        var predicate = {type: 'IRI'};
+        predicate.value = (property === '@type') ? RDF_TYPE : property;
 
-    // default to xsd:string datatype
-    datatype = datatype || XSD_STRING;
-
-    var object = {
-      nominalValue: value,
-      interfaceName: 'LiteralNode',
-      datatype: {
-        nominalValue: datatype,
-        interfaceName: 'IRI'
+        // convert @list to triples
+        if(_isList(item)) {
+          _listToRDF(item['@list'], namer, subject, predicate, rval);
+        }
+        // convert value or node object to triple
+        else {
+          var object = _objectToRDF(item, namer);
+          rval.push({subject: subject, predicate: predicate, object: object});
+        }
       }
-    };
-    if('@language' in element && datatype === XSD_STRING) {
-      object.language = element['@language'];
     }
-
-    // emit literal
-    var statement = {
-      subject: _clone(subject),
-      property: _clone(property),
-      object: object
-    };
-    if(graph !== null) {
-      statement.name = graph;
-    }
-    return callback(null, statement);
   }
 
-  // Note: element must be a subject
-
-  // get subject @id (generate one if it is a bnode)
-  var isBnode = _isBlankNode(element);
-  var id = isBnode ? namer.getName(element['@id']) : element['@id'];
-
-  // create object
-  var object = {
-    nominalValue: id,
-    interfaceName: isBnode ? 'BlankNode' : 'IRI'
-  };
-
-  // emit statement if subject isn't null
-  if(subject !== null) {
-    var statement = {
-      subject: _clone(subject),
-      property: _clone(property),
-      object: _clone(object)
-    };
-    if(graph !== null) {
-      statement.name = graph;
-    }
-    callback(null, statement);
-  }
-
-  // set new active subject to object
-  subject = object;
-
-  // recurse over subject properties in order
-  var props = Object.keys(element).sort();
-  for(var pi in props) {
-    var prop = props[pi];
-    var e = element[prop];
-
-    // convert @type to rdf:type
-    if(prop === '@type') {
-      prop = RDF_TYPE;
-    }
-
-    // recurse into @graph
-    if(prop === '@graph') {
-      _toRDF(e, namer, null, null, subject, callback);
-      continue;
-    }
-
-    // skip keywords
-    if(_isKeyword(prop)) {
-      continue;
-    }
-
-    // create new active property
-    property = {
-      nominalValue: prop,
-      interfaceName: 'IRI'
-    };
-
-    // recurse into value
-    _toRDF(e, namer, subject, property, graph, callback);
-  }
+  return rval;
 }
 
 /**
- * Converts an RDF statement object to a JSON-LD object.
+ * Converts a @list value into linked list of blank node RDF triples
+ * (an RDF collection).
  *
- * @param o the RDF statement object to convert.
+ * @param list the @list value.
+ * @param namer a UniqueNamer for assigning blank node names.
+ * @param subject the subject for the head of the list.
+ * @param predicate the predicate for the head of the list.
+ * @param triples the array of triples to append to.
+ */
+function _listToRDF(list, namer, subject, predicate, triples) {
+  var first = {type: 'IRI', value: RDF_FIRST};
+  var rest = {type: 'IRI', value: RDF_REST};
+  var nil = {type: 'IRI', value: RDF_NIL};
+
+  for(var vi = 0; vi < list.length; ++vi) {
+    var value = list[vi];
+
+    var blankNode = {type: 'blank node', value: namer.getName()};
+    triples.push({subject: subject, predicate: predicate, object: blankNode});
+
+    subject = blankNode;
+    predicate = first;
+    var object = _objectToRDF(value, namer);
+    triples.push({subject: subject, predicate: predicate, object: object});
+
+    predicate = rest;
+  }
+
+  triples.push({subject: subject, predicate: predicate, object: nil});
+}
+
+/**
+ * Converts a JSON-LD value object to an RDF literal or a JSON-LD string or
+ * node object to an RDF resource.
+ *
+ * @param item the JSON-LD value or node object.
+ * @param namer the UniqueNamer to use to assign blank node names.
+ *
+ * @return the RDF literal or RDF resource.
+ */
+function _objectToRDF(item, namer) {
+  var object = {};
+
+  // convert value object to RDF
+  if(_isValue(item)) {
+    object.type = 'literal';
+    var value = item['@value'];
+    var datatype = item['@type'] || null;
+
+    // convert to XSD datatypes as appropriate
+    if(_isBoolean(value)) {
+      object.value = value.toString();
+      object.datatype = datatype || XSD_BOOLEAN;
+    }
+    else if(_isDouble(value)) {
+      // canonical double representation
+      object.value = value.toExponential(15).replace(/(\d)0*e\+?/, '$1E');
+      object.datatype = datatype || XSD_DOUBLE;
+    }
+    else if(_isNumber(value)) {
+      object.value = value.toFixed(0);
+      object.datatype = datatype || XSD_INTEGER;
+    }
+    else if('@language' in item) {
+      object.value = value;
+      object.datatype = datatype || RDF_LANGSTRING;
+      object.language = item['@language'];
+    }
+    else {
+      object.value = value;
+      object.datatype = datatype || XSD_STRING;
+    }
+  }
+  // convert string/node object to RDF
+  else {
+    var id = _isObject(item) ? item['@id'] : item;
+
+    var isBnode = (id.indexOf('_:') === 0);
+    if(isBnode) {
+      object.type = 'blank node';
+      object.value = namer.getName(id);
+    }
+    else {
+      object.type = 'IRI';
+      object.value = id;
+    }
+  }
+
+  return object;
+}
+
+/**
+ * Converts an RDF triple object to a JSON-LD object.
+ *
+ * @param o the RDF triple object to convert.
  * @param useNativeTypes true to output native types, false not to.
  *
  * @return the JSON-LD object.
  */
-function _rdfToObject(o, useNativeTypes) {
+function _RDFToObject(o, useNativeTypes) {
   // convert empty list
-  if(o.interfaceName === 'IRI' && o.nominalValue === RDF_NIL) {
+  if(o.type === 'IRI' && o.value === RDF_NIL) {
     return {'@list': []};
   }
 
   // convert IRI/BlankNode object to JSON-LD
-  if(o.interfaceName === 'IRI' || o.interfaceName === 'BlankNode') {
-    return {'@id': o.nominalValue};
+  if(o.type === 'IRI' || o.type === 'blank node') {
+    return {'@id': o.value};
   }
 
-  // convert literal object to JSON-LD
-  var rval = {'@value': o.nominalValue};
+  // convert literal to JSON-LD
+  var rval = {'@value': o.value};
 
+  // add language
+  if('language' in o) {
+    rval['@language'] = o.language;
+  }
   // add datatype
-  if('datatype' in o) {
-    var type = o.datatype.nominalValue;
+  else {
+    var type = o.datatype;
     if(useNativeTypes) {
       // use native types for certain xsd types
       if(type === XSD_BOOLEAN) {
@@ -2867,96 +2836,56 @@ function _rdfToObject(o, useNativeTypes) {
       rval['@type'] = type;
     }
   }
-  // add language
-  if('language' in o) {
-    rval['@language'] = o.language;
-  }
 
   return rval;
 }
 
 /**
- * Compares two RDF statements for equality.
+ * Compares two RDF triples for equality.
  *
- * @param s1 the first statement.
- * @param s2 the second statement.
+ * @param t1 the first triple.
+ * @param t2 the second triple.
  *
- * @return true if the statements are the same, false if not.
+ * @return true if the triples are the same, false if not.
  */
-function _compareRdfStatements(s1, s2) {
-  if(_isString(s1) || _isString(s2)) {
-    return s1 === s2;
-  }
-
-  var attrs = ['subject', 'property', 'object'];
-  for(var i in attrs) {
+function _compareRDFTriples(t1, t2) {
+  var attrs = ['subject', 'predicate', 'object'];
+  for(var i = 0; i < attrs.length; ++i) {
     var attr = attrs[i];
-    if(s1[attr].interfaceName !== s2[attr].interfaceName ||
-      s1[attr].nominalValue !== s2[attr].nominalValue) {
+    if(t1[attr].type !== t2[attr].type || t1[attr].value !== t2[attr].value) {
       return false;
     }
   }
-  if(s1.object.language !== s2.object.language) {
+  if(t1.object.language !== t2.object.language) {
     return false;
   }
-  if(('datatype' in s1.object) !== ('datatype' in s2.object)) {
-    return false;
-  }
-  if('datatype' in s1.object) {
-    if(s1.object.datatype.interfaceName !== s2.object.datatype.interfaceName ||
-      s1.object.datatype.nominalValue !== s2.object.datatype.nominalValue) {
-      return false;
-    }
-  }
-  if(s1.name !== s2.name) {
+  if(t1.object.datatype !== t2.object.datatype) {
     return false;
   }
   return true;
 }
 
 /**
- * Converts a @list value into an embedded linked list of blank nodes in
- * expanded form. The resulting array can be used as an RDF-replacement for
- * a property that used a @list.
+ * Hashes all of the quads about a blank node.
  *
- * @param value the @list value.
- *
- * @return the head of the linked list of blank nodes.
- */
-function _makeLinkedList(value) {
-  // convert @list array into embedded blank node linked list in reverse
-  var list = value['@list'];
-  var len = list.length;
-  var tail = {'@id': RDF_NIL};
-  for(var i = len - 1; i >= 0; --i) {
-    var e = {};
-    e[RDF_FIRST] = [list[i]];
-    e[RDF_REST] = [tail];
-    tail = e;
-  }
-  return tail;
-}
-
-/**
- * Hashes all of the statements about a blank node.
- *
- * @param id the ID of the bnode to hash statements for.
- * @param bnodes the mapping of bnodes to statements.
+ * @param id the ID of the bnode to hash quads for.
+ * @param bnodes the mapping of bnodes to quads.
  * @param namer the canonical bnode namer.
  *
  * @return the new hash.
  */
-function _hashStatements(id, bnodes, namer) {
+function _hashQuads(id, bnodes, namer) {
   // return cached hash
   if('hash' in bnodes[id]) {
     return bnodes[id].hash;
   }
 
-  // serialize all of bnode's statements
-  var statements = bnodes[id].statements;
+  // serialize all of bnode's quads
+  var quads = bnodes[id].quads;
   var nquads = [];
-  for(var i in statements) {
-    nquads.push(_toNQuad(statements[i], id));
+  for(var i = 0; i < quads.length; ++i) {
+    nquads.push(_toNQuad(
+      quads[i], quads[i].name ? quads[i].name.value : null, id));
   }
   // sort serialized quads
   nquads.sort();
@@ -2972,7 +2901,7 @@ function _hashStatements(id, bnodes, namer) {
  * lexicographically-least 'path' serializations.
  *
  * @param id the ID of the bnode to hash paths for.
- * @param bnodes the map of bnode statements.
+ * @param bnodes the map of bnode quads.
  * @param namer the canonical bnode namer.
  * @param pathNamer the namer used to assign names to adjacent bnodes.
  * @param callback(err, result) called once the operation completes.
@@ -2984,25 +2913,27 @@ function _hashPaths(id, bnodes, namer, pathNamer, callback) {
   // group adjacent bnodes by hash, keep properties and references separate
   var groups = {};
   var groupHashes;
-  var statements = bnodes[id].statements;
-  setTimeout(function() {groupNodes(0);}, 0);
+  var quads = bnodes[id].quads;
+  jsonld.nextTick(function() {groupNodes(0);});
   function groupNodes(i) {
-    if(i === statements.length) {
+    if(i === quads.length) {
       // done, hash groups
       groupHashes = Object.keys(groups).sort();
       return hashGroup(0);
     }
 
     // get adjacent bnode
-    var statement = statements[i];
-    var bnode = _getAdjacentBlankNodeName(statement.subject, id);
+    var quad = quads[i];
+    var bnode = _getAdjacentBlankNodeName(quad.subject, id);
     var direction = null;
     if(bnode !== null) {
+      // normal property
       direction = 'p';
     }
     else {
-      bnode = _getAdjacentBlankNodeName(statement.object, id);
+      bnode = _getAdjacentBlankNodeName(quad.object, id);
       if(bnode !== null) {
+        // reverse property
         direction = 'r';
       }
     }
@@ -3017,13 +2948,13 @@ function _hashPaths(id, bnodes, namer, pathNamer, callback) {
         name = pathNamer.getName(bnode);
       }
       else {
-        name = _hashStatements(bnode, bnodes, namer);
+        name = _hashQuads(bnode, bnodes, namer);
       }
 
       // hash direction, property, and bnode name/hash
       var md = sha1.create();
       md.update(direction);
-      md.update(statement.property.nominalValue);
+      md.update(quad.predicate.value);
       md.update(name);
       var groupHash = md.digest();
 
@@ -3036,7 +2967,7 @@ function _hashPaths(id, bnodes, namer, pathNamer, callback) {
       }
     }
 
-    setTimeout(function() {groupNodes(i + 1);}, 0);
+    jsonld.nextTick(function() {groupNodes(i + 1);});
   }
 
   // hashes a group of adjacent bnodes
@@ -3054,7 +2985,7 @@ function _hashPaths(id, bnodes, namer, pathNamer, callback) {
     var chosenPath = null;
     var chosenNamer = null;
     var permutator = new Permutator(groups[groupHash]);
-    setTimeout(function() {permutate();}, 0);
+    jsonld.nextTick(function() {permutate();});
     function permutate() {
       var permutation = permutator.next();
       var pathNamerCopy = pathNamer.clone();
@@ -3122,7 +3053,7 @@ function _hashPaths(id, bnodes, namer, pathNamer, callback) {
 
         // do next permutation
         if(permutator.hasNext()) {
-          setTimeout(function() {permutate();}, 0);
+          jsonld.nextTick(function() {permutate();});
         }
         else {
           // digest chosen path and update namer
@@ -3138,18 +3069,17 @@ function _hashPaths(id, bnodes, namer, pathNamer, callback) {
 }
 
 /**
- * A helper function that gets the blank node name from an RDF statement node
- * (subject or object). If the node is a blank node and its nominal value
+ * A helper function that gets the blank node name from an RDF quad node
+ * (subject or object). If the node is a blank node and its value
  * does not match the given blank node ID, it will be returned.
  *
- * @param node the RDF statement node.
+ * @param node the RDF quad node.
  * @param id the ID of the blank node to look next to.
  *
  * @return the adjacent blank node name or null if none was found.
  */
 function _getAdjacentBlankNodeName(node, id) {
-  return (node.interfaceName === 'BlankNode' && node.nominalValue !== id ?
-    node.nominalValue : null);
+  return (node.type === 'blank node' && node.value !== id ? node.value : null);
 }
 
 /**
@@ -5329,11 +5259,11 @@ if(!Object.keys) {
 }
 
 /**
- * Parses statements in the form of N-Quads.
+ * Parses RDF in the form of N-Quads.
  *
  * @param input the N-Quads input to parse.
  *
- * @return an array of RDF statements.
+ * @return an RDF dataset.
  */
 function _parseNQuads(input) {
   // define partial regexes
@@ -5352,20 +5282,20 @@ function _parseNQuads(input) {
   var subject = '(?:' + iri + '|' + bnode + ')' + ws;
   var property = iri + ws;
   var object = '(?:' + iri + '|' + bnode + '|' + literal + ')' + wso;
-  var graph = '(?:\\.|(?:(?:' + iri + '|' + bnode + ')' + wso + '\\.))';
+  var graphName = '(?:\\.|(?:(?:' + iri + '|' + bnode + ')' + wso + '\\.))';
 
   // full quad regex
   var quad = new RegExp(
-    '^' + wso + subject + property + object + graph + wso + '$');
+    '^' + wso + subject + property + object + graphName + wso + '$');
 
-  // build RDF statements
-  var statements = [];
+  // build RDF dataset
+  var dataset = {};
 
   // split N-Quad input into lines
   var lines = input.split(eoln);
   var lineNumber = 0;
-  for(var i in lines) {
-    var line = lines[i];
+  for(var li = 0; li < lines.length; ++li) {
+    var line = lines[li];
     lineNumber++;
 
     // skip empty lines
@@ -5381,139 +5311,185 @@ function _parseNQuads(input) {
         'jsonld.ParseError', {line: lineNumber});
     }
 
-    // create RDF statement
-    var s = {};
+    // create RDF triple
+    var triple = {};
 
     // get subject
     if(!_isUndefined(match[1])) {
-      s.subject = {nominalValue: match[1], interfaceName: 'IRI'};
+      triple.subject = {type: 'IRI', value: match[1]};
     }
     else {
-      s.subject = {nominalValue: match[2], interfaceName: 'BlankNode'};
+      triple.subject = {type: 'blank node', value: match[2]};
     }
 
-    // get property
-    s.property = {nominalValue: match[3], interfaceName: 'IRI'};
+    // get predicate
+    triple.predicate = {type: 'IRI', value: match[3]};
 
     // get object
     if(!_isUndefined(match[4])) {
-      s.object = {nominalValue: match[4], interfaceName: 'IRI'};
+      triple.object = {type: 'IRI', value: match[4]};
     }
     else if(!_isUndefined(match[5])) {
-      s.object = {nominalValue: match[5], interfaceName: 'BlankNode'};
+      triple.object = {type: 'blank node', value: match[5]};
     }
     else {
+      triple.object = {type: 'literal'};
+      if(!_isUndefined(match[7])) {
+        triple.object.datatype = match[7];
+      }
+      else if(!_isUndefined(match[8])) {
+        triple.object.datatype = RDF_LANGSTRING;
+        triple.object.language = match[8];
+      }
+      else {
+        triple.object.datatype = XSD_STRING;
+      }
       var unescaped = match[6]
         .replace(/\\"/g, '"')
         .replace(/\\t/g, '\t')
         .replace(/\\n/g, '\n')
         .replace(/\\r/g, '\r')
         .replace(/\\\\/g, '\\');
-      s.object = {nominalValue: unescaped, interfaceName: 'LiteralNode'};
-      if(!_isUndefined(match[7])) {
-        s.object.datatype = {nominalValue: match[7], interfaceName: 'IRI'};
-      }
-      else if(!_isUndefined(match[8])) {
-        s.object.language = match[8];
-      }
+      triple.object.value = unescaped;
     }
 
-    // get graph
+    // get graph name
+    var name = null;
     if(!_isUndefined(match[9])) {
-      s.name = {nominalValue: match[9], interfaceName: 'IRI'};
+      name = match[9];
     }
     else if(!_isUndefined(match[10])) {
-      s.name = {nominalValue: match[10], interfaceName: 'BlankNode'};
+      name = match[10];
     }
 
-    // add unique statement
-    for(var si in statements) {
-      if(_compareRdfStatements(statements[si], s)) {
-        continue;
+    // use '@default' key for default graph in dataset
+    if(name === null) {
+      name = '@default';
+    }
+
+    // initialize graph in dataset
+    if(!(name in dataset)) {
+      dataset[name] = [triple];
+    }
+    // add triple if unique to its graph
+    else {
+      var unique = true;
+      var triples = dataset[name];
+      for(var ti = 0; unique && ti < triples.length; ++ti) {
+        if(_compareRDFTriples(triples[ti], triple)) {
+          unique = false;
+        }
+      }
+      if(unique) {
+        triples.push(triple);
       }
     }
-    statements.push(s);
   }
 
-  return statements;
+  return dataset;
 }
 
 // register the N-Quads RDF parser
 jsonld.registerRDFParser('application/nquads', _parseNQuads);
 
 /**
- * Converts an RDF statement to an N-Quad string (a single quad).
+ * Converts an RDF dataset to N-Quads.
  *
- * @param statement the RDF statement to convert.
- * @param bnode the bnode the statement is mapped to (optional, for use
- *           during normalization only).
+ * @param dataset the RDF dataset to convert.
+ *
+ * @return the N-Quads string.
+ */
+function _toNQuads(dataset) {
+  var quads = [];
+  for(var graphName in dataset) {
+    var triples = dataset[graphName];
+    for(var ti = 0; ti < triples.length; ++ti) {
+      var triple = triples[ti];
+      if(graphName === '@default') {
+        graphName = null;
+      }
+      quads.push(_toNQuad(triple, graphName));
+    }
+  }
+  quads.sort();
+  return quads.join('');
+}
+
+/**
+ * Converts an RDF triple and graph name to an N-Quad string (a single quad).
+ *
+ * @param triple the RDF triple to convert.
+ * @param graphName the name of the graph containing the triple, null for
+ *          the default graph.
+ * @param bnode the bnode the quad is mapped to (optional, for use
+ *          during normalization only).
  *
  * @return the N-Quad string.
  */
-function _toNQuad(statement, bnode) {
-  var s = statement.subject;
-  var p = statement.property;
-  var o = statement.object;
-  var g = statement.name || null;
+function _toNQuad(triple, graphName, bnode) {
+  var s = triple.subject;
+  var p = triple.predicate;
+  var o = triple.object;
+  var g = graphName;
 
   var quad = '';
 
   // subject is an IRI or bnode
-  if(s.interfaceName === 'IRI') {
-    quad += '<' + s.nominalValue + '>';
+  if(s.type === 'IRI') {
+    quad += '<' + s.value + '>';
   }
   // normalization mode
   else if(bnode) {
-    quad += (s.nominalValue === bnode) ? '_:a' : '_:z';
+    quad += (s.value === bnode) ? '_:a' : '_:z';
   }
   // normal mode
   else {
-    quad += s.nominalValue;
+    quad += s.value;
   }
 
   // property is always an IRI
-  quad += ' <' + p.nominalValue + '> ';
+  quad += ' <' + p.value + '> ';
 
   // object is IRI, bnode, or literal
-  if(o.interfaceName === 'IRI') {
-    quad += '<' + o.nominalValue + '>';
+  if(o.type === 'IRI') {
+    quad += '<' + o.value + '>';
   }
-  else if(o.interfaceName === 'BlankNode') {
+  else if(o.type === 'blank node') {
     // normalization mode
     if(bnode) {
-      quad += (o.nominalValue === bnode) ? '_:a' : '_:z';
+      quad += (o.value === bnode) ? '_:a' : '_:z';
     }
     // normal mode
     else {
-      quad += o.nominalValue;
+      quad += o.value;
     }
   }
   else {
-    var escaped = o.nominalValue
+    var escaped = o.value
       .replace(/\\/g, '\\\\')
       .replace(/\t/g, '\\t')
       .replace(/\n/g, '\\n')
       .replace(/\r/g, '\\r')
       .replace(/\"/g, '\\"');
     quad += '"' + escaped + '"';
-    if('datatype' in o && o.datatype.nominalValue !== XSD_STRING) {
-      quad += '^^<' + o.datatype.nominalValue + '>';
-    }
-    else if('language' in o) {
+    if(o.datatype === RDF_LANGSTRING) {
       quad += '@' + o.language;
+    }
+    else if(o.datatype !== XSD_STRING) {
+      quad += '^^<' + o.datatype + '>';
     }
   }
 
   // graph
   if(g !== null) {
-    if(g.interfaceName === 'IRI') {
-      quad += ' <' + g.nominalValue + '>';
+    if(g.indexOf('_:') !== 0) {
+      quad += ' <' + g + '>';
     }
     else if(bnode) {
       quad += ' _:g';
     }
     else {
-      quad += ' ' + g.nominalValue;
+      quad += ' ' + g;
     }
   }
 
@@ -5522,17 +5498,18 @@ function _toNQuad(statement, bnode) {
 }
 
 /**
- * Parses statements found via the data object from the RDFa API.
+ * Parses the RDF dataset found via the data object from the RDFa API.
  *
  * @param data the RDFa API data object.
  *
- * @return an array of RDF statements.
+ * @return the RDF dataset.
  */
 function _parseRdfaApiData(data) {
-  var statements = [];
+  var dataset = {};
+  dataset['@default'] = [];
 
   var subjects = data.getSubjects();
-  for(var si in subjects) {
+  for(var si = 0; si < subjects.length; ++si) {
     var subject = subjects[si];
     if(subject === null) {
       continue;
@@ -5544,25 +5521,25 @@ function _parseRdfaApiData(data) {
       continue;
     }
     var predicates = triples.predicates;
-    for(var p in predicates) {
+    for(var predicate in predicates) {
       // iterate over objects
-      var objects = predicates[p].objects;
-      for(var oi in objects) {
+      var objects = predicates[predicate].objects;
+      for(var oi = 0; oi < objects.length; ++oi) {
         var object = objects[oi];
 
-        // create RDF statement
-        var s = {};
+        // create RDF triple
+        var triple = {};
 
         // add subject
         if(subject.indexOf('_:') === 0) {
-          s.subject = {nominalValue: subject, interfaceName: 'BlankNode'};
+          triple.subject = {type: 'blank node', value: subject};
         }
         else {
-          s.subject = {nominalValue: subject, interfaceName: 'IRI'};
+          triple.subject = {type: 'IRI', value: subject};
         }
 
-        // add property
-        s.property = {nominalValue: p, interfaceName: 'IRI'};
+        // add predicate
+        triple.predicate = {type: 'IRI', value: predicate};
 
         // serialize XML literal
         var value = object.value;
@@ -5584,40 +5561,42 @@ function _parseRdfaApiData(data) {
         }
 
         // add object
-        s.object = {nominalValue: value};
+        triple.object = {};
 
         // object is an IRI
         if(object.type === RDF_OBJECT) {
           if(object.value.indexOf('_:') === 0) {
-            s.object.interfaceName = 'BlankNode';
+            triple.object.type = 'blank node';
           }
           else {
-            s.object.interfaceName = 'IRI';
+            triple.object.type = 'IRI';
           }
         }
         // literal
         else {
-          s.object.interfaceName = 'LiteralNode';
+          triple.object.type = 'literal';
           if(object.type === RDF_PLAIN_LITERAL) {
             if(object.language) {
-              s.object.language = object.language;
+              triple.object.datatype = RDF_LANGSTRING;
+              triple.object.language = object.language;
+            }
+            else {
+              triple.object.datatype = XSD_STRING;
             }
           }
           else {
-            s.object.datatype = {
-              nominalValue: object.type,
-              interfaceName: 'IRI'
-            };
+            triple.object.datatype = object.type;
           }
         }
+        triple.object.value = value;
 
-        // add statement
-        statements.push(s);
+        // add triple to dataset in default graph
+        dataset['@default'].push(triple);
       }
     }
   }
 
-  return statements;
+  return dataset;
 }
 
 // register the RDFa API RDF parser
