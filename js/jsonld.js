@@ -2173,6 +2173,11 @@ Processor.prototype.normalize = function(dataset, options, callback) {
   function createArray() {
     var normalized = [];
 
+    /* Note: At this point all bnodes in the set of RDF quads have been
+     assigned canonical names, which have been stored in the 'namer' object.
+     Here each quad is updated by assigning each of its bnodes its new name
+     via the 'namer' object. */
+
     // update bnode names in each quad and serialize
     for(var i = 0; i < quads.length; ++i) {
       var quad = quads[i];
