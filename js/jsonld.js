@@ -5448,7 +5448,7 @@ function _toNQuad(triple, graphName, bnode) {
     quad += s.value;
   }
 
-  // property is always an IRI
+  // predicate is always an IRI
   quad += ' <' + p.value + '> ';
 
   // object is IRI, bnode, or literal
