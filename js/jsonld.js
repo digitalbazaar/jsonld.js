@@ -5359,18 +5359,13 @@ function _parseNQuads(input) {
       triple.object.value = unescaped;
     }
 
-    // get graph name
-    var name = null;
+    // get graph name ('@default' is used for the default graph)
+    var name = '@default';
     if(!_isUndefined(match[9])) {
       name = match[9];
     }
     else if(!_isUndefined(match[10])) {
       name = match[10];
-    }
-
-    // use '@default' key for default graph in dataset
-    if(name === null) {
-      name = '@default';
     }
 
     // initialize graph in dataset
