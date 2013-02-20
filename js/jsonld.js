@@ -2350,7 +2350,7 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
   var output = [];
   var subjects = defaultGraph.subjects;
   var ids = Object.keys(subjects).sort();
-  for(var i in ids) {
+  for(var i = 0; i < ids.length; ++i) {
     var id = ids[i];
 
     // add subject to default graph
@@ -2360,10 +2360,10 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
     // output named graph in subject @id order
     if(id in graphs) {
       var graph = subject['@graph'] = [];
-      var _subjects = graphs[id].subjects;
-      var _ids = Object.keys(_subjects).sort();
-      for(var _i in _ids) {
-        graph.push(_subjects[_ids[_i]]);
+      var subjects_ = graphs[id].subjects;
+      var ids_ = Object.keys(subjects_).sort();
+      for(var i_ = 0; i_ < ids_.length; ++i_) {
+        graph.push(subjects_[ids_[i_]]);
       }
     }
   }
