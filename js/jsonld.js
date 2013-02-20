@@ -2791,7 +2791,7 @@ function _RDFToObject(o, useNativeTypes) {
     return {'@list': []};
   }
 
-  // convert IRI/BlankNode object to JSON-LD
+  // convert IRI/blank node object to JSON-LD
   if(o.type === 'IRI' || o.type === 'blank node') {
     return {'@id': o.value};
   }
@@ -2806,8 +2806,8 @@ function _RDFToObject(o, useNativeTypes) {
   // add datatype
   else {
     var type = o.datatype;
+    // use native types for certain xsd types
     if(useNativeTypes) {
-      // use native types for certain xsd types
       if(type === XSD_BOOLEAN) {
         if(rval['@value'] === 'true') {
           rval['@value'] = true;
