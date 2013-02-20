@@ -2702,15 +2702,15 @@ function _listToRDF(list, namer, subject, predicate, triples) {
   var rest = {type: 'IRI', value: RDF_REST};
   var nil = {type: 'IRI', value: RDF_NIL};
 
-  for(var vi = 0; vi < list.length; ++vi) {
-    var value = list[vi];
+  for(var i = 0; i < list.length; ++i) {
+    var item = list[i];
 
     var blankNode = {type: 'blank node', value: namer.getName()};
     triples.push({subject: subject, predicate: predicate, object: blankNode});
 
     subject = blankNode;
     predicate = first;
-    var object = _objectToRDF(value, namer);
+    var object = _objectToRDF(item, namer);
     triples.push({subject: subject, predicate: predicate, object: object});
 
     predicate = rest;
