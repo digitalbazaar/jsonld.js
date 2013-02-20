@@ -2764,9 +2764,7 @@ function _objectToRDF(item, namer) {
   // convert string/node object to RDF
   else {
     var id = _isObject(item) ? item['@id'] : item;
-
-    var isBnode = (id.indexOf('_:') === 0);
-    if(isBnode) {
+    if(id.indexOf('_:') === 0) {
       object.type = 'blank node';
       object.value = namer.getName(id);
     }
