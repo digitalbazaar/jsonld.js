@@ -58,7 +58,6 @@ var wrapper = function(jsonld) {
  *          [skipExpansion] true to assume the input is expanded and skip
  *            expansion, false not to, defaults to false.
  *          [loadContext(url, callback(err, url, result))] the context loader.
- *          [optimize] true to optimize the compaction (default: false).
  * @param callback(err, compacted, ctx) called once the operation completes.
  */
 jsonld.compact = function(input, ctx, options, callback) {
@@ -92,9 +91,6 @@ jsonld.compact = function(input, ctx, options, callback) {
   if(!('loadContext' in options)) {
     options.loadContext = jsonld.loadContext;
   }
-  if(!('optimize' in options)) {
-    options.optimize = false;
-  }
 
   var expand = function(input, options, callback) {
     if(options.skipExpansion) {
@@ -121,11 +117,6 @@ jsonld.compact = function(input, ctx, options, callback) {
       }
 
       try {
-        // create optimize context
-        if(options.optimize) {
-          options.optimizeCtx = {};
-        }
-
         // do compaction
         var compacted = new Processor().compact(
           activeCtx, null, expanded, options);
@@ -143,7 +134,7 @@ jsonld.compact = function(input, ctx, options, callback) {
       return callback(err);
     }
 
-    if(!options.graph && _isArray(compacted)) {
+    if(options.compactArrays && !options.graph && _isArray(compacted)) {
       // simplify to a single item
       if(compacted.length === 1) {
         compacted = compacted[0];
@@ -167,10 +158,6 @@ jsonld.compact = function(input, ctx, options, callback) {
     ctx = _clone(ctx);
     if(!_isArray(ctx)) {
       ctx = [ctx];
-    }
-    // add optimize context
-    if(options.optimizeCtx) {
-      ctx.push(options.optimizeCtx);
     }
     // remove empty contexts
     var tmp = ctx;
@@ -353,7 +340,6 @@ jsonld.flatten = function(input, ctx, options, callback) {
  *          [embed] default @embed flag (default: true).
  *          [explicit] default @explicit flag (default: false).
  *          [omitDefault] default @omitDefault flag (default: false).
- *          [optimize] optimize when compacting (default: false).
  *          [loadContext(url, callback(err, url, result))] the context loader.
  * @param callback(err, framed) called once the operation completes.
  */
@@ -379,7 +365,6 @@ jsonld.frame = function(input, frame) {
   }
   options.explicit = options.explicit || false;
   options.omitDefault = options.omitDefault || false;
-  options.optimize = options.optimize || false;
 
   // preserve frame context
   var ctx = frame['@context'] || {};
