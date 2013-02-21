@@ -4735,6 +4735,12 @@ function _getInitialContext(options) {
     child.share = this.share;
     child.inverse = null;
     child.getInverse = this.getInverse;
+    if('@language' in this) {
+      child['@language'] = this['@language'];
+    }
+    if('@vocab' in this) {
+      child['@vocab'] = this['@vocab'];
+    }
     return child;
   }
 
@@ -4758,6 +4764,12 @@ function _getInitialContext(options) {
     rval.share = this.share;
     rval.inverse = this.inverse;
     rval.getInverse = this.getInverse;
+    if('@language' in this) {
+      rval['@language'] = this['@language'];
+    }
+    if('@vocab' in this) {
+      rval['@vocab'] = this['@vocab'];
+    }
     return rval;
   }
 }
