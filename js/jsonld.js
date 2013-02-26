@@ -4321,9 +4321,9 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
  * @return the expanded value.
  */
 function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
-  // nothing to expand
-  if(value === null) {
-    return null;
+  // already expanded
+  if(value === null || _isKeyword(value)) {
+    return value;
   }
 
   // define term dependency if not defined
