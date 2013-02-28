@@ -4458,10 +4458,17 @@ function _prependBase(base, iri) {
     return iri;
   }
 
+  // parse base if it is a string
   if(_isString(base)) {
     base = jsonld.url.parse(base || '');
     base.pathname = base.pathname || '';
   }
+
+  // if base is empty, do not change iri
+  if(base.href === '') {
+    return iri;
+  }
+
   var authority = (base.host || '');
   var rel = jsonld.url.parse(iri);
   rel.pathname = (rel.pathname || '');
@@ -4470,8 +4477,8 @@ function _prependBase(base, iri) {
   var path;
 
   // IRI contains authority
-  if(rel.href.indexOf('//') === 0) {
-    path = rel.href.substr(2);
+  if(rel.pathname.indexOf('//') === 0) {
+    path = rel.pathname.substr(2);
     authority = path.substr(0, path.lastIndexOf('/'));
     path = path.substr(authority.length);
   }
@@ -4495,31 +4502,28 @@ function _prependBase(base, iri) {
     return e !== '.' && (e !== '' || i === segments.length - 1);
   });
 
-  // do not remove '..' for empty base
-  if(base.href !== '') {
-    // remove as many '..' as possible
-    for(var i = 0; i < segments.length;) {
-      var segment = segments[i];
-      if(segment === '..') {
-        // too many reverse dots
-        if(i === 0) {
-          var last = segments[segments.length - 1];
-          if(last !== '..') {
-            segments = [last];
-          }
-          else {
-            segments = [];
-          }
-          break;
+  // remove as many '..' as possible
+  for(var i = 0; i < segments.length;) {
+    var segment = segments[i];
+    if(segment === '..') {
+      // too many reverse dots
+      if(i === 0) {
+        var last = segments[segments.length - 1];
+        if(last !== '..') {
+          segments = [last];
         }
+        else {
+          segments = [];
+        }
+        break;
+      }
 
-        // remove '..' and previous segment
-        segments.splice(i - 1, 2);
-        i -= 1;
-      }
-      else {
-        i += 1;
-      }
+      // remove '..' and previous segment
+      segments.splice(i - 1, 2);
+      i -= 1;
+    }
+    else {
+      i += 1;
     }
   }
 
@@ -4533,20 +4537,11 @@ function _prependBase(base, iri) {
     path += rel.hash;
   }
 
-  var rval = '';
-  if(base.href === '') {
-    if(rel.href.indexOf('//') === 0) {
-      rval += '//';
-    }
-    rval += path;
+  var rval = (base.protocol || '') + '//';
+  if(base.auth) {
+    rval += base.auth + '@';
   }
-  else {
-    rval += (base.protocol || '') + '//';
-    if(base.auth) {
-      rval += base.auth + '@';
-    }
-    rval += authority + '/' + path;
-  }
+  rval += authority + '/' + path;
 
   return rval;
 }
