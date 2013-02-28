@@ -4495,28 +4495,31 @@ function _prependBase(base, iri) {
     return e !== '.' && (e !== '' || i === segments.length - 1);
   });
 
-  // remove as many '..' as possible
-  for(var i = 0; i < segments.length;) {
-    var segment = segments[i];
-    if(segment === '..') {
-      // too many reverse dots
-      if(i === 0) {
-        var last = segments[segments.length - 1];
-        if(last !== '..') {
-          segments = [last];
+  // do not remove '..' for empty base
+  if(base.href !== '') {
+    // remove as many '..' as possible
+    for(var i = 0; i < segments.length;) {
+      var segment = segments[i];
+      if(segment === '..') {
+        // too many reverse dots
+        if(i === 0) {
+          var last = segments[segments.length - 1];
+          if(last !== '..') {
+            segments = [last];
+          }
+          else {
+            segments = [];
+          }
+          break;
         }
-        else {
-          segments = [];
-        }
-        break;
-      }
 
-      // remove '..' and previous segment
-      segments.splice(i - 1, 2);
-      i -= 1;
-    }
-    else {
-      i += 1;
+        // remove '..' and previous segment
+        segments.splice(i - 1, 2);
+        i -= 1;
+      }
+      else {
+        i += 1;
+      }
     }
   }
 
