@@ -2436,6 +2436,33 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
     // define context mappings for keys in local context
     var defined = {};
 
+    // handle @base
+    if('@base' in ctx) {
+      var base = ctx['@base'];
+
+      // reset base
+      if(base === null) {
+        base = options.base;
+      }
+      else if(!_isString(base)) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; the value of "@base" in a ' +
+          '@context must be a string or null.',
+          'jsonld.SyntaxError', {context: ctx});
+      }
+      else if(!_isAbsoluteIri(base)) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; the value of "@base" in a ' +
+          '@context must be an absolute IRI.',
+          'jsonld.SyntaxError', {context: ctx});
+      }
+      else {
+        base = jsonld.url.parse(base || '');
+        base.pathname = base.pathname || '';
+        rval['@base'] = value;
+      }
+    }
+
     // handle @vocab
     if('@vocab' in ctx) {
       var value = ctx['@vocab'];
