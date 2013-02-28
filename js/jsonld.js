@@ -2450,10 +2450,10 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
           '@context must be a string or null.',
           'jsonld.SyntaxError', {context: ctx});
       }
-      else if(!_isAbsoluteIri(base)) {
+      else if(base !== '' && !_isAbsoluteIri(base)) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; the value of "@base" in a ' +
-          '@context must be an absolute IRI.',
+          '@context must be an absolute IRI or the empty string.',
           'jsonld.SyntaxError', {context: ctx});
       }
       else {
