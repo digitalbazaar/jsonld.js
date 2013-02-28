@@ -4537,9 +4537,12 @@ function _removeBase(base, iri) {
     return iri;
   }
 
+  // remove root from IRI and parse remainder
+  var rel = jsonld.url.parse(iri.substr(root.length));
+
   // remove path segments that match
   var baseSegments = base.pathname.split('/');
-  var iriSegments = iri.substr(root.length).split('/');
+  var iriSegments = rel.pathname.split('/');
   while(baseSegments.length > 0 && iriSegments.length > 0) {
     if(baseSegments[0] !== iriSegments[0]) {
       break;
@@ -4562,6 +4565,18 @@ function _removeBase(base, iri) {
 
   // prepend remaining segments
   rval += iriSegments.join('/');
+
+  // add query and hash
+  if(rel.query) {
+    rval += '?' + rel.query;
+  }
+  if(rel.hash) {
+    rval += rel.hash;
+  }
+
+  if(rval === '') {
+    rval = './';
+  }
 
   return rval;
 }
