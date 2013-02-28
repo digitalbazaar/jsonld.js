@@ -4520,7 +4520,7 @@ function _prependBase(base, iri) {
     }
   }
 
-  path = '/' + segments.join('/');
+  path = segments.join('/');
 
   // add query and hash
   if(rel.query) {
@@ -4530,11 +4530,20 @@ function _prependBase(base, iri) {
     path += rel.hash;
   }
 
-  var rval = (base.protocol || '') + '//';
-  if(base.auth) {
-    rval += base.auth + '@';
+  var rval = '';
+  if(base.href === '') {
+    if(rel.href.indexOf('//') === 0) {
+      rval += '//';
+    }
+    rval += path;
   }
-  rval += authority + path;
+  else {
+    rval += (base.protocol || '') + '//';
+    if(base.auth) {
+      rval += base.auth + '@';
+    }
+    rval += authority + '/' + path;
+  }
 
   return rval;
 }
@@ -4553,6 +4562,11 @@ function _removeBase(base, iri) {
     base.pathname = base.pathname || '';
   }
 
+  // base is empty
+  if(base.href === '') {
+    return iri;
+  }
+
   // establish base root
   var root = (base.protocol || '') + '//';
   if(base.auth) {
@@ -4567,6 +4581,7 @@ function _removeBase(base, iri) {
 
   // remove root from IRI and parse remainder
   var rel = jsonld.url.parse(iri.substr(root.length));
+  rel.pathname = rel.pathname || '';
 
   // remove path segments that match
   var baseSegments = base.pathname.split('/');
