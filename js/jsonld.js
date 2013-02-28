@@ -2459,8 +2459,9 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
       else {
         base = jsonld.url.parse(base || '');
         base.pathname = base.pathname || '';
-        rval['@base'] = value;
+        rval['@base'] = base;
       }
+      defined['@base'] = true;
     }
 
     // handle @vocab
