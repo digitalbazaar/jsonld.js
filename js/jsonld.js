@@ -2456,11 +2456,10 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
           '@context must be an absolute IRI or the empty string.',
           'jsonld.SyntaxError', {context: ctx});
       }
-      else {
-        base = jsonld.url.parse(base || '');
-        base.pathname = base.pathname || '';
-        rval['@base'] = base;
-      }
+
+      base = jsonld.url.parse(base || '');
+      base.pathname = base.pathname || '';
+      rval['@base'] = base;
       defined['@base'] = true;
     }
 
