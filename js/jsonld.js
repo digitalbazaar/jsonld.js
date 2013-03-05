@@ -6152,7 +6152,7 @@ else {
   // MIT License
   var parseUri = {};
   parseUri.options = {
-    key: ['href','protocol','host','userInfo','user','password','hostname','port','relative','path','directory','file','query','hash'],
+    key: ['href','protocol','host','auth','user','password','hostname','port','relative','path','directory','file','query','hash'],
     parser: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/
   };
   jsonld.url.parse = function(str) {
@@ -6173,7 +6173,9 @@ else {
     if(uri.query) {
       uri.path = uri.path + '?' + uri.query;
     }
-    uri.protocol += ':';
+    if(uri.protocol) {
+      uri.protocol += ':';
+    }
     if(uri.hash) {
       uri.hash = '#' + uri.hash;
     }
@@ -6187,17 +6189,27 @@ else {
  * @param parsed the pre-parsed URL.
  */
 function _parseAuthority(parsed) {
-  // parse authority for network-path reference
-  if(parsed.href.indexOf('//') === 0) {
-    parsed.pathname = parsed.pathname.substr(2);
-    var idx = parsed.pathname.indexOf('/');
-    if(idx === -1) {
-      parsed.authority = parsed.pathname;
-      parsed.pathname = '';
+  // parse authority for relative network-path reference
+  if(parsed.href.indexOf(':') === -1 && parsed.href.indexOf('//') === 0) {
+    // authority already parsed, pathname should also be correct
+    if(parsed.host) {
+      parsed.authority = parsed.host;
+      if(parsed.auth) {
+        parsed.authority = parsed.auth + '@' + parsed.authority;
+      }
     }
+    // must parse authority from pathname
     else {
-      parsed.authority = parsed.pathname.substr(0, idx);
-      parsed.pathname = parsed.pathname.substr(idx);
+      parsed.pathname = parsed.pathname.substr(2);
+      var idx = parsed.pathname.indexOf('/');
+      if(idx === -1) {
+        parsed.authority = parsed.pathname;
+        parsed.pathname = '';
+      }
+      else {
+        parsed.authority = parsed.pathname.substr(0, idx);
+        parsed.pathname = parsed.pathname.substr(idx);
+      }
     }
   }
   else {
