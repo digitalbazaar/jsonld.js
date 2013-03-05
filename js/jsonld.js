@@ -2458,7 +2458,6 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
       }
 
       base = jsonld.url.parse(base || '');
-      base.pathname = base.pathname || '';
       rval['@base'] = base;
       defined['@base'] = true;
     }
@@ -4460,73 +4459,42 @@ function _prependBase(base, iri) {
   // parse base if it is a string
   if(_isString(base)) {
     base = jsonld.url.parse(base || '');
-    base.pathname = base.pathname || '';
   }
 
-  // if base is empty, do not change iri
-  if(base.href === '') {
-    return iri;
-  }
-
-  var authority = (base.host || '');
+  // parse given IRI
   var rel = jsonld.url.parse(iri);
-  rel.pathname = (rel.pathname || '');
 
-  // per RFC3986 normalize slashes and dots in path
+  // start hierarchical part
+  var hierPart = (base.protocol || '');
+  if(rel.authority) {
+    hierPart += '//' + rel.authority;
+  }
+  else if(base.href !== '') {
+    hierPart += '//' + base.authority;
+  }
+
+  // per RFC3986 normalize
   var path;
 
-  // IRI contains authority
-  if(rel.pathname.indexOf('//') === 0) {
-    path = rel.pathname.substr(2);
-    authority = path.substr(0, path.lastIndexOf('/'));
-    path = path.substr(authority.length);
-  }
   // IRI represents an absolute path
-  else if(rel.pathname.indexOf('/') === 0) {
+  if(rel.pathname.indexOf('/') === 0) {
     path = rel.pathname;
   }
   else {
     path = base.pathname;
 
-    // use up to last directory for base
+    // append relative path to the end of the last directory from base
     if(rel.pathname !== '') {
-      path = path.substr(0, path.lastIndexOf('/') + 1) + rel.pathname;
-    }
-  }
-
-  var segments = path.split('/');
-
-  // remove '.' and '' (do not remove trailing empty path)
-  segments = segments.filter(function(e, i) {
-    return e !== '.' && (e !== '' || i === segments.length - 1);
-  });
-
-  // remove as many '..' as possible
-  for(var i = 0; i < segments.length;) {
-    var segment = segments[i];
-    if(segment === '..') {
-      // too many reverse dots
-      if(i === 0) {
-        var last = segments[segments.length - 1];
-        if(last !== '..') {
-          segments = [last];
-        }
-        else {
-          segments = [];
-        }
-        break;
+      path = path.substr(0, path.lastIndexOf('/') + 1);
+      if(path.length > 0 && path.lastIndexOf('/') !== path.length - 1) {
+        path += '/';
       }
-
-      // remove '..' and previous segment
-      segments.splice(i - 1, 2);
-      i -= 1;
-    }
-    else {
-      i += 1;
+      path += rel.pathname;
     }
   }
 
-  path = segments.join('/');
+  // remove slashes and dots in path
+  path = _removeDotSegments(path, hierPart !== '');
 
   // add query and hash
   if(rel.query) {
@@ -4536,11 +4504,11 @@ function _prependBase(base, iri) {
     path += rel.hash;
   }
 
-  var rval = (base.protocol || '') + '//';
-  if(base.auth) {
-    rval += base.auth + '@';
+  var rval = hierPart + path;
+
+  if(rval === '') {
+    rval = './';
   }
-  rval += authority + '/' + path;
 
   return rval;
 }
@@ -4556,20 +4524,17 @@ function _prependBase(base, iri) {
 function _removeBase(base, iri) {
   if(_isString(base)) {
     base = jsonld.url.parse(base || '');
-    base.pathname = base.pathname || '';
-  }
-
-  // base is empty
-  if(base.href === '') {
-    return iri;
   }
 
   // establish base root
-  var root = (base.protocol || '') + '//';
-  if(base.auth) {
-    root += base.auth + '@';
+  var root = '';
+  if(base.href !== '') {
+    root += (base.protocol || '') + '//' + base.authority;
   }
-  root += (base.host || '');
+  // scheme-relative root with empty base
+  else if(iri.indexOf('//')) {
+    root += '//';
+  }
 
   // IRI not relative to base
   if(iri.indexOf(root) !== 0) {
@@ -4578,11 +4543,11 @@ function _removeBase(base, iri) {
 
   // remove root from IRI and parse remainder
   var rel = jsonld.url.parse(iri.substr(root.length));
-  rel.pathname = rel.pathname || '';
 
   // remove path segments that match
-  var baseSegments = base.pathname.split('/');
-  var iriSegments = rel.pathname.split('/');
+  var baseSegments = base.normalizedPath.split('/');
+  var iriSegments = rel.normalizedPath.split('/');
+
   while(baseSegments.length > 0 && iriSegments.length > 0) {
     if(baseSegments[0] !== iriSegments[0]) {
       break;
@@ -4595,7 +4560,8 @@ function _removeBase(base, iri) {
   var rval = '';
   if(baseSegments.length > 0) {
     // do not count the last segment if it isn't a path (doesn't end in '/')
-    if(base.pathname.indexOf('/', base.pathname.length - 1) === -1) {
+    if(base.normalizedPath.indexOf(
+      '/', base.normalizedPath.length - 1) === -1) {
       baseSegments.pop();
     }
     for(var i = 0; i < baseSegments.length; ++i) {
@@ -4635,7 +4601,6 @@ function _getInitialContext(options) {
     namer = new UniqueNamer('_:b');
   }
   var base = jsonld.url.parse(options.base || '');
-  base.pathname = base.pathname || '';
   return {
     '@base': base,
     mappings: {},
@@ -6171,7 +6136,15 @@ function _defineXMLSerializer() {
 // define URL parser
 jsonld.url = {};
 if(_nodejs) {
-  jsonld.url.parse = require('url').parse;
+  var parse = require('url').parse;
+  jsonld.url.parse = function(url) {
+    var parsed = parse(url);
+    parsed.pathname = parsed.pathname || '';
+    _parseAuthority(parsed);
+    parsed.normalizedPath = _removeDotSegments(
+      parsed.pathname, parsed.authority !== '');
+    return parsed;
+  };
 }
 else {
   // parseUri 1.2.2
@@ -6194,7 +6167,9 @@ else {
     if(uri.host && uri.path === '') {
       uri.path = '/';
     }
-    uri.pathname = uri.path;
+    uri.pathname = uri.path || '';
+    _parseAuthority(uri);
+    uri.normalizedPath = _removeDotSegments(uri.pathname, uri.authority !== '');
     if(uri.query) {
       uri.path = uri.path + '?' + uri.query;
     }
@@ -6204,6 +6179,74 @@ else {
     }
     return uri;
   };
+}
+
+/**
+ * Parses the authority for the pre-parsed given URL.
+ *
+ * @param parsed the pre-parsed URL.
+ */
+function _parseAuthority(parsed) {
+  // parse authority for network-path reference
+  if(parsed.href.indexOf('//') === 0) {
+    parsed.pathname = parsed.pathname.substr(2);
+    var idx = parsed.pathname.indexOf('/');
+    if(idx === -1) {
+      parsed.authority = parsed.pathname;
+      parsed.pathname = '';
+    }
+    else {
+      parsed.authority = parsed.pathname.substr(0, idx);
+      parsed.pathname = parsed.pathname.substr(idx);
+    }
+  }
+  else {
+    // construct authority
+    parsed.authority = '';
+    if(parsed.auth) {
+      parsed.authority += parsed.auth + '@';
+    }
+    parsed.authority += (parsed.host || '');
+  }
+}
+
+/**
+ * Removes dot segments from a URL path.
+ *
+ * @param path the path to remove dot segments from.
+ * @param hasAuthority true if the URL has an authority, false if not.
+ */
+function _removeDotSegments(path, hasAuthority) {
+  var rval = '';
+
+  if(path.indexOf('/') === 0) {
+    rval = '/';
+  }
+
+  // RFC 3986 5.2.4 (reworked)
+  var input = path.split('/');
+  var output = [];
+  while(input.length > 0) {
+    if(input[0] === '.' || (input[0] === '' && input.length > 1)) {
+      input.shift();
+      continue;
+    }
+    if(input[0] === '..') {
+      input.shift();
+      if(hasAuthority ||
+        (output.length > 0 && output[output.length - 1] !== '..')) {
+        output.pop();
+      }
+      // leading relative URL '..'
+      else {
+        output.push('..');
+      }
+      continue;
+    }
+    output.push(input.shift());
+  }
+
+  return rval + output.join('/');
 }
 
 if(_nodejs) {
