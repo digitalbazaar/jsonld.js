@@ -4832,6 +4832,7 @@ function _isKeyword(v) {
     return false;
   }
   switch(v) {
+  case '@base':
   case '@context':
   case '@container':
   case '@default':
