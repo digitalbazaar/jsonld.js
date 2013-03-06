@@ -4486,7 +4486,7 @@ function _prependBase(base, iri) {
     // append relative path to the end of the last directory from base
     if(rel.pathname !== '') {
       path = path.substr(0, path.lastIndexOf('/') + 1);
-      if(path.length > 0 && path.lastIndexOf('/') !== path.length - 1) {
+      if(path.length > 0 && path.substr(-1) !== '/') {
         path += '/';
       }
       path += rel.pathname;
@@ -4531,7 +4531,7 @@ function _removeBase(base, iri) {
   if(base.href !== '') {
     root += (base.protocol || '') + '//' + base.authority;
   }
-  // scheme-relative root with empty base
+  // support network-path reference with empty base
   else if(iri.indexOf('//')) {
     root += '//';
   }
@@ -4560,8 +4560,7 @@ function _removeBase(base, iri) {
   var rval = '';
   if(baseSegments.length > 0) {
     // do not count the last segment if it isn't a path (doesn't end in '/')
-    if(base.normalizedPath.indexOf(
-      '/', base.normalizedPath.length - 1) === -1) {
+    if(base.normalizedPath.substr(-1) !== '/') {
       baseSegments.pop();
     }
     for(var i = 0; i < baseSegments.length; ++i) {
