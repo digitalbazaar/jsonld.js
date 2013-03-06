@@ -6189,36 +6189,27 @@ else {
  * @param parsed the pre-parsed URL.
  */
 function _parseAuthority(parsed) {
-  // parse authority for relative network-path reference
-  if(parsed.href.indexOf(':') === -1 && parsed.href.indexOf('//') === 0) {
-    // authority already parsed, pathname should also be correct
-    if(parsed.host) {
-      parsed.authority = parsed.host;
-      if(parsed.auth) {
-        parsed.authority = parsed.auth + '@' + parsed.authority;
-      }
-    }
+  // parse authority for unparsed relative network-path reference
+  if(parsed.href.indexOf(':') === -1 && parsed.href.indexOf('//') === 0 &&
+    !parsed.host) {
     // must parse authority from pathname
+    parsed.pathname = parsed.pathname.substr(2);
+    var idx = parsed.pathname.indexOf('/');
+    if(idx === -1) {
+      parsed.authority = parsed.pathname;
+      parsed.pathname = '';
+    }
     else {
-      parsed.pathname = parsed.pathname.substr(2);
-      var idx = parsed.pathname.indexOf('/');
-      if(idx === -1) {
-        parsed.authority = parsed.pathname;
-        parsed.pathname = '';
-      }
-      else {
-        parsed.authority = parsed.pathname.substr(0, idx);
-        parsed.pathname = parsed.pathname.substr(idx);
-      }
+      parsed.authority = parsed.pathname.substr(0, idx);
+      parsed.pathname = parsed.pathname.substr(idx);
     }
   }
   else {
     // construct authority
-    parsed.authority = '';
+    parsed.authority = parsed.host || '';
     if(parsed.auth) {
-      parsed.authority += parsed.auth + '@';
+      parsed.authority = parsed.auth + '@' + parsed.authority;
     }
-    parsed.authority += (parsed.host || '');
   }
 }
 
