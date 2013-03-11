@@ -1448,8 +1448,8 @@ Processor.prototype.compact = function(
 
         // handle double-reversed properties
         for(var compactedProperty in compactedValue) {
-          if(activeCtx[compactedProperty] &&
-            activeCtx[compactedProperty].reverse) {
+          if(activeCtx.mappings[compactedProperty] &&
+            activeCtx.mappings[compactedProperty].reverse) {
             jsonld.addValue(
               rval, compactedProperty, compactedValue,
               {propertyIsArray: options.compactArrays});
@@ -1846,7 +1846,7 @@ Processor.prototype.expand = function(
 
       // FIXME: can this be merged with code above to simplify?
       // merge in reverse properties
-      if(activeCtx[key] && activeCtx[key].reverse) {
+      if(activeCtx.mappings[key] && activeCtx.mappings[key].reverse) {
         var reverseMap = rval['@reverse'] = {};
         if(!_isArray(expandedValue)) {
           expandedValue = [expandedValue];
