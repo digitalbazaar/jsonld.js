@@ -3856,13 +3856,6 @@ function _compactIri(activeCtx, iri, value, relativeTo, reverse) {
     return iri;
   }
 
-  // term is a keyword
-  if(_isKeyword(iri)) {
-    // return alias if available
-    var aliases = activeCtx.keywords[iri];
-    return (aliases.length > 0) ? aliases[0] : iri;
-  }
-
   // default value and parent to null
   if(_isUndefined(value)) {
     value = null;
@@ -3872,6 +3865,11 @@ function _compactIri(activeCtx, iri, value, relativeTo, reverse) {
     reverse = false;
   }
   relativeTo = relativeTo || {};
+
+  // if term is a keyword, default vocab to true
+  if(_isKeyword(iri)) {
+    relativeTo.vocab = true;
+  }
 
   // use inverse context to pick a term if iri is relative to vocab
   if(relativeTo.vocab && iri in activeCtx.getInverse()) {
@@ -4151,13 +4149,9 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
       'jsonld.SyntaxError', {context: localCtx});
   }
 
+  // remove old mapping
   if(activeCtx.mappings[term]) {
-    // if term is a keyword alias, remove it
-    var kw = activeCtx.mappings[term]['@id'];
-    if(_isKeyword(kw)) {
-      var aliases = activeCtx.keywords[kw];
-      aliases.splice(aliases.indexOf(term), 1);
-    }
+    delete activeCtx.mappings[term];
   }
 
   // get context term value
@@ -4182,16 +4176,9 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
           'Invalid JSON-LD syntax; @context and @preserve cannot be aliased.',
           'jsonld.SyntaxError');
       }
-
-      // uniquely add term as a keyword alias and resort
-      var aliases = activeCtx.keywords[id];
-      if(aliases.indexOf(term) === -1) {
-        aliases.push(term);
-        aliases.sort(_compareShortestLeast);
-      }
     }
 
-    // define/redefine term to expanded IRI/keyword
+    // define term to expanded IRI/keyword
     activeCtx.mappings[term] = {'@id': id};
     defined[term] = true;
     return;
@@ -4598,25 +4585,6 @@ function _getInitialContext(options) {
   return {
     '@base': base,
     mappings: {},
-    keywords: {
-      '@context': [],
-      '@container': [],
-      '@default': [],
-      '@embed': [],
-      '@explicit': [],
-      '@graph': [],
-      '@id': [],
-      '@index': [],
-      '@language': [],
-      '@list': [],
-      '@omitDefault': [],
-      '@preserve': [],
-      '@reverse': [],
-      '@set': [],
-      '@type': [],
-      '@value': [],
-      '@vocab': []
-    },
     namer: namer,
     inverse: null,
     getInverse: _createInverseContext,
@@ -4732,7 +4700,6 @@ function _getInitialContext(options) {
   function _cloneActiveContext() {
     var child = {};
     child['@base'] = this['@base'];
-    child.keywords = _clone(this.keywords);
     child.mappings = _clone(this.mappings);
     child.namer = this.namer;
     child.clone = this.clone;
@@ -4758,7 +4725,6 @@ function _getInitialContext(options) {
   function _shareActiveContext() {
     var rval = {};
     rval['@base'] = this['@base'];
-    rval.keywords = this.keywords;
     rval.mappings = this.mappings;
     rval.namer = null;
     if(this.namer) {
