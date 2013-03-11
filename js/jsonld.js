@@ -4646,31 +4646,28 @@ function _getInitialContext(options) {
         }
         entry = entry[container];
 
-        // special case reverse mapping
+        // term is preferred for values using @reverse
         if(mapping.reverse) {
           _addPreferredTerm(mapping, term, entry['@type'], '@reverse');
         }
+        // term is preferred for values using specific type
+        else if('@type' in mapping) {
+          _addPreferredTerm(mapping, term, entry['@type'], mapping['@type']);
+        }
+        // term is preferred for values using specific language
+        else if('@language' in mapping) {
+          var language = mapping['@language'] || '@null';
+          _addPreferredTerm(mapping, term, entry['@language'], language);
+        }
+        // term is preferred for values w/default language or no type and
+        // no language
         else {
-          // consider updating @language entry if @type is not specified
-          if(!('@type' in mapping)) {
-            // if a @language is specified, update its specific entry
-            if('@language' in mapping) {
-              var language = mapping['@language'] || '@null';
-              _addPreferredTerm(mapping, term, entry['@language'], language);
-            }
-            // add an entry for the default language and for no @language
-            else {
-              _addPreferredTerm(
-                mapping, term, entry['@language'], defaultLanguage);
-              _addPreferredTerm(mapping, term, entry['@language'], '@none');
-            }
-          }
+          // add an entry for the default language
+          _addPreferredTerm(mapping, term, entry['@language'], defaultLanguage);
 
-          // consider updating @type entry if @language is not specified
-          if(!('@language' in mapping)) {
-            var type = mapping['@type'] || '@none';
-            _addPreferredTerm(mapping, term, entry['@type'], type);
-          }
+          // add entries for no type and no language
+          _addPreferredTerm(mapping, term, entry['@type'], '@none');
+          _addPreferredTerm(mapping, term, entry['@language'], '@none');
         }
       }
     }
