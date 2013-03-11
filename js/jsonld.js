@@ -3785,14 +3785,13 @@ function _selectTerm(
   // preferences for the value of @type or @language
   var prefs = [];
 
-  // prefer @reverse first
-  if(typeOrLanguageValue === '@reverse') {
-    prefs.push('@reverse');
-  }
-
   // determine prefs for @id based on whether or not value compacts to a term
   if((typeOrLanguageValue === '@id' || typeOrLanguageValue === '@reverse') &&
     _isSubjectReference(value)) {
+    // prefer @reverse first
+    if(typeOrLanguageValue === '@reverse') {
+      prefs.push('@reverse');
+    }
     // try to compact value to a term
     var term = _compactIri(activeCtx, value['@id'], null, {vocab: true});
     if(term in activeCtx.mappings &&
@@ -3806,7 +3805,7 @@ function _selectTerm(
       prefs.push.apply(prefs, ['@id', '@vocab']);
     }
   }
-  else if(typeOrLanguageValue !== '@reverse') {
+  else {
     prefs.push(typeOrLanguageValue);
   }
   prefs.push('@none');
