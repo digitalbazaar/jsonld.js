@@ -1450,9 +1450,11 @@ Processor.prototype.compact = function(
         for(var compactedProperty in compactedValue) {
           if(activeCtx.mappings[compactedProperty] &&
             activeCtx.mappings[compactedProperty].reverse) {
+            if(!(compactedProperty in rval) && !options.compactArrays) {
+              rval[compactedProperty] = [];
+            }
             jsonld.addValue(
-              rval, compactedProperty, compactedValue,
-              {propertyIsArray: options.compactArrays});
+              rval, compactedProperty, compactedValue[compactedProperty]);
             delete compactedValue[compactedProperty];
           }
         }
@@ -1486,7 +1488,8 @@ Processor.prototype.compact = function(
       // preserve empty arrays
       if(expandedValue.length === 0) {
         var itemActiveProperty = _compactIri(
-          activeCtx, expandedProperty, expandedValue, {vocab: true});
+          activeCtx, expandedProperty, expandedValue, {vocab: true},
+          insideReverse);
         jsonld.addValue(
           rval, itemActiveProperty, expandedValue, {propertyIsArray: true});
       }
@@ -1497,7 +1500,8 @@ Processor.prototype.compact = function(
 
         // compact property and get container type
         var itemActiveProperty = _compactIri(
-          activeCtx, expandedProperty, expandedItem, {vocab: true});
+          activeCtx, expandedProperty, expandedItem, {vocab: true},
+          insideReverse);
         var container = jsonld.getContextValue(
           activeCtx, itemActiveProperty, '@container');
 
@@ -3884,7 +3888,7 @@ function _compactIri(activeCtx, iri, value, relativeTo, reverse) {
     var typeOrLanguageValue = '@null';
 
     if(reverse) {
-      typeOrLanguage = '@reverse';
+      typeOrLanguage = '@type';
       typeOrLanguageValue = '@reverse';
       containers.push('@set');
     }
@@ -4607,6 +4611,7 @@ function _getInitialContext(options) {
       '@list': [],
       '@omitDefault': [],
       '@preserve': [],
+      '@reverse': [],
       '@set': [],
       '@type': [],
       '@value': [],
@@ -4677,26 +4682,27 @@ function _getInitialContext(options) {
         if(mapping.reverse) {
           _addPreferredTerm(mapping, term, entry['@type'], '@reverse');
         }
-
-        // consider updating @language entry if @type is not specified
-        if(!('@type' in mapping)) {
-          // if a @language is specified, update its specific entry
-          if('@language' in mapping) {
-            var language = mapping['@language'] || '@null';
-            _addPreferredTerm(mapping, term, entry['@language'], language);
+        else {
+          // consider updating @language entry if @type is not specified
+          if(!('@type' in mapping)) {
+            // if a @language is specified, update its specific entry
+            if('@language' in mapping) {
+              var language = mapping['@language'] || '@null';
+              _addPreferredTerm(mapping, term, entry['@language'], language);
+            }
+            // add an entry for the default language and for no @language
+            else {
+              _addPreferredTerm(
+                mapping, term, entry['@language'], defaultLanguage);
+              _addPreferredTerm(mapping, term, entry['@language'], '@none');
+            }
           }
-          // add an entry for the default language and for no @language
-          else {
-            _addPreferredTerm(
-              mapping, term, entry['@language'], defaultLanguage);
-            _addPreferredTerm(mapping, term, entry['@language'], '@none');
-          }
-        }
 
-        // consider updating @type entry if @language is not specified
-        if(!('@language' in mapping)) {
-          var type = mapping['@type'] || '@none';
-          _addPreferredTerm(mapping, term, entry['@type'], type);
+          // consider updating @type entry if @language is not specified
+          if(!('@language' in mapping)) {
+            var type = mapping['@type'] || '@none';
+            _addPreferredTerm(mapping, term, entry['@type'], type);
+          }
         }
       }
     }
