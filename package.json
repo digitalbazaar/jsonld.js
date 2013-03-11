@@ -1,6 +1,6 @@
 {
   "name": "jsonld",
-  "version": "0.0.33",
+  "version": "0.0.34",
   "description": "A JSON-LD Processor and API implementation in JavaScript.",
   "homepage": "http://github.com/digitalbazaar/jsonld.js",
   "author": {
