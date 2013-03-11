@@ -1403,6 +1403,9 @@ Processor.prototype.compact = function(
       return _compactValue(activeCtx, activeProperty, element);
     }
 
+    // FIXME: avoid misuse of active property as an expanded property?
+    var insideReverse = (activeProperty === '@reverse');
+
     // process element keys in order
     var keys = Object.keys(element).sort();
     var rval = {};
@@ -1434,6 +1437,32 @@ Processor.prototype.compact = function(
         var isArray = (_isArray(compactedValue) && expandedValue.length === 0);
         jsonld.addValue(
           rval, alias, compactedValue, {propertyIsArray: isArray});
+        continue;
+      }
+
+      // handle @reverse
+      if(expandedProperty === '@reverse') {
+        // recursively compact expanded value
+        var compactedValue = this.compact(
+          activeCtx, '@reverse', expandedValue, options);
+
+        // handle double-reversed properties
+        for(var compactedProperty in compactedValue) {
+          if(activeCtx[compactedProperty] &&
+            activeCtx[compactedProperty].reverse) {
+            jsonld.addValue(
+              rval, compactedProperty, compactedValue,
+              {propertyIsArray: options.compactArrays});
+            delete compactedValue[compactedProperty];
+          }
+        }
+
+        if(Object.keys(compactedValue).length > 0) {
+          // use keyword alias and add value
+          var alias = _compactIri(activeCtx, expandedProperty);
+          jsonld.addValue(rval, alias, compactedValue);
+        }
+
         continue;
       }
 
@@ -1644,6 +1673,14 @@ Processor.prototype.expand = function(
         continue;
       }
 
+      if(_isKeyword(expandedProperty) &&
+        expandedActiveProperty === '@reverse') {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; a keyword cannot be used as a @reverse ' +
+          'property.',
+          'jsonld.SyntaxError', {value: value});
+      }
+
       // syntax error if @id is not a string
       if(expandedProperty === '@id' && !_isString(value)) {
         throw new JsonLdError(
@@ -1685,13 +1722,61 @@ Processor.prototype.expand = function(
         value = value.toLowerCase();
       }
 
-      // preserve @index
+      // @index must be a string
       if(expandedProperty === '@index') {
         if(!_isString(value)) {
           throw new JsonLdError(
             'Invalid JSON-LD syntax; "@index" value must be a string.',
             'jsonld.SyntaxError', {value: value});
         }
+      }
+
+      // @reverse must be an object
+      if(expandedProperty === '@reverse') {
+        if(!_isObject(value)) {
+          throw new JsonLdError(
+            'Invalid JSON-LD syntax; "@reverse" value must be an object.',
+            'jsonld.SyntaxError', {value: value});
+        }
+
+        expandedValue = self.expand(
+          activeCtx, '@reverse', value, options, insideList);
+
+        // properties double-reversed
+        if('@reverse' in expandedValue) {
+          for(var property in expandedValue['@reverse']) {
+            jsonld.addValue(
+              rval, property, expandedValue['@reverse'][property],
+              {propertyIsArray: true});
+          }
+        }
+
+        // FIXME: can this be merged with code below to simplify?
+        // merge in all reversed properties
+        var reverseMap = rval['@reverse'] || null;
+        for(var property in expandedValue) {
+          if(property === '@reverse') {
+            continue;
+          }
+          if(reverseMap === null) {
+            reverseMap = rval['@reverse'] = {};
+          }
+          jsonld.addValue(reverseMap, property, [], {propertyIsArray: true});
+          var items = expandedValue[property];
+          for(var ii = 0; ii < items.length; ++ii) {
+            var item = items[ii];
+            if(_isValue(item) || _isList(item)) {
+              throw new JsonLdError(
+                'Invalid JSON-LD syntax; "@reverse" value must not be a ' +
+                '@value or an @list.',
+                'jsonld.SyntaxError', {value: expandedValue});
+            }
+            jsonld.addValue(
+              reverseMap, property, item, {propertyIsArray: true});
+          }
+        }
+
+        continue;
       }
 
       var container = jsonld.getContextValue(activeCtx, key, '@container');
@@ -1757,6 +1842,27 @@ Processor.prototype.expand = function(
         expandedValue = (_isArray(expandedValue) ?
           expandedValue : [expandedValue]);
         expandedValue = {'@list': expandedValue};
+      }
+
+      // FIXME: can this be merged with code above to simplify?
+      // merge in reverse properties
+      if(activeCtx[key] && activeCtx[key].reverse) {
+        var reverseMap = rval['@reverse'] = {};
+        if(!_isArray(expandedValue)) {
+          expandedValue = [expandedValue];
+        }
+        for(var ii = 0; ii < expandedValue.length; ++ii) {
+          var item = expandedValue[ii];
+          if(_isValue(item) || _isList(item)) {
+            throw new JsonLdError(
+              'Invalid JSON-LD syntax; "@reverse" value must not be a ' +
+              '@value or an @list.',
+              'jsonld.SyntaxError', {value: expandedValue});
+          }
+          jsonld.addValue(
+            reverseMap, expandedProperty, item, {propertyIsArray: true});
+        }
+        continue;
       }
 
       // add value for property
@@ -3130,6 +3236,23 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
       continue;
     }
 
+    // handle reverse properties
+    if('@reverse' in input) {
+      var referencedNode = {'@id': name};
+      var reverseMap = input['@reverse'];
+      for(var reverseProperty in reverseMap) {
+        var items = reverseMap[reverseProperty];
+        for(var ii = 0; ii < items; ++ii) {
+          var item = items[ii];
+          jsonld.addValue(
+            item, reverseProperty, referencedNode,
+            {propertyIsArray: true});
+          _createNodeMap(item, graphs, graph, namer);
+        }
+      }
+      continue;
+    }
+
     // recurse into graph
     if(property === '@graph') {
       // add graph subjects map entry
@@ -3143,6 +3266,11 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
 
     // copy non-@type keywords
     if(property !== '@type' && _isKeyword(property)) {
+      if(property === '@index' && '@index' in subject) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; conflicting @index property detected.',
+          'jsonld.SyntaxError', {subject: subject});
+      }
       subject[property] = input[property];
       continue;
     }
@@ -3646,32 +3774,38 @@ function _compareShortestLeast(a, b) {
  */
 function _selectTerm(
   activeCtx, iri, value, containers, typeOrLanguage, typeOrLanguageValue) {
-  containers.push('@none');
   if(typeOrLanguageValue === null) {
     typeOrLanguageValue = '@null';
   }
 
-  // options for the value of @type or @language
-  var options;
+  // preferences for the value of @type or @language
+  var prefs = [];
 
-  // determine options for @id based on whether or not value compacts to a term
-  if(typeOrLanguageValue === '@id' && _isSubjectReference(value)) {
+  // prefer @reverse first
+  if(typeOrLanguageValue === '@reverse') {
+    prefs.push('@reverse');
+  }
+
+  // determine prefs for @id based on whether or not value compacts to a term
+  if((typeOrLanguageValue === '@id' || typeOrLanguageValue === '@reverse') &&
+    _isSubjectReference(value)) {
     // try to compact value to a term
     var term = _compactIri(activeCtx, value['@id'], null, {vocab: true});
     if(term in activeCtx.mappings &&
       activeCtx.mappings[term] &&
       activeCtx.mappings[term]['@id'] === value['@id']) {
       // prefer @vocab
-      options = ['@vocab', '@id', '@none'];
+      prefs.push.apply(prefs, ['@vocab', '@id']);
     }
     else {
       // prefer @id
-      options = ['@id', '@vocab', '@none'];
+      prefs.push.apply(prefs, ['@id', '@vocab']);
     }
   }
-  else {
-    options = [typeOrLanguageValue, '@none'];
+  else if(typeOrLanguageValue !== '@reverse') {
+    prefs.push(typeOrLanguageValue);
   }
+  prefs.push('@none');
 
   var term = null;
   var containerMap = activeCtx.inverse[iri];
@@ -3683,15 +3817,15 @@ function _selectTerm(
     }
 
     var typeOrLanguageValueMap = containerMap[container][typeOrLanguage];
-    for(var oi = 0; term === null && oi < options.length; ++oi) {
+    for(var pi = 0; term === null && pi < prefs.length; ++pi) {
       // if type/language option not available in the map, continue
-      var option = options[oi];
-      if(!(option in typeOrLanguageValueMap)) {
+      var pref = prefs[pi];
+      if(!(pref in typeOrLanguageValueMap)) {
         continue;
       }
 
       // select term
-      term = typeOrLanguageValueMap[option];
+      term = typeOrLanguageValueMap[pref];
     }
   }
 
@@ -3708,10 +3842,11 @@ function _selectTerm(
  * @param relativeTo options for how to compact IRIs:
  *          base: true to resolve against the base IRI, false not to.
  *          vocab: true to split after @vocab, false not to.
+ * @param reverse true if a reverse property is being compacted, false if not.
  *
  * @return the compacted term, prefix, keyword alias, or the original IRI.
  */
-function _compactIri(activeCtx, iri, value, relativeTo) {
+function _compactIri(activeCtx, iri, value, relativeTo, reverse) {
   // can't compact null
   if(iri === null) {
     return iri;
@@ -3727,6 +3862,10 @@ function _compactIri(activeCtx, iri, value, relativeTo) {
   // default value and parent to null
   if(_isUndefined(value)) {
     value = null;
+  }
+  // default reverse to false
+  if(_isUndefined(reverse)) {
+    reverse = false;
   }
   relativeTo = relativeTo || {};
 
@@ -3744,8 +3883,13 @@ function _compactIri(activeCtx, iri, value, relativeTo) {
     var typeOrLanguage = '@language';
     var typeOrLanguageValue = '@null';
 
+    if(reverse) {
+      typeOrLanguage = '@reverse';
+      typeOrLanguageValue = '@reverse';
+      containers.push('@set');
+    }
     // choose the most specific term that works for all elements in @list
-    if(_isList(value)) {
+    else if(_isList(value)) {
       // only select @list containers if @index is NOT in value
       if(!('@index' in value)) {
         containers.push('@list');
@@ -3819,6 +3963,7 @@ function _compactIri(activeCtx, iri, value, relativeTo) {
     }
 
     // do term selection
+    containers.push('@none');
     var term = _selectTerm(
       activeCtx, iri, value, containers, typeOrLanguage, typeOrLanguageValue);
     if(term !== null) {
@@ -4057,8 +4202,29 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
 
   // create new mapping
   var mapping = {};
+  mapping.reverse = false;
 
-  if('@id' in value) {
+  if('@reverse' in value) {
+    if('@id' in value || '@type' in value || '@language' in value) {
+      throw new JsonLdError(
+      'Invalid JSON-LD syntax; a @reverse term definition must not ' +
+      'contain @id, @type, or @language.',
+      'jsonld.SyntaxError', {context: localCtx});
+    }
+    var reverse = value['@reverse'];
+    if(!_isString(reverse)) {
+      throw new JsonLdError(
+        'Invalid JSON-LD syntax; a @context @reverse value must be a string.',
+        'jsonld.SyntaxError', {context: localCtx});
+    }
+
+    // expand and add @id mapping, set @type to @id
+    mapping['@id'] = _expandIri(
+      activeCtx, reverse, {vocab: true, base: true}, localCtx, defined);
+    mapping['@type'] = '@id';
+    mapping.reverse = true;
+  }
+  else if('@id' in value) {
     var id = value['@id'];
     if(!_isString(id)) {
       throw new JsonLdError(
@@ -4066,11 +4232,9 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
         'of strings or a string.',
         'jsonld.SyntaxError', {context: localCtx});
     }
-    else {
-      // expand and add @id mapping
-      mapping['@id'] = _expandIri(
-        activeCtx, id, {vocab: true, base: true}, localCtx, defined);
-    }
+    // expand and add @id mapping
+    mapping['@id'] = _expandIri(
+      activeCtx, id, {vocab: true, base: true}, localCtx, defined);
   }
   else {
     // see if the term has a prefix
@@ -4129,6 +4293,12 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; @context @container value must be ' +
         'one of the following: @list, @set, @index, or @language.',
+        'jsonld.SyntaxError', {context: localCtx});
+    }
+    if(mapping.reverse && container !== '@index') {
+      throw new JsonLdError(
+        'Invalid JSON-LD syntax; @context @container value for a @reverse ' +
+        'type definition must be @index.',
         'jsonld.SyntaxError', {context: localCtx});
     }
 
@@ -4503,6 +4673,11 @@ function _getInitialContext(options) {
         }
         entry = entry[container];
 
+        // special case reverse mapping
+        if(mapping.reverse) {
+          _addPreferredTerm(mapping, term, entry['@type'], '@reverse');
+        }
+
         // consider updating @language entry if @type is not specified
         if(!('@type' in mapping)) {
           // if a @language is specified, update its specific entry
@@ -4622,6 +4797,7 @@ function _isKeyword(v) {
   case '@list':
   case '@omitDefault':
   case '@preserve':
+  case '@reverse':
   case '@set':
   case '@type':
   case '@value':
