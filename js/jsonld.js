@@ -3241,16 +3241,16 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
     }
 
     // handle reverse properties
-    if('@reverse' in input) {
+    if(property === '@reverse') {
       var referencedNode = {'@id': name};
       var reverseMap = input['@reverse'];
       for(var reverseProperty in reverseMap) {
         var items = reverseMap[reverseProperty];
-        for(var ii = 0; ii < items; ++ii) {
+        for(var ii = 0; ii < items.length; ++ii) {
           var item = items[ii];
           jsonld.addValue(
             item, reverseProperty, referencedNode,
-            {propertyIsArray: true});
+            {propertyIsArray: true, allowDuplicate: false});
           _createNodeMap(item, graphs, graph, namer);
         }
       }
