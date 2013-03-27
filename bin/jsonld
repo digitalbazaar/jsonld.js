@@ -111,7 +111,7 @@ program
       readInput: function(callback, results) {
         _readData(input, 'utf-8', callback);
       },
-      compact: ['readInput', function(callback, results) {
+      process: ['readInput', function(callback, results) {
         var options = {
           format: cmd.format
         };
@@ -183,7 +183,7 @@ program
       readInput: function(callback, results) {
         _readData(input, 'utf-8', callback);
       },
-      compact: ['readContext', 'readInput', function(callback, results) {
+      process: ['readContext', 'readInput', function(callback, results) {
         var options = {
           strict: cmd.strict,
           compactArrays: cmd.compactArrays,
@@ -271,7 +271,7 @@ program
           callback(null, null);
         }
       },
-      flatten: ['readInput', 'readContext', function(callback, results) {
+      process: ['readInput', 'readContext', function(callback, results) {
         var options = {};
         if(cmd.base) {
           options.base = cmd.base;
@@ -315,7 +315,7 @@ program
       readFrame: function(callback, results) {
         _readData(cmd.frame, 'utf-8', callback)
       },
-      flatten: ['readInput', 'readFrame', function(callback, results) {
+      process: ['readInput', 'readFrame', function(callback, results) {
         var options = {
           embed: cmd.embed,
           explicit: cmd.explicit,
@@ -356,7 +356,7 @@ program
       readInput: function(callback, results) {
         _readData(input, 'utf-8', callback);
       },
-      normalize: ['readInput', function(callback, results) {
+      process: ['readInput', function(callback, results) {
         var options = {};
         if(cmd.base) {
           options.base = cmd.base;
@@ -372,7 +372,7 @@ program
             callback(err, normalized);
           });
       }],
-      output: ['normalize', function(callback, results) {
+      output: ['process', function(callback, results) {
         if(typeof results.normalize === 'object') {
           var output = JSON.stringify(results.normalize, null, cmd.indent);
           process.stdout.write(output);
