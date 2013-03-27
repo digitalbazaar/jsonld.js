@@ -93,6 +93,32 @@ function _readData(src, encoding, callback) {
   }
 }
 
+// common output function
+function _output(callback, data, cmd) {
+  if(typeof data === 'object') {
+    var output = JSON.stringify(data, null, cmd.indent);
+    process.stdout.write(output);
+  }
+  else if(typeof data === 'string') {
+    process.stdout.write(data.trim());
+  }
+  else {
+    process.stdout.write(data);
+  }
+  if(cmd.newline) {
+    process.stdout.write('\n');
+  }
+  callback();
+}
+
+// final async call to handle errors
+function _final(err, results) {
+  if(err) {
+    console.log('ERROR:', err);
+    process.exit(1);
+  }
+}
+
 program
   .version(module.exports.version);
 
@@ -131,11 +157,7 @@ program
           case 'application/nquads':
             jsonld.toRDF(results.readInput, options,
               function(err, dataset) {
-                process.stdout.write(dataset.trim());
-                if(cmd.newline) {
-                  process.stdout.write('\n');
-                }
-                callback();
+                callback(err, dataset);
               });
             break;
           case 'application/json':
@@ -143,23 +165,16 @@ program
           case 'application/ld+json':
           case 'json-ld':
           case 'ld+json':
-            var output = JSON.stringify(results.readInput, null, cmd.indent);
-            process.stdout.write(output);
-            if(cmd.newline) {
-              process.stdout.write('\n');
-            }
-            callback();
+            callback(null, results.readInput);
             break;
           default:
             throw Error('ERROR: Unknown format: ' + format);
         }
+      }],
+      output: ['process', function(callback, results) {
+        _output(callback, results.process, cmd);
       }]
-    }, function(err, results) {
-      if(err) {
-        console.log('ERROR:', err);
-        process.exit(1);
-      }
-    });
+    }, _final);
   });
 
 program
@@ -195,20 +210,14 @@ program
         }
         jsonld.compact(results.readInput, results.readContext, options,
           function(err, compacted, ctx) {
-            var output = JSON.stringify(compacted, null, cmd.indent);
-            process.stdout.write(output);
-            if(cmd.newline) {
-              process.stdout.write('\n');
-            }
+            // is ctx output needed?
+            callback(err, compacted);
           });
-        callback();
+      }],
+      output: ['process', function(callback, results) {
+        _output(callback, results.process, cmd);
       }]
-    }, function(err, results) {
-      if(err) {
-        console.log('ERROR:', err);
-        process.exit(1);
-      }
-    });
+    }, _final);
   });
 
 program
@@ -233,20 +242,13 @@ program
         }
         jsonld.expand(results.readInput, options,
           function(err, expanded) {
-            var output = JSON.stringify(expanded, null, cmd.indent);
-            process.stdout.write(output);
-            if(cmd.newline) {
-              process.stdout.write('\n');
-            }
+            callback(err, expanded);
           });
-        callback();
+      }],
+      output: ['process', function(callback, results) {
+        _output(callback, results.process, cmd);
       }]
-    }, function(err, results) {
-      if(err) {
-        console.log('ERROR:', err);
-        process.exit(1);
-      }
-    });
+    }, _final);
   });
 
 program
@@ -278,20 +280,13 @@ program
         }
         jsonld.flatten(results.readInput, results.readContext, options,
           function(err, flattened) {
-            var output = JSON.stringify(flattened, null, cmd.indent);
-            process.stdout.write(output);
-            if(cmd.newline) {
-              process.stdout.write('\n');
-            }
+            callback(err, flattened);
           });
-        callback();
+      }],
+      output: ['process', function(callback, results) {
+        _output(callback, results.process, cmd);
       }]
-    }, function(err, results) {
-      if(err) {
-        console.log('ERROR:', err);
-        process.exit(1);
-      }
-    });
+    }, _final);
   });
 
 program
@@ -326,21 +321,15 @@ program
         }
         jsonld.frame(results.readInput, results.readFrame, options,
           function(err, framed) {
-            var output = JSON.stringify(framed, null, cmd.indent);
-            process.stdout.write(output);
-            if(cmd.newline) {
-              process.stdout.write('\n');
-            }
+            callback(err, framed);
           });
-        callback();
+      }],
+      output: ['process', function(callback, results) {
+        _output(callback, results.process, cmd);
       }]
-    }, function(err, results) {
-      if(err) {
-        console.log('ERROR:', err);
-        process.exit(1);
-      }
-    });
+    }, _final);
   });
+
 program
   .command('normalize [filename|URL|-]')
   .description('normalize JSON-LD')
@@ -373,23 +362,9 @@ program
           });
       }],
       output: ['process', function(callback, results) {
-        if(typeof results.normalize === 'object') {
-          var output = JSON.stringify(results.normalize, null, cmd.indent);
-          process.stdout.write(output);
-        }
-        else {
-          process.stdout.write(results.normalize.trim());
-        }
-        if(cmd.newline) {
-          process.stdout.write('\n');
-        }
+        _output(callback, results.process, cmd);
       }]
-    }, function(err, results) {
-      if(err) {
-        console.log('ERROR:', err);
-        process.exit(1);
-      }
-    });
+    }, _final);
   });
 
 program.parse(process.argv);
