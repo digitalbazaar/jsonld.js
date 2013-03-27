@@ -217,7 +217,6 @@ program
   .option('-i, --indent <spaces>', 'spaces to indent [2]', Number, 2)
   .option('-N, --no-newline')
   .option('-b, --base <base>', 'base IRI', String)
-  .option('-R, --no-rename-blank-nodes', 'disable renaming blank nodes')
   .option('-k, --keep-free-floating-nodes', 'keep free-floating nodes')
   .action(function(input, cmd) {
     input = input || '-';
@@ -227,7 +226,6 @@ program
       },
       expand: ['readInput', function(callback, results) {
         var options = {
-          renameBlankNodes: cmd.renameBlankNodes,
           keepFreeFloatingNodes: cmd.keepFreeFloatingNodes
         };
         if(cmd.base) {
