@@ -1,0 +1,397 @@
+#!/usr/bin/env node
+/**
+ * A command line JSON-LD utility.
+ *
+ * @author David I. Lehn <dlehn@digitalbazaar.com>
+ *
+ * BSD 3-Clause License
+ * Copyright (c) 2013 Digital Bazaar, Inc.
+ * All rights reserved.
+ */
+
+var async = require('async');
+var fs = require('fs');
+var jsonld = require('../js/jsonld');
+var path = require('path');
+var pkginfo = require('pkginfo')(module, 'version');
+var program = require('commander');
+
+try {
+  var request = require('request');
+} catch(e) {
+  // skip URL fetching when request is missing
+}
+
+// Parse the string or value and return the boolean value encoded or raise an
+// exception.
+function boolify(value) {
+  if(typeof value === 'boolean') {
+    return value;
+  }
+  if(typeof value === 'string' && value) {
+    var lower = value.toLowerCase();
+    switch(value.toLowerCase()) {
+      case 'true':
+      case 't':
+      case '1':
+      case 'yes':
+      case 'y':
+        return true;
+      case 'false':
+      case 't':
+      case '0':
+      case 'no':
+      case 'n':
+        return false;
+    }
+  }
+  // if here we couldn't parse it
+  throw Error('Invalid boolean:' + value);
+}
+
+// read a file or use '-' for stdin.
+function _readData(src, encoding, callback) {
+  if(src === '-') {
+    var data = '';
+    process.stdin.resume();
+    process.stdin.setEncoding(encoding);
+
+    process.stdin.on('data', function(chunk) {
+      data += chunk;
+    });
+
+    process.stdin.on('end', function() {
+      callback(null, JSON.parse(data));
+    });
+  }
+  else if(request &&
+    (src.indexOf('http://') === 0 || src.indexOf('https://') === 0)) {
+    request({
+      method: 'GET',
+      url: src,
+      json: true
+      //strictSSL: true,
+    }, function(err, res) {
+      if(err) {
+        callback(err);
+      }
+      var s = res.statusCode/100 | 0;
+      if(s !== 2) {
+        callback({
+          message: 'Bad status code.',
+          statusCode: res.statusCode,
+          url: src
+        });
+      }
+      callback(null, res.body);
+    });
+  }
+  else {
+    fs.readFile(src, encoding, function(error, data) {
+      callback(null, JSON.parse(data));
+    });
+  }
+}
+
+program
+  .version(module.exports.version);
+
+program
+  .command('format [filename|URL|-]')
+  .description('format JSON')
+  .option('-i, --indent <spaces>', 'spaces to indent [2]', Number, 2)
+  .option('-N, --no-newline')
+  .option('-b, --base <base>', 'base IRI', String)
+  .option('-f, --format <format>', 'format to output', String)
+  .option('-q, --nquads', 'use application/nquads format')
+  .option('-j, --json', 'use application/json format [default]')
+  .action(function(input, cmd) {
+    input = input || '-';
+    async.auto({
+      readInput: function(callback, results) {
+        _readData(input, 'utf-8', callback);
+      },
+      compact: ['readInput', function(callback, results) {
+        var options = {
+          format: cmd.format
+        };
+        if(cmd.base) {
+          options.base = cmd.base;
+        }
+        if(!options.format) {
+          options.format = 'json';
+        }
+        if(cmd.nquads) {
+          options.format = 'application/nquads';
+        }
+        if(cmd.json) {
+          options.format = 'application/json';
+        }
+        switch(options.format) {
+          case 'application/nquads':
+            jsonld.toRDF(results.readInput, options,
+              function(err, dataset) {
+                process.stdout.write(dataset.trim());
+                if(cmd.newline) {
+                  process.stdout.write('\n');
+                }
+                callback();
+              });
+            break;
+          case 'application/json':
+          case 'json':
+          case 'application/ld+json':
+          case 'json-ld':
+          case 'ld+json':
+            var output = JSON.stringify(results.readInput, null, cmd.indent);
+            process.stdout.write(output);
+            if(cmd.newline) {
+              process.stdout.write('\n');
+            }
+            callback();
+            break;
+          default:
+            throw Error('ERROR: Unknown format: ' + format);
+        }
+      }]
+    }, function(err, results) {
+      if(err) {
+        console.log('ERROR:', err);
+        process.exit(1);
+      }
+    });
+  });
+
+program
+  .command('compact [filename|URL]')
+  .description('compact JSON-LD')
+  .option('-i, --indent <spaces>', 'spaces to indent [2]', Number, 2)
+  .option('-N, --no-newline')
+  .option('-b, --base <base>', 'base IRI', String)
+  .option('-c, --context <filename|URL>', 'context filename or URL')
+  .option('-S, --no-strict', 'disable strict mode')
+  .option('-A, --no-compact-arrays',
+    'disable compacting arrays to single values')
+  .option('-g, --graph', 'always output top-level graph [false]')
+  .option('-E, --no-expansion', 'disable input expansion')
+  .action(function(input, cmd) {
+    input = input || '-';
+    async.auto({
+      readContext: function(callback, results) {
+        _readData(cmd.context, 'utf-8', callback)
+      },
+      readInput: function(callback, results) {
+        _readData(input, 'utf-8', callback);
+      },
+      compact: ['readContext', 'readInput', function(callback, results) {
+        var options = {
+          strict: cmd.strict,
+          compactArrays: cmd.compactArrays,
+          graph: cmd.graph,
+          skipExpansion: cmd.expansion
+        };
+        if(cmd.base) {
+          options.base = cmd.base;
+        }
+        jsonld.compact(results.readInput, results.readContext, options,
+          function(err, compacted, ctx) {
+            var output = JSON.stringify(compacted, null, cmd.indent);
+            process.stdout.write(output);
+            if(cmd.newline) {
+              process.stdout.write('\n');
+            }
+          });
+        callback();
+      }]
+    }, function(err, results) {
+      if(err) {
+        console.log('ERROR:', err);
+        process.exit(1);
+      }
+    });
+  });
+
+program
+  .command('expand [filename|URL|-]')
+  .description('expand JSON-LD')
+  .option('-i, --indent <spaces>', 'spaces to indent [2]', Number, 2)
+  .option('-N, --no-newline')
+  .option('-b, --base <base>', 'base IRI', String)
+  .option('-R, --no-rename-blank-nodes', 'disable renaming blank nodes')
+  .option('-k, --keep-free-floating-nodes', 'keep free-floating nodes')
+  .action(function(input, cmd) {
+    input = input || '-';
+    async.auto({
+      readInput: function(callback, results) {
+        _readData(input, 'utf-8', callback);
+      },
+      expand: ['readInput', function(callback, results) {
+        var options = {
+          renameBlankNodes: cmd.renameBlankNodes,
+          keepFreeFloatingNodes: cmd.keepFreeFloatingNodes
+        };
+        if(cmd.base) {
+          options.base = cmd.base;
+        }
+        jsonld.expand(results.readInput, options,
+          function(err, expanded) {
+            var output = JSON.stringify(expanded, null, cmd.indent);
+            process.stdout.write(output);
+            if(cmd.newline) {
+              process.stdout.write('\n');
+            }
+          });
+        callback();
+      }]
+    }, function(err, results) {
+      if(err) {
+        console.log('ERROR:', err);
+        process.exit(1);
+      }
+    });
+  });
+
+program
+  .command('flatten [filename|URL|-]')
+  .description('flatten JSON-LD')
+  .option('-i, --indent <spaces>', 'spaces to indent [2]', Number, 2)
+  .option('-N, --no-newline')
+  .option('-b, --base <base>', 'base IRI', String)
+  .option('-c, --context <filename|URL>',
+    'context filename or URL for compaction [none]')
+  .action(function(input, cmd) {
+    input = input || '-';
+    async.auto({
+      readInput: function(callback, results) {
+        _readData(input, 'utf-8', callback);
+      },
+      readContext: function(callback, results) {
+        if(cmd.context) {
+          _readData(cmd.context, 'utf-8', callback)
+        }
+        else {
+          callback(null, null);
+        }
+      },
+      flatten: ['readInput', 'readContext', function(callback, results) {
+        var options = {};
+        if(cmd.base) {
+          options.base = cmd.base;
+        }
+        jsonld.flatten(results.readInput, results.readContext, options,
+          function(err, flattened) {
+            var output = JSON.stringify(flattened, null, cmd.indent);
+            process.stdout.write(output);
+            if(cmd.newline) {
+              process.stdout.write('\n');
+            }
+          });
+        callback();
+      }]
+    }, function(err, results) {
+      if(err) {
+        console.log('ERROR:', err);
+        process.exit(1);
+      }
+    });
+  });
+
+program
+  .command('frame [filename|URL|-]')
+  .description('flatten JSON-LD')
+  .option('-i, --indent <spaces>', 'spaces to indent [2]', Number, 2)
+  .option('-N, --no-newline')
+  .option('-b, --base <base>', 'base IRI', String)
+  .option('-f, --frame <filename|URL>', 'frame to use')
+  .option('-e, --embed <embed>', 'default @embed flag [true]', boolify, true)
+  .option('-x, --explicit <explicit>', 'default @explicit flag [false]',
+    boolify, false)
+  .option('-d, --omitDefault <omitDefault>',
+    'default @omitDefault flag [false]', boolify, false)
+  .action(function(input, cmd) {
+    input = input || '-';
+    async.auto({
+      readInput: function(callback, results) {
+        _readData(input, 'utf-8', callback);
+      },
+      readFrame: function(callback, results) {
+        _readData(cmd.frame, 'utf-8', callback)
+      },
+      flatten: ['readInput', 'readFrame', function(callback, results) {
+        var options = {
+          embed: cmd.embed,
+          explicit: cmd.explicit,
+          omitDefault: cmd.omitDefault
+        };
+        if(cmd.base) {
+          options.base = cmd.base;
+        }
+        jsonld.frame(results.readInput, results.readFrame, options,
+          function(err, framed) {
+            var output = JSON.stringify(framed, null, cmd.indent);
+            process.stdout.write(output);
+            if(cmd.newline) {
+              process.stdout.write('\n');
+            }
+          });
+        callback();
+      }]
+    }, function(err, results) {
+      if(err) {
+        console.log('ERROR:', err);
+        process.exit(1);
+      }
+    });
+  });
+program
+  .command('normalize [filename|URL|-]')
+  .description('normalize JSON-LD')
+  .option('-i, --indent <spaces>', 'spaces to indent [2]', Number, 2)
+  .option('-N, --no-newline')
+  .option('-b, --base <base>', 'base IRI', String)
+  .option('-f, --format <format>',
+    'format to output (\'application/nquads\' for N-Quads')
+  .option('-q, --nquads', 'use \'application/nquads\' format')
+  .action(function(input, cmd) {
+    input = input || '-';
+    async.auto({
+      readInput: function(callback, results) {
+        _readData(input, 'utf-8', callback);
+      },
+      normalize: ['readInput', function(callback, results) {
+        var options = {};
+        if(cmd.base) {
+          options.base = cmd.base;
+        }
+        if(cmd.nquads) {
+          options.format = 'application/nquads';
+        }
+        if(cmd.format) {
+          options.format = cmd.format;
+        }
+        jsonld.normalize(results.readInput, options,
+          function(err, normalized) {
+            callback(err, normalized);
+          });
+      }],
+      output: ['normalize', function(callback, results) {
+        if(typeof results.normalize === 'object') {
+          var output = JSON.stringify(results.normalize, null, cmd.indent);
+          process.stdout.write(output);
+        }
+        else {
+          process.stdout.write(results.normalize.trim());
+        }
+        if(cmd.newline) {
+          process.stdout.write('\n');
+        }
+      }]
+    }, function(err, results) {
+      if(err) {
+        console.log('ERROR:', err);
+        process.exit(1);
+      }
+    });
+  });
+
+program.parse(process.argv);

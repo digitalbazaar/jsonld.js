@@ -22,11 +22,13 @@
   },
   "main": "js/jsonld.js",
   "optionalDependencies": {
-    "request": "",
+    "commander": "~1.1.0",
+    "pkginfo": "~0.2.3",
+    "request": "~2.16.0",
     "xmldom": ""
   },
   "devDependencies": {
-    "async": "~0.1.22"
+    "async": "~0.2.6"
   },
   "engines": {
     "node": "*"
@@ -37,5 +39,8 @@
     "JSON-LD",
     "RDF",
     "Semantic Web"
-  ]
+  ],
+  "bin": {
+    "jsonld": "./bin/jsonld"
+  }
 }
