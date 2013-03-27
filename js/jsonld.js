@@ -4369,21 +4369,19 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
         return mapping['@id'] + suffix;
       }
     }
-  }
 
-  // already absolute IRI
-  if(_isAbsoluteIri(value)) {
+    // already absolute IRI
     return value;
   }
 
-  var rval = value;
-
   // prepend vocab
   if(relativeTo.vocab && '@vocab' in activeCtx) {
-    rval = activeCtx['@vocab'] + rval;
+    return activeCtx['@vocab'] + value;
   }
+
   // prepend base
-  else if(relativeTo.base) {
+  var rval = value;
+  if(relativeTo.base) {
     rval = _prependBase(activeCtx['@base'], rval);
   }
 
