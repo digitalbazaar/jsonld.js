@@ -206,8 +206,6 @@ jsonld.compact = function(input, ctx, options, callback) {
  * @param input the JSON-LD input to expand.
  * @param [options] the options to use:
  *          [base] the base IRI to use.
- *          [renameBlankNodes] true to rename blank nodes, false not to,
- *            defaults to true.
  *          [keepFreeFloatingNodes] true to keep free-floating nodes,
  *            false not to, defaults to false.
  *          [loadContext(url, callback(err, url, result))] the context loader.
@@ -230,9 +228,6 @@ jsonld.expand = function(input) {
   }
   if(!('loadContext' in options)) {
     options.loadContext = jsonld.loadContext;
-  }
-  if(!('renameBlankNodes' in options)) {
-    options.renameBlankNodes = true;
   }
   if(!('keepFreeFloatingNodes' in options)) {
     options.keepFreeFloatingNodes = false;
@@ -2456,7 +2451,6 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
   if(jsonld.cache.activeCtx) {
     rval = jsonld.cache.activeCtx.get(activeCtx, localCtx);
     if(rval) {
-      rval.namer = activeCtx.namer;
       return rval;
     }
   }
@@ -2478,7 +2472,6 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
     // reset to initial context, keeping namer
     if(ctx === null) {
       rval = _getInitialContext(options);
-      rval.namer = activeCtx.namer;
       continue;
     }
 
@@ -2693,10 +2686,6 @@ function _expandValue(activeCtx, activeProperty, value) {
 
   // other type
   if(type !== null) {
-    // rename blank node if requested
-    if(activeCtx.namer && type.indexOf('_:') === 0) {
-      type = activeCtx.namer.getName(type);
-    }
     rval['@type'] = type;
   }
   // check for language tagging for strings
@@ -4178,7 +4167,7 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
     }
 
     // define term to expanded IRI/keyword
-    activeCtx.mappings[term] = {'@id': id};
+    activeCtx.mappings[term] = {'@id': id, reverse: false};
     defined[term] = true;
     return;
   }
@@ -4197,9 +4186,9 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
   if('@reverse' in value) {
     if('@id' in value || '@type' in value || '@language' in value) {
       throw new JsonLdError(
-      'Invalid JSON-LD syntax; a @reverse term definition must not ' +
-      'contain @id, @type, or @language.',
-      'jsonld.SyntaxError', {context: localCtx});
+        'Invalid JSON-LD syntax; a @reverse term definition must not ' +
+        'contain @id, @type, or @language.',
+        'jsonld.SyntaxError', {context: localCtx});
     }
     var reverse = value['@reverse'];
     if(!_isString(reverse)) {
@@ -4346,8 +4335,6 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
   }
 
   relativeTo = relativeTo || {};
-  var rval = null;
-
   if(relativeTo.vocab) {
     var mapping = activeCtx.mappings[value];
 
@@ -4358,51 +4345,41 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
 
     if(mapping) {
       // value is a term
-      rval = mapping['@id'];
+      return mapping['@id'];
     }
   }
 
-  if(rval === null) {
-    // split value into prefix:suffix
-    var colon = value.indexOf(':');
-    if(colon !== -1) {
-      var prefix = value.substr(0, colon);
-      var suffix = value.substr(colon + 1);
+  // split value into prefix:suffix
+  var colon = value.indexOf(':');
+  if(colon !== -1) {
+    var prefix = value.substr(0, colon);
+    var suffix = value.substr(colon + 1);
 
-      // do not expand blank nodes (prefix of '_') or already-absolute
-      // IRIs (suffix of '//')
-      if(prefix !== '_' && suffix.indexOf('//') !== 0) {
-        // prefix dependency not defined, define it
-        if(localCtx && prefix in localCtx) {
-          _createTermDefinition(activeCtx, localCtx, prefix, defined);
-        }
+    // do not expand blank nodes (prefix of '_') or already-absolute
+    // IRIs (suffix of '//')
+    if(prefix !== '_' && suffix.indexOf('//') !== 0) {
+      // prefix dependency not defined, define it
+      if(localCtx && prefix in localCtx) {
+        _createTermDefinition(activeCtx, localCtx, prefix, defined);
+      }
 
-        // use mapping if prefix is defined
-        var mapping = activeCtx.mappings[prefix];
-        if(mapping) {
-          rval = mapping['@id'] + suffix;
-        }
+      // use mapping if prefix is defined
+      var mapping = activeCtx.mappings[prefix];
+      if(mapping) {
+        return mapping['@id'] + suffix;
       }
     }
   }
 
-  if(rval === null) {
-    rval = value;
+  // already absolute IRI
+  if(_isAbsoluteIri(value)) {
+    return value;
   }
 
-  // keywords need no expanding (aliasing already handled by now)
-  if(_isKeyword(rval)) {
-    return rval;
-  }
+  var rval = value;
 
-  if(_isAbsoluteIri(rval)) {
-    // rename blank node if requested
-    if(!localCtx && rval.indexOf('_:') === 0 && activeCtx.namer) {
-      rval = activeCtx.namer.getName(rval);
-    }
-  }
   // prepend vocab
-  else if(relativeTo.vocab && '@vocab' in activeCtx) {
+  if(relativeTo.vocab && '@vocab' in activeCtx) {
     rval = activeCtx['@vocab'] + rval;
   }
   // prepend base
@@ -4576,15 +4553,10 @@ function _removeBase(base, iri) {
  * @return the initial context.
  */
 function _getInitialContext(options) {
-  var namer = null;
-  if(options.renameBlankNodes) {
-    namer = new UniqueNamer('_:b');
-  }
   var base = jsonld.url.parse(options.base || '');
   return {
     '@base': base,
     mappings: {},
-    namer: namer,
     inverse: null,
     getInverse: _createInverseContext,
     clone: _cloneActiveContext,
@@ -4697,7 +4669,6 @@ function _getInitialContext(options) {
     var child = {};
     child['@base'] = this['@base'];
     child.mappings = _clone(this.mappings);
-    child.namer = this.namer;
     child.clone = this.clone;
     child.share = this.share;
     child.inverse = null;
@@ -4722,10 +4693,6 @@ function _getInitialContext(options) {
     var rval = {};
     rval['@base'] = this['@base'];
     rval.mappings = this.mappings;
-    rval.namer = null;
-    if(this.namer) {
-      rval.namer = new UniqueNamer('_:b');
-    }
     rval.clone = this.clone;
     rval.share = this.share;
     rval.inverse = this.inverse;
