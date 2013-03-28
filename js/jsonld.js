@@ -3181,23 +3181,18 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
     return;
   }
 
-  // add entries for @type
-  if('@type' in input) {
-    var types = input['@type'];
-    if(!_isArray(types)) {
-      types = [types];
-    }
-    for(var ti = 0; ti < types.length; ++ti) {
-      var type = types[ti];
-      var id = (type.indexOf('_:') === 0) ? namer.getName(type) : type;
-      if(!(id in graphs[graph])) {
-        graphs[graph][id] = {'@id': id};
-      }
-    }
-  }
-
   // add values to list
   if(_isValue(input)) {
+    if('@type' in input) {
+      var type = input['@type'];
+      // rename @type blank node
+      if(type.indexOf('_:') === 0) {
+        input['@type'] = type = namer.getName(type);
+      }
+      if(!(type in graphs[graph])) {
+        graphs[graph][type] = {'@id': type};
+      }
+    }
     if(list) {
       list.push(input);
     }
@@ -3276,6 +3271,14 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
     }
     for(var oi = 0; oi < objects.length; ++oi) {
       var o = objects[oi];
+
+      if(property === '@type') {
+        // rename @type blank nodes
+        o = (o.indexOf('_:') === 0) ? namer.getName(o) : o;
+        if(!(o in graphs[graph])) {
+          graphs[graph][o] = {'@id': o};
+        }
+      }
 
       // handle embedded subject or subject reference
       if(_isSubject(o) || _isSubjectReference(o)) {
