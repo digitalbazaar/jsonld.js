@@ -22,6 +22,13 @@ try {
   // skip URL fetching when request is missing
 }
 
+try {
+  var jsdom = require('jsdom');
+  var RDFa = require('../js/rdfa');
+} catch(e) {
+  // skip RDFa parsing if is libs missing
+}
+
 // Parse the string or value and return the boolean value encoded or raise an
 // exception.
 function boolify(value) {
@@ -69,7 +76,13 @@ function _readData(src, encoding, callback) {
     request({
       method: 'GET',
       url: src,
-      json: true
+      headers: {
+        Accept:
+          'application/ld+json, ' +
+          'application/json, ' +
+          'text/html, ' +
+          'application/xhtml+xml'
+      }
       //strictSSL: true,
     }, function(err, res) {
       if(err) {
@@ -82,8 +95,60 @@ function _readData(src, encoding, callback) {
           statusCode: res.statusCode,
           url: src
         });
+        return;
       }
-      callback(null, res.body);
+      var ct = res.headers['content-type'];
+      // grab part before ';'
+      var type = (ct || '').split(';')[0];
+      var body;
+      switch(type) {
+        case 'application/ld+json':
+        case 'application/json':
+          body = JSON.parse(res.body);
+          break;
+        case 'text/html':
+        case 'application/xhtml+xml':
+          if(RDFa) {
+            // input is RDFa
+            jsdom.env(res.body, function(errors, window) {
+              if(errors && errors.length > 0) {
+                callback({
+                  message: 'DOM Errors:',
+                  errors: errors,
+                  url: src
+                });
+                return;
+              }
+
+              try {
+                // extract JSON-LD from RDFa
+                RDFa.attach(window.document);
+                jsonld.fromRDF(window.document.data,
+                  {format: 'rdfa-api'}, callback);
+              }
+              catch(ex) {
+                return callback(ex);
+              }
+            });
+            break;
+          }
+          else {
+            callback({
+              message: 'RDFa parser not found.',
+              contentType: ct,
+              url: src
+            });
+          }
+          break;
+        default:
+          callback({
+            message: 'Unknown Content-Type.',
+            contentType: ct,
+            url: src
+          });
+          return;
+      }
+      callback(null, body);
     });
   }
   else {
