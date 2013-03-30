@@ -258,6 +258,11 @@ program
     input = input || '-';
     async.auto({
       readContext: function(callback, results) {
+        // use built-in context loader
+        if(cmd.context.indexOf('http://') === 0 ||
+          cmd.context.indexOf('https://') === 0) {
+          return callback(null, cmd.context);
+        }
         _readData(cmd.context, 'utf-8', callback)
       },
       readInput: function(callback, results) {
@@ -332,6 +337,11 @@ program
       },
       readContext: function(callback, results) {
         if(cmd.context) {
+          // use built-in context loader
+          if(cmd.context.indexOf('http://') === 0 ||
+            cmd.context.indexOf('https://') === 0) {
+            return callback(null, cmd.context);
+          }
           _readData(cmd.context, 'utf-8', callback)
         }
         else {

@@ -989,7 +989,8 @@ jsonld.processContext = function(activeCtx, localCtx) {
 
   // retrieve URLs in localCtx
   localCtx = _clone(localCtx);
-  if(_isObject(localCtx) && !('@context' in localCtx)) {
+  if(_isString(localCtx) ||
+    (_isObject(localCtx) && !('@context' in localCtx))) {
     localCtx = {'@context': localCtx};
   }
   _retrieveContextUrls(localCtx, options, function(err, ctx) {
