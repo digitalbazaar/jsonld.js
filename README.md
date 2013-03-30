@@ -31,6 +31,40 @@ to JSON with added semantics. Finally, the format is intended to be fast
 to parse, fast to generate, stream-based and document-based processing
 compatible, and require a very small memory footprint in order to operate.
 
+Using the Command-line Tool
+---------------------------
+
+The jsonld command line tool can be used to:
+
+ * Transform JSON-LD to compact, expanded, normalized, or flattened form
+ * Transform RDFa to JSON-LD
+ * Normalize JSON-LD/RDFa Datasets to NQuads
+
+To install the tool, do the following (you will need git, nodejs, and
+npm installed):
+
+    git clone https://github.com/digitalbazaar/jsonld.js.git
+    cd jsonld.js
+    npm install
+
+To compact a document on the Web using a JSON-LD context published on
+the Web:
+
+    ./bin/jsonld compact -c "http://w3id.org/payswarm/v1" "http://recipes.payswarm.com/?p=10554"
+
+The command above will read in a PaySwarm Asset and Listing in RDFa 1.0 format, 
+convert it to JSON-LD expanded form, compact it using the 
+'http://w3id.org/payswarm/v1' context, and dump it out to the console in 
+compacted form.
+
+    ./bin/jsonld normalize -q "http://recipes.payswarm.com/?p=10554"
+
+The command above will read in a PaySwarm Asset and Listing in RDFa 1.0 format,
+normalize the data using the RDF Dataset normalization algorithm, and
+then dump the output to normalized NQuads format. The NQuads can then be
+processed via SHA-256, or similar algorithm, to get a deterministic hash
+of the contents of the Dataset.
+
 Commercial Support
 ------------------
 
