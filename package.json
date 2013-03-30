@@ -22,14 +22,12 @@
   },
   "main": "js/jsonld.js",
   "optionalDependencies": {
+    "async": "~0.2.6",
     "commander": "~1.1.0",
     "jsdom": "~0.5.0",
     "pkginfo": "~0.2.3",
     "request": "~2.16.0",
     "xmldom": ""
-  },
-  "devDependencies": {
-    "async": "~0.2.6"
   },
   "engines": {
     "node": "*"
