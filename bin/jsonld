@@ -153,6 +153,9 @@ function _readData(src, encoding, callback) {
   }
   else {
     fs.readFile(src, encoding, function(error, data) {
+      if(error) {
+        return callback(error);
+      }
       callback(null, JSON.parse(data));
     });
   }
