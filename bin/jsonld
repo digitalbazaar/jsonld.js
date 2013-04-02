@@ -179,7 +179,12 @@ function _output(callback, data, cmd) {
 // final async call to handle errors
 function _final(err, results) {
   if(err) {
-    console.log('ERROR:', err);
+    if(typeof err === 'object') {
+      console.log('ERROR:', JSON.stringify(err, null, 2));
+    }
+    else {
+      console.log('ERROR:', err);
+    }
     process.exit(1);
   }
 }
