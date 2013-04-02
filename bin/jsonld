@@ -86,59 +86,61 @@ function _readData(src, encoding, callback) {
       //strictSSL: true,
     }, function(err, res) {
       if(err) {
-        callback(err);
+        return callback(err);
       }
-      var s = res.statusCode/100 | 0;
-      if(s !== 2) {
-        callback({
+      if((res.statusCode/100 | 0) !== 2) {
+        return callback({
           message: 'Bad status code.',
           statusCode: res.statusCode,
           url: src
         });
-        return;
       }
       var ct = res.headers['content-type'];
       // grab part before ';'
       var type = (ct || '').split(';')[0];
-      var body;
       switch(type) {
         case 'application/ld+json':
         case 'application/json':
-          body = JSON.parse(res.body);
+          callback(null, JSON.parse(res.body));
           break;
         case 'text/html':
         case 'application/xhtml+xml':
-          if(RDFa) {
-            // input is RDFa
-            jsdom.env(res.body, function(errors, window) {
-              if(errors && errors.length > 0) {
-                callback({
-                  message: 'DOM Errors:',
-                  errors: errors,
-                  url: src
-                });
-                return;
-              }
-
-              try {
-                // extract JSON-LD from RDFa
-                RDFa.attach(window.document);
-                jsonld.fromRDF(window.document.data,
-                  {format: 'rdfa-api'}, callback);
-              }
-              catch(ex) {
-                return callback(ex);
-              }
-            });
-            break;
-          }
-          else {
+          if(typeof jsdom === 'undefined') {
             callback({
-              message: 'RDFa parser not found.',
+              message: 'jsdom module not found.',
               contentType: ct,
               url: src
             });
+            break;
           }
+          if(typeof RDFa === 'undefined') {
+            callback({
+              message: 'RDFa module not found.',
+              contentType: ct,
+              url: src
+            });
+            break;
+          }
+          // input is RDFa
+          jsdom.env(res.body, function(errors, window) {
+            if(errors && errors.length > 0) {
+              return callback({
+                message: 'DOM Errors:',
+                errors: errors,
+                url: src
+              });
+            }
+
+            try {
+              // extract JSON-LD from RDFa
+              RDFa.attach(window.document);
+              jsonld.fromRDF(window.document.data,
+                {format: 'rdfa-api'}, callback);
+            }
+            catch(ex) {
+              callback(ex);
+            }
+          });
           break;
         default:
           callback({
@@ -146,9 +148,7 @@ function _readData(src, encoding, callback) {
             contentType: ct,
             url: src
           });
-          return;
       }
-      callback(null, body);
     });
   }
   else {
