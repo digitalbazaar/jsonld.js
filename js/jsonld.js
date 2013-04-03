@@ -3803,9 +3803,8 @@ function _selectTerm(
   }
   prefs.push('@none');
 
-  var term = null;
   var containerMap = activeCtx.inverse[iri];
-  for(var ci = 0; term === null && ci < containers.length; ++ci) {
+  for(var ci = 0; ci < containers.length; ++ci) {
     // if container not available in the map, continue
     var container = containers[ci];
     if(!(container in containerMap)) {
@@ -3813,7 +3812,7 @@ function _selectTerm(
     }
 
     var typeOrLanguageValueMap = containerMap[container][typeOrLanguage];
-    for(var pi = 0; term === null && pi < prefs.length; ++pi) {
+    for(var pi = 0; pi < prefs.length; ++pi) {
       // if type/language option not available in the map, continue
       var pref = prefs[pi];
       if(!(pref in typeOrLanguageValueMap)) {
@@ -3821,11 +3820,11 @@ function _selectTerm(
       }
 
       // select term
-      term = typeOrLanguageValueMap[pref];
+      return typeOrLanguageValueMap[pref];
     }
   }
 
-  return term;
+  return null;
 }
 
 /**
