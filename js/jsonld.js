@@ -3263,8 +3263,15 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
       continue;
     }
 
-    // iterate over objects (ensure property is added for empty arrays)
+    // iterate over objects
     var objects = input[property];
+
+    // if property is a bnode, assign it a new id
+    if(property.indexOf('_:') === 0) {
+      property = namer.getName(property);
+    }
+
+    // ensure property is added for empty arrays
     if(objects.length === 0) {
       jsonld.addValue(subject, property, [], {propertyIsArray: true});
       continue;

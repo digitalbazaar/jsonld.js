@@ -127,13 +127,7 @@ TestRunner.prototype.check = function(test, expect, result, type) {
     var expanded = (
       type.indexOf('jld:ExpandTest') !== -1 ||
       type.indexOf('jld:FlattenTest') !== -1);
-    var relabel = (type.indexOf('jld:FlattenTest') !== -1);
     if(expanded) {
-      // relabel blank nodes
-      if(relabel) {
-        expect = jsonld.relabelBlankNodes(expect);
-        result = jsonld.relabelBlankNodes(result);
-      }
       pass = this.expandedEqual(expect, result);
     }
   }
