@@ -3970,7 +3970,22 @@ function _compactIri(activeCtx, iri, value, relativeTo, reverse) {
     }
   }
 
-  // no term match, check for possible CURIEs
+  // no term match, use @vocab if available
+  if(relativeTo.vocab) {
+    if('@vocab' in activeCtx) {
+      // determine if vocab is a prefix of the iri
+      var vocab = activeCtx['@vocab'];
+      if(iri.indexOf(vocab) === 0 && iri !== vocab) {
+        // use suffix as relative iri if it is not a term in the active context
+        var suffix = iri.substr(vocab.length);
+        if(!(suffix in activeCtx.mappings)) {
+          return suffix;
+        }
+      }
+    }
+  }
+
+  // no term or @vocab match, check for possible CURIEs
   var choice = null;
   for(var term in activeCtx.mappings) {
     // skip terms with colons, they can't be prefixes
@@ -4006,22 +4021,8 @@ function _compactIri(activeCtx, iri, value, relativeTo, reverse) {
     return choice;
   }
 
-  // no matching terms or curies, use @vocab if available
-  if(relativeTo.vocab) {
-    if('@vocab' in activeCtx) {
-      // determine if vocab is a prefix of the iri
-      var vocab = activeCtx['@vocab'];
-      if(iri.indexOf(vocab) === 0 && iri !== vocab) {
-        // use suffix as relative iri if it is not a term in the active context
-        var suffix = iri.substr(vocab.length);
-        if(!(suffix in activeCtx.mappings)) {
-          return suffix;
-        }
-      }
-    }
-  }
   // compact IRI relative to base
-  else {
+  if(!relativeTo.vocab) {
     return _removeBase(activeCtx['@base'], iri);
   }
 
