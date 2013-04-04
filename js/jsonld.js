@@ -4366,17 +4366,19 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
 
     // do not expand blank nodes (prefix of '_') or already-absolute
     // IRIs (suffix of '//')
-    if(prefix !== '_' && suffix.indexOf('//') !== 0) {
-      // prefix dependency not defined, define it
-      if(localCtx && prefix in localCtx) {
-        _createTermDefinition(activeCtx, localCtx, prefix, defined);
-      }
+    if(prefix === '_' || suffix.indexOf('//') === 0) {
+      return value;
+    }
 
-      // use mapping if prefix is defined
-      var mapping = activeCtx.mappings[prefix];
-      if(mapping) {
-        return mapping['@id'] + suffix;
-      }
+    // prefix dependency not defined, define it
+    if(localCtx && prefix in localCtx) {
+      _createTermDefinition(activeCtx, localCtx, prefix, defined);
+    }
+
+    // use mapping if prefix is defined
+    var mapping = activeCtx.mappings[prefix];
+    if(mapping) {
+      return mapping['@id'] + suffix;
     }
 
     // already absolute IRI
