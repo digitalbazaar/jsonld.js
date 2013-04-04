@@ -66,6 +66,7 @@ jsonld.compact = function(input, ctx, options, callback) {
     callback = options;
     options = {};
   }
+  options = options || {};
 
   // nothing to compact
   if(input === null) {
@@ -211,16 +212,13 @@ jsonld.compact = function(input, ctx, options, callback) {
  *          [loadContext(url, callback(err, url, result))] the context loader.
  * @param callback(err, expanded) called once the operation completes.
  */
-jsonld.expand = function(input) {
+jsonld.expand = function(input, options, callback) {
   // get arguments
-  var options = {};
-  var callback;
-  var callbackArg = 1;
-  if(arguments.length > 2) {
-    options = arguments[1] || {};
-    callbackArg += 1;
+  if(typeof options === 'function') {
+    callback = options;
+    options = {};
   }
-  callback = arguments[callbackArg];
+  options = options || {};
 
   // set default options
   if(!('base' in options)) {
@@ -282,6 +280,7 @@ jsonld.flatten = function(input, ctx, options, callback) {
     callback = options;
     options = {};
   }
+  options = options || {};
 
   // set default options
   if(!('base' in options)) {
@@ -338,15 +337,13 @@ jsonld.flatten = function(input, ctx, options, callback) {
  *          [loadContext(url, callback(err, url, result))] the context loader.
  * @param callback(err, framed) called once the operation completes.
  */
-jsonld.frame = function(input, frame) {
+jsonld.frame = function(input, frame, options, callback) {
   // get arguments
-  var options = {};
-  var callbackArg = 2;
-  if(arguments.length > 3) {
-    options = arguments[2] || {};
-    callbackArg += 1;
+  if(typeof options === 'function') {
+    callback = options;
+    options = {};
   }
-  var callback = arguments[callbackArg];
+  options = options || {};
 
   // set default options
   if(!('base' in options)) {
@@ -419,15 +416,13 @@ jsonld.frame = function(input, frame) {
  *          [loadContext(url, callback(err, url, result))] the context loader.
  * @param callback(err, objectified) called once the operation completes.
  */
-jsonld.objectify = function(input, ctx) {
+jsonld.objectify = function(input, ctx, options, callback) {
   // get arguments
-  var options = {};
-  var callbackArg = 2;
-  if(arguments.length > 3) {
-    options = arguments[2] || {};
-    callbackArg += 1;
+  if(typeof options === 'function') {
+    callback = options;
+    options = {};
   }
-  var callback = arguments[callbackArg];
+  options = options || {};
 
   // set default options
   if(!('base' in options)) {
@@ -715,6 +710,18 @@ jsonld.loadContext = function(url, callback) {
     'Could not retrieve @context URL. URL derefencing not implemented.',
     'jsonld.ContextUrlError'), url);
 };
+
+/* WebIDL API */
+
+function JsonLdProcessor() {};
+JsonLdProcessor.prototype.expand = jsonld.expand;
+JsonLdProcessor.prototype.compact = jsonld.compact;
+JsonLdProcessor.prototype.flatten = jsonld.flatten;
+JsonLdProcessor.prototype.frame = jsonld.frame;
+JsonLdProcessor.prototype.fromRDF = jsonld.fromRDF;
+JsonLdProcessor.prototype.toRDF = jsonld.toRDF;
+JsonLdProcessor.prototype.normalize = jsonld.normalize;
+jsonld.JsonLdProcessor = JsonLdProcessor;
 
 /* Utility API */
 
