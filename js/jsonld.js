@@ -3841,7 +3841,6 @@ function _selectTerm(
  * @param iri the IRI to compact.
  * @param value the value to check or null.
  * @param relativeTo options for how to compact IRIs:
- *          base: true to resolve against the base IRI, false not to.
  *          vocab: true to split after @vocab, false not to.
  * @param reverse true if a reverse property is being compacted, false if not.
  *
