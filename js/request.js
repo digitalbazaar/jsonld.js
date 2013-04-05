@@ -51,7 +51,7 @@ function _clone(value) {
  * green-turtle RDFa modules.
  *
  * @param loc the location of the resource, one of the following:
- *        -: to read data from stdin.
+ *        falsey or -: to read data from stdin.
  *        URL: URL string beginning with 'http://' or 'https://'.
  *        *: a filename
  * @param options request options [optional]
@@ -66,7 +66,7 @@ function _request(loc, options, callback) {
     callback = options;
     options = {};
   }
-  if(loc === '-') {
+  if(!loc || loc === '-') {
     // read from stdin
     options.encoding = options.encoding || 'utf-8';
     var data = '';
