@@ -939,7 +939,7 @@ jsonld.contextLoaders['node'] = function(options) {
 
 /**
  * Assigns the default context loader for external @context URLs to a built-in
- * default. Supported types currently include: 'jquery'.
+ * default. Supported types currently include: 'jquery' and 'node'.
  *
  * To use the jquery context loader, the 'data' parameter must be a reference
  * to the main jquery object.
