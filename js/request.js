@@ -46,6 +46,132 @@ function _clone(value) {
 }
 
 /**
+ * Parse string with given type.
+ *
+ * @param loc location string came from
+ * @param type content type of the string
+ * @param str the data string
+ * @param callback function(err, data) called with errors or JSON data
+ */
+function _typedParse(loc, type, str, callback) {
+  switch(type) {
+    case 'json':
+    case 'jsonld':
+    case 'json-ld':
+    case 'application/json':
+    case 'application/ld+json':
+      try {
+        callback(null, JSON.parse(str));
+      }
+      catch(ex) {
+        callback({
+          message: 'Error parsing JSON.',
+          contentType: type,
+          url: loc,
+          exception: ex.toString()
+        });
+      }
+      break;
+    case 'xml':
+    case 'html':
+    case 'xhtml':
+    case 'text/html':
+    case 'application/xhtml+xml':
+      if(typeof jsdom === 'undefined') {
+        callback({
+          message: 'jsdom module not found.',
+          contentType: type,
+          url: loc
+        });
+        break;
+      }
+      if(typeof RDFa === 'undefined') {
+        callback({
+          message: 'RDFa module not found.',
+          contentType: type,
+          url: loc
+        });
+        break;
+      }
+      // input is RDFa
+      jsdom.env(str, function(errors, window) {
+        if(errors && errors.length > 0) {
+          return callback({
+            message: 'DOM Errors:',
+            errors: errors,
+            url: loc
+          });
+        }
+
+        try {
+          // extract JSON-LD from RDFa
+          RDFa.attach(window.document);
+          jsonld.fromRDF(window.document.data,
+            {format: 'rdfa-api'}, callback);
+        }
+        catch(ex) {
+          callback(ex);
+        }
+      });
+      break;
+    default:
+      callback({
+        message: 'Unknown Content-Type.',
+        contentType: type,
+        url: loc
+      });
+  }
+}
+
+// http://stackoverflow.com/questions/280634/endswith-in-javascript
+function endsWith(str, suffix) {
+  return str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
+
+/**
+ * Parse string.
+ *
+ * @param loc location string came from
+ * @param type content type of the string or null to attempt to auto-detect
+ * @param str the data string
+ * @param callback function(err, data) called with errors or JSON data
+ */
+function _parse(loc, type, str, callback) {
+  // explicit type
+  if(type) {
+    return _typedParse(loc, type, str, callback);
+  }
+  // typed via JSON-like extension
+  if(loc && (endsWith(loc, '.json') ||
+    endsWith(loc, '.jsonld') ||
+    endsWith(loc, '.json-ld'))) {
+    return _typedParse(loc, 'json', str, callback);
+  }
+  // typed via HTML-like extension
+  if(loc && (endsWith(loc, '.xml') ||
+    endsWith(loc, '.html') ||
+    endsWith(loc, '.xhtml'))) {
+    return _typedParse(loc, 'html', str, callback);
+  }
+  // try ~JSON
+  _typedParse(loc, 'application/ld+json', str, function(err, data) {
+    if(err) {
+      // try ~HTML
+      return _typedParse(loc, 'text/html', str, function(err, data) {
+        if(err) {
+          return callback({
+            message: 'Unable to auto-detect format.',
+            url: loc
+          });
+        }
+        callback(null, data);
+      });
+    }
+    callback(null, data);
+  });
+}
+
+/**
  * Request JSON-LD data from a location. Fetching remote resources depends on
  * the node 'request' module. Parsing of RDFa depends on the jsdom and
  * green-turtle RDFa modules.
@@ -58,6 +184,7 @@ function _clone(value) {
  *        URLs: see node 'request' module
  *        stdin and files:
  *          encoding: input character encoding (default: 'utf-8')
+ *          type: explicit content type (default: auto)
  * @param callback function(err, data) called with error or a JSON object.
  */
 function _request(loc, options, callback) {
@@ -78,7 +205,7 @@ function _request(loc, options, callback) {
     });
 
     process.stdin.on('end', function() {
-      callback(null, JSON.parse(data));
+      _parse(loc, options.type, data, callback);
     });
   }
   else if(loc.indexOf('http://') === 0 || loc.indexOf('https://') === 0) {
@@ -125,57 +252,7 @@ function _request(loc, options, callback) {
       var ct = res.headers['content-type'];
       // grab part before ';'
       var type = (ct || '').split(';')[0];
-      switch(type) {
-        case 'application/ld+json':
-        case 'application/json':
-          callback(null, JSON.parse(body));
-          break;
-        case 'text/html':
-        case 'application/xhtml+xml':
-          if(typeof jsdom === 'undefined') {
-            callback({
-              message: 'jsdom module not found.',
-              contentType: ct,
-              url: loc
-            });
-            break;
-          }
-          if(typeof RDFa === 'undefined') {
-            callback({
-              message: 'RDFa module not found.',
-              contentType: ct,
-              url: loc
-            });
-            break;
-          }
-          // input is RDFa
-          jsdom.env(body, function(errors, window) {
-            if(errors && errors.length > 0) {
-              return callback({
-                message: 'DOM Errors:',
-                errors: errors,
-                url: loc
-              });
-            }
-
-            try {
-              // extract JSON-LD from RDFa
-              RDFa.attach(window.document);
-              jsonld.fromRDF(window.document.data,
-                {format: 'rdfa-api'}, callback);
-            }
-            catch(ex) {
-              callback(ex);
-            }
-          });
-          break;
-        default:
-          callback({
-            message: 'Unknown Content-Type.',
-            contentType: ct,
-            url: loc
-          });
-      }
+      _parse(loc, type, body, callback);
     });
   }
   else {
@@ -185,7 +262,7 @@ function _request(loc, options, callback) {
       if(error) {
         return callback(error);
       }
-      callback(null, JSON.parse(data));
+      _parse(loc, options.type, data, callback);
     });
   }
 }

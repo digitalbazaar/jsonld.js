@@ -89,8 +89,9 @@ function _isHTTP(url) {
 function _jsonLdCommand(command) {
   command
     .option('-i, --indent <spaces>', 'spaces to indent [2]', Number, 2)
-    .option('-N, --no-newline', 'do not output the trailing newline')
-    .option('-k, --insecure', 'allow insecure SSL connections')
+    .option('-N, --no-newline', 'do not output the trailing newline [newline]')
+    .option('-k, --insecure', 'allow insecure SSL connections [false]')
+    .option('-t, --type <type>', 'input type [auto]')
   return command;
 }
 
@@ -100,6 +101,9 @@ function _requestOptions(command) {
   if(command.insecure) {
     options.strictSSL = false;
   }
+  if(command.type && command.type !== 'auto') {
+    options.type = command.type;
+  }
   return options;
 }
 
@@ -108,10 +112,10 @@ program
 
 _jsonLdCommand(program.command('format [filename|URL|-]'))
   .description('format JSON')
-  .option('-b, --base <base>', 'base IRI', String)
-  .option('-f, --format <format>', 'format to output', String)
-  .option('-q, --nquads', 'use application/nquads format')
-  .option('-j, --json', 'use application/json format [default]')
+  .option('-b, --base <base>', 'base IRI []', String)
+  .option('-f, --format <format>', 'output format [json]', String)
+  .option('-q, --nquads', 'output application/nquads [false]')
+  .option('-j, --json', 'output application/json [true]')
   .action(function(input, cmd) {
     input = input || '-';
     var reqopts = _requestOptions(cmd);
