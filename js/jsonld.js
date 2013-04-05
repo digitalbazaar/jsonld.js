@@ -6170,6 +6170,21 @@ if(_nodejs) {
   jsonld.useContextLoader('node');
 }
 
+if(_nodejs) {
+  jsonld.use = function(extension) {
+    switch(extension) {
+      case 'request':
+        // use node JSON-LD request extension
+        jsonld.request = require('./request');
+        break;
+      default:
+        throw new JsonLdError(
+          'Unknown extension.',
+          'jsonld.UnknownExtension', {extension: extension});
+    }
+  }
+}
+
 // end of jsonld API factory
 return jsonld;
 };
