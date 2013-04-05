@@ -16,18 +16,8 @@ var path = require('path');
 var pkginfo = require('pkginfo')(module, 'version');
 var program = require('commander');
 
-try {
-  var request = require('request');
-} catch(e) {
-  // skip URL fetching when request is missing
-}
-
-try {
-  var jsdom = require('jsdom');
-  var RDFa = require('../js/rdfa');
-} catch(e) {
-  // skip RDFa parsing if is libs missing
-}
+// use 'request' extension to load JSON-LD
+jsonld.use('request');
 
 // Parse the string or value and return the boolean value encoded or raise an
 // exception.
@@ -56,113 +46,8 @@ function boolify(value) {
   throw Error('Invalid boolean:' + value);
 }
 
-// read a file or use '-' for stdin.
-function _readData(src, encoding, callback) {
-  if(src === '-') {
-    var data = '';
-    process.stdin.resume();
-    process.stdin.setEncoding(encoding);
-
-    process.stdin.on('data', function(chunk) {
-      data += chunk;
-    });
-
-    process.stdin.on('end', function() {
-      callback(null, JSON.parse(data));
-    });
-  }
-  else if(request &&
-    (src.indexOf('http://') === 0 || src.indexOf('https://') === 0)) {
-    request({
-      method: 'GET',
-      url: src,
-      headers: {
-        Accept:
-          'application/ld+json, ' +
-          'application/json, ' +
-          'text/html, ' +
-          'application/xhtml+xml'
-      }
-      //strictSSL: true,
-    }, function(err, res) {
-      if(err) {
-        return callback(err);
-      }
-      if((res.statusCode/100 | 0) !== 2) {
-        return callback({
-          message: 'Bad status code.',
-          statusCode: res.statusCode,
-          url: src
-        });
-      }
-      var ct = res.headers['content-type'];
-      // grab part before ';'
-      var type = (ct || '').split(';')[0];
-      switch(type) {
-        case 'application/ld+json':
-        case 'application/json':
-          callback(null, JSON.parse(res.body));
-          break;
-        case 'text/html':
-        case 'application/xhtml+xml':
-          if(typeof jsdom === 'undefined') {
-            callback({
-              message: 'jsdom module not found.',
-              contentType: ct,
-              url: src
-            });
-            break;
-          }
-          if(typeof RDFa === 'undefined') {
-            callback({
-              message: 'RDFa module not found.',
-              contentType: ct,
-              url: src
-            });
-            break;
-          }
-          // input is RDFa
-          jsdom.env(res.body, function(errors, window) {
-            if(errors && errors.length > 0) {
-              return callback({
-                message: 'DOM Errors:',
-                errors: errors,
-                url: src
-              });
-            }
-
-            try {
-              // extract JSON-LD from RDFa
-              RDFa.attach(window.document);
-              jsonld.fromRDF(window.document.data,
-                {format: 'rdfa-api'}, callback);
-            }
-            catch(ex) {
-              callback(ex);
-            }
-          });
-          break;
-        default:
-          callback({
-            message: 'Unknown Content-Type.',
-            contentType: ct,
-            url: src
-          });
-      }
-    });
-  }
-  else {
-    fs.readFile(src, encoding, function(error, data) {
-      if(error) {
-        return callback(error);
-      }
-      callback(null, JSON.parse(data));
-    });
-  }
-}
-
 // common output function
-function _output(callback, data, cmd) {
+function _output(data, cmd, callback) {
   if(typeof data === 'object') {
     var output = JSON.stringify(data, null, cmd.indent);
     process.stdout.write(output);
@@ -195,23 +80,44 @@ function _final(err, results) {
   }
 }
 
+// check for HTTP/HTTPS URL
+function _isHTTP(url) {
+  return (url.indexOf('http://') === 0 || url.indexOf('https://') === 0);
+}
+
+// init common command options
+function _jsonLdCommand(command) {
+  command
+    .option('-i, --indent <spaces>', 'spaces to indent [2]', Number, 2)
+    .option('-N, --no-newline', 'do not output the trailing newline')
+    .option('-k, --insecure', 'allow insecure SSL connections')
+  return command;
+}
+
+// init options for request
+function _requestOptions(command) {
+  var options = {};
+  if(command.insecure) {
+    options.strictSSL = false;
+  }
+  return options;
+}
+
 program
   .version(module.exports.version);
 
-program
-  .command('format [filename|URL|-]')
+_jsonLdCommand(program.command('format [filename|URL|-]'))
   .description('format JSON')
-  .option('-i, --indent <spaces>', 'spaces to indent [2]', Number, 2)
-  .option('-N, --no-newline')
   .option('-b, --base <base>', 'base IRI', String)
   .option('-f, --format <format>', 'format to output', String)
   .option('-q, --nquads', 'use application/nquads format')
   .option('-j, --json', 'use application/json format [default]')
   .action(function(input, cmd) {
     input = input || '-';
+    var reqopts = _requestOptions(cmd);
     async.auto({
       readInput: function(callback, results) {
-        _readData(input, 'utf-8', callback);
+        jsonld.request(input, reqopts, callback);
       },
       process: ['readInput', function(callback, results) {
         var options = {
@@ -244,75 +150,67 @@ program
             callback(null, results.readInput);
             break;
           default:
-            throw Error('ERROR: Unknown format: ' + format);
+            throw Error('ERROR: Unknown format: ' + options.format);
         }
       }],
       output: ['process', function(callback, results) {
-        _output(callback, results.process, cmd);
+        _output(results.process, cmd, callback);
       }]
     }, _final);
   });
 
-program
-  .command('compact [filename|URL]')
+_jsonLdCommand(program.command('compact [filename|URL]'))
   .description('compact JSON-LD')
-  .option('-i, --indent <spaces>', 'spaces to indent [2]', Number, 2)
-  .option('-N, --no-newline')
   .option('-b, --base <base>', 'base IRI', String)
   .option('-c, --context <filename|URL>', 'context filename or URL')
   .option('-S, --no-strict', 'disable strict mode')
   .option('-A, --no-compact-arrays',
     'disable compacting arrays to single values')
   .option('-g, --graph', 'always output top-level graph [false]')
-  .option('-E, --no-expansion', 'disable input expansion')
   .action(function(input, cmd) {
     input = input || '-';
+    var reqopts = _requestOptions(cmd);
     async.auto({
       readContext: function(callback, results) {
         // use built-in context loader
-        if(cmd.context.indexOf('http://') === 0 ||
-          cmd.context.indexOf('https://') === 0) {
+        if(_isHTTP(cmd.context)) {
           return callback(null, cmd.context);
         }
-        _readData(cmd.context, 'utf-8', callback)
+        jsonld.request(cmd.context, reqopts, callback)
       },
       readInput: function(callback, results) {
-        _readData(input, 'utf-8', callback);
+        jsonld.request(input, reqopts, callback);
       },
       process: ['readContext', 'readInput', function(callback, results) {
         var options = {
           strict: cmd.strict,
           compactArrays: cmd.compactArrays,
-          graph: cmd.graph,
-          skipExpansion: cmd.expansion
+          graph: !!cmd.graph
         };
         if(cmd.base) {
           options.base = cmd.base;
         }
         jsonld.compact(results.readInput, results.readContext, options,
-          function(err, compacted, ctx) {
-            // is ctx output needed?
+          function(err, compacted) {
             callback(err, compacted);
           });
       }],
       output: ['process', function(callback, results) {
-        _output(callback, results.process, cmd);
+        _output(results.process, cmd, callback);
       }]
     }, _final);
   });
 
-program
-  .command('expand [filename|URL|-]')
+_jsonLdCommand(program.command('expand [filename|URL|-]'))
   .description('expand JSON-LD')
-  .option('-i, --indent <spaces>', 'spaces to indent [2]', Number, 2)
-  .option('-N, --no-newline')
   .option('-b, --base <base>', 'base IRI', String)
-  .option('-k, --keep-free-floating-nodes', 'keep free-floating nodes')
+  .option('    --keep-free-floating-nodes', 'keep free-floating nodes')
   .action(function(input, cmd) {
     input = input || '-';
+    var reqopts = _requestOptions(cmd);
     async.auto({
       readInput: function(callback, results) {
-        _readData(input, 'utf-8', callback);
+        jsonld.request(input, reqopts, callback);
       },
       expand: ['readInput', function(callback, results) {
         var options = {
@@ -327,33 +225,30 @@ program
           });
       }],
       output: ['process', function(callback, results) {
-        _output(callback, results.process, cmd);
+        _output(results.process, cmd, callback);
       }]
     }, _final);
   });
 
-program
-  .command('flatten [filename|URL|-]')
+_jsonLdCommand(program.command('flatten [filename|URL|-]'))
   .description('flatten JSON-LD')
-  .option('-i, --indent <spaces>', 'spaces to indent [2]', Number, 2)
-  .option('-N, --no-newline')
   .option('-b, --base <base>', 'base IRI', String)
   .option('-c, --context <filename|URL>',
     'context filename or URL for compaction [none]')
   .action(function(input, cmd) {
     input = input || '-';
+    var reqopts = _requestOptions(cmd);
     async.auto({
       readInput: function(callback, results) {
-        _readData(input, 'utf-8', callback);
+        jsonld.request(input, reqopts, callback);
       },
       readContext: function(callback, results) {
         if(cmd.context) {
           // use built-in context loader
-          if(cmd.context.indexOf('http://') === 0 ||
-            cmd.context.indexOf('https://') === 0) {
+          if(_isHTTP(cmd.context)) {
             return callback(null, cmd.context);
           }
-          _readData(cmd.context, 'utf-8', callback)
+          jsonld.request(cmd.context, reqopts, callback);
         }
         else {
           callback(null, null);
@@ -370,16 +265,13 @@ program
           });
       }],
       output: ['process', function(callback, results) {
-        _output(callback, results.process, cmd);
+        _output(results.process, cmd, callback);
       }]
     }, _final);
   });
 
-program
-  .command('frame [filename|URL|-]')
+_jsonLdCommand(program.command('frame [filename|URL|-]'))
   .description('flatten JSON-LD')
-  .option('-i, --indent <spaces>', 'spaces to indent [2]', Number, 2)
-  .option('-N, --no-newline')
   .option('-b, --base <base>', 'base IRI', String)
   .option('-f, --frame <filename|URL>', 'frame to use')
   .option('-e, --embed <embed>', 'default @embed flag [true]', boolify, true)
@@ -391,10 +283,10 @@ program
     input = input || '-';
     async.auto({
       readInput: function(callback, results) {
-        _readData(input, 'utf-8', callback);
+        jsonld.request(input, reqopts, callback);
       },
       readFrame: function(callback, results) {
-        _readData(cmd.frame, 'utf-8', callback)
+        jsonld.request(cmd.frame, reqopts, callback)
       },
       process: ['readInput', 'readFrame', function(callback, results) {
         var options = {
@@ -411,25 +303,23 @@ program
           });
       }],
       output: ['process', function(callback, results) {
-        _output(callback, results.process, cmd);
+        _output(results.process, cmd, callback);
       }]
     }, _final);
   });
 
-program
-  .command('normalize [filename|URL|-]')
+_jsonLdCommand(program.command('normalize [filename|URL|-]'))
   .description('normalize JSON-LD')
-  .option('-i, --indent <spaces>', 'spaces to indent [2]', Number, 2)
-  .option('-N, --no-newline')
   .option('-b, --base <base>', 'base IRI', String)
   .option('-f, --format <format>',
     'format to output (\'application/nquads\' for N-Quads')
   .option('-q, --nquads', 'use \'application/nquads\' format')
   .action(function(input, cmd) {
     input = input || '-';
+    var reqopts = _requestOptions(cmd);
     async.auto({
       readInput: function(callback, results) {
-        _readData(input, 'utf-8', callback);
+        jsonld.request(input, reqopts, callback);
       },
       process: ['readInput', function(callback, results) {
         var options = {};
@@ -448,7 +338,7 @@ program
           });
       }],
       output: ['process', function(callback, results) {
-        _output(callback, results.process, cmd);
+        _output(results.process, cmd, callback);
       }]
     }, _final);
   });
