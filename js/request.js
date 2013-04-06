@@ -183,7 +183,7 @@ function _parse(loc, type, str, callback) {
  * @param options request options [optional]
  *        URLs: see node 'request' module
  *        stdin and files:
- *          encoding: input character encoding (default: 'utf-8')
+ *          encoding: input character encoding (default: 'utf8')
  *          type: explicit content type (default: auto)
  * @param callback function(err, data) called with error or a JSON object.
  */
@@ -195,10 +195,9 @@ function _request(loc, options, callback) {
   }
   if(!loc || loc === '-') {
     // read from stdin
-    options.encoding = options.encoding || 'utf-8';
     var data = '';
     process.stdin.resume();
-    process.stdin.setEncoding(options.encoding);
+    process.stdin.setEncoding(options.encoding || 'utf8');
 
     process.stdin.on('data', function(chunk) {
       data += chunk;
@@ -224,8 +223,7 @@ function _request(loc, options, callback) {
     // force method and url
     opts.method = 'GET';
     opts.url = loc;
-
-    // set if not set
+    opts.encoding = opts.encoding || 'utf8';
     if(!('strictSSL' in opts)) {
       opts.strictSSL = true;
     }
@@ -257,8 +255,7 @@ function _request(loc, options, callback) {
   }
   else {
     // read file
-    options.encoding = options.encoding || 'utf-8';
-    fs.readFile(loc, options.encoding, function(error, data) {
+    fs.readFile(loc, options.encoding || 'utf8', function(error, data) {
       if(error) {
         return callback(error);
       }
