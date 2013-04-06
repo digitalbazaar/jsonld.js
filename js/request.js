@@ -217,11 +217,8 @@ function _request(loc, options, callback) {
       return;
     }
 
-    // setup request options
+    // clone and setup request options
     var opts = _clone(options);
-
-    // force method and url
-    opts.method = 'GET';
     opts.url = loc;
     opts.encoding = opts.encoding || 'utf8';
     if(!('strictSSL' in opts)) {
