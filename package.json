@@ -29,6 +29,10 @@
     "request": "~2.16.0",
     "xmldom": ""
   },
+  "devDependencies": {
+    "mocha": "~1.9.0",
+    "visionmedia-jscoverage": "~1.0.0"
+  },
   "engines": {
     "node": "*"
   },
@@ -41,5 +45,8 @@
   ],
   "bin": {
     "jsonld": "./bin/jsonld"
+  },
+  "scripts": {
+    "test": "make test"
   }
 }

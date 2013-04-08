@@ -79,6 +79,9 @@ is available at:
 
 http://github.com/digitalbazaar/jsonld.js
 
+Tests
+-----
+
 This library includes a sample testing utility which may be used to verify
 that changes to the processor maintain the correct output.
 
@@ -87,10 +90,21 @@ the [json-ld.org repository][json-ld.org] hosted on GitHub.
 
 https://github.com/json-ld/json-ld.org
 
-Then run the nodejs-jsonld.tests.js application and point it at the directory
-containing the tests.
+If the json-ld.org directory is a sibling of the jsonld.js directory:
 
-    node tests/nodejs-jsonld.tests.js {PATH_TO_JSON_LD_ORG/test-suite/tests}
+    make test
+
+If you installed the test suite elsewhere:
+
+    make test JSONLD_TEST_SUITE={PATH_TO_YOUR_JSON_LD_ORG}/test-suite}
+
+Code coverage output can be generated in `coverage.html`:
+
+    make test-cov
+
+The Mocha output reporter can be changed to min, dot, list, nyan, etc:
+
+    make test REPORTER=dot
 
 [JSON-LD]: http://json-ld.org/
 [json-ld.org]: https://github.com/json-ld/json-ld.org
