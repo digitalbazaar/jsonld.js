@@ -6,7 +6,7 @@ var server = express();
 server.configure(function() {
   server.use(express.methodOverride());
   server.use(CORS);
-  server.use(express.static(path.resolve('./contexts')));
+  server.use(express.static(path.resolve(path.join(__dirname, 'contexts'))));
 });
 
 // use CORS
