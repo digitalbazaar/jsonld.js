@@ -106,6 +106,13 @@ The Mocha output reporter can be changed to min, dot, list, nyan, etc:
 
     make test REPORTER=dot
 
+Remote context tests are also available:
+
+    # run the context server in the background or another terminal
+    node tests/remote-context-server.js
+
+    make test JSONLD_TEST_SUITE=./tests
+
 [JSON-LD]: http://json-ld.org/
 [json-ld.org]: https://github.com/json-ld/json-ld.org
 
