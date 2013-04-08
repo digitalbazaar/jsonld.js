@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * JSON-LD extension to load JSON-LD from stdin, a URL, or a file.
  *
