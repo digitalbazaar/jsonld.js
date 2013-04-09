@@ -718,37 +718,16 @@ jsonld.loadContext = function(url, callback) {
 /* WebIDL API */
 
 function JsonLdProcessor() {};
-// callback param order unconventional w/WebIDL API
-JsonLdProcessor.prototype.expand = function(input, callback) {
-  var options = {};
-  if(arguments.length > 2) {
-    options = callback;
-    callback = arguments[2];
-  }
-  jsonld.expand(input, options, callback);
-};
-// callback param order unconventional w/WebIDL API
-JsonLdProcessor.prototype.compact = function(input, ctx, callback) {
-  var options = {};
-  if(arguments.length > 3) {
-    options = callback;
-    callback = arguments[3];
-  }
-  jsonld.compact(input, ctx, options, callback);
-};
-// callback param order unconventional w/WebIDL API
-JsonLdProcessor.prototype.flatten = function(input, ctx, callback) {
-  var options = {};
-  if(arguments.length > 3) {
-    options = callback;
-    callback = arguments[3];
-  }
-  jsonld.flatten(input, ctx, options, callback);
-};
+JsonLdProcessor.prototype.expand = jsonld.expand;
+JsonLdProcessor.prototype.compact = jsonld.compact;
+JsonLdProcessor.prototype.flatten = jsonld.flatten;
 JsonLdProcessor.prototype.frame = jsonld.frame;
 JsonLdProcessor.prototype.fromRDF = jsonld.fromRDF;
 JsonLdProcessor.prototype.toRDF = jsonld.toRDF;
 JsonLdProcessor.prototype.normalize = jsonld.normalize;
+JsonLdProcessor.prototype.toString = function() {
+  return '[object JsonLdProcessor]';
+};
 jsonld.JsonLdProcessor = JsonLdProcessor;
 
 /* Utility API */
