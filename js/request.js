@@ -53,14 +53,16 @@ function _clone(value) {
  * @param callback function(err, data) called with errors and result data
  */
 function _typedParse(loc, type, data, callback) {
-  switch(type) {
+  switch(type.toLowerCase()) {
     case 'text':
+    case 'plain':
     case 'text/plain':
       callback(null, data);
       break;
     case 'json':
     case 'jsonld':
     case 'json-ld':
+    case 'ld+json':
     case 'application/json':
     case 'application/ld+json':
       try {
@@ -188,15 +190,17 @@ function _parse(loc, type, data, callback) {
  *        URL: URL string beginning with 'http://' or 'https://'.
  *        *: a filename
  * @param options request options [optional]
- *        URLs: see node 'request' module
- *        stdin and files:
  *          encoding: input character encoding (default: 'utf8')
- *          type: explicit content type (default: auto)
- * @param callback function(err, data) called with error or a JSON object.
+ *          dataType: data type to expect and use for parsing the response.
+ *            omit or falsy to auto-detect. (default: auto)
+ *          *: see node 'request' module options
+ * @param callback function(err, res, data) called when done with possible
+ *          error, http.ClientResponse for URLS else null, and the result
+ *          data.
  */
 function _request(loc, options, callback) {
   // handle missing optional options param
-  if(typeof callback === 'undefined') {
+  if(typeof options === 'function') {
     callback = options;
     options = {};
   }
@@ -211,7 +215,9 @@ function _request(loc, options, callback) {
     });
 
     process.stdin.on('end', function() {
-      _parse(loc, options.type, data, callback);
+      _parse(loc, options.dataType, data, function(err, data) {
+        callback(err, null, data);
+      });
     });
   }
   else if(loc.indexOf('http://') === 0 || loc.indexOf('https://') === 0) {
@@ -251,10 +257,19 @@ function _request(loc, options, callback) {
           url: loc
         });
       }
-      var ct = res.headers['content-type'];
-      // grab part before ';'
-      var type = (ct || '').split(';')[0];
-      _parse(loc, type, body, callback);
+      // done if length specified and is 0
+      var cl = res.headers['content-length'];
+      if(cl && parseInt(cl, 10) === 0) {
+        return callback(null, null, null);
+      }
+      var dataType =
+        options.dataType ||
+        // grab part before ';'
+        (res.headers['content-type'] || '').split(';')[0];
+      // parse content
+      _parse(loc, dataType, body, function(err, data) {
+        callback(err, res, data);
+      });
     });
   }
   else {
@@ -263,7 +278,9 @@ function _request(loc, options, callback) {
       if(error) {
         return callback(error);
       }
-      _parse(loc, options.type, data, callback);
+      _parse(loc, options.type, data, function(err, data) {
+        callback(err, null, data);
+      });
     });
   }
 }
