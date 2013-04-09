@@ -68,6 +68,12 @@ jsonld.compact = function(input, ctx, options, callback) {
   }
   options = options || {};
 
+  if(ctx === null) {
+    return callback(new JsonLdError(
+      'The compaction context must not be null.',
+      'jsonld.CompactError'));
+  }
+
   // nothing to compact
   if(input === null) {
     return callback(null, null);
