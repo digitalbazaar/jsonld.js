@@ -45,22 +45,26 @@ function _clone(value) {
 }
 
 /**
- * Parse string with given type.
+ * Parse data with given type.
  *
  * @param loc location string came from
  * @param type content type of the string
- * @param str the data string
- * @param callback function(err, data) called with errors or JSON data
+ * @param data the data string or buffer
+ * @param callback function(err, data) called with errors and result data
  */
-function _typedParse(loc, type, str, callback) {
+function _typedParse(loc, type, data, callback) {
   switch(type) {
+    case 'text':
+    case 'text/plain':
+      callback(null, data);
+      break;
     case 'json':
     case 'jsonld':
     case 'json-ld':
     case 'application/json':
     case 'application/ld+json':
       try {
-        callback(null, JSON.parse(str));
+        callback(null, JSON.parse(data));
       }
       catch(ex) {
         callback({
@@ -93,7 +97,7 @@ function _typedParse(loc, type, str, callback) {
         break;
       }
       // input is RDFa
-      jsdom.env(str, function(errors, window) {
+      jsdom.env(data, function(errors, window) {
         if(errors && errors.length > 0) {
           return callback({
             message: 'DOM Errors:',
@@ -128,35 +132,39 @@ function endsWith(str, suffix) {
 }
 
 /**
- * Parse string.
+ * Parse data.
  *
- * @param loc location string came from
+ * @param loc location the data came from
  * @param type content type of the string or null to attempt to auto-detect
- * @param str the data string
- * @param callback function(err, data) called with errors or JSON data
+ * @param data the data string or buffer
+ * @param callback function(err, data) called with errors and result data
  */
-function _parse(loc, type, str, callback) {
+function _parse(loc, type, data, callback) {
   // explicit type
-  if(type) {
-    return _typedParse(loc, type, str, callback);
+  if(type && type !== 'auto') {
+    return _typedParse(loc, type, data, callback);
+  }
+  // typed via text-like extension
+  if(loc && (endsWith(loc, '.txt'))) {
+    return _typedParse(loc, 'text', data, callback);
   }
   // typed via JSON-like extension
   if(loc && (endsWith(loc, '.json') ||
     endsWith(loc, '.jsonld') ||
     endsWith(loc, '.json-ld'))) {
-    return _typedParse(loc, 'json', str, callback);
+    return _typedParse(loc, 'json', data, callback);
   }
   // typed via HTML-like extension
   if(loc && (endsWith(loc, '.xml') ||
     endsWith(loc, '.html') ||
     endsWith(loc, '.xhtml'))) {
-    return _typedParse(loc, 'html', str, callback);
+    return _typedParse(loc, 'html', data, callback);
   }
   // try ~JSON
-  _typedParse(loc, 'application/ld+json', str, function(err, data) {
+  _typedParse(loc, 'application/ld+json', data, function(err, data) {
     if(err) {
       // try ~HTML
-      return _typedParse(loc, 'text/html', str, function(err, data) {
+      return _typedParse(loc, 'text/html', data, function(err, data) {
         if(err) {
           return callback({
             message: 'Unable to auto-detect format.',
