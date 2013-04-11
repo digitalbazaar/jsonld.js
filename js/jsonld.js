@@ -732,21 +732,27 @@ jsonld.JsonLdProcessor = JsonLdProcessor;
 
 /* Utility API */
 
-// define nextTick
+// define setImmediate and nextTick
 if(typeof process === 'undefined' || !process.nextTick) {
   if(typeof setImmediate === 'function') {
-    jsonld.nextTick = function(callback) {
-      setImmediate(callback);
-    };
+    jsonld.setImmediate = setImmediate;
+    jsonld.nextTick = setImmediate;
   }
   else {
-    jsonld.nextTick = function(callback) {
+    jsonld.setImmediate = function(callback) {
       setTimeout(callback, 0);
     };
+    jsonld.nextTick = jsonld.setImmediate;
   }
 }
 else {
   jsonld.nextTick = process.nextTick;
+  if(typeof setImmediate === 'function') {
+    jsonld.setImmediate = setImmediate;
+  }
+  else {
+    jsonld.setImmediate = jsonld.nextTick;
+  }
 }
 
 /**
@@ -2101,7 +2107,7 @@ Processor.prototype.normalize = function(dataset, options, callback) {
     var unique = {};
 
     // hash quads for each unnamed bnode
-    jsonld.nextTick(function() {hashUnnamed(0);});
+    jsonld.setImmediate(function() {hashUnnamed(0);});
     function hashUnnamed(i) {
       if(i === unnamed.length) {
         // done, name blank nodes
@@ -2128,7 +2134,7 @@ Processor.prototype.normalize = function(dataset, options, callback) {
       }
 
       // hash next unnamed bnode
-      jsonld.nextTick(function() {hashUnnamed(i + 1);});
+      jsonld.setImmediate(function() {hashUnnamed(i + 1);});
     }
   }
 
@@ -2980,7 +2986,7 @@ function _hashPaths(id, bnodes, namer, pathNamer, callback) {
   var groups = {};
   var groupHashes;
   var quads = bnodes[id].quads;
-  jsonld.nextTick(function() {groupNodes(0);});
+  jsonld.setImmediate(function() {groupNodes(0);});
   function groupNodes(i) {
     if(i === quads.length) {
       // done, hash groups
@@ -3033,7 +3039,7 @@ function _hashPaths(id, bnodes, namer, pathNamer, callback) {
       }
     }
 
-    jsonld.nextTick(function() {groupNodes(i + 1);});
+    jsonld.setImmediate(function() {groupNodes(i + 1);});
   }
 
   // hashes a group of adjacent bnodes
@@ -3051,7 +3057,7 @@ function _hashPaths(id, bnodes, namer, pathNamer, callback) {
     var chosenPath = null;
     var chosenNamer = null;
     var permutator = new Permutator(groups[groupHash]);
-    jsonld.nextTick(function() {permutate();});
+    jsonld.setImmediate(function() {permutate();});
     function permutate() {
       var permutation = permutator.next();
       var pathNamerCopy = pathNamer.clone();
@@ -3119,7 +3125,7 @@ function _hashPaths(id, bnodes, namer, pathNamer, callback) {
 
         // do next permutation
         if(permutator.hasNext()) {
-          jsonld.nextTick(function() {permutate();});
+          jsonld.setImmediate(function() {permutate();});
         }
         else {
           // digest chosen path and update namer
