@@ -1,3 +1,5 @@
-*~
 *.sw[op]
+*~
+coverage.html
+js-cov
 node_modules
