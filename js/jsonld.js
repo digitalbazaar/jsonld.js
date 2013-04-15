@@ -4162,24 +4162,9 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
     return;
   }
 
+  // convert short-hand value to object w/@id
   if(_isString(value)) {
-    // expand value to a full IRI
-    var id = _expandIri(
-      activeCtx, value, {vocab: true, base: true}, localCtx, defined);
-
-    if(_isKeyword(id)) {
-      // disallow aliasing @context and @preserve
-      if(id === '@context' || id === '@preserve') {
-        throw new JsonLdError(
-          'Invalid JSON-LD syntax; @context and @preserve cannot be aliased.',
-          'jsonld.SyntaxError');
-      }
-    }
-
-    // define term to expanded IRI/keyword
-    activeCtx.mappings[term] = {'@id': id, reverse: false};
-    defined[term] = true;
-    return;
+    value = {'@id': value};
   }
 
   if(!_isObject(value)) {
@@ -4312,6 +4297,14 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
       language = language.toLowerCase();
     }
     mapping['@language'] = language;
+  }
+
+  // disallow aliasing @context and @preserve
+  var id = mapping['@id'];
+  if(id === '@context' || id === '@preserve') {
+    throw new JsonLdError(
+      'Invalid JSON-LD syntax; @context and @preserve cannot be aliased.',
+      'jsonld.SyntaxError');
   }
 
   // define term mapping
