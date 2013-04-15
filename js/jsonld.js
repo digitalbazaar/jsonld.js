@@ -4221,11 +4221,14 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
         'of strings or a string.',
         'jsonld.SyntaxError', {context: localCtx});
     }
-    // expand and add @id mapping
-    mapping['@id'] = _expandIri(
-      activeCtx, id, {vocab: true, base: true}, localCtx, defined);
+    if(id !== term) {
+      // expand and add @id mapping
+      mapping['@id'] = _expandIri(
+        activeCtx, id, {vocab: true, base: true}, localCtx, defined);
+    }
   }
-  else {
+
+  if(!('@id' in mapping)) {
     // see if the term has a prefix
     var colon = term.indexOf(':');
     if(colon !== -1) {
