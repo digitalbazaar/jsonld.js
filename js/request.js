@@ -99,25 +99,40 @@ function _typedParse(loc, type, data, callback) {
         break;
       }
       // input is RDFa
-      jsdom.env(data, function(errors, window) {
-        if(errors && errors.length > 0) {
-          return callback({
-            message: 'DOM Errors:',
-            errors: errors,
-            url: loc
-          });
-        }
+      try {
+        jsdom.env(data, function(errors, window) {
+          if(errors && errors.length > 0) {
+            return callback({
+              message: 'DOM Errors:',
+              errors: errors,
+              url: loc
+            });
+          }
 
-        try {
-          // extract JSON-LD from RDFa
-          RDFa.attach(window.document);
-          jsonld.fromRDF(window.document.data,
-            {format: 'rdfa-api'}, callback);
-        }
-        catch(ex) {
-          callback(ex);
-        }
-      });
+          try {
+            // extract JSON-LD from RDFa
+            RDFa.attach(window.document);
+            jsonld.fromRDF(window.document.data,
+              {format: 'rdfa-api'}, callback);
+          }
+          catch(ex) {
+            // FIXME: expose RDFa/jsonld ex?
+            callback({
+              message: 'RDFa extraction error.',
+              contentType: type,
+              url: loc
+            });
+          }
+        });
+      }
+      catch(ex) {
+        // FIXME: expose jsdom(?) ex?
+        callback({
+          message: 'jsdom error.',
+          contentType: type,
+          url: loc
+        });
+      }
       break;
     default:
       callback({
