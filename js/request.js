@@ -251,11 +251,25 @@ function _request(loc, options, callback) {
         return callback(err);
       }
       if(!(res.statusCode >= 200 && res.statusCode < 300)) {
-        return callback({
+        var msg = {
           message: 'Bad status code.',
           statusCode: res.statusCode,
-          url: loc
-        });
+          url: loc,
+        };
+        if(body) {
+          // attempt to auto-parse error body
+          return _parse(loc, null, body, function(err, data) {
+            if(err) {
+              // failed to parse, just use raw body
+              data = body
+            }
+            msg.body = data
+            callback(msg);
+          });
+        }
+        else {
+          return callback(msg);
+        }
       }
       // done if length specified and is 0
       var cl = res.headers['content-length'];
