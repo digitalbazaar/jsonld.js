@@ -4175,7 +4175,7 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
   }
 
   // create new mapping
-  var mapping = {};
+  var mapping = activeCtx.mappings[term] = {};
   mapping.reverse = false;
 
   if('@reverse' in value) {
@@ -4245,6 +4245,9 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
     }
   }
 
+  // IRI mapping now defined
+  defined[term] = true;
+
   if('@type' in value) {
     var type = value['@type'];
     if(!_isString(type)) {
@@ -4306,10 +4309,6 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
       'Invalid JSON-LD syntax; @context and @preserve cannot be aliased.',
       'jsonld.SyntaxError');
   }
-
-  // define term mapping
-  activeCtx.mappings[term] = mapping;
-  defined[term] = true;
 }
 
 /**
