@@ -27,6 +27,7 @@
     "jsdom": "~0.5.0",
     "pkginfo": "~0.2.3",
     "request": "git://github.com/mikeal/request.git",
+    "when": "~2.0.1",
     "xmldom": ""
   },
   "devDependencies": {

@@ -14,6 +14,8 @@ var path = require('path');
 var util = require('util');
 var _jsdir = process.env.JSDIR || 'js';
 var jsonld = require('../' + _jsdir + '/jsonld')();
+var when = require('when');
+var nodefn = require('when/node/function');
 
 var JSONLD_TEST_SUITE = '../json-ld.org/test-suite';
 
@@ -245,7 +247,9 @@ function run(manifest, src) {
       });
     }
     else {
+      // run with regular and futures API
       _run(manifest, src);
+      _run_future(manifest, src);
     }
   }
   else {
@@ -299,7 +303,6 @@ function _run(test, src) {
       var input = _readTestJson(dir, test.input);
       var context = _readTestJson(dir, test.context);
       var expect = _readTestJson(dir, test.expect);
-      options.optimize = test.optimize || false;
       jsonld.compact(input, context, options, checkResult(expect, done));
     }
     else if(type.indexOf('jld:FlattenTest') !== -1) {
@@ -322,8 +325,87 @@ function _run(test, src) {
       var input = _readTestJson(dir, test.input);
       var expect = _readTestNQuads(dir, test.expect);
       options.format = 'application/nquads';
-      options.collate = true;
       jsonld.toRDF(input, options, checkResult(expect, done));
+    }
+    else {
+      util.log('Skipping test "' + test.name + '" of type: ' +
+        JSON.stringify(type));
+    }
+  });
+}
+
+/**
+ * Run a test using the futures API.
+ *
+ * @param test the test specification object.
+ * @param src the source manifest (optional)
+ */
+function _run_future(test, src) {
+  // read test input files
+  var type = test['@type'];
+  var options = {};
+  if(src) {
+    options.base = src.baseIri + test.input;
+  }
+  var dir = src ? path.dirname(src._path) : null;
+
+  // check results
+  var checkResult = function(expect, done) {
+    return function(result) {
+      // FIXME: result is arrayified args or something strange
+      check(test, expect, result, done);
+    };
+  };
+
+  var futures = jsonld.futures();
+  it(test.name, function(done) {
+    if(type.indexOf('jld:ApiErrorTest') !== -1) {
+      util.log('Skipping test "' + test.name + '" of type: ' +
+        JSON.stringify(type));
+    }
+    else if(type.indexOf('jld:NormalizeTest') !== -1) {
+      var input = _readTestJson(dir, test.input);
+      var expect = _readTestNQuads(dir, test.expect);
+      options.format = 'application/nquads';
+      futures.normalize(input, options).then(checkResult(expect, done), done);
+    }
+    else if(type.indexOf('jld:ExpandTest') !== -1) {
+      var input = _readTestJson(dir, test.input);
+      var expect = _readTestJson(dir, test.expect);
+      futures.expand(input, options).then(checkResult(expect, done), done);
+    }
+    else if(type.indexOf('jld:CompactTest') !== -1) {
+      var input = _readTestJson(dir, test.input);
+      var context = _readTestJson(dir, test.context);
+      var expect = _readTestJson(dir, test.expect);
+      futures.compact(input, context, options).then(
+        checkResult(expect, done), done);
+    }
+    else if(type.indexOf('jld:FlattenTest') !== -1) {
+      var input = _readTestJson(dir, test.input);
+      var expect = _readTestJson(dir, test.expect);
+      futures.flatten(input, null, options).then(
+        checkResult(expect, done), done);
+    }
+    else if(type.indexOf('jld:FrameTest') !== -1) {
+      var input = _readTestJson(dir, test.input);
+      var frame = _readTestJson(dir, test.frame);
+      var expect = _readTestJson(dir, test.expect);
+      futures.frame(input, frame, options).then(
+        checkResult(expect, done), done);
+    }
+    else if(type.indexOf('jld:FromRDFTest') !== -1) {
+      var input = _readTestNQuads(dir, test.input);
+      var expect = _readTestJson(dir, test.expect);
+      futures.fromRDF(input, options).then(
+        checkResult(expect, done), done);
+    }
+    else if(type.indexOf('jld:ToRDFTest') !== -1) {
+      var input = _readTestJson(dir, test.input);
+      var expect = _readTestNQuads(dir, test.expect);
+      options.format = 'application/nquads';
+      futures.toRDF(input, options).then(
+        checkResult(expect, done), done);
     }
     else {
       util.log('Skipping test "' + test.name + '" of type: ' +
