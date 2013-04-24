@@ -14,8 +14,7 @@ var path = require('path');
 var util = require('util');
 var _jsdir = process.env.JSDIR || 'js';
 var jsonld = require('../' + _jsdir + '/jsonld')();
-var when = require('when');
-var nodefn = require('when/node/function');
+require('../' + _jsdir + '/Future');
 
 var JSONLD_TEST_SUITE = '../json-ld.org/test-suite';
 
@@ -352,7 +351,6 @@ function _run_future(test, src) {
   // check results
   var checkResult = function(expect, done) {
     return function(result) {
-      // FIXME: result is arrayified args or something strange
       check(test, expect, result, done);
     };
   };
@@ -367,44 +365,44 @@ function _run_future(test, src) {
       var input = _readTestJson(dir, test.input);
       var expect = _readTestNQuads(dir, test.expect);
       options.format = 'application/nquads';
-      futures.normalize(input, options).then(checkResult(expect, done), done);
+      futures.normalize(input, options).done(checkResult(expect, done), done);
     }
     else if(type.indexOf('jld:ExpandTest') !== -1) {
       var input = _readTestJson(dir, test.input);
       var expect = _readTestJson(dir, test.expect);
-      futures.expand(input, options).then(checkResult(expect, done), done);
+      futures.expand(input, options).done(checkResult(expect, done), done);
     }
     else if(type.indexOf('jld:CompactTest') !== -1) {
       var input = _readTestJson(dir, test.input);
       var context = _readTestJson(dir, test.context);
       var expect = _readTestJson(dir, test.expect);
-      futures.compact(input, context, options).then(
+      futures.compact(input, context, options).done(
         checkResult(expect, done), done);
     }
     else if(type.indexOf('jld:FlattenTest') !== -1) {
       var input = _readTestJson(dir, test.input);
       var expect = _readTestJson(dir, test.expect);
-      futures.flatten(input, null, options).then(
+      futures.flatten(input, null, options).done(
         checkResult(expect, done), done);
     }
     else if(type.indexOf('jld:FrameTest') !== -1) {
       var input = _readTestJson(dir, test.input);
       var frame = _readTestJson(dir, test.frame);
       var expect = _readTestJson(dir, test.expect);
-      futures.frame(input, frame, options).then(
+      futures.frame(input, frame, options).done(
         checkResult(expect, done), done);
     }
     else if(type.indexOf('jld:FromRDFTest') !== -1) {
       var input = _readTestNQuads(dir, test.input);
       var expect = _readTestJson(dir, test.expect);
-      futures.fromRDF(input, options).then(
+      futures.fromRDF(input, options).done(
         checkResult(expect, done), done);
     }
     else if(type.indexOf('jld:ToRDFTest') !== -1) {
       var input = _readTestJson(dir, test.input);
       var expect = _readTestNQuads(dir, test.expect);
       options.format = 'application/nquads';
-      futures.toRDF(input, options).then(
+      futures.toRDF(input, options).done(
         checkResult(expect, done), done);
     }
     else {

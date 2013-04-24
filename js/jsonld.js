@@ -728,20 +728,30 @@ jsonld.loadContext = function(url, callback) {
 /* Futures/Promises API */
 
 jsonld.futures = jsonld.promises = function() {
-  var when = _nodejs ? require('when') : window.when;
-  var nodefn = _nodejs ? require('when/node/function') : window.nodefn;
+  var Future = _nodejs ? require('./Future') : window.Future;
 
-  // converts a promise to a node-style function that takes a callback
-  function callbackify(promise) {
-    return function() {
-      var args = Array.prototype.slice.call(arguments);
-      var callback = args.pop();
-      promise.apply(null, args).then(
+  // converts a node.js async op into a future w/boxed resolved value(s)
+  function futurize(op) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return new Future(function(resolver) {
+      op.apply(null, args.concat(function(err, value) {
+        if(err) {
+          resolver.reject(err);
+        }
+        else {
+          resolver.resolve(value);
+        }
+      }));
+    });
+  }
+
+  // converts a load context promise callback to a node-style callback
+  function createContextLoader(promise) {
+    return function(url, callback) {
+      promise(url).then(
         // success
-        function() {
-          var args = Array.prototype.slice.call(arguments);
-          args.unshift(null);
-          callback.apply(null, args);
+        function(remoteContext) {
+          callback(null, remoteContext.url, remoteContext.context);
         },
         // failure
         callback
@@ -750,15 +760,17 @@ jsonld.futures = jsonld.promises = function() {
   }
 
   var api = {};
-  api.expand = function(input, options) {
+  api.expand = function(input) {
+    var options = (arguments.length > 1) ? arguments[1] : {};
     if('loadContext' in options) {
-      options.loadContext = callbackify(options.loadContext);
+      options.loadContext = createContextLoader(options.loadContext);
     }
-    return nodefn.call(jsonld.expand, input, options);
+    return futurize(jsonld.expand, input, options);
   };
-  api.compact = function(input, ctx, options) {
+  api.compact = function(input, ctx) {
+    var options = (arguments.length > 2) ? arguments[2] : {};
     if('loadContext' in options) {
-      options.loadContext = callbackify(options.loadContext);
+      options.loadContext = createContextLoader(options.loadContext);
     }
     var compact = function(input, ctx, options, callback) {
       // ensure only one value is returned in callback
@@ -766,34 +778,39 @@ jsonld.futures = jsonld.promises = function() {
         callback(err, compacted);
       });
     };
-    return nodefn.call(compact, input, ctx, options);
+    return futurize(compact, input, ctx, options);
   };
-  api.flatten = function(input, ctx, options) {
+  api.flatten = function(input, ctx) {
+    var options = (arguments.length > 2) ? arguments[2] : {};
     if('loadContext' in options) {
-      options.loadContext = callbackify(options.loadContext);
+      options.loadContext = createContextLoader(options.loadContext);
     }
-    return nodefn.call(jsonld.flatten, input, ctx, options);
+    return futurize(jsonld.flatten, input, ctx, options);
   };
-  api.frame = function(input, frame, options) {
+  api.frame = function(input, frame) {
+    var options = (arguments.length > 2) ? arguments[2] : {};
     if('loadContext' in options) {
-      options.loadContext = callbackify(options.loadContext);
+      options.loadContext = createContextLoader(options.loadContext);
     }
-    return nodefn.call(jsonld.frame, input, frame, options);
+    return futurize(jsonld.frame, input, frame, options);
   };
-  api.fromRDF = function(dataset, options) {
-    return nodefn.call(jsonld.fromRDF, dataset, options);
+  api.fromRDF = function(dataset) {
+    var options = (arguments.length > 1) ? arguments[1] : {};
+    return futurize(jsonld.fromRDF, dataset, options);
   };
-  api.toRDF = function(input, options) {
+  api.toRDF = function(input) {
+    var options = (arguments.length > 1) ? arguments[1] : {};
     if('loadContext' in options) {
-      options.loadContext = callbackify(options.loadContext);
+      options.loadContext = createContextLoader(options.loadContext);
     }
-    return nodefn.call(jsonld.toRDF, input, options);
+    return futurize(jsonld.toRDF, input, options);
   };
-  api.normalize = function(input, options) {
+  api.normalize = function(input) {
+    var options = (arguments.length > 1) ? arguments[1] : {};
     if('loadContext' in options) {
-      options.loadContext = callbackify(options.loadContext);
+      options.loadContext = createContextLoader(options.loadContext);
     }
-    return nodefn.call(jsonld.normalize, input, options);
+    return futurize(jsonld.normalize, input, options);
   };
   return api;
 };
