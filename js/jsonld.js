@@ -61,6 +61,12 @@ var wrapper = function(jsonld) {
  * @param callback(err, compacted, ctx) called once the operation completes.
  */
 jsonld.compact = function(input, ctx, options, callback) {
+  if(arguments.length < 2) {
+    return jsonld.nextTick(function() {
+      callback(new TypeError('Could not compact, too few arguments.'));
+    });
+  }
+
   // get arguments
   if(typeof options === 'function') {
     callback = options;
@@ -223,6 +229,12 @@ jsonld.compact = function(input, ctx, options, callback) {
  * @param callback(err, expanded) called once the operation completes.
  */
 jsonld.expand = function(input, options, callback) {
+  if(arguments.length < 1) {
+    return jsonld.nextTick(function() {
+      callback(new TypeError('Could not expand, too few arguments.'));
+    });
+  }
+
   // get arguments
   if(typeof options === 'function') {
     callback = options;
@@ -287,6 +299,12 @@ jsonld.expand = function(input, options, callback) {
  * @param callback(err, flattened) called once the operation completes.
  */
 jsonld.flatten = function(input, ctx, options, callback) {
+  if(arguments.length < 1) {
+    return jsonld.nextTick(function() {
+      callback(new TypeError('Could not flatten, too few arguments.'));
+    });
+  }
+
   // get arguments
   if(typeof options === 'function') {
     callback = options;
@@ -350,6 +368,12 @@ jsonld.flatten = function(input, ctx, options, callback) {
  * @param callback(err, framed) called once the operation completes.
  */
 jsonld.frame = function(input, frame, options, callback) {
+  if(arguments.length < 2) {
+    return jsonld.nextTick(function() {
+      callback(new TypeError('Could not frame, too few arguments.'));
+    });
+  }
+
   // get arguments
   if(typeof options === 'function') {
     callback = options;
@@ -559,6 +583,12 @@ jsonld.objectify = function(input, ctx, options, callback) {
  * @param callback(err, normalized) called once the operation completes.
  */
 jsonld.normalize = function(input, options, callback) {
+  if(arguments.length < 1) {
+    return jsonld.nextTick(function() {
+      callback(new TypeError('Could not normalize, too few arguments.'));
+    });
+  }
+
   // get arguments
   if(typeof options === 'function') {
     callback = options;
@@ -605,6 +635,12 @@ jsonld.normalize = function(input, options, callback) {
  * @param callback(err, output) called once the operation completes.
  */
 jsonld.fromRDF = function(dataset, options, callback) {
+  if(arguments.length < 1) {
+    return jsonld.nextTick(function() {
+      callback(new TypeError('Could not convert from RDF, too few arguments.'));
+    });
+  }
+
   // get arguments
   if(typeof options === 'function') {
     callback = options;
@@ -658,6 +694,12 @@ jsonld.fromRDF = function(dataset, options, callback) {
  * @param callback(err, dataset) called once the operation completes.
  */
 jsonld.toRDF = function(input, options, callback) {
+  if(arguments.length < 1) {
+    return jsonld.nextTick(function() {
+      callback(new TypeError('Could not convert to RDF, too few arguments.'));
+    });
+  }
+
   // get arguments
   if(typeof options === 'function') {
     callback = options;
@@ -729,10 +771,11 @@ jsonld.loadContext = function(url, callback) {
 
 jsonld.futures = jsonld.promises = function() {
   var Future = _nodejs ? require('./Future') : window.Future;
+  var slice = Array.prototype.slice;
 
   // converts a node.js async op into a future w/boxed resolved value(s)
   function futurize(op) {
-    var args = Array.prototype.slice.call(arguments, 1);
+    var args = slice.call(arguments, 1);
     return new Future(function(resolver) {
       op.apply(null, args.concat(function(err, value) {
         if(err) {
@@ -765,7 +808,7 @@ jsonld.futures = jsonld.promises = function() {
     if('loadContext' in options) {
       options.loadContext = createContextLoader(options.loadContext);
     }
-    return futurize(jsonld.expand, input, options);
+    return futurize.apply(null, [jsonld.expand].concat(slice.call(arguments)));
   };
   api.compact = function(input, ctx) {
     var options = (arguments.length > 2) ? arguments[2] : {};
@@ -778,39 +821,39 @@ jsonld.futures = jsonld.promises = function() {
         callback(err, compacted);
       });
     };
-    return futurize(compact, input, ctx, options);
+    return futurize.apply(null, [compact].concat(slice.call(arguments)));
   };
-  api.flatten = function(input, ctx) {
+  api.flatten = function(input) {
     var options = (arguments.length > 2) ? arguments[2] : {};
     if('loadContext' in options) {
       options.loadContext = createContextLoader(options.loadContext);
     }
-    return futurize(jsonld.flatten, input, ctx, options);
+    return futurize.apply(null, [jsonld.flatten].concat(slice.call(arguments)));
   };
   api.frame = function(input, frame) {
     var options = (arguments.length > 2) ? arguments[2] : {};
     if('loadContext' in options) {
       options.loadContext = createContextLoader(options.loadContext);
     }
-    return futurize(jsonld.frame, input, frame, options);
+    return futurize.apply(null, [jsonld.frame].concat(slice.call(arguments)));
   };
   api.fromRDF = function(dataset) {
-    var options = (arguments.length > 1) ? arguments[1] : {};
-    return futurize(jsonld.fromRDF, dataset, options);
+    return futurize.apply(null, [jsonld.fromRDF].concat(slice.call(arguments)));
   };
   api.toRDF = function(input) {
     var options = (arguments.length > 1) ? arguments[1] : {};
     if('loadContext' in options) {
       options.loadContext = createContextLoader(options.loadContext);
     }
-    return futurize(jsonld.toRDF, input, options);
+    return futurize.apply(null, [jsonld.toRDF].concat(slice.call(arguments)));
   };
   api.normalize = function(input) {
     var options = (arguments.length > 1) ? arguments[1] : {};
     if('loadContext' in options) {
       options.loadContext = createContextLoader(options.loadContext);
     }
-    return futurize(jsonld.normalize, input, options);
+    return futurize.apply(
+      null, [jsonld.normalize].concat(slice.call(arguments)));
   };
   return api;
 };
@@ -6265,7 +6308,7 @@ if(_nodejs) {
           'Unknown extension.',
           'jsonld.UnknownExtension', {extension: extension});
     }
-  }
+  };
 }
 
 // end of jsonld API factory
