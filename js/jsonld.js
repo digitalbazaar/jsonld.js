@@ -804,6 +804,9 @@ jsonld.futures = jsonld.promises = function() {
 
   var api = {};
   api.expand = function(input) {
+    if(arguments.length < 1) {
+      throw new TypeError('Could not expand, too few arguments.');
+    }
     var options = (arguments.length > 1) ? arguments[1] : {};
     if('loadContext' in options) {
       options.loadContext = createContextLoader(options.loadContext);
@@ -811,6 +814,9 @@ jsonld.futures = jsonld.promises = function() {
     return futurize.apply(null, [jsonld.expand].concat(slice.call(arguments)));
   };
   api.compact = function(input, ctx) {
+    if(arguments.length < 2) {
+      throw new TypeError('Could not compact, too few arguments.');
+    }
     var options = (arguments.length > 2) ? arguments[2] : {};
     if('loadContext' in options) {
       options.loadContext = createContextLoader(options.loadContext);
@@ -824,6 +830,9 @@ jsonld.futures = jsonld.promises = function() {
     return futurize.apply(null, [compact].concat(slice.call(arguments)));
   };
   api.flatten = function(input) {
+    if(arguments.length < 1) {
+      throw new TypeError('Could not flatten, too few arguments.');
+    }
     var options = (arguments.length > 2) ? arguments[2] : {};
     if('loadContext' in options) {
       options.loadContext = createContextLoader(options.loadContext);
@@ -831,6 +840,9 @@ jsonld.futures = jsonld.promises = function() {
     return futurize.apply(null, [jsonld.flatten].concat(slice.call(arguments)));
   };
   api.frame = function(input, frame) {
+    if(arguments.length < 2) {
+      throw new TypeError('Could not frame, too few arguments.');
+    }
     var options = (arguments.length > 2) ? arguments[2] : {};
     if('loadContext' in options) {
       options.loadContext = createContextLoader(options.loadContext);
@@ -838,9 +850,15 @@ jsonld.futures = jsonld.promises = function() {
     return futurize.apply(null, [jsonld.frame].concat(slice.call(arguments)));
   };
   api.fromRDF = function(dataset) {
+    if(arguments.length < 1) {
+      throw new TypeError('Could not convert from RDF, too few arguments.');
+    }
     return futurize.apply(null, [jsonld.fromRDF].concat(slice.call(arguments)));
   };
   api.toRDF = function(input) {
+    if(arguments.length < 1) {
+      throw new TypeError('Could not convert to RDF, too few arguments.');
+    }
     var options = (arguments.length > 1) ? arguments[1] : {};
     if('loadContext' in options) {
       options.loadContext = createContextLoader(options.loadContext);
@@ -848,6 +866,9 @@ jsonld.futures = jsonld.promises = function() {
     return futurize.apply(null, [jsonld.toRDF].concat(slice.call(arguments)));
   };
   api.normalize = function(input) {
+    if(arguments.length < 1) {
+      throw new TypeError('Could not normalize, too few arguments.');
+    }
     var options = (arguments.length > 1) ? arguments[1] : {};
     if('loadContext' in options) {
       options.loadContext = createContextLoader(options.loadContext);
