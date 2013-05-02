@@ -37,7 +37,7 @@ function boolify(value) {
       case 'y':
         return true;
       case 'false':
-      case 't':
+      case 'f':
       case '0':
       case 'no':
       case 'n':
