@@ -321,6 +321,43 @@ _jsonLdCommand(program.command('frame [filename|URL|-]'))
     }, _final);
   });
 
+_jsonLdCommand(program.command('toRDF [filename|URL|-]'))
+  .description('convert JSON-LD to RDF')
+  .option('-f, --format <format>',
+    'format to output (\'application/nquads\' for N-Quads')
+  .option('-q, --nquads', 'use \'application/nquads\' format')
+  .action(function(input, cmd) {
+    input = input || '-';
+    var reqopts = _requestOptions(cmd);
+    async.auto({
+      readInput: function(callback, results) {
+        jsonld.request(input, reqopts, function(err, res, data) {
+          callback(err, data);
+        });
+      },
+      process: ['readInput', function(callback, results) {
+        var options = _jsonLdOptions(cmd);
+        if(cmd.nquads) {
+          options.format = 'application/nquads';
+        }
+        if(cmd.format) {
+          options.format = cmd.format;
+        }
+        if(!('format' in options)) {
+          options.format = 'application/nquads';
+        }
+
+        jsonld.toRDF(results.readInput, options,
+          function(err, rdf) {
+            callback(err, rdf);
+          });
+      }],
+      output: ['process', function(callback, results) {
+        _output(results.process, cmd, callback);
+      }]
+    }, _final);
+  });
+
 _jsonLdCommand(program.command('normalize [filename|URL|-]'))
   .description('normalize JSON-LD')
   .option('-f, --format <format>',
