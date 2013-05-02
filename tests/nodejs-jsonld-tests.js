@@ -18,6 +18,58 @@ require('../' + _jsdir + '/Future');
 
 var JSONLD_TEST_SUITE = '../json-ld.org/test-suite';
 
+var today = new Date();
+today = (today.getFullYear() + '-' +
+  (today.getMonth() < 9) ?
+    '0' + (today.getMonth() + 1) : today.getMonth() + 1) +
+  (today.getDate() < 10) ? '0' + today.getDate() : today.getDate();
+var earl = {
+  '@context': {
+    'doap': 'http://usefulinc.com/ns/doap#',
+    'foaf': 'http://xmlns.com/foaf/0.1/',
+    'dc': 'http://purl.org/dc/terms/',
+    'earl': 'http://www.w3.org/ns/earl#',
+    'xsd': 'http://www.w3.org/2001/XMLSchema#',
+    'doap:homepage': {'@type': '@id'},
+    'doap:license': {'@type': '@id'},
+    'dc:creator': {'@type': '@id'},
+    'foaf:homepage': {'@type': '@id'},
+    'subjectOf': {'@reverse': 'earl:subject'},
+    'earl:assertedBy': {'@type': '@id'},
+    'earl:mode': {'@type': '@id'},
+    'earl:test': {'@type': '@id'},
+    'earl:outcome': {'@type': '@id'},
+    'dc:date': {'@type': 'xsd:date'}
+  },
+  '@id': 'https://github.com/digitalbazaar/jsonld.js',
+  '@type': [
+    'doap:Project',
+    'earl:TestSubject',
+    'earl:Software'
+  ],
+  'doap:name': 'jsonld.js',
+  'dc:title': 'jsonld.js',
+  'doap:homepage': 'https://github.com/digitalbazaar/jsonld.js',
+  'doap:license': 'https://github.com/digitalbazaar/jsonld.js/blob/master/LICENSE',
+  'doap:description': 'A JSON-LD processor for JavaScript',
+  'doap:programming-language': 'JavaScript',
+  'dc:creator': 'https://github.com/dlongley',
+  'doap:developer': {
+    '@id': 'https://github.com/dlongley',
+    '@type': [
+      'foaf:Person',
+      'earl:Assertor'
+    ],
+    'foaf:name': 'Dave Longley',
+    'foaf:homepage': 'https://github.com/dlongley'
+  },
+  'dc:date': {
+    '@value': today,
+    '@type': 'xsd:date'
+  },
+  'subjectOf': []
+};
+
 function expandedEqual(x, y, isList) {
   if(x === y) {
     return true;
@@ -76,6 +128,21 @@ function expandedEqual(x, y, isList) {
 }
 
 function check(test, expect, result, done) {
+  var earlAssertion = null;
+  if(test._earl) {
+    earlAssertion = {
+      '@type': 'earl:Assertion',
+      'earl:assertedBy': earl['doap:developer']['@id'],
+      'earl:mode': 'earl:automatic',
+      'earl:test': test['@id'],
+      'earl:result': {
+        '@type': 'earl:TestResult',
+        'dc:date': new Date().toISOString()
+      }
+    };
+    earl.subjectOf.push(earlAssertion);
+  }
+
   var type = test['@type'];
   var expanded = (
     type.indexOf('jld:ExpandTest') !== -1 ||
@@ -87,6 +154,9 @@ function check(test, expect, result, done) {
       assert(expandedEqual(expect, result));
     }
     assert.deepEqual(expect, result);
+    if(test._earl) {
+      earlAssertion['earl:result']['earl:outcome'] = 'earl:passed';
+    }
     done();
   }
   catch(ex) {
@@ -98,6 +168,9 @@ function check(test, expect, result, done) {
     //console.log(expectedJson);
     //console.log('Result:');
     //console.log(actualJson);
+    if(test._earl) {
+      earlAssertion['earl:result']['earl:outcome'] = 'earl:failed';
+    }
     done(ex);
   }
 }
@@ -215,7 +288,7 @@ function run(manifest, src) {
      test format:
        {
          'name': <test name>,
-         '@type': ["test:TestCase", "jld:<type of test>"],
+         '@type': ['test:TestCase', 'jld:<type of test>'],
          'input': <input file for test>,
          'context': <context file for add context test type>,
          'frame': <frame file for frame test type>,
@@ -267,8 +340,10 @@ function _run(test, src) {
   // read test input files
   var type = test['@type'];
   var options = {};
+  var idBase = '';
   if(src) {
     options.base = src.baseIri + test.input;
+    idBase = path.join(src.baseIri, path.basename(src._path));
   }
   var dir = src ? path.dirname(src._path) : null;
 
@@ -276,8 +351,21 @@ function _run(test, src) {
   var checkResult = function(expect, done) {
     return function(err, result) {
       if(err) {
+        earl.subjectOf.push({
+          '@type': 'earl:Assertion',
+          'earl:assertedBy': earl['doap:developer']['@id'],
+          'earl:mode': 'earl:automatic',
+          'earl:test': test['@id'],
+          'earl:result': {
+            '@type': 'earl:TestResult',
+            'dc:date': new Date().toISOString(),
+            'earl:outcome': 'earl:failed'
+          }
+        });
         return done(err);
       }
+      test['@id'] = idBase + test['@id'];
+      test._earl = true;
       check(test, expect, result, done);
     };
   };
@@ -418,3 +506,13 @@ describe('JSON-LD', function() {
     JSONLD_TEST_SUITE;
   run(path);
 });
+
+// FIXME: add command line params for outputting earl report
+/*
+describe('EARL report', function() {
+  it('should print the earl report', function(done) {
+    fs.writeFileSync('/tmp/jsonld.js-earl.jsonld',
+      JSON.stringify(earl, null, 2));
+    done();
+  });
+});*/
