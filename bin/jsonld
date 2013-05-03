@@ -120,10 +120,32 @@ function _jsonLdOptions(command) {
 }
 
 program
-  .version(module.exports.version);
+  .version(module.exports.version)
+  .on('--help', function() {
+    console.log();
+    console.log(
+      '  The input parameter for all commands can be a filename, a URL\n' +
+      '  beginning with "http://" or "https://", or "-" for stdin (the\n' +
+      '  default).');
+    console.log();
+    console.log(
+      '  Input type can be specified as a standard content type or a\n' +
+      '  simple string for common types. See the "request" extension code\n' +
+      '  for available types. XML and HTML variations will be converted\n' +
+      '  with an RDFa processor if available. If the input type is not\n' +
+      '  specified it will be auto-detected based on file extension, URL\n' +
+      '  content type, or by guessing with various parsers. Guessing may\n' +
+      '  not always produce correct results.');
+    console.log();
+    console.log(
+      '  Output type can be specified for the "format" command and a\n' +
+      '  N-Quads shortcut for the "normalize" command. For other commands\n' +
+      '  you can pipe JSON-LD output to the "format" command.');
+    console.log();
+  });;
 
 _jsonLdCommand(program.command('format [filename|URL|-]'))
-  .description('format JSON')
+  .description('format and convert JSON-LD')
   .option('-f, --format <format>', 'output format [json]', String)
   .option('-q, --nquads', 'output application/nquads [false]')
   .option('-j, --json', 'output application/json [true]')
@@ -150,6 +172,8 @@ _jsonLdCommand(program.command('format [filename|URL|-]'))
           case 'nquads':
           case 'n-quads':
           case 'application/nquads':
+            // normalize format for toRDF
+            options.format = 'application/nquads';
             jsonld.toRDF(results.readInput, options,
               function(err, dataset) {
                 callback(err, dataset);
@@ -161,6 +185,7 @@ _jsonLdCommand(program.command('format [filename|URL|-]'))
           case 'ld+json':
           case 'application/json':
           case 'application/ld+json':
+            // just doing basic JSON formatting
             callback(null, results.readInput);
             break;
           default:
@@ -313,43 +338,6 @@ _jsonLdCommand(program.command('frame [filename|URL|-]'))
         jsonld.frame(results.readInput, results.readFrame, options,
           function(err, framed) {
             callback(err, framed);
-          });
-      }],
-      output: ['process', function(callback, results) {
-        _output(results.process, cmd, callback);
-      }]
-    }, _final);
-  });
-
-_jsonLdCommand(program.command('toRDF [filename|URL|-]'))
-  .description('convert JSON-LD to RDF')
-  .option('-f, --format <format>',
-    'format to output (\'application/nquads\' for N-Quads')
-  .option('-q, --nquads', 'use \'application/nquads\' format')
-  .action(function(input, cmd) {
-    input = input || '-';
-    var reqopts = _requestOptions(cmd);
-    async.auto({
-      readInput: function(callback, results) {
-        jsonld.request(input, reqopts, function(err, res, data) {
-          callback(err, data);
-        });
-      },
-      process: ['readInput', function(callback, results) {
-        var options = _jsonLdOptions(cmd);
-        if(cmd.nquads) {
-          options.format = 'application/nquads';
-        }
-        if(cmd.format) {
-          options.format = cmd.format;
-        }
-        if(!('format' in options)) {
-          options.format = 'application/nquads';
-        }
-
-        jsonld.toRDF(results.readInput, options,
-          function(err, rdf) {
-            callback(err, rdf);
           });
       }],
       output: ['process', function(callback, results) {
