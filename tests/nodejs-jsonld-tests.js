@@ -343,7 +343,7 @@ function _run(test, src) {
   var idBase = '';
   if(src) {
     options.base = src.baseIri + test.input;
-    idBase = path.join(src.baseIri, path.basename(src._path));
+    idBase = src.baseIri + path.basename(src._path);
   }
   var dir = src ? path.dirname(src._path) : null;
 

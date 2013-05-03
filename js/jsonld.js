@@ -894,7 +894,7 @@ jsonld.JsonLdProcessor = JsonLdProcessor;
 if(typeof process === 'undefined' || !process.nextTick) {
   if(typeof setImmediate === 'function') {
     jsonld.setImmediate = setImmediate;
-    jsonld.nextTick = function (callback) {
+    jsonld.nextTick = function(callback) {
       return setImmediate(callback);
     };
   }
