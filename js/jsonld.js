@@ -4683,7 +4683,7 @@ function _removeBase(base, iri) {
   var rval = '';
   if(baseSegments.length > 0) {
     // don't count the last segment if it isn't a path (doesn't end in '/')
-    // or is the root path (empty string segment)
+    // don't count empty first segment, it means base began with '/'
     if(base.normalizedPath.substr(-1) !== '/' || baseSegments[0] === '') {
       baseSegments.pop();
     }
