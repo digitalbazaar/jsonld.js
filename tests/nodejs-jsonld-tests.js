@@ -19,10 +19,10 @@ require('../' + _jsdir + '/Future');
 var JSONLD_TEST_SUITE = '../json-ld.org/test-suite';
 
 var today = new Date();
-today = (today.getFullYear() + '-' +
-  (today.getMonth() < 9) ?
-    '0' + (today.getMonth() + 1) : today.getMonth() + 1) +
-  (today.getDate() < 10) ? '0' + today.getDate() : today.getDate();
+today = today.getFullYear() + '-' +
+  (today.getMonth() < 9 ?
+    '0' + (today.getMonth() + 1) : today.getMonth() + 1) + '-' +
+  (today.getDate() < 10 ? '0' + today.getDate() : today.getDate());
 var earl = {
   '@context': {
     'doap': 'http://usefulinc.com/ns/doap#',
