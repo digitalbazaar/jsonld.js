@@ -4354,7 +4354,7 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
 
     // expand and add @id mapping, set @type to @id
     mapping['@id'] = _expandIri(
-      activeCtx, reverse, {vocab: true, base: true}, localCtx, defined);
+      activeCtx, reverse, {vocab: true, base: false}, localCtx, defined);
     mapping['@type'] = '@id';
     mapping.reverse = true;
   }
@@ -4369,7 +4369,7 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
     if(id !== term) {
       // expand and add @id mapping
       mapping['@id'] = _expandIri(
-        activeCtx, id, {vocab: true, base: true}, localCtx, defined);
+        activeCtx, id, {vocab: true, base: false}, localCtx, defined);
     }
   }
 
