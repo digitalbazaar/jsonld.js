@@ -881,12 +881,27 @@ jsonld.futures = jsonld.promises = function() {
 
 /* WebIDL API */
 
-function JsonLdProcessor() {};
+function JsonLdProcessor() {}
 JsonLdProcessor.prototype = jsonld.futures();
 JsonLdProcessor.prototype.toString = function() {
-  return '[object JsonLdProcessor]';
+  if(this instanceof JsonLdProcessor) {
+    return '[object JsonLdProcessor]';
+  }
+  return '[object JsonLdProcessorPrototype]';
 };
 jsonld.JsonLdProcessor = JsonLdProcessor;
+if(Object.defineProperty) {
+  Object.defineProperty(JsonLdProcessor, 'prototype', {
+    writable: false,
+    enumerable: false
+  });
+  Object.defineProperty(JsonLdProcessor.prototype, 'constructor', {
+    writable: true,
+    enumerable: false,
+    configurable: true,
+    value: JsonLdProcessor
+  });
+}
 
 /* Utility API */
 
