@@ -37,7 +37,21 @@
 
 // determine if in-browser or using node.js
 var _nodejs = (typeof module === 'object' && module.exports);
-var _browser = !_nodejs && window;
+var _browser = !_nodejs &&
+  (typeof window !== 'undefined' || typeof self !== 'undefined');
+if(_browser) {
+  if(typeof global === 'undefined') {
+    if(typeof window !== 'undefined') {
+      global = window;
+    }
+    else if(typeof self !== 'undefined') {
+      global = self;
+    }
+    else if(typeof $ !== 'undefined') {
+      global = $;
+    }
+  }
+}
 
 // attaches jsonld API to the given object
 var wrapper = function(jsonld) {
@@ -770,7 +784,7 @@ jsonld.loadContext = function(url, callback) {
 /* Futures/Promises API */
 
 jsonld.futures = jsonld.promises = function() {
-  var Future = _nodejs ? require('./Future') : window.Future;
+  var Future = _nodejs ? require('./Future') : global.Future;
   var slice = Array.prototype.slice;
 
   // converts a node.js async op into a future w/boxed resolved value(s)
@@ -901,6 +915,20 @@ if(Object.defineProperty) {
     configurable: true,
     value: JsonLdProcessor
   });
+}
+// setup browser global JsonLdProcessor
+if(_browser && typeof global.JsonLdProcessor === 'undefined') {
+  if(Object.defineProperty) {
+    Object.defineProperty(global, 'JsonLdProcessor', {
+      writable: true,
+      enumerable: false,
+      configurable: true,
+      value: JsonLdProcessor
+    });
+  }
+  else {
+    global.JsonLdProcessor = JsonLdProcessor;
+  }
 }
 
 /* Utility API */
@@ -6377,7 +6405,12 @@ else if(typeof define === 'function' && define.amd) {
 }
 // export simple browser API
 else if(_browser) {
-  window.jsonld = window.jsonld || factory;
+  if(typeof jsonld === 'undefined') {
+    jsonld = jsonldjs = factory;
+  }
+  else {
+    jsonldjs = factory;
+  }
 }
 
 })();

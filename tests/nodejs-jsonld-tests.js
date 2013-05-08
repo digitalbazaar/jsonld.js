@@ -374,6 +374,7 @@ function _run(test, src) {
     if(type.indexOf('jld:ApiErrorTest') !== -1) {
       util.log('Skipping test "' + test.name + '" of type: ' +
         JSON.stringify(type));
+      done();
     }
     else if(type.indexOf('jld:NormalizeTest') !== -1) {
       var input = _readTestJson(dir, test.input);
@@ -417,6 +418,7 @@ function _run(test, src) {
     else {
       util.log('Skipping test "' + test.name + '" of type: ' +
         JSON.stringify(type));
+      done();
     }
   });
 }
@@ -496,6 +498,7 @@ function _run_future(test, src) {
     else {
       util.log('Skipping test "' + test.name + '" of type: ' +
         JSON.stringify(type));
+      done();
     }
   });
 }
