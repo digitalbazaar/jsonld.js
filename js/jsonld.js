@@ -2504,6 +2504,7 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
 
       var value;
       if(objectIsId && o.value === RDF_NIL && p !== RDF_REST) {
+        // empty list detected
         value = {'@list': []};
       }
       else {
@@ -2511,13 +2512,17 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
       }
       jsonld.addValue(node, p, value, {propertyIsArray: true});
 
-      // object may be the head of an RDF list
+      // object may be the head of an RDF list but we can't know easily
+      // until all triples are read
       if(o.type === 'blank node' && !(p === RDF_FIRST || p === RDF_REST)) {
         var object = nodeMap[o.value];
-        if(!('usages' in object)) {
-          object.usages = [];
+        if(!('listHeadFor' in object)) {
+          object.listHeadFor = value;
         }
-        object.usages.push(value);
+        // can't be a list head if referenced more than once
+        else {
+          object.listHeadFor = null;
+        }
       }
     }
   }
@@ -2536,23 +2541,24 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
       }
 
       var node = graphObject[subject];
-      if(!(_isArray(node.usages) && node.usages.length === 1)) {
+      if(!_isObject(node.listHeadFor)) {
         continue;
       }
 
-      var value = node.usages[0];
+      var value = node.listHeadFor;
       var list = [];
       var eliminatedNodes = {};
       while(subject !== RDF_NIL && list !== null) {
         // ensure node is a valid list node; node must:
         // 1. Be a blank node
-        // 2. Have no keys other than: @id, usages, rdf:first, rdf:rest.
+        // 2. Have no keys other than: @id, listHeadFor, rdf:first, rdf:rest.
         // 3. Have an array for rdf:first that has 1 item.
         // 4. Have an array for rdf:rest that has 1 object with @id.
         // 5. Not already be in a list (it is in the eliminated nodes map).
         var nodeKeyCount = Object.keys(node || {}).length;
         if(!(_isObject(node) && node['@id'].indexOf('_:') === 0 &&
-          (nodeKeyCount === 3 || (nodeKeyCount === 4 && 'usages' in node)) &&
+          (nodeKeyCount === 3 ||
+          (nodeKeyCount === 4 && 'listHeadFor' in node)) &&
           _isArray(node[RDF_FIRST]) && node[RDF_FIRST].length === 1 &&
           _isArray(node[RDF_REST]) && node[RDF_REST].length === 1 &&
           _isObject(node[RDF_REST][0]) && ('@id' in node[RDF_REST][0]) &&
@@ -2591,11 +2597,11 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
       var subjects_ = Object.keys(graphObject).sort();
       for(var si = 0; si < subjects_.length; ++si) {
         var node_ = graphObject[subjects_[si]];
-        delete node_.usages;
+        delete node_.listHeadFor;
         graph.push(node_);
       }
     }
-    delete node.usages;
+    delete node.listHeadFor;
     result.push(node);
   }
 
