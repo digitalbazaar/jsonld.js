@@ -167,7 +167,7 @@ function check(test, expect, result, done) {
     //console.log('Expect:');
     //console.log(expectedJson);
     //console.log('Result:');
-    //console.log(actualJson);
+    //console.log(resultJson);
     if(test._earl) {
       earlAssertion['earl:result']['earl:outcome'] = 'earl:failed';
     }
@@ -502,6 +502,24 @@ function _run_future(test, src) {
     }
   });
 }
+
+// run w/o mocha
+/*
+if(typeof describe === 'undefined') {
+  var describe = function(name, test) {
+    console.log(name);
+    test();
+  };
+}
+if(typeof it === 'undefined') {
+  var it = function(name, callback) {
+    callback(function(err) {
+      if(err) {
+        console.log('Error', err);
+      }
+    });
+  };
+}*/
 
 describe('JSON-LD', function() {
   var path =
