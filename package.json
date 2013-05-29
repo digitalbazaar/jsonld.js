@@ -24,15 +24,15 @@
   "optionalDependencies": {
     "async": "~0.2.6",
     "commander": "~1.1.0",
-    "jsdom": "~0.5.0",
+    "jsdom": "~0.6.5",
     "pkginfo": "~0.2.3",
-    "request": "git://github.com/mikeal/request.git",
+    "request": "~0.21.0",
     "when": "~2.0.1",
     "xmldom": "",
     "DOMFuture": "git://github.com/slightlyoff/DOMFuture.git"
   },
   "devDependencies": {
-    "mocha": "~1.9.0",
+    "mocha": "~1.10.0",
     "visionmedia-jscoverage": "~1.0.0"
   },
   "engines": {
