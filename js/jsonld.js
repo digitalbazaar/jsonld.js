@@ -3012,7 +3012,7 @@ function _objectToRDF(item, namer) {
       object.value = value.toString();
       object.datatype = datatype || XSD_BOOLEAN;
     }
-    else if(_isDouble(value)) {
+    else if(_isDouble(value) || datatype === XSD_DOUBLE) {
       // canonical double representation
       object.value = value.toExponential(15).replace(/(\d)0*e\+?/, '$1E');
       object.datatype = datatype || XSD_DOUBLE;
