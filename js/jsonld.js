@@ -2931,8 +2931,15 @@ function _graphToRDF(graph, namer) {
         }
 
         // RDF predicate
-        var predicate = {type: 'IRI'};
-        predicate.value = property;
+        var predicate = {};
+        if(property.indexOf('_:') === 0) {
+          predicate.type = 'blank node';
+          predicate.value = namer.getName(property);
+        }
+        else {
+          predicate.type = 'IRI';
+          predicate.value = property;
+        }
 
         // convert @list to triples
         if(_isList(item)) {
@@ -5549,21 +5556,34 @@ function _toNQuad(triple, graphName, bnode) {
 
   var quad = '';
 
-  // subject is an IRI or bnode
+  // subject is an IRI
   if(s.type === 'IRI') {
     quad += '<' + s.value + '>';
   }
-  // normalization mode
+  // bnode normalization mode
   else if(bnode) {
     quad += (s.value === bnode) ? '_:a' : '_:z';
   }
-  // normal mode
+  // bnode normal mode
   else {
     quad += s.value;
   }
+  quad += ' ';
 
-  // predicate is always an IRI
-  quad += ' <' + p.value + '> ';
+  // predicate is an IRI
+  if(p.type === 'IRI') {
+    quad += '<' + p.value + '>';
+  }
+  // FIXME: TBD what to do with bnode predicates during normalization
+  // bnode normalization mode
+  else if(bnode) {
+    quad += '_:p';
+  }
+  // bnode normal mode
+  else {
+    quad += p.value;
+  }
+  quad += ' ';
 
   // object is IRI, bnode, or literal
   if(o.type === 'IRI') {
@@ -5654,7 +5674,12 @@ function _parseRdfaApiData(data) {
         }
 
         // add predicate
-        triple.predicate = {type: 'IRI', value: predicate};
+        if(predicate.indexOf('_:') === 0) {
+          triple.predicate = {type: 'blank node', value: predicate};
+        }
+        else {
+          triple.predicate = {type: 'IRI', value: predicate};
+        }
 
         // serialize XML literal
         var value = object.value;
