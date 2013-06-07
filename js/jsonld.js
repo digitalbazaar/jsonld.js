@@ -2635,8 +2635,6 @@ Processor.prototype.toRDF = function(input) {
  * @return the new active context.
  */
 Processor.prototype.processContext = function(activeCtx, localCtx, options) {
-  var rval = activeCtx;
-
   // normalize local context to an array of @context objects
   if(_isObject(localCtx) && '@context' in localCtx &&
     _isArray(localCtx['@context'])) {
@@ -2650,6 +2648,7 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
   }
 
   // process each context in order
+  var rval = activeCtx;
   var mustClone = true;
   for(var i = 0; i < ctxs.length; ++i) {
     var ctx = ctxs[i];
