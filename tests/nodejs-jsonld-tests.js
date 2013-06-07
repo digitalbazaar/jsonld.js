@@ -164,10 +164,12 @@ function check(test, expect, result, done) {
     var resultJson = JSON.stringify(result, null, 2);
     ex.expected = expectedJson;
     ex.actual = resultJson;
-    //console.log('Expect:');
-    //console.log(expectedJson);
-    //console.log('Result:');
-    //console.log(resultJson);
+    /*console.log('Test FAILED: ' + test.input);
+    console.log('Expect:');
+    console.log(expectedJson);
+    console.log('Result:');
+    console.log(resultJson);
+    process.exit();*/
     if(test._earl) {
       earlAssertion['earl:result']['earl:outcome'] = 'earl:failed';
     }
@@ -340,6 +342,7 @@ function _run(test, src) {
   // read test input files
   var type = test['@type'];
   var options = {};
+  options.useNativeTypes = true;
   var idBase = '';
   if(src) {
     options.base = src.baseIri + test.input;
@@ -433,6 +436,7 @@ function _run_future(test, src) {
   // read test input files
   var type = test['@type'];
   var options = {};
+  options.useNativeTypes = true;
   if(src) {
     options.base = src.baseIri + test.input;
   }
@@ -504,8 +508,7 @@ function _run_future(test, src) {
 }
 
 // run w/o mocha
-/*
-if(typeof describe === 'undefined') {
+/*if(typeof describe === 'undefined') {
   var describe = function(name, test) {
     console.log(name);
     test();
