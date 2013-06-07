@@ -2911,7 +2911,9 @@ function _graphToRDF(graph, namer) {
   for(var i = 0; i < ids.length; ++i) {
     var id = ids[i];
     var node = graph[id];
-    for(var property in node) {
+    var properties = Object.keys(node).sort();
+    for(var pi = 0; pi < properties.length; ++pi) {
+      var property = properties[pi];
       var items = node[property];
       if(property === '@type') {
         property = RDF_TYPE;
