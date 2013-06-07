@@ -2618,7 +2618,9 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
 Processor.prototype.toRDF = function(nodeMap) {
   var namer = new UniqueNamer('_:b');
   var dataset = {};
-  for(var graphName in nodeMap) {
+  var graphNames = Object.keys(nodeMap).sort();
+  for(var i = 0; i < graphNames.length; ++i) {
+    var graphName = graphNames[i];
     var graph = nodeMap[graphName];
     if(graphName.indexOf('_:') === 0) {
       graphName = namer.getName(graphName);
