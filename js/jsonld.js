@@ -644,7 +644,7 @@ jsonld.normalize = function(input, options, callback) {
  *          [useRdfType] true to use rdf:type, false to use @type
  *            (default: false).
  *          [useNativeTypes] true to convert XSD types into native types
- *            (boolean, integer, double), false not to (default: true).
+ *            (boolean, integer, double), false not to (default: false).
  *
  * @param callback(err, output) called once the operation completes.
  */
@@ -667,7 +667,7 @@ jsonld.fromRDF = function(dataset, options, callback) {
     options.useRdfType = false;
   }
   if(!('useNativeTypes' in options)) {
-    options.useNativeTypes = true;
+    options.useNativeTypes = false;
   }
 
   if(!('format' in options) && _isString(dataset)) {
@@ -737,14 +737,9 @@ jsonld.toRDF = function(input, options, callback) {
         'jsonld.RdfError', {cause: err}));
     }
 
-    // create node map for default graph (and any named graphs)
-    var namer = new UniqueNamer('_:b');
-    var nodeMap = {'@default': {}};
-    _createNodeMap(expanded, nodeMap, '@default', namer);
-
     try {
       // output RDF dataset
-      var dataset = Processor.prototype.toRDF(nodeMap);
+      var dataset = Processor.prototype.toRDF(expanded);
       if(options.format) {
         if(options.format === 'application/nquads') {
           return callback(null, _toNQuads(dataset));
@@ -2609,23 +2604,23 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
 };
 
 /**
- * Adds RDF triples for each graph in the given node map to an RDF dataset.
+ * Outputs an RDF dataset for the expanded JSON-LD input.
  *
- * @param nodeMap the node map.
+ * @param input the expanded JSON-LD input.
  *
  * @return the RDF dataset.
  */
-Processor.prototype.toRDF = function(nodeMap) {
+Processor.prototype.toRDF = function(input) {
+  // create node map for default graph (and any named graphs)
   var namer = new UniqueNamer('_:b');
+  var nodeMap = {'@default': {}};
+  _createNodeMap(input, nodeMap, '@default', namer);
+
   var dataset = {};
   var graphNames = Object.keys(nodeMap).sort();
   for(var i = 0; i < graphNames.length; ++i) {
     var graphName = graphNames[i];
-    var graph = nodeMap[graphName];
-    if(graphName.indexOf('_:') === 0) {
-      graphName = namer.getName(graphName);
-    }
-    dataset[graphName] = _graphToRDF(graph, namer);
+    dataset[graphName] = _graphToRDF(nodeMap[graphName], namer);
   }
   return dataset;
 };
@@ -2642,17 +2637,6 @@ Processor.prototype.toRDF = function(nodeMap) {
 Processor.prototype.processContext = function(activeCtx, localCtx, options) {
   var rval = null;
 
-  // get context from cache if available
-  if(jsonld.cache.activeCtx) {
-    rval = jsonld.cache.activeCtx.get(activeCtx, localCtx);
-    if(rval) {
-      return rval;
-    }
-  }
-
-  // initialize the resulting context
-  rval = activeCtx.clone();
-
   // normalize local context to an array of @context objects
   if(_isObject(localCtx) && '@context' in localCtx &&
     _isArray(localCtx['@context'])) {
@@ -2660,11 +2644,17 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
   }
   var ctxs = _isArray(localCtx) ? localCtx : [localCtx];
 
-  // process each context in order
-  for(var i in ctxs) {
-    var ctx = ctxs[i];
+  // no contexts in array, clone existing context
+  if(ctxs.length === 0) {
+    return activeCtx.clone();
+  }
 
-    // reset to initial context, keeping namer
+  // process each context in order
+  for(var i = 0; i < ctxs.length; ++i) {
+    var ctx = ctxs[i];
+    var isCached = false;
+
+    // reset to initial context
     if(ctx === null) {
       rval = _getInitialContext(options);
       continue;
@@ -2680,6 +2670,25 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; @context must be an object.',
         'jsonld.SyntaxError', {context: ctx});
+    }
+
+    // get context from cache if available
+    if(jsonld.cache.activeCtx) {
+      var cached = jsonld.cache.activeCtx.get(activeCtx, ctx);
+      if(cached) {
+        isCached = true;
+        rval = cached;
+        continue;
+      }
+    }
+
+    // initialize the resulting context
+    if(rval === null) {
+      rval = activeCtx.clone();
+    }
+    // clone cached context before modification
+    else if(isCached) {
+      rval = rval.clone();
     }
 
     // define context mappings for keys in local context
@@ -2757,11 +2766,11 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
     for(var key in ctx) {
       _createTermDefinition(rval, ctx, key, defined);
     }
-  }
 
-  // cache result
-  if(jsonld.cache.activeCtx) {
-    jsonld.cache.activeCtx.set(activeCtx, localCtx, rval);
+    // cache result
+    if(jsonld.cache.activeCtx) {
+      jsonld.cache.activeCtx.set(activeCtx, ctx, rval);
+    }
   }
 
   return rval;
@@ -2927,25 +2936,13 @@ function _graphToRDF(graph, namer) {
 
         // RDF subject
         var subject = {};
-        if(id.indexOf('_:') === 0) {
-          subject.type = 'blank node';
-          subject.value = namer.getName(id);
-        }
-        else {
-          subject.type = 'IRI';
-          subject.value = id;
-        }
+        subject.type = (id.indexOf('_:') === 0) ? 'blank node' : 'IRI';
+        subject.value = id;
 
         // RDF predicate
         var predicate = {};
-        if(property.indexOf('_:') === 0) {
-          predicate.type = 'blank node';
-          predicate.value = namer.getName(property);
-        }
-        else {
-          predicate.type = 'IRI';
-          predicate.value = property;
-        }
+        predicate.type = (property.indexOf('_:') === 0) ? 'blank node' : 'IRI';
+        predicate.value = property;
 
         // convert @list to triples
         if(_isList(item)) {
@@ -2953,7 +2950,7 @@ function _graphToRDF(graph, namer) {
         }
         // convert value or node object to triple
         else {
-          var object = _objectToRDF(item, namer);
+          var object = _objectToRDF(item);
           rval.push({subject: subject, predicate: predicate, object: object});
         }
       }
@@ -2986,7 +2983,7 @@ function _listToRDF(list, namer, subject, predicate, triples) {
 
     subject = blankNode;
     predicate = first;
-    var object = _objectToRDF(item, namer);
+    var object = _objectToRDF(item);
     triples.push({subject: subject, predicate: predicate, object: object});
 
     predicate = rest;
@@ -3000,11 +2997,10 @@ function _listToRDF(list, namer, subject, predicate, triples) {
  * node object to an RDF resource.
  *
  * @param item the JSON-LD value or node object.
- * @param namer the UniqueNamer to use to assign blank node names.
  *
  * @return the RDF literal or RDF resource.
  */
-function _objectToRDF(item, namer) {
+function _objectToRDF(item) {
   var object = {};
 
   // convert value object to RDF
@@ -3040,14 +3036,8 @@ function _objectToRDF(item, namer) {
   // convert string/node object to RDF
   else {
     var id = _isObject(item) ? item['@id'] : item;
-    if(id.indexOf('_:') === 0) {
-      object.type = 'blank node';
-      object.value = namer.getName(id);
-    }
-    else {
-      object.type = 'IRI';
-      object.value = id;
-    }
+    object.type = (id.indexOf('_:') === 0) ? 'blank node' : 'IRI';
+    object.value = id;
   }
 
   return object;
@@ -3104,7 +3094,7 @@ function _RDFToObject(o, useNativeTypes) {
         rval['@type'] = type;
       }
     }
-    else {
+    else if(type !== XSD_STRING) {
       rval['@type'] = type;
     }
   }
@@ -3401,6 +3391,17 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
   }
 
   // Note: At this point, input must be a subject.
+
+  // spec requires @type to be named first, so assign names early
+  if('@type' in input) {
+    var types = input['@type'];
+    for(var i = 0; i < types.length; ++i) {
+      var type = types[i];
+      if(type.indexOf('_:') === 0) {
+        namer.getName(type);
+      }
+    }
+  }
 
   // get name for subject
   if(_isUndefined(name)) {
