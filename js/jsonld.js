@@ -2907,7 +2907,9 @@ function _expandValue(activeCtx, activeProperty, value) {
 function _graphToRDF(graph, namer) {
   var rval = [];
 
-  for(var id in graph) {
+  var ids = Object.keys(graph).sort();
+  for(var i = 0; i < ids.length; ++i) {
+    var id = ids[i];
     var node = graph[id];
     for(var property in node) {
       var items = node[property];
@@ -2918,8 +2920,8 @@ function _graphToRDF(graph, namer) {
         continue;
       }
 
-      for(var i = 0; i < items.length; ++i) {
-        var item = items[i];
+      for(var ii = 0; ii < items.length; ++ii) {
+        var item = items[ii];
 
         // RDF subject
         var subject = {};
