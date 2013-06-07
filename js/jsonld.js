@@ -2689,9 +2689,9 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
     if('@base' in ctx) {
       var base = ctx['@base'];
 
-      // reset base
+      // clear base
       if(base === null) {
-        base = options.base;
+        base = null;
       }
       else if(!_isString(base)) {
         throw new JsonLdError(
