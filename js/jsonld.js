@@ -2635,7 +2635,7 @@ Processor.prototype.toRDF = function(input) {
  * @return the new active context.
  */
 Processor.prototype.processContext = function(activeCtx, localCtx, options) {
-  var rval = null;
+  var rval = activeCtx;
 
   // normalize local context to an array of @context objects
   if(_isObject(localCtx) && '@context' in localCtx &&
@@ -2650,13 +2650,14 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
   }
 
   // process each context in order
+  var mustClone = true;
   for(var i = 0; i < ctxs.length; ++i) {
     var ctx = ctxs[i];
-    var isCached = false;
 
     // reset to initial context
     if(ctx === null) {
       rval = _getInitialContext(options);
+      mustClone = false;
       continue;
     }
 
@@ -2676,19 +2677,16 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
     if(jsonld.cache.activeCtx) {
       var cached = jsonld.cache.activeCtx.get(activeCtx, ctx);
       if(cached) {
-        isCached = true;
         rval = cached;
+        mustClone = true;
         continue;
       }
     }
 
-    // initialize the resulting context
-    if(rval === null) {
-      rval = activeCtx.clone();
-    }
-    // clone cached context before modification
-    else if(isCached) {
+    // clone context, if required, before updating
+    if(mustClone) {
       rval = rval.clone();
+      mustClone = false;
     }
 
     // define context mappings for keys in local context
