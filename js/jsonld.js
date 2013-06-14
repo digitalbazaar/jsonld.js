@@ -91,8 +91,8 @@ jsonld.compact = function(input, ctx, options, callback) {
   if(ctx === null) {
     return jsonld.nextTick(function() {
       callback(new JsonLdError(
-      'The compaction context must not be null.',
-      'jsonld.CompactError'));
+        'The compaction context must not be null.',
+        'jsonld.CompactError'));
     });
   }
 
@@ -153,11 +153,12 @@ jsonld.compact = function(input, ctx, options, callback) {
         // do compaction
         var compacted = new Processor().compact(
           activeCtx, null, expanded, options);
-        cleanup(null, compacted, activeCtx, options);
       }
       catch(ex) {
-        callback(ex);
+        return callback(ex);
       }
+
+      cleanup(null, compacted, activeCtx, options);
     });
   });
 
@@ -293,11 +294,11 @@ jsonld.expand = function(input, options, callback) {
         if(!_isArray(expanded)) {
           expanded = [expanded];
         }
-        callback(null, expanded);
       }
       catch(ex) {
-        callback(ex);
+        return callback(ex);
       }
+      callback(null, expanded);
     });
   });
 };
@@ -748,11 +749,11 @@ jsonld.toRDF = function(input, options, callback) {
           'Unknown output format.',
           'jsonld.UnknownFormat', {format: options.format});
       }
-      callback(null, dataset);
     }
     catch(ex) {
-      callback(ex);
+      return callback(ex);
     }
+    callback(null, dataset);
   });
 };
 
@@ -1217,11 +1218,11 @@ jsonld.processContext = function(activeCtx, localCtx) {
     try {
       // process context
       ctx = new Processor().processContext(activeCtx, ctx, options);
-      callback(null, ctx);
     }
     catch(ex) {
-      callback(ex);
+      return callback(ex);
     }
+    callback(null, ctx);
   });
 };
 
