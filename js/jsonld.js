@@ -1066,9 +1066,9 @@ jsonld.cache = {
 };
 
 /**
- * Document loaders (w/alias for contextLoaders).
+ * Document loaders.
  */
-jsonld.documentLoaders = jsonld.contextLoaders = {};
+jsonld.documentLoaders = {};
 
 /**
  * The built-in jquery document loader.
