@@ -1687,11 +1687,12 @@ Processor.prototype.compact = function(
         for(var compactedProperty in compactedValue) {
           if(activeCtx.mappings[compactedProperty] &&
             activeCtx.mappings[compactedProperty].reverse) {
-            if(!(compactedProperty in rval) && !options.compactArrays) {
-              rval[compactedProperty] = [];
-            }
+            var value = compactedValue[compactedProperty];
+            var container = jsonld.getContextValue(
+              activeCtx, compactedProperty, '@container');
+            var useArray = (container === '@set' || !options.compactArrays);
             jsonld.addValue(
-              rval, compactedProperty, compactedValue[compactedProperty]);
+              rval, compactedProperty, value, {propertyIsArray: useArray});
             delete compactedValue[compactedProperty];
           }
         }
@@ -4420,10 +4421,10 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
   mapping.reverse = false;
 
   if('@reverse' in value) {
-    if('@id' in value || '@type' in value || '@language' in value) {
+    if('@id' in value) {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; a @reverse term definition must not ' +
-        'contain @id, @type, or @language.',
+        'contain @id.',
         'jsonld.SyntaxError', {context: localCtx});
     }
     var reverse = value['@reverse'];
@@ -4433,10 +4434,9 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
         'jsonld.SyntaxError', {context: localCtx});
     }
 
-    // expand and add @id mapping, set @type to @id
+    // expand and add @id mapping
     mapping['@id'] = _expandIri(
       activeCtx, reverse, {vocab: true, base: false}, localCtx, defined);
-    mapping['@type'] = '@id';
     mapping.reverse = true;
   }
   else if('@id' in value) {
@@ -4516,10 +4516,11 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
         'one of the following: @list, @set, @index, or @language.',
         'jsonld.SyntaxError', {context: localCtx});
     }
-    if(mapping.reverse && container !== '@index') {
+    if(mapping.reverse && container !== '@index' && container !== '@set' &&
+      container !== null) {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; @context @container value for a @reverse ' +
-        'type definition must be @index.',
+        'type definition must be @index or @set.',
         'jsonld.SyntaxError', {context: localCtx});
     }
 
