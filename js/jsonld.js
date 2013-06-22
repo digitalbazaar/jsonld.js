@@ -197,7 +197,7 @@ jsonld.compact = function(input, ctx, options, callback) {
     // remove empty contexts
     var tmp = ctx;
     ctx = [];
-    for(var i=0;i<tmp.length;i++) {
+    for(var i = 0; i < tmp.length; ++i) {
       if(!_isObject(tmp[i]) || Object.keys(tmp[i]).length > 0) {
         ctx.push(tmp[i]);
       }
@@ -581,7 +581,7 @@ jsonld.objectify = function(input, ctx, options, callback) {
             recurse(obj);
           }
           else if(_isArray(obj)) {
-            for(var i=0; i<obj.length; i++) {
+            for(var i = 0; i < obj.length; ++i) {
               if(_isString(obj[i]) && isid) {
                 obj[i] = top[obj[i]];
               }
@@ -942,12 +942,13 @@ jsonld.JsonLdProcessor = JsonLdProcessor;
 
 // IE8 has Object.defineProperty but it only
 // works on DOM nodes -- so feature detection
-// requries try/catch :-(
-var canDefineProperty = (!!Object.defineProperty);
-if (canDefineProperty){
+// requires try/catch :-(
+var canDefineProperty = !!Object.defineProperty;
+if(canDefineProperty) {
   try {
     Object.defineProperty({}, 'x', {});
-  } catch(e) {
+  }
+  catch(e) {
     canDefineProperty = false;
   }
 }
@@ -964,6 +965,22 @@ if(canDefineProperty) {
     value: JsonLdProcessor
   });
 }
+
+// setup browser global JsonLdProcessor
+if(_browser && typeof global.JsonLdProcessor === 'undefined') {
+  if(canDefineProperty) {
+    Object.defineProperty(global, 'JsonLdProcessor', {
+      writable: true,
+      enumerable: false,
+      configurable: true,
+      value: JsonLdProcessor
+    });
+  }
+  else {
+    global.JsonLdProcessor = JsonLdProcessor;
+  }
+}
+
 /* Utility API */
 
 // define setImmediate and nextTick
@@ -1301,7 +1318,7 @@ jsonld.hasValue = function(subject, property, value) {
       if(isList) {
         val = val['@list'];
       }
-      for(var i=0;i<val.length;i++) {
+      for(var i = 0; i < val.length; ++i) {
         if(jsonld.compareValues(value, val[i])) {
           rval = true;
           break;
@@ -1343,7 +1360,7 @@ jsonld.addValue = function(subject, property, value, options) {
       !(property in subject)) {
       subject[property] = [];
     }
-    for(var i=0;i<value.length;i++) {
+    for(var i = 0; i < value.length; ++i) {
       jsonld.addValue(subject, property, value[i], options);
     }
   }
@@ -1612,7 +1629,7 @@ Processor.prototype.compact = function(
   // recursively compact array
   if(_isArray(element)) {
     var rval = [];
-    for(var i=0;i<element.length;i++) {
+    for(var i = 0; i < element.length; ++i) {
       // compact, dropping any null values
       var compacted = this.compact(
         activeCtx, activeProperty, element[i], options);
@@ -1858,7 +1875,7 @@ Processor.prototype.expand = function(
   // recursively expand array
   if(_isArray(element)) {
     var rval = [];
-    for(var i=0;i<element.length;i++) {
+    for(var i = 0; i < element.length; ++i) {
       // expand element
       var e = self.expand(
         activeCtx, activeProperty, element[i], options, insideList);
@@ -3397,7 +3414,7 @@ function _getAdjacentBlankNodeName(node, id) {
 function _createNodeMap(input, graphs, graph, namer, name, list) {
   // recurse through array
   if(_isArray(input)) {
-    for(var i=0;i<input.length;i++) {
+    for(var i = 0; i < input.length; ++i) {
       _createNodeMap(input[i], graphs, graph, namer, undefined, list);
     }
     return;
@@ -3609,7 +3626,7 @@ function _frame(state, subjects, frame, parent, property) {
       // existing embed's parent is an array
       var existing = state.embeds[id];
       if(_isArray(existing.parent)) {
-        for(var i=0;i<existing.parent.length;i++) {
+        for(var i = 0; i < existing.parent.length; ++i) {
           if(jsonld.compareValues(output, existing.parent[i])) {
             embedOn = true;
             break;
@@ -3638,8 +3655,8 @@ function _frame(state, subjects, frame, parent, property) {
       // iterate over subject properties
       var subject = matches[id];
       var props = Object.keys(subject).sort();
-      for(var j=0; j<props.length;j++) {
-        var prop = props[j];
+      for(var i = 0; i < props.length; i++) {
+        var prop = props[i];
 
         // copy keywords to output
         if(_isKeyword(prop)) {
@@ -3658,8 +3675,8 @@ function _frame(state, subjects, frame, parent, property) {
 
         // add objects
         var objects = subject[prop];
-        for(var i=0;i<objects.length;i++) {
-          var o = objects[i];
+        for(var oi = 0; oi < objects.length; ++oi) {
+          var o = objects[oi];
 
           // recurse into list
           if(_isList(o)) {
@@ -3696,7 +3713,7 @@ function _frame(state, subjects, frame, parent, property) {
 
       // handle defaults
       var props = Object.keys(frame).sort();
-      for(var i=0;i<props.length;i++) {
+      for(var i = 0; i < props.length; ++i) {
         var prop = props[i];
 
         // skip keywords
@@ -3766,7 +3783,7 @@ function _validateFrame(state, frame) {
 function _filterSubjects(state, subjects, frame) {
   // filter subjects in @id order
   var rval = {};
-  for(var i=0;i<subjects.length;i++) {
+  for(var i = 0; i < subjects.length; ++i) {
     var id = subjects[i];
     var subject = state.subjects[id];
     if(_filterSubject(subject, frame)) {
@@ -3789,7 +3806,7 @@ function _filterSubject(subject, frame) {
   if('@type' in frame &&
     !(frame['@type'].length === 1 && _isObject(frame['@type'][0]))) {
     var types = frame['@type'];
-    for(var i=0;i<types.length;i++) {
+    for(var i = 0; i < types.length; ++i) {
       // any matching @type is a match
       if(jsonld.hasValue(subject, '@type', types[i])) {
         return true;
@@ -3820,7 +3837,7 @@ function _filterSubject(subject, frame) {
 function _embedValues(state, subject, property, output) {
   // embed subject properties in output
   var objects = subject[property];
-  for(var i=0;i<objects.length;i++) {
+  for(var i = 0; i < objects.length; ++i) {
     var o = objects[i];
 
     // recurse into @list
@@ -3880,7 +3897,7 @@ function _removeEmbed(state, id) {
   // remove existing embed
   if(_isArray(parent)) {
     // replace subject with reference
-    for(var i=0;i<parent.length;i++) {
+    for(var i = 0; i < parent.length; ++i) {
       if(jsonld.compareValues(parent[i], subject)) {
         parent[i] = subject;
         break;
@@ -3898,7 +3915,7 @@ function _removeEmbed(state, id) {
   var removeDependents = function(id) {
     // get embed keys as a separate array to enable deleting keys in map
     var ids = Object.keys(embeds);
-    for(var i=0;i<ids.length;i++) {
+    for(var i = 0; i < ids.length; ++i) {
       var next = ids[i];
       if(next in embeds && _isObject(embeds[next].parent) &&
         embeds[next].parent['@id'] === id) {
@@ -3940,7 +3957,7 @@ function _removePreserve(ctx, input, options) {
   // recurse through arrays
   if(_isArray(input)) {
     var output = [];
-    for(var i=0;i<input.length;i++) {
+    for(var i = 0; i < input.length; ++i) {
       var result = _removePreserve(ctx, input[i], options);
       // drop nulls from arrays
       if(result !== null) {
@@ -5011,7 +5028,7 @@ function _validateTypeValue(v) {
   if(_isArray(v)) {
     // must contain only strings
     isValid = true;
-    for(var i=0;i<v.length;i++) {
+    for(var i = 0; i < v.length; ++i) {
       if(!(_isString(v[i]))) {
         isValid = false;
         break;
@@ -5202,16 +5219,19 @@ function _isAbsoluteIri(v) {
  * @return the cloned value.
  */
 function _clone(value) {
-  if(value && _isArray(value)) {
-    var rval = [];
-    for(var i=0;i<value.length;i++) {
-      rval[i] = _clone(value[i]);
+  if(value && typeof value === 'object') {
+    var rval;
+    if(_isArray(value)) {
+      rval = [];
+      for(var i = 0; i < value.length; ++i) {
+        rval[i] = _clone(value[i]);
+      }
     }
-   }
-  else if(value && typeof value === 'object') {
-    var rval = {};
-    for(var i in value) {
-      rval[i] = _clone(value[i]);
+    else {
+      rval = {};
+      for(var key in value) {
+        rval[key] = _clone(value[key]);
+      }
     }
     return rval;
   }
@@ -5232,7 +5252,7 @@ function _clone(value) {
 function _findContextUrls(input, urls, replace, base) {
   var count = Object.keys(urls).length;
   if(_isArray(input)) {
-    for(var i=0;i<input.length;i++) {
+    for(var i = 0; i < input.length; ++i) {
       _findContextUrls(input[i], urls, replace, base);
     }
     return (count < Object.keys(urls).length);
@@ -5349,7 +5369,7 @@ function _retrieveContextUrls(input, options, callback) {
 
     // retrieve URLs in queue
     var count = queue.length;
-    for(var i=0;i<queue.length;i++) {
+    for(var i = 0; i < queue.length; ++i) {
       (function(url) {
         // check for context URL cycle
         if(url in cycles) {
@@ -5870,7 +5890,7 @@ Permutator = function(list) {
   this.done = false;
   // directional info for permutation algorithm
   this.left = {};
-  for(var i=0;i<list.length;i++) {
+  for(var i = 0; i < list.length; ++i) {
     this.left[list[i]] = true;
   }
 };
@@ -5967,7 +5987,7 @@ else {
  */
 sha1.hash = function(nquads) {
   var md = sha1.create();
-  for(var i=0;i<nquads.length;i++) {
+  for(var i = 0; i < nquads.length; ++i) {
     md.update(nquads[i]);
   }
   return md.digest();
