@@ -36,7 +36,8 @@
 (function() {
 
 // determine if in-browser or using node.js
-var _nodejs = (typeof module === 'object' && module.exports);
+var _nodejs = (
+  typeof process !== 'undefined' && process.versions && process.versions.node);
 var _browser = !_nodejs &&
   (typeof window !== 'undefined' || typeof self !== 'undefined');
 if(_browser) {
