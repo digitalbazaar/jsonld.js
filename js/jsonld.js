@@ -282,14 +282,14 @@ jsonld.expand = function(input, options, callback) {
       });
     }
     // nothing to load
-    expand({document: input, context: null});
+    expand({contextUrl: null, documentUrl: null, document: input});
   });
 
   function expand(remoteDoc) {
     // build meta-object and retrieve all @context URLs
     var input = {
       document: _clone(remoteDoc.document),
-      remoteContext: remoteDoc.context
+      remoteContext: {'@context': remoteDoc.contextUrl}
     };
     _retrieveContextUrls(input, options, function(err, input) {
       if(err) {
@@ -300,7 +300,7 @@ jsonld.expand = function(input, options, callback) {
         var processor = new Processor();
         var activeCtx = _getInitialContext(options);
         var document = input.document;
-        var remoteContext = input.remoteContext;
+        var remoteContext = input.remoteContext['@context'];
 
         // process optional expandContext
         if('expandContext' in options) {
@@ -809,7 +809,7 @@ jsonld.relabelBlankNodes = function(input) {
 /**
  * The default document loader for external documents.
  *
- * @param loadDocument(url, callback(err, url, result)) the document loader.
+ * @param loadDocument(url, callback(err, remoteDoc)) the document loader.
  */
 jsonld.loadDocument = function(url, callback) {
   return callback(new JsonLdError(
@@ -1114,14 +1114,15 @@ jsonld.documentLoaders['jquery'] = function($, options) {
       dataType: 'json',
       crossDomain: true,
       success: function(data, textStatus, jqXHR) {
-        var doc = {url: url, document: data, context: null};
+        var doc = {contextUrl: null, documentUrl: url, document: data};
         cache.set(url, doc);
         callback(null, doc);
       },
       error: function(jqXHR, textStatus, err) {
         callback(new JsonLdError(
           'URL could not be dereferenced, an error occurred.',
-          'jsonld.LoadDocumentError', {url: url, cause: err}), url);
+          'jsonld.LoadDocumentError', {url: url, cause: err}),
+          {contextUrl: null, documentUrl: url, document: null});
       }
     });
   };
@@ -1163,14 +1164,15 @@ jsonld.documentLoaders['node'] = function(options) {
       if(err) {
         return callback(new JsonLdError(
           'URL could not be dereferenced, an error occurred.',
-          'jsonld.LoadDocumentError', {url: url, cause: err}), url);
+          'jsonld.LoadDocumentError', {url: url, cause: err}),
+          {contextUrl: null, documentUrl: url, document: null});
       }
       var statusText = http.STATUS_CODES[res.statusCode];
       if(res.statusCode >= 400) {
         return callback(new JsonLdError(
           'URL could not be dereferenced: ' + statusText,
           'jsonld.InvalidUrl', {url: url, httpStatusCode: res.statusCode}),
-          url);
+          {contextUrl: null, documentUrl: url, document: null});
       }
       // handle redirect
       if(res.statusCode >= 300 && res.statusCode < 400 &&
@@ -1180,14 +1182,14 @@ jsonld.documentLoaders['node'] = function(options) {
             'URL could not be dereferenced; there were too many redirects.',
             'jsonld.TooManyRedirects',
             {url: url, httpStatusCode: res.statusCode, redirects: redirects}),
-            url);
+            {contextUrl: null, documentUrl: url, document: null});
         }
         if(redirects.indexOf(url) !== -1) {
           return callback(new JsonLdError(
             'URL could not be dereferenced; infinite redirection was detected.',
             'jsonld.InfiniteRedirectDetected',
             {url: url, httpStatusCode: res.statusCode, redirects: redirects}),
-            url);
+            {contextUrl: null, documentUrl: url, document: null});
         }
         redirects.push(url);
         return loadDocument(res.headers.location, redirects, callback);
@@ -1196,9 +1198,10 @@ jsonld.documentLoaders['node'] = function(options) {
       redirects.push(url);
       for(var i = 0; i < redirects.length; ++i) {
         cache.set(
-          redirects[i], {url: redirects[i], document: body, context: null});
+          redirects[i],
+          {contextUrl: null, documentUrl: redirects[i], document: body});
       }
-      callback(err, {url: url, document: body, context: null});
+      callback(err, {contextUrl: null, documentUrl: url, document: body});
     });
   }
 
