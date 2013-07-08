@@ -1061,8 +1061,9 @@ else {
  */
 jsonld.parseLinkHeader = function(header) {
   var rval = {};
-  var entries = header.split(',');
-  var rLinkHeader = /\s*<(.*?)>\s*(?:;\s*(.*))?/;
+  // split on unbracketed/unquoted commas
+  var entries = header.match(/(?:<[^>]*?>|"[^"]*?"|[^,])+/g);
+  var rLinkHeader = /\s*<([^>]*?)>\s*(?:;\s*(.*))?/;
   for(var i = 0; i < entries.length; ++i) {
     var match = entries[i].match(rLinkHeader);
     if(!match) {
@@ -1070,7 +1071,7 @@ jsonld.parseLinkHeader = function(header) {
     }
     var result = {target: match[1]};
     var params = match[2];
-    var rParams = /(.*?)="?(.*?)"?\s*(?:(?:;\s*)|$)/g;
+    var rParams = /(.*?)="?([^"]*?)"?\s*(?:(?:;\s*)|$)/g;
     while(match = rParams.exec(params)) {
       result[match[1]] = match[2];
     }
