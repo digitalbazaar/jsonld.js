@@ -1163,6 +1163,21 @@ jsonld.documentLoaders['jquery'] = function($, options) {
       crossDomain: true,
       success: function(data, textStatus, jqXHR) {
         var doc = {contextUrl: null, documentUrl: url, document: data};
+
+        // handle Link Header
+        var linkHeader = jqXHR.getResponseHeader('Link');
+        if(linkHeader) {
+          // only 1 related link header permitted
+          linkHeader = jsonld.parseLinkHeader(linkHeader)[LINK_HEADER_REL];
+          if(_isArray(linkHeader)) {
+            return callback(new JsonLdError(
+              'URL could not be dereferenced, it has more than one ' +
+              'associated HTTP Link Header.',
+              'jsonld.InvalidUrl', {url: url}), doc);
+          }
+          doc.contextUrl = linkHeader.target;
+        }
+
         cache.set(url, doc);
         callback(null, doc);
       },
