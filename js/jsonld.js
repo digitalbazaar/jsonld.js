@@ -1010,8 +1010,56 @@ else {
 }
 
 /**
+ * Parses a link header. The results will be key'd by the value of "rel".
+ *
+ * Link: <http://json-ld.org/contexts/person.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"
+ *
+ * Parses as: {
+ *   'http://www.w3.org/ns/json-ld#context': {
+ *     target: http://json-ld.org/contexts/person.jsonld,
+ *     type: 'application/ld+json'
+ *   }
+ * }
+ *
+ * If there is more than one "rel" with the same IRI, then entries in the
+ * resulting map for that "rel" will be arrays.
+ *
+ * @param header the link header to parse.
+ */
+jsonld.parseLinkHeader = function(header) {
+  var rval = {};
+  var entries = header.split(',');
+  var rLinkHeader = /\s*<(.*?)>\s*(?:;\s*(.*))?/;
+  for(var i = 0; i < entries.length; ++i) {
+    var match = entries[i].match(rLinkHeader);
+    if(!match) {
+      continue;
+    }
+    var result = {target: match[1]};
+    var params = match[2];
+    var rParams = /(.*?)="?(.*?)"?\s*(?:(?:;\s*)|$)/g;
+    while(match = rParams.exec(params)) {
+      result[match[1]] = match[2];
+    }
+    var rel = result['rel'];
+    if(_isArray(rval[rel])) {
+      rval[rel].push(result);
+    }
+    else if(rel in rval) {
+      rval[rel] = [rval[rel], result];
+    }
+    else {
+      rval[rel] = result;
+    }
+  }
+  return rval;
+};
+
+/**
  * Creates a simple document cache that retains documents for a short
  * period of time.
+ *
+ * FIXME: Implement simple HTTP caching instead.
  *
  * @param size the maximum size of the cache.
  */
@@ -1149,7 +1197,8 @@ jsonld.documentLoaders['node'] = function(options) {
       return callback(new JsonLdError(
         'URL could not be dereferenced; secure mode is enabled and ' +
         'the URL\'s scheme is not "https".',
-        'jsonld.InvalidUrl', {url: url}), url);
+        'jsonld.InvalidUrl', {url: url}),
+        {contextUrl: null, documentUrl: url, document: null});
     }
     var doc = cache.get(url);
     if(doc !== null) {
@@ -1160,20 +1209,36 @@ jsonld.documentLoaders['node'] = function(options) {
       strictSSL: true,
       followRedirect: false
     }, function(err, res, body) {
+      doc = {contextUrl: null, documentUrl: url, document: body || null};
+
       // handle error
       if(err) {
         return callback(new JsonLdError(
           'URL could not be dereferenced, an error occurred.',
-          'jsonld.LoadDocumentError', {url: url, cause: err}),
-          {contextUrl: null, documentUrl: url, document: null});
+          'jsonld.LoadDocumentError', {url: url, cause: err}), doc);
       }
       var statusText = http.STATUS_CODES[res.statusCode];
       if(res.statusCode >= 400) {
         return callback(new JsonLdError(
           'URL could not be dereferenced: ' + statusText,
           'jsonld.InvalidUrl', {url: url, httpStatusCode: res.statusCode}),
-          {contextUrl: null, documentUrl: url, document: null});
+          doc);
       }
+
+      // handle Link Header
+      if(res.headers.link) {
+        // only 1 related link header permitted
+        var linkHeader = jsonld.parseLinkHeader(
+          res.headers.link)[LINK_HEADER_REL];
+        if(_isArray(linkHeader)) {
+          return callback(new JsonLdError(
+            'URL could not be dereferenced, it has more than one associated ' +
+            'HTTP Link Header.',
+            'jsonld.InvalidUrl', {url: url}), doc);
+        }
+        doc.contextUrl = linkHeader.target;
+      }
+
       // handle redirect
       if(res.statusCode >= 300 && res.statusCode < 400 &&
         res.headers.location) {
@@ -1182,14 +1247,14 @@ jsonld.documentLoaders['node'] = function(options) {
             'URL could not be dereferenced; there were too many redirects.',
             'jsonld.TooManyRedirects',
             {url: url, httpStatusCode: res.statusCode, redirects: redirects}),
-            {contextUrl: null, documentUrl: url, document: null});
+            doc);
         }
         if(redirects.indexOf(url) !== -1) {
           return callback(new JsonLdError(
             'URL could not be dereferenced; infinite redirection was detected.',
             'jsonld.InfiniteRedirectDetected',
             {url: url, httpStatusCode: res.statusCode, redirects: redirects}),
-            {contextUrl: null, documentUrl: url, document: null});
+            doc);
         }
         redirects.push(url);
         return loadDocument(res.headers.location, redirects, callback);
@@ -1201,7 +1266,7 @@ jsonld.documentLoaders['node'] = function(options) {
           redirects[i],
           {contextUrl: null, documentUrl: redirects[i], document: body});
       }
-      callback(err, {contextUrl: null, documentUrl: url, document: body});
+      callback(err, doc);
     });
   }
 
@@ -1589,6 +1654,7 @@ var RDF_XML_LITERAL = RDF + 'XMLLiteral';
 var RDF_OBJECT = RDF + 'object';
 var RDF_LANGSTRING = RDF + 'langString';
 
+var LINK_HEADER_REL = 'http://www.w3.org/ns/json-ld#context';
 var MAX_CONTEXT_URLS = 10;
 
 /**
@@ -5323,7 +5389,7 @@ function _findContextUrls(input, urls, replace, base) {
  *
  * @param input the JSON-LD input with possible contexts.
  * @param options the options to use:
- *          loadDocument(url, callback(err, url, result)) the document loader.
+ *          loadDocument(url, callback(err, remoteDoc)) the document loader.
  * @param callback(err, input) called once the operation completes.
  */
 function _retrieveContextUrls(input, options, callback) {
@@ -5409,8 +5475,9 @@ function _retrieveContextUrls(input, options, callback) {
               'Derefencing a URL did not result in a valid JSON-LD object. ' +
               'Possible causes are an inaccessible URL perhaps due to ' +
               'a same-origin policy (ensure the server uses CORS if you are ' +
-              'using client-side JavaScript), too many redirects, or a ' +
-              'non-JSON response.',
+              'using client-side JavaScript), too many redirects, a ' +
+              'non-JSON response, or more than one HTTP Link Header was ' +
+              'provided for a remote context.',
               'jsonld.InvalidUrl', {url: url, cause: err});
           }
           else if(!_isObject(ctx)) {
@@ -5427,6 +5494,17 @@ function _retrieveContextUrls(input, options, callback) {
           // use empty context if no @context key is present
           if(!('@context' in ctx)) {
             ctx = {'@context': {}};
+          }
+          else {
+            ctx = {'@context': ctx['@context']};
+          }
+
+          // append context URL to context if given
+          if(remoteDoc.contextUrl) {
+            if(!_isArray(ctx['@context'])) {
+              ctx['@context'] = [ctx['@context']];
+            }
+            ctx['@context'].push(remoteDoc.contextUrl);
           }
 
           // recurse
