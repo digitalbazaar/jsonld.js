@@ -13,7 +13,7 @@
 
 var async = require('async');
 var fs = require('fs');
-var jsonld = require('../js/jsonld');
+var jsonld = require('../js/jsonld')();
 var path = require('path');
 var pkginfo = require('pkginfo')(module, 'version');
 var program = require('commander');

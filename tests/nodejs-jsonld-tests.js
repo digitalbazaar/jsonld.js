@@ -14,7 +14,7 @@ var path = require('path');
 var util = require('util');
 var _jsdir = process.env.JSDIR || 'js';
 var jsonld = require('../' + _jsdir + '/jsonld')();
-require('../' + _jsdir + '/Future');
+require('../' + _jsdir + '/Promise');
 
 var JSONLD_TEST_SUITE = '../json-ld.org/test-suite';
 
@@ -321,9 +321,9 @@ function run(manifest, src) {
       });
     }
     else {
-      // run with regular and futures API
+      // run with regular and promises API
       _run(manifest, src);
-      _run_future(manifest, src);
+      _run_promise(manifest, src);
     }
   }
   else {
@@ -427,12 +427,12 @@ function _run(test, src) {
 }
 
 /**
- * Run a test using the futures API.
+ * Run a test using the promises API.
  *
  * @param test the test specification object.
  * @param src the source manifest (optional)
  */
-function _run_future(test, src) {
+function _run_promise(test, src) {
   // read test input files
   var type = test['@type'];
   var options = {};
@@ -449,7 +449,7 @@ function _run_future(test, src) {
     };
   };
 
-  var futures = jsonld.futures();
+  var promises = jsonld.promises();
   it(test.name, function(done) {
     if(type.indexOf('jld:ApiErrorTest') !== -1) {
       util.log('Skipping test "' + test.name + '" of type: ' +
@@ -459,44 +459,44 @@ function _run_future(test, src) {
       var input = _readTestJson(dir, test.input);
       var expect = _readTestNQuads(dir, test.expect);
       options.format = 'application/nquads';
-      futures.normalize(input, options).done(checkResult(expect, done), done);
+      promises.normalize(input, options).then(checkResult(expect, done), done);
     }
     else if(type.indexOf('jld:ExpandTest') !== -1) {
       var input = _readTestJson(dir, test.input);
       var expect = _readTestJson(dir, test.expect);
-      futures.expand(input, options).done(checkResult(expect, done), done);
+      promises.expand(input, options).then(checkResult(expect, done), done);
     }
     else if(type.indexOf('jld:CompactTest') !== -1) {
       var input = _readTestJson(dir, test.input);
       var context = _readTestJson(dir, test.context);
       var expect = _readTestJson(dir, test.expect);
-      futures.compact(input, context, options).done(
+      promises.compact(input, context, options).then(
         checkResult(expect, done), done);
     }
     else if(type.indexOf('jld:FlattenTest') !== -1) {
       var input = _readTestJson(dir, test.input);
       var expect = _readTestJson(dir, test.expect);
-      futures.flatten(input, null, options).done(
+      promises.flatten(input, null, options).then(
         checkResult(expect, done), done);
     }
     else if(type.indexOf('jld:FrameTest') !== -1) {
       var input = _readTestJson(dir, test.input);
       var frame = _readTestJson(dir, test.frame);
       var expect = _readTestJson(dir, test.expect);
-      futures.frame(input, frame, options).done(
+      promises.frame(input, frame, options).then(
         checkResult(expect, done), done);
     }
     else if(type.indexOf('jld:FromRDFTest') !== -1) {
       var input = _readTestNQuads(dir, test.input);
       var expect = _readTestJson(dir, test.expect);
-      futures.fromRDF(input, options).done(
+      promises.fromRDF(input, options).then(
         checkResult(expect, done), done);
     }
     else if(type.indexOf('jld:ToRDFTest') !== -1) {
       var input = _readTestJson(dir, test.input);
       var expect = _readTestNQuads(dir, test.expect);
       options.format = 'application/nquads';
-      futures.toRDF(input, options).done(
+      promises.toRDF(input, options).then(
         checkResult(expect, done), done);
     }
     else {

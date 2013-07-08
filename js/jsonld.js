@@ -817,16 +817,16 @@ jsonld.loadDocument = function(url, callback) {
     'implemented.', 'jsonld.DocumentUrlError'), url);
 };
 
-/* Futures/Promises API */
+/* Promises API */
 
-jsonld.futures = jsonld.promises = function() {
-  var Future = _nodejs ? require('./Future') : global.Future;
+jsonld.promises = function() {
+  var Promise = _nodejs ? require('./Promise').Promise : global.Promise;
   var slice = Array.prototype.slice;
 
-  // converts a node.js async op into a future w/boxed resolved value(s)
-  function futurize(op) {
+  // converts a node.js async op into a promise w/boxed resolved value(s)
+  function promisify(op) {
     var args = slice.call(arguments, 1);
-    return new Future(function(resolver) {
+    return new Promise(function(resolver) {
       op.apply(null, args.concat(function(err, value) {
         if(err) {
           resolver.reject(err);
@@ -861,7 +861,7 @@ jsonld.futures = jsonld.promises = function() {
     if('loadDocument' in options) {
       options.loadDocument = createDocumentLoader(options.loadDocument);
     }
-    return futurize.apply(null, [jsonld.expand].concat(slice.call(arguments)));
+    return promisify.apply(null, [jsonld.expand].concat(slice.call(arguments)));
   };
   api.compact = function(input, ctx) {
     if(arguments.length < 2) {
@@ -877,7 +877,7 @@ jsonld.futures = jsonld.promises = function() {
         callback(err, compacted);
       });
     };
-    return futurize.apply(null, [compact].concat(slice.call(arguments)));
+    return promisify.apply(null, [compact].concat(slice.call(arguments)));
   };
   api.flatten = function(input) {
     if(arguments.length < 1) {
@@ -887,7 +887,8 @@ jsonld.futures = jsonld.promises = function() {
     if('loadDocument' in options) {
       options.loadDocument = createDocumentLoader(options.loadDocument);
     }
-    return futurize.apply(null, [jsonld.flatten].concat(slice.call(arguments)));
+    return promisify.apply(
+      null, [jsonld.flatten].concat(slice.call(arguments)));
   };
   api.frame = function(input, frame) {
     if(arguments.length < 2) {
@@ -897,13 +898,14 @@ jsonld.futures = jsonld.promises = function() {
     if('loadDocument' in options) {
       options.loadDocument = createDocumentLoader(options.loadDocument);
     }
-    return futurize.apply(null, [jsonld.frame].concat(slice.call(arguments)));
+    return promisify.apply(null, [jsonld.frame].concat(slice.call(arguments)));
   };
   api.fromRDF = function(dataset) {
     if(arguments.length < 1) {
       throw new TypeError('Could not convert from RDF, too few arguments.');
     }
-    return futurize.apply(null, [jsonld.fromRDF].concat(slice.call(arguments)));
+    return promisify.apply(
+      null, [jsonld.fromRDF].concat(slice.call(arguments)));
   };
   api.toRDF = function(input) {
     if(arguments.length < 1) {
@@ -913,7 +915,7 @@ jsonld.futures = jsonld.promises = function() {
     if('loadDocument' in options) {
       options.loadDocument = createDocumentLoader(options.loadDocument);
     }
-    return futurize.apply(null, [jsonld.toRDF].concat(slice.call(arguments)));
+    return promisify.apply(null, [jsonld.toRDF].concat(slice.call(arguments)));
   };
   api.normalize = function(input) {
     if(arguments.length < 1) {
@@ -923,7 +925,7 @@ jsonld.futures = jsonld.promises = function() {
     if('loadDocument' in options) {
       options.loadDocument = createDocumentLoader(options.loadDocument);
     }
-    return futurize.apply(
+    return promisify.apply(
       null, [jsonld.normalize].concat(slice.call(arguments)));
   };
   return api;
@@ -932,7 +934,7 @@ jsonld.futures = jsonld.promises = function() {
 /* WebIDL API */
 
 function JsonLdProcessor() {}
-JsonLdProcessor.prototype = jsonld.futures();
+JsonLdProcessor.prototype = jsonld.promises();
 JsonLdProcessor.prototype.toString = function() {
   if(this instanceof JsonLdProcessor) {
     return '[object JsonLdProcessor]';
