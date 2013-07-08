@@ -1071,9 +1071,9 @@ jsonld.parseLinkHeader = function(header) {
     }
     var result = {target: match[1]};
     var params = match[2];
-    var rParams = /(.*?)="?([^"]*?)"?\s*(?:(?:;\s*)|$)/g;
+    var rParams = /(.*?)=(?:(?:"([^"]*?)")|([^"]*?))\s*(?:(?:;\s*)|$)/g;
     while(match = rParams.exec(params)) {
-      result[match[1]] = match[2];
+      result[match[1]] = (match[2] === undefined) ? match[3] : match[2];
     }
     var rel = result['rel'];
     if(_isArray(rval[rel])) {
