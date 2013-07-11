@@ -5813,7 +5813,9 @@ function _toNQuad(triple, graphName, bnode) {
       .replace(/\"/g, '\\"');
     quad += '"' + escaped + '"';
     if(o.datatype === RDF_LANGSTRING) {
-      quad += '@' + o.language;
+      if(o.language) {
+        quad += '@' + o.language;
+      }
     }
     else if(o.datatype !== XSD_STRING) {
       quad += '^^<' + o.datatype + '>';
