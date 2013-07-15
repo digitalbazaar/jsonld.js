@@ -28,7 +28,6 @@ function boolify(value) {
     return value;
   }
   if(typeof value === 'string' && value) {
-    var lower = value.toLowerCase();
     switch(value.toLowerCase()) {
       case 'true':
       case 't':
