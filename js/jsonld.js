@@ -291,6 +291,15 @@ jsonld.expand = function(input, options, callback) {
       document: _clone(remoteDoc.document),
       remoteContext: {'@context': remoteDoc.contextUrl}
     };
+    if('expandContext' in options) {
+      if(typeof options.expandContext === 'object' &&
+        '@context' in options.expandContext) {
+        input.expandContext = _clone(options.expandContext);
+      }
+      else {
+        input.expandContext = {'@context': options.expandContext};
+      }
+    }
     _retrieveContextUrls(input, options, function(err, input) {
       if(err) {
         return callback(err);
@@ -303,13 +312,15 @@ jsonld.expand = function(input, options, callback) {
         var remoteContext = input.remoteContext['@context'];
 
         // process optional expandContext
-        if('expandContext' in options) {
-          processor.processContext(activeCtx, options.expandContext, options);
+        if(input.expandContext) {
+          activeCtx = processor.processContext(
+            activeCtx, input.expandContext, options);
         }
 
         // process remote context from HTTP Link Header
         if(remoteContext) {
-          processor.processContext(activeCtx, remoteContext, options);
+          activeCtx = processor.processContext(
+            activeCtx, remoteContext, options);
         }
 
         // expand document
