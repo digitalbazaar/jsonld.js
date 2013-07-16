@@ -26,7 +26,7 @@
     "commander": "~1.1.0",
     "jsdom": "~0.7.0",
     "pkginfo": "~0.2.3",
-    "request": "~2.21.0",
+    "request": "~2.22.0",
     "xmldom": "0.1.16"
   },
   "devDependencies": {
