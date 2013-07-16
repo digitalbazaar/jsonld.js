@@ -1980,14 +1980,8 @@ Processor.prototype.expand = function(
   activeCtx, activeProperty, element, options, insideList) {
   var self = this;
 
-  if(typeof element === 'undefined') {
-    throw new JsonLdError(
-      'Invalid JSON-LD syntax; undefined element.',
-      'jsonld.SyntaxError');
-  }
-
   // nothing to expand
-  if(element === null) {
+  if(element === null || element === undefined) {
     return null;
   }
 
