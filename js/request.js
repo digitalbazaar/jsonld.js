@@ -100,28 +100,31 @@ function _typedParse(loc, type, data, callback) {
       }
       // input is RDFa
       try {
-        jsdom.env(data, function(errors, window) {
-          if(errors && errors.length > 0) {
-            return callback({
-              message: 'DOM Errors:',
-              errors: errors,
-              url: loc
-            });
-          }
+        jsdom.env({
+          html: data,
+          done: function(errors, window) {
+            if(errors && errors.length > 0) {
+              return callback({
+                message: 'DOM Errors:',
+                errors: errors,
+                url: loc
+              });
+            }
 
-          try {
-            // extract JSON-LD from RDFa
-            RDFa.attach(window.document);
-            jsonld.fromRDF(window.document.data,
-              {format: 'rdfa-api'}, callback);
-          }
-          catch(ex) {
-            // FIXME: expose RDFa/jsonld ex?
-            callback({
-              message: 'RDFa extraction error.',
-              contentType: type,
-              url: loc
-            });
+            try {
+              // extract JSON-LD from RDFa
+              RDFa.attach(window.document);
+              jsonld.fromRDF(window.document.data,
+                {format: 'rdfa-api'}, callback);
+            }
+            catch(ex) {
+              // FIXME: expose RDFa/jsonld ex?
+              callback({
+                message: 'RDFa extraction error.',
+                contentType: type,
+                url: loc
+              });
+            }
           }
         });
       }
