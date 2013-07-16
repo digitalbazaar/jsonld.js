@@ -23,14 +23,14 @@
   "main": "js/jsonld.js",
   "dependencies": {
     "async": "~0.2.6",
-    "commander": "~1.1.0",
+    "commander": "~1.3.0",
     "jsdom": "~0.7.0",
-    "pkginfo": "~0.2.3",
+    "pkginfo": "~0.3.0",
     "request": "~2.22.0",
     "xmldom": "0.1.16"
   },
   "devDependencies": {
-    "mocha": "~1.10.0",
+    "mocha": "~1.12.0",
     "visionmedia-jscoverage": "~1.0.0"
   },
   "engines": {
