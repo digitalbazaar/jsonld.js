@@ -297,7 +297,7 @@ jsonld.expand = function(input, options, callback) {
         input.expandContext = _clone(options.expandContext);
       }
       else {
-        input.expandContext = {'@context': options.expandContext};
+        input.expandContext = {'@context': _clone(options.expandContext)};
       }
     }
     _retrieveContextUrls(input, options, function(err, input) {
