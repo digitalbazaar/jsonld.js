@@ -292,12 +292,12 @@ jsonld.expand = function(input, options, callback) {
       remoteContext: {'@context': remoteDoc.contextUrl}
     };
     if('expandContext' in options) {
-      if(typeof options.expandContext === 'object' &&
-        '@context' in options.expandContext) {
-        input.expandContext = _clone(options.expandContext);
+      var expandContext = _clone(options.expandContext);
+      if(typeof expandContext === 'object' && '@context' in expandContext) {
+        input.expandContext = expandContext;
       }
       else {
-        input.expandContext = {'@context': _clone(options.expandContext)};
+        input.expandContext = {'@context': expandContext};
       }
     }
     _retrieveContextUrls(input, options, function(err, input) {
