@@ -66,7 +66,6 @@ var wrapper = function(jsonld) {
  * @param ctx the context to compact with.
  * @param [options] options to use:
  *          [base] the base IRI to use.
- *          [strict] use strict mode (default: true).
  *          [compactArrays] true to compact arrays to single values when
  *            appropriate, false not to (default: true).
  *          [graph] true to always output a top-level graph (default: false).
@@ -108,9 +107,6 @@ jsonld.compact = function(input, ctx, options, callback) {
   // set default options
   if(!('base' in options)) {
     options.base = (typeof input === 'string') ? input : '';
-  }
-  if(!('strict' in options)) {
-    options.strict = true;
   }
   if(!('compactArrays' in options)) {
     options.compactArrays = true;
@@ -489,6 +485,9 @@ jsonld.frame = function(input, frame, options, callback) {
         frame['@context'] = ctx;
       }
     }
+    else {
+      ctx = {};
+    }
 
     // expand input
     jsonld.expand(input, options, function(err, expanded) {
@@ -500,6 +499,7 @@ jsonld.frame = function(input, frame, options, callback) {
 
       // expand frame
       var opts = _clone(options);
+      opts.isFrame = true;
       opts.keepFreeFloatingNodes = true;
       jsonld.expand(frame, opts, function(err, expandedFrame) {
         if(err) {
@@ -510,7 +510,7 @@ jsonld.frame = function(input, frame, options, callback) {
 
         try {
           // do framing
-          var framed = new Processor().frame(expanded, expandedFrame, options);
+          var framed = new Processor().frame(expanded, expandedFrame, opts);
         }
         catch(ex) {
           return callback(ex);
@@ -2064,9 +2064,16 @@ Processor.prototype.expand = function(
 
       // syntax error if @id is not a string
       if(expandedProperty === '@id' && !_isString(value)) {
-        throw new JsonLdError(
-          'Invalid JSON-LD syntax; "@id" value must a string.',
-          'jsonld.SyntaxError', {value: value});
+        if(!options.isFrame) {
+          throw new JsonLdError(
+            'Invalid JSON-LD syntax; "@id" value must a string.',
+            'jsonld.SyntaxError', {value: value});
+        }
+        if(!_isObject(value)) {
+          throw new JsonLdError(
+            'Invalid JSON-LD syntax; "@id" value must be a string or an ' +
+            'object.', 'jsonld.SyntaxError', {value: value});
+        }
       }
 
       // validate @type value
