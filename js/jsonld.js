@@ -786,7 +786,7 @@ jsonld.fromRDF = function(dataset, options, callback) {
  *          [base] the base IRI to use.
  *          [expandContext] a context to expand with.
  *          [format] the format to use to output a string:
- *            'application/nquads' for N-Quads (default).
+ *            'application/nquads' for N-Quads.
  *          [loadDocument(url, callback(err, remoteDoc))] the document loader.
  * @param callback(err, dataset) called once the operation completes.
  */
