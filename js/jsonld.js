@@ -72,7 +72,7 @@ var wrapper = function(jsonld) {
  *          [expandContext] a context to expand with.
  *          [skipExpansion] true to assume the input is expanded and skip
  *            expansion, false not to, defaults to false.
- *          [loadDocument(url, callback(err, remoteDoc))] the document loader.
+ *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
  * @param callback(err, compacted, ctx) called once the operation completes.
  */
 jsonld.compact = function(input, ctx, options, callback) {
@@ -117,8 +117,8 @@ jsonld.compact = function(input, ctx, options, callback) {
   if(!('skipExpansion' in options)) {
     options.skipExpansion = false;
   }
-  if(!('loadDocument' in options)) {
-    options.loadDocument = jsonld.loadDocument;
+  if(!('documentLoader' in options)) {
+    options.documentLoader = jsonld.loadDocument;
   }
 
   var expand = function(input, options, callback) {
@@ -239,7 +239,7 @@ jsonld.compact = function(input, ctx, options, callback) {
  *          [expandContext] a context to expand with.
  *          [keepFreeFloatingNodes] true to keep free-floating nodes,
  *            false not to, defaults to false.
- *          [loadDocument(url, callback(err, remoteDoc))] the document loader.
+ *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
  * @param callback(err, expanded) called once the operation completes.
  */
 jsonld.expand = function(input, options, callback) {
@@ -260,8 +260,8 @@ jsonld.expand = function(input, options, callback) {
   if(!('base' in options)) {
     options.base = (typeof input === 'string') ? input : '';
   }
-  if(!('loadDocument' in options)) {
-    options.loadDocument = jsonld.loadDocument;
+  if(!('documentLoader' in options)) {
+    options.documentLoader = jsonld.loadDocument;
   }
   if(!('keepFreeFloatingNodes' in options)) {
     options.keepFreeFloatingNodes = false;
@@ -270,7 +270,7 @@ jsonld.expand = function(input, options, callback) {
   jsonld.nextTick(function() {
     // if input is a string, attempt to dereference remote document
     if(typeof input === 'string') {
-      return options.loadDocument(input, function(err, remoteDoc) {
+      return options.documentLoader(input, function(err, remoteDoc) {
         if(err) {
           return callback(err);
         }
@@ -353,7 +353,7 @@ jsonld.expand = function(input, options, callback) {
  * @param [options] the options to use:
  *          [base] the base IRI to use.
  *          [expandContext] a context to expand with.
- *          [loadDocument(url, callback(err, remoteDoc))] the document loader.
+ *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
  * @param callback(err, flattened) called once the operation completes.
  */
 jsonld.flatten = function(input, ctx, options, callback) {
@@ -374,8 +374,8 @@ jsonld.flatten = function(input, ctx, options, callback) {
   if(!('base' in options)) {
     options.base = (typeof input === 'string') ? input : '';
   }
-  if(!('loadDocument' in options)) {
-    options.loadDocument = jsonld.loadDocument;
+  if(!('documentLoader' in options)) {
+    options.documentLoader = jsonld.loadDocument;
   }
 
   // expand input
@@ -423,7 +423,7 @@ jsonld.flatten = function(input, ctx, options, callback) {
  *          [embed] default @embed flag (default: true).
  *          [explicit] default @explicit flag (default: false).
  *          [omitDefault] default @omitDefault flag (default: false).
- *          [loadDocument(url, callback(err, remoteDoc))] the document loader.
+ *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
  * @param callback(err, framed) called once the operation completes.
  */
 jsonld.frame = function(input, frame, options, callback) {
@@ -444,8 +444,8 @@ jsonld.frame = function(input, frame, options, callback) {
   if(!('base' in options)) {
     options.base = (typeof input === 'string') ? input : '';
   }
-  if(!('loadDocument' in options)) {
-    options.loadDocument = jsonld.loadDocument;
+  if(!('documentLoader' in options)) {
+    options.documentLoader = jsonld.loadDocument;
   }
   if(!('embed' in options)) {
     options.embed = true;
@@ -456,7 +456,7 @@ jsonld.frame = function(input, frame, options, callback) {
   jsonld.nextTick(function() {
     // if frame is a string, attempt to dereference remote document
     if(typeof frame === 'string') {
-      return options.loadDocument(frame, function(err, remoteDoc) {
+      return options.documentLoader(frame, function(err, remoteDoc) {
         if(err) {
           return callback(err);
         }
@@ -544,7 +544,7 @@ jsonld.frame = function(input, frame, options, callback) {
  * @param [options] the framing options.
  *          [base] the base IRI to use.
  *          [expandContext] a context to expand with.
- *          [loadDocument(url, callback(err, remoteDoc))] the document loader.
+ *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
  * @param callback(err, objectified) called once the operation completes.
  */
 jsonld.objectify = function(input, ctx, options, callback) {
@@ -559,8 +559,8 @@ jsonld.objectify = function(input, ctx, options, callback) {
   if(!('base' in options)) {
     options.base = (typeof input === 'string') ? input : '';
   }
-  if(!('loadDocument' in options)) {
-    options.loadDocument = jsonld.loadDocument;
+  if(!('documentLoader' in options)) {
+    options.documentLoader = jsonld.loadDocument;
   }
 
   // expand input
@@ -675,7 +675,7 @@ jsonld.objectify = function(input, ctx, options, callback) {
  *          [expandContext] a context to expand with.
  *          [format] the format if output is a string:
  *            'application/nquads' for N-Quads.
- *          [loadDocument(url, callback(err, remoteDoc))] the document loader.
+ *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
  * @param callback(err, normalized) called once the operation completes.
  */
 jsonld.normalize = function(input, options, callback) {
@@ -696,8 +696,8 @@ jsonld.normalize = function(input, options, callback) {
   if(!('base' in options)) {
     options.base = (typeof input === 'string') ? input : '';
   }
-  if(!('loadDocument' in options)) {
-    options.loadDocument = jsonld.loadDocument;
+  if(!('documentLoader' in options)) {
+    options.documentLoader = jsonld.loadDocument;
   }
 
   // convert to RDF dataset then do normalization
@@ -787,7 +787,7 @@ jsonld.fromRDF = function(dataset, options, callback) {
  *          [expandContext] a context to expand with.
  *          [format] the format to use to output a string:
  *            'application/nquads' for N-Quads.
- *          [loadDocument(url, callback(err, remoteDoc))] the document loader.
+ *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
  * @param callback(err, dataset) called once the operation completes.
  */
 jsonld.toRDF = function(input, options, callback) {
@@ -808,8 +808,8 @@ jsonld.toRDF = function(input, options, callback) {
   if(!('base' in options)) {
     options.base = (typeof input === 'string') ? input : '';
   }
-  if(!('loadDocument' in options)) {
-    options.loadDocument = jsonld.loadDocument;
+  if(!('documentLoader' in options)) {
+    options.documentLoader = jsonld.loadDocument;
   }
 
   // expand input
@@ -851,12 +851,22 @@ jsonld.relabelBlankNodes = function(input) {
 /**
  * The default document loader for external documents.
  *
- * @param loadDocument(url, callback(err, remoteDoc)) the document loader.
+ * @param url the URL to load.
+ * @param callback(err, remoteDoc) called once the operation completes.
  */
-jsonld.loadDocument = function(url, callback) {
+jsonld.documentLoader = function(url, callback) {
   return callback(new JsonLdError(
     'Could not retrieve a JSON-LD document from the URL. URL derefencing not ' +
-    'implemented.', 'jsonld.DocumentUrlError'), url);
+    'implemented.', 'jsonld.LoadDocumentError'),
+    {contextUrl: null, documentUrl: url, document: null});
+};
+
+/**
+ * Deprecated default document loader. Use or override jsonld.documentLoader
+ * instead.
+ */
+jsonld.loadDocument = function(url, callback) {
+  jsonld.documentLoader(url, callback);
 };
 
 /* Promises API */
@@ -900,8 +910,8 @@ jsonld.promises = function() {
       throw new TypeError('Could not expand, too few arguments.');
     }
     var options = (arguments.length > 1) ? arguments[1] : {};
-    if('loadDocument' in options) {
-      options.loadDocument = createDocumentLoader(options.loadDocument);
+    if('documentLoader' in options) {
+      options.documentLoader = createDocumentLoader(options.documentLoader);
     }
     return promisify.apply(null, [jsonld.expand].concat(slice.call(arguments)));
   };
@@ -910,8 +920,8 @@ jsonld.promises = function() {
       throw new TypeError('Could not compact, too few arguments.');
     }
     var options = (arguments.length > 2) ? arguments[2] : {};
-    if('loadDocument' in options) {
-      options.loadDocument = createDocumentLoader(options.loadDocument);
+    if('documentLoader' in options) {
+      options.documentLoader = createDocumentLoader(options.documentLoader);
     }
     var compact = function(input, ctx, options, callback) {
       // ensure only one value is returned in callback
@@ -926,8 +936,8 @@ jsonld.promises = function() {
       throw new TypeError('Could not flatten, too few arguments.');
     }
     var options = (arguments.length > 2) ? arguments[2] : {};
-    if('loadDocument' in options) {
-      options.loadDocument = createDocumentLoader(options.loadDocument);
+    if('documentLoader' in options) {
+      options.documentLoader = createDocumentLoader(options.documentLoader);
     }
     return promisify.apply(
       null, [jsonld.flatten].concat(slice.call(arguments)));
@@ -937,8 +947,8 @@ jsonld.promises = function() {
       throw new TypeError('Could not frame, too few arguments.');
     }
     var options = (arguments.length > 2) ? arguments[2] : {};
-    if('loadDocument' in options) {
-      options.loadDocument = createDocumentLoader(options.loadDocument);
+    if('documentLoader' in options) {
+      options.documentLoader = createDocumentLoader(options.documentLoader);
     }
     return promisify.apply(null, [jsonld.frame].concat(slice.call(arguments)));
   };
@@ -954,8 +964,8 @@ jsonld.promises = function() {
       throw new TypeError('Could not convert to RDF, too few arguments.');
     }
     var options = (arguments.length > 1) ? arguments[1] : {};
-    if('loadDocument' in options) {
-      options.loadDocument = createDocumentLoader(options.loadDocument);
+    if('documentLoader' in options) {
+      options.documentLoader = createDocumentLoader(options.documentLoader);
     }
     return promisify.apply(null, [jsonld.toRDF].concat(slice.call(arguments)));
   };
@@ -964,8 +974,8 @@ jsonld.promises = function() {
       throw new TypeError('Could not normalize, too few arguments.');
     }
     var options = (arguments.length > 1) ? arguments[1] : {};
-    if('loadDocument' in options) {
-      options.loadDocument = createDocumentLoader(options.loadDocument);
+    if('documentLoader' in options) {
+      options.documentLoader = createDocumentLoader(options.documentLoader);
     }
     return promisify.apply(
       null, [jsonld.normalize].concat(slice.call(arguments)));
@@ -1354,7 +1364,7 @@ jsonld.useDocumentLoader = function(type) {
   }
 
   // set document loader
-  jsonld.loadDocument = jsonld.documentLoaders[type].apply(
+  jsonld.documentLoader = jsonld.documentLoaders[type].apply(
     jsonld, Array.prototype.slice.call(arguments, 1));
 };
 
@@ -1365,7 +1375,7 @@ jsonld.useDocumentLoader = function(type) {
  * @param activeCtx the current active context.
  * @param localCtx the local context to process.
  * @param [options] the options to use:
- *          [loadDocument(url, callback(err, remoteDoc))] the document loader.
+ *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
  * @param callback(err, ctx) called once the operation completes.
  */
 jsonld.processContext = function(activeCtx, localCtx) {
@@ -1382,8 +1392,8 @@ jsonld.processContext = function(activeCtx, localCtx) {
   if(!('base' in options)) {
     options.base = (typeof input === 'string') ? input : '';
   }
-  if(!('loadDocument' in options)) {
-    options.loadDocument = jsonld.loadDocument;
+  if(!('documentLoader' in options)) {
+    options.documentLoader = jsonld.loadDocument;
   }
 
   // return initial context early for null context
@@ -5450,7 +5460,7 @@ function _findContextUrls(input, urls, replace, base) {
  *
  * @param input the JSON-LD input with possible contexts.
  * @param options the options to use:
- *          loadDocument(url, callback(err, remoteDoc)) the document loader.
+ *          documentLoader(url, callback(err, remoteDoc)) the document loader.
  * @param callback(err, input) called once the operation completes.
  */
 function _retrieveContextUrls(input, options, callback) {
@@ -5459,8 +5469,8 @@ function _retrieveContextUrls(input, options, callback) {
   var regex = /(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
 
   // recursive document loader
-  var loadDocument = options.loadDocument;
-  var retrieve = function(input, cycles, loadDocument, base, callback) {
+  var documentLoader = options.documentLoader;
+  var retrieve = function(input, cycles, documentLoader, base, callback) {
     if(Object.keys(cycles).length > MAX_CONTEXT_URLS) {
       error = new JsonLdError(
         'Maximum number of @context URLs exceeded.',
@@ -5512,7 +5522,7 @@ function _retrieveContextUrls(input, options, callback) {
         var _cycles = _clone(cycles);
         _cycles[url] = true;
 
-        loadDocument(url, function(err, remoteDoc) {
+        documentLoader(url, function(err, remoteDoc) {
           // short-circuit if there was an error with another URL
           if(error) {
             return;
@@ -5569,7 +5579,7 @@ function _retrieveContextUrls(input, options, callback) {
           }
 
           // recurse
-          retrieve(ctx, _cycles, loadDocument, url, function(err, ctx) {
+          retrieve(ctx, _cycles, documentLoader, url, function(err, ctx) {
             if(err) {
               return callback(err);
             }
@@ -5583,7 +5593,7 @@ function _retrieveContextUrls(input, options, callback) {
       }(queue[i]));
     }
   };
-  retrieve(input, {}, loadDocument, options.base, callback);
+  retrieve(input, {}, documentLoader, options.base, callback);
 }
 
 // define js 1.8.5 Object.keys method if not present
