@@ -703,6 +703,7 @@ jsonld.normalize = function(input, options, callback) {
   // convert to RDF dataset then do normalization
   var opts = _clone(options);
   delete opts.format;
+  opts.produceGeneralizedRdf = false;
   jsonld.toRDF(input, opts, function(err, dataset) {
     if(err) {
       return callback(new JsonLdError(
