@@ -1392,7 +1392,7 @@ jsonld.processContext = function(activeCtx, localCtx) {
 
   // set default options
   if(!('base' in options)) {
-    options.base = (typeof input === 'string') ? input : '';
+    options.base = '';
   }
   if(!('documentLoader' in options)) {
     options.documentLoader = jsonld.loadDocument;
