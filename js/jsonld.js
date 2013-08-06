@@ -818,13 +818,13 @@ jsonld.toRDF = function(input, options, callback) {
   jsonld.expand(input, options, function(err, expanded) {
     if(err) {
       return callback(new JsonLdError(
-        'Could not expand input before conversion to RDF.',
+        'Could not expand input before serialization to RDF.',
         'jsonld.RdfError', {cause: err}));
     }
 
     try {
       // output RDF dataset
-      var dataset = Processor.prototype.toRDF(expanded);
+      var dataset = Processor.prototype.toRDF(expanded, options);
       if(options.format) {
         if(options.format === 'application/nquads') {
           return callback(null, _toNQuads(dataset));
@@ -2660,7 +2660,7 @@ Processor.prototype.normalize = function(dataset, options, callback) {
  * Converts an RDF dataset to JSON-LD.
  *
  * @param dataset the RDF dataset.
- * @param options the RDF conversion options.
+ * @param options the RDF serialization options.
  * @param callback(err, output) called once the operation completes.
  */
 Processor.prototype.fromRDF = function(dataset, options, callback) {
@@ -2815,10 +2815,11 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
  * Outputs an RDF dataset for the expanded JSON-LD input.
  *
  * @param input the expanded JSON-LD input.
+ * @param options the RDF serialization options.
  *
  * @return the RDF dataset.
  */
-Processor.prototype.toRDF = function(input) {
+Processor.prototype.toRDF = function(input, options) {
   // create node map for default graph (and any named graphs)
   var namer = new UniqueNamer('_:b');
   var nodeMap = {'@default': {}};
@@ -2828,7 +2829,7 @@ Processor.prototype.toRDF = function(input) {
   var graphNames = Object.keys(nodeMap).sort();
   for(var i = 0; i < graphNames.length; ++i) {
     var graphName = graphNames[i];
-    dataset[graphName] = _graphToRDF(nodeMap[graphName], namer);
+    dataset[graphName] = _graphToRDF(nodeMap[graphName], namer, options);
   }
   return dataset;
 };
@@ -3115,10 +3116,11 @@ function _expandValue(activeCtx, activeProperty, value) {
  *
  * @param graph the graph to create RDF triples for.
  * @param namer a UniqueNamer for assigning blank node names.
+ * @param options the RDF serialization options.
  *
  * @return the array of RDF triples for the given graph.
  */
-function _graphToRDF(graph, namer) {
+function _graphToRDF(graph, namer, options) {
   var rval = [];
 
   var ids = Object.keys(graph).sort();
@@ -3148,6 +3150,11 @@ function _graphToRDF(graph, namer) {
         var predicate = {};
         predicate.type = (property.indexOf('_:') === 0) ? 'blank node' : 'IRI';
         predicate.value = property;
+
+        // skip blank node predicates unless producing generalized RDF
+        if(predicate.type === 'blank node' && !options.produceGeneralizedRdf) {
+          continue;
+        }
 
         // convert @list to triples
         if(_isList(item)) {
