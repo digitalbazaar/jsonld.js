@@ -2793,11 +2793,17 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
       for(var si = 0; si < subjects_.length; ++si) {
         var node_ = graphObject[subjects_[si]];
         delete node_.listHeadFor;
-        graph.push(node_);
+        // only add full subjects to top-level
+        if(!_isSubjectReference(node_)) {
+          graph.push(node_);
+        }
       }
     }
     delete node.listHeadFor;
-    result.push(node);
+    // only add full subjects to top-level
+    if(!_isSubjectReference(node)) {
+      result.push(node);
+    }
   }
 
   callback(null, result);
