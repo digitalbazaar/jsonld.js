@@ -3831,7 +3831,8 @@ function _frame(state, subjects, frame, parent, property) {
               o = src[n];
               // recurse into subject reference
               if(_isSubjectReference(o)) {
-                _frame(state, [o['@id']], frame[prop], list, '@list');
+                _frame(state, [o['@id']], frame[prop][0]['@list'],
+                list, '@list');
               }
               // include other values automatically
               else {
