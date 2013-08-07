@@ -289,9 +289,9 @@ function _request(loc, options, callback) {
           return callback(msg);
         }
       }
-      // done if length specified and is 0
-      var cl = res.headers['content-length'];
-      if(cl && parseInt(cl, 10) === 0) {
+      // done if no content
+      var cl = parseInt(res.headers['content-length'] || 0, 10);
+      if(!body || cl <= 0) {
         return callback(null, null, null);
       }
       var dataType =
