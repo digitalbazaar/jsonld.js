@@ -1,0 +1,9 @@
+language: node_js
+node_js:
+  - "0.8"
+  - "0.10"
+# download test suite and run tests... submodule? meta testing project with
+# all of the reference implementations?
+script: 
+  - git clone https://github.com/json-ld/json-ld.org.git _json-ld.org
+  - make test JSONLD_TEST_SUITE=./_json-ld.org/test-suite
