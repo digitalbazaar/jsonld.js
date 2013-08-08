@@ -151,6 +151,11 @@ function endsWith(str, suffix) {
   return str.indexOf(suffix, str.length - suffix.length) !== -1;
 }
 
+// check if data is a string or buffer sequence of data
+function isSequence(data) {
+  return typeof data === 'string' || Buffer.isBuffer(data);
+}
+
 /**
  * Parse data.
  *
@@ -160,8 +165,13 @@ function endsWith(str, suffix) {
  * @param callback function(err, data) called with errors and result data
  */
 function _parse(loc, type, data, callback) {
+  // empty string or buffer
+  var seq = isSequence(data);
+  if(seq && data.length === 0) {
+    return callback(null, null);
+  }
   // already parsed
-  if(typeof data === 'object') {
+  if(!seq && typeof data === 'object') {
     return callback(null, data);
   }
   // explicit type
@@ -294,8 +304,7 @@ function _request(loc, options, callback) {
         }
       }
       // done if no content
-      var cl = parseInt(res.headers['content-length'] || 0, 10);
-      if(!body || cl <= 0) {
+      if(!body || (isSequence(body) && body.length === 0)) {
         return callback(null, null, null);
       }
       var dataType =
