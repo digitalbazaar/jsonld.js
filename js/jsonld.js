@@ -2450,7 +2450,7 @@ Processor.prototype.frame = function(input, frame, options) {
 
   // produce a map of all graphs and name each bnode
   // FIXME: currently uses subjects from @merged graph only
-  namer = new UniqueNamer('_:b');
+  var namer = new UniqueNamer('_:b');
   _createNodeMap(input, state.graphs, '@merged', namer);
   state.subjects = state.graphs['@merged'];
 
@@ -3708,9 +3708,6 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
       if(property === '@type') {
         // rename @type blank nodes
         o = (o.indexOf('_:') === 0) ? namer.getName(o) : o;
-        if(!(o in graphs[graph])) {
-          graphs[graph][o] = {'@id': o};
-        }
       }
 
       // handle embedded subject or subject reference
