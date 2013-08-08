@@ -1,3 +1,10 @@
+jsonld.js
+=========
+
+[![Build Status][travis-ci-png]][travis-ci-site]
+[travis-ci-png]: https://travis-ci.org/digitalbazaar/jsonld.js.png?branch=master
+[travis-ci-site]: https://travis-ci.org/digitalbazaar/jsonld.js
+
 Introduction
 ------------
 
