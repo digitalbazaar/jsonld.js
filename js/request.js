@@ -160,6 +160,10 @@ function endsWith(str, suffix) {
  * @param callback function(err, data) called with errors and result data
  */
 function _parse(loc, type, data, callback) {
+  // already parsed
+  if(typeof data === 'object') {
+    return callback(null, data);
+  }
   // explicit type
   if(type && type !== 'auto') {
     return _typedParse(loc, type, data, callback);
