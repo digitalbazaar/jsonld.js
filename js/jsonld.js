@@ -1718,6 +1718,7 @@ var XSD_INTEGER = 'http://www.w3.org/2001/XMLSchema#integer';
 var XSD_STRING = 'http://www.w3.org/2001/XMLSchema#string';
 
 var RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+var RDF_LIST = RDF + 'List';
 var RDF_FIRST = RDF + 'first';
 var RDF_REST = RDF + 'rest';
 var RDF_NIL = RDF + 'nil';
@@ -2410,8 +2411,11 @@ Processor.prototype.flatten = function(input) {
     var graph = subject['@graph'];
     var ids = Object.keys(nodeMap).sort();
     for(var ii = 0; ii < ids.length; ++ii) {
-      var id = ids[ii];
-      graph.push(nodeMap[id]);
+      var node = nodeMap[ids[ii]];
+      // only add full subjects
+      if(!_isSubjectReference(node)) {
+        graph.push(node);
+      }
     }
   }
 
@@ -2419,8 +2423,11 @@ Processor.prototype.flatten = function(input) {
   var flattened = [];
   var keys = Object.keys(defaultGraph).sort();
   for(var ki = 0; ki < keys.length; ++ki) {
-    var key = keys[ki];
-    flattened.push(defaultGraph[key]);
+    var node = defaultGraph[keys[ki]];
+    // only add full subjects to top-level
+    if(!_isSubjectReference(node)) {
+      flattened.push(node);
+    }
   }
   return flattened;
 };
@@ -2691,7 +2698,7 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
       var node = nodeMap[s];
 
       var objectIsId = (o.type === 'IRI' || o.type === 'blank node');
-      if(objectIsId && o.value !== RDF_NIL && !(o.value in nodeMap)) {
+      if(objectIsId && !(o.value in nodeMap)) {
         nodeMap[o.value] = {'@id': o.value};
       }
 
@@ -2700,27 +2707,21 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
         continue;
       }
 
-      var value;
-      if(objectIsId && o.value === RDF_NIL && p !== RDF_REST) {
-        // empty list detected
-        value = {'@list': []};
-      }
-      else {
-        value = _RDFToObject(o, options.useNativeTypes);
-      }
+      var value = _RDFToObject(o, options.useNativeTypes);
       jsonld.addValue(node, p, value, {propertyIsArray: true});
 
-      // object may be the head of an RDF list but we can't know easily
+      // object may be an RDF list/partial list node but we can't know easily
       // until all triples are read
-      if(o.type === 'blank node' && !(p === RDF_FIRST || p === RDF_REST)) {
+      if(objectIsId) {
         var object = nodeMap[o.value];
-        if(!('listHeadFor' in object)) {
-          object.listHeadFor = value;
+        if(!('usages' in object)) {
+          object.usages = [];
         }
-        // can't be a list head if referenced more than once
-        else {
-          object.listHeadFor = null;
-        }
+        object.usages.push({
+          node: node,
+          property: p,
+          value: value
+        });
       }
     }
   }
@@ -2728,58 +2729,71 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
   // convert linked lists to @list arrays
   for(var name in graphMap) {
     var graphObject = graphMap[name];
-    var subjects = Object.keys(graphObject);
-    for(var i = 0; i < subjects.length; ++i) {
-      var subject = subjects[i];
 
-      // if subject not in graphObject, it has been removed as it was
-      // part of an RDF list, continue on
-      if(!(subject in graphObject)) {
-        continue;
-      }
+    // no @lists to be converted, continue
+    if(!(RDF_NIL in graphObject)) {
+      continue;
+    }
 
-      var node = graphObject[subject];
-      if(!_isObject(node.listHeadFor)) {
-        continue;
-      }
-
-      var value = node.listHeadFor;
+    // iterate backwards through each RDF list
+    var nil = graphObject[RDF_NIL];
+    for(var i = 0; i < nil.usages.length; ++i) {
+      var usage = nil.usages[i];
+      var node = usage.node;
+      var property = usage.property;
+      var head = usage.value;
       var list = [];
-      var eliminatedNodes = {};
-      while(subject !== RDF_NIL && list !== null) {
-        // ensure node is a valid list node; node must:
-        // 1. Be a blank node
-        // 2. Have no keys other than: @id, listHeadFor, rdf:first, rdf:rest.
-        // 3. Have an array for rdf:first that has 1 item.
-        // 4. Have an array for rdf:rest that has 1 object with @id.
-        // 5. Not already be in a list (it is in the eliminated nodes map).
-        var nodeKeyCount = Object.keys(node || {}).length;
-        if(!(_isObject(node) && node['@id'].indexOf('_:') === 0 &&
-          (nodeKeyCount === 3 ||
-          (nodeKeyCount === 4 && 'listHeadFor' in node)) &&
-          _isArray(node[RDF_FIRST]) && node[RDF_FIRST].length === 1 &&
-          _isArray(node[RDF_REST]) && node[RDF_REST].length === 1 &&
-          _isObject(node[RDF_REST][0]) && ('@id' in node[RDF_REST][0]) &&
-          !(subject in eliminatedNodes))) {
-          list = null;
+      var listNodes = [];
+
+      // ensure node is a well-formed list node; it must:
+      // 1. Be used only once in a list.
+      // 2. Have an array for rdf:first that has 1 item.
+      // 3. Have an array for rdf:rest that has 1 item.
+      // 4. Have no keys other than: @id, usages, rdf:first, rdf:rest and,
+      //   optionally, @type where the value is rdf:List.
+      // 5. Not already be in a list (it is in the eliminated nodes map).
+      var nodeKeyCount = Object.keys(node).length;
+      while(property === RDF_REST && node.usages.length === 1 &&
+        _isArray(node[RDF_FIRST]) && node[RDF_FIRST].length === 1 &&
+        _isArray(node[RDF_REST]) && node[RDF_REST].length === 1 &&
+        (nodeKeyCount === 4 || (nodeKeyCount === 5 && _isArray(node['@type']) &&
+          node['@type'].length === 1 && node['@type'][0] === RDF_LIST))) {
+        list.push(node[RDF_FIRST][0]);
+        listNodes.push(node['@id']);
+
+        // get next node, moving backwards through list
+        usage = node.usages[0];
+        node = usage.node;
+        property = usage.property;
+        head = usage.value;
+        nodeKeyCount = Object.keys(node).length;
+
+        // if node is not a blank node, then list head found
+        if(node['@id'].indexOf('_:') !== 0) {
           break;
         }
-
-        list.push(node[RDF_FIRST][0]);
-        eliminatedNodes[node['@id']] = true;
-        subject = node[RDF_REST][0]['@id'];
-        node = graphObject[subject] || null;
       }
 
-      // bad list detected, skip it
-      if(list === null) {
-        continue;
+      // the list is nested another list
+      if(property === RDF_FIRST) {
+        // empty list
+        if(node['@id'] === RDF_NIL) {
+          // can't convert rdf:nil to a @list object because it would
+          // result in a list of lists which isn't supported
+          continue;
+        }
+
+        // preserve list head
+        head = graphObject[head['@id']][RDF_REST][0];
+        list.pop();
+        listNodes.pop();
       }
 
-      delete value['@id'];
-      value['@list'] = list;
-      for(var id in eliminatedNodes) {
-        delete graphObject[id];
+      // transform list into @list object
+      delete head['@id'];
+      head['@list'] = list.reverse();
+      for(var j = 0; j < listNodes.length; ++j) {
+        delete graphObject[listNodes[j]];
       }
     }
   }
@@ -2795,14 +2809,14 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
       var subjects_ = Object.keys(graphObject).sort();
       for(var si = 0; si < subjects_.length; ++si) {
         var node_ = graphObject[subjects_[si]];
-        delete node_.listHeadFor;
+        delete node_.usages;
         // only add full subjects to top-level
         if(!_isSubjectReference(node_)) {
           graph.push(node_);
         }
       }
     }
-    delete node.listHeadFor;
+    delete node.usages;
     // only add full subjects to top-level
     if(!_isSubjectReference(node)) {
       result.push(node);
