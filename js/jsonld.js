@@ -3607,9 +3607,6 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
       if(type.indexOf('_:') === 0) {
         input['@type'] = type = namer.getName(type);
       }
-      if(!(type in graphs[graph])) {
-        graphs[graph][type] = {'@id': type};
-      }
     }
     if(list) {
       list.push(input);
