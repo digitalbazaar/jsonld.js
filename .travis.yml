@@ -7,3 +7,7 @@ node_js:
 script: 
   - git clone https://github.com/json-ld/json-ld.org.git _json-ld.org
   - make test JSONLD_TEST_SUITE=./_json-ld.org/test-suite
+notifications:
+  email:
+    on_success: change
+    on_failure: change
