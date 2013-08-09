@@ -2749,9 +2749,8 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
       // 1. Be used only once in a list.
       // 2. Have an array for rdf:first that has 1 item.
       // 3. Have an array for rdf:rest that has 1 item.
-      // 4. Have no keys other than: @id, usages, rdf:first, rdf:rest and,
+      // 4. Have no keys other than: @id, usages, rdf:first, rdf:rest, and,
       //   optionally, @type where the value is rdf:List.
-      // 5. Not already be in a list (it is in the eliminated nodes map).
       var nodeKeyCount = Object.keys(node).length;
       while(property === RDF_REST && node.usages.length === 1 &&
         _isArray(node[RDF_FIRST]) && node[RDF_FIRST].length === 1 &&
