@@ -2773,7 +2773,7 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
         }
       }
 
-      // the list is nested another list
+      // the list is nested in another list
       if(property === RDF_FIRST) {
         // empty list
         if(node['@id'] === RDF_NIL) {
