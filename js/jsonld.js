@@ -6661,7 +6661,7 @@ if(_nodejs) {
 }
 // export AMD API
 else if(typeof define === 'function' && define.amd) {
-  define('jsonld', [], function() {
+  define([], function() {
     return factory;
   });
 }
