@@ -57,11 +57,11 @@ npm installed):
 To compact a document on the Web using a JSON-LD context published on
 the Web:
 
-    ./bin/jsonld compact -c "http://w3id.org/payswarm/v1" "http://recipes.payswarm.com/?p=10554"
+    ./bin/jsonld compact -c "https://w3id.org/payswarm/v1" "http://recipes.payswarm.com/?p=10554"
 
 The command above will read in a PaySwarm Asset and Listing in RDFa 1.0 format, 
 convert it to JSON-LD expanded form, compact it using the 
-'http://w3id.org/payswarm/v1' context, and dump it out to the console in 
+'https://w3id.org/payswarm/v1' context, and dump it out to the console in 
 compacted form.
 
     ./bin/jsonld normalize -q "http://recipes.payswarm.com/?p=10554"
