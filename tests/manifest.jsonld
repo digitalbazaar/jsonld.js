@@ -2,34 +2,41 @@
   "@context": "http://json-ld.org/test-suite/context.jsonld",
   "@id": "",
   "@type": "mf:Manifest",
-  "rdfs:comment": "JSON-LD remote context tests",
-  "name": "remote",
+  "name": "Custom jsonld.js Tests",
+  "description": "Custom jsonld.js Tests",
+  "baseIri": "http://github.com/digitalbazaar/jsonld.js/",
   "sequence": [{
+    "@id": "#t0001",
     "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
     "name": "resolve single URL",
     "input": "remote-0001-in.jsonld",
     "expect": "remote-0001-out.jsonld"
   }, {
+    "@id": "#t0002",
     "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
     "name": "resolve recursive URL",
     "input": "remote-0002-in.jsonld",
     "expect": "remote-0002-out.jsonld"
   }, {
+    "@id": "#t0003",
     "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
     "name": "resolve doubly recursive URL",
     "input": "remote-0003-in.jsonld",
     "expect": "remote-0003-out.jsonld"
   }, {
+    "@id": "#t0004",
     "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
     "name": "resolve array context",
     "input": "remote-0004-in.jsonld",
     "expect": "remote-0004-out.jsonld"
   }, {
+    "@id": "#t0005",
     "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
     "name": "resolve relative URL",
     "input": "remote-0005-in.jsonld",
     "expect": "remote-0005-out.jsonld"
   }, {
+    "@id": "#t0006",
     "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
     "name": "follow redirect",
     "input": "remote-0006-in.jsonld",

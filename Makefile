@@ -1,4 +1,4 @@
-TESTS = tests/nodejs-jsonld-tests.js
+TESTS = tests/test.js
 REPORTER = spec
 
 all:
