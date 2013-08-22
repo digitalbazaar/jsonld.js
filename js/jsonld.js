@@ -2843,7 +2843,10 @@ Processor.prototype.toRDF = function(input, options) {
   var graphNames = Object.keys(nodeMap).sort();
   for(var i = 0; i < graphNames.length; ++i) {
     var graphName = graphNames[i];
-    dataset[graphName] = _graphToRDF(nodeMap[graphName], namer, options);
+    // skip relative IRIs
+    if(graphName === '@default' || _isAbsoluteIri(graphName)) {
+      dataset[graphName] = _graphToRDF(nodeMap[graphName], namer, options);
+    }
   }
   return dataset;
 };
@@ -3160,10 +3163,20 @@ function _graphToRDF(graph, namer, options) {
         subject.type = (id.indexOf('_:') === 0) ? 'blank node' : 'IRI';
         subject.value = id;
 
+        // skip relative IRI subjects
+        if(!_isAbsoluteIri(id)) {
+          continue;
+        }
+
         // RDF predicate
         var predicate = {};
         predicate.type = (property.indexOf('_:') === 0) ? 'blank node' : 'IRI';
         predicate.value = property;
+
+        // skip relative IRI predicates
+        if(!_isAbsoluteIri(property)) {
+          continue;
+        }
 
         // skip blank node predicates unless producing generalized RDF
         if(predicate.type === 'blank node' && !options.produceGeneralizedRdf) {
@@ -3177,7 +3190,11 @@ function _graphToRDF(graph, namer, options) {
         // convert value or node object to triple
         else {
           var object = _objectToRDF(item);
-          rval.push({subject: subject, predicate: predicate, object: object});
+
+          // skip null objects (they are relative IRIs)
+          if(object) {
+            rval.push({subject: subject, predicate: predicate, object: object});
+          }
         }
       }
     }
@@ -3210,7 +3227,11 @@ function _listToRDF(list, namer, subject, predicate, triples) {
     subject = blankNode;
     predicate = first;
     var object = _objectToRDF(item);
-    triples.push({subject: subject, predicate: predicate, object: object});
+
+    // skip null objects (they are relative IRIs)
+    if(object) {
+      triples.push({subject: subject, predicate: predicate, object: object});
+    }
 
     predicate = rest;
   }
@@ -3264,6 +3285,11 @@ function _objectToRDF(item) {
     var id = _isObject(item) ? item['@id'] : item;
     object.type = (id.indexOf('_:') === 0) ? 'blank node' : 'IRI';
     object.value = id;
+  }
+
+  // skip relative IRIs
+  if(object.type === 'IRI' && !_isAbsoluteIri(object.value)) {
+    return null;
   }
 
   return object;
