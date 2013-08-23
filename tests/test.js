@@ -20,6 +20,10 @@ if(_nodejs) {
   var jsonld = require('../' + _jsdir + '/jsonld')();
   require('../' + _jsdir + '/Promise');
   var assert = require('assert');
+  var program = require('commander');
+  program
+    .option('--earl [filename]', 'Output an earl report')
+    .parse(process.argv);
 }
 else {
   var fs = require('fs');
@@ -30,6 +34,11 @@ else {
   var assert = require('chai').assert;
   require('mocha/mocha');
   require('mocha-phantomjs/lib/mocha-phantomjs/core_extensions');
+  var program = {};
+  var system = require('system');
+  if(system.args[1] === '--earl') {
+    program.earl = system.args[2];
+  }
 
   mocha.setup({
     reporter: 'list',
@@ -123,13 +132,15 @@ describe('JSON-LD', function() {
   addManifest(rootManifest);
 });
 
-// FIXME: add command line params for outputting earl report
-/*describe('EARL report', function() {
-  it('should print the earl report', function(done) {
-    earl.write('/tmp/jsonld.js-earl.jsonld');
-    done();
+if(program.earl) {
+  var filename = resolvePath(program.earl);
+  describe('Writing EARL report to: ' + filename, function() {
+    it('should print the earl report', function(done) {
+      earl.write(filename);
+      done();
+    });
   });
-});*/
+}
 
 if(!_nodejs) {
   mocha.run(function() {
@@ -417,7 +428,7 @@ EarlReport.prototype.addAssertion = function(test, pass) {
     'earl:result': {
       '@type': 'earl:TestResult',
       'dc:date': new Date().toISOString(),
-      'earl:outcome': pass ? 'earl:pass' : 'earl:fail'
+      'earl:outcome': pass ? 'earl:passed' : 'earl:failed'
     }
   });
   return this;
