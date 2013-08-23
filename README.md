@@ -120,6 +120,15 @@ Remote context tests are also available:
 
     make test JSONLD_TEST_SUITE=./tests
 
+To generate earl reports:
+
+    # generate the earl report for node.js
+    ./node_modules/mocha/bin/mocha -R list tests/test.js --earl earl-node.jsonld
+
+    # generate the earl report for the browser
+    ./node_modules/phantomjs/bin/phantomjs tests/test.js --timeout 120 --earl earl-browser.jsonld
+    
+
 [JSON-LD]: http://json-ld.org/
 [json-ld.org]: https://github.com/json-ld/json-ld.org
 
