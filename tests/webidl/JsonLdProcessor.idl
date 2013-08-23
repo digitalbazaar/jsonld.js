@@ -1,0 +1,67 @@
+[Constructor]
+interface JsonLdProcessor {
+    Promise compact (any input, JsonLdContext context, optional JsonLdOptions options);
+    Promise expand (any input, optional JsonLdOptions options);
+    Promise flatten (any input, optional JsonLdContext? context, optional JsonLdOptions options);
+};
+
+typedef (object or DOMString or (object or DOMString[])) JsonLdContext;
+
+dictionary JsonLdOptions {
+    DOMString              base;
+    boolean                compactArrays = true;
+    LoadDocumentCallback   documentLoader = null;
+    (object? or DOMString) expandContext = null;
+    DOMString              processingMode = "json-ld-1.0";
+};
+
+callback LoadDocumentCallback = Promise (DOMString url);
+
+dictionary RemoteDocument {
+    DOMString contextUrl = null;
+    DOMString documentUrl;
+    any document;
+};
+
+dictionary JsonLdError {
+    JsonLdErrorCode code;
+    DOMString?      message = null;
+};
+
+enum JsonLdErrorCode {
+    "loading document failed",
+    "list of lists",
+    "invalid @index value",
+    "conflicting indexes",
+    "invalid @id value",
+    "invalid local context",
+    "multiple context link headers",
+    "loading remote context failed",
+    "invalid remote context",
+    "recursive context inclusion",
+    "invalid base IRI",
+    "invalid vocab mapping",
+    "invalid default language",
+    "keyword redefinition",
+    "invalid term definition",
+    "invalid reverse property",
+    "invalid IRI mapping",
+    "cyclic IRI mapping",
+    "invalid keyword alias",
+    "invalid type mapping",
+    "invalid language mapping",
+    "colliding keywords",
+    "invalid container mapping",
+    "invalid type value",
+    "invalid value object",
+    "invalid value object value",
+    "invalid language-tagged string",
+    "invalid language-tagged value",
+    "invalid typed value",
+    "invalid set or list object",
+    "invalid language map value",
+    "compaction to list of lists",
+    "invalid reverse property map",
+    "invalid @reverse value",
+    "invalid reverse property value"
+};
