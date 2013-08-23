@@ -10,14 +10,33 @@
 'use strict';
 
 // detect node.js (vs. phantomJS)
-var _nodejs = true;
+var _nodejs = (typeof process !== 'undefined' &&
+  process.versions && process.versions.node);
 
-var assert = require('assert');
-var fs = require('fs');
-var path = require('path');
-var _jsdir = process.env.JSDIR || 'js';
-var jsonld = require('../' + _jsdir + '/jsonld')();
-require('../' + _jsdir + '/Promise');
+if(_nodejs) {
+  var _jsdir = process.env.JSDIR || 'js';
+  var fs = require('fs');
+  var path = require('path');
+  var jsonld = require('../' + _jsdir + '/jsonld')();
+  require('../' + _jsdir + '/Promise');
+  var assert = require('assert');
+}
+else {
+  var fs = require('fs');
+  require('../js/jsonld');
+  jsonld = jsonldjs;
+  require('../js/Promise');
+  window.Promise = window.DomPromise;
+  var assert = require('chai').assert;
+  require('mocha/mocha');
+  require('mocha-phantomjs/lib/mocha-phantomjs/core_extensions');
+
+  mocha.setup({
+    reporter: 'list',
+    ui: 'bdd',
+    timeout: 2000//60000 * 2
+  });
+}
 
 var JSONLD_TEST_SUITE = '../json-ld.org/test-suite';
 
@@ -92,9 +111,11 @@ var earl = new EarlReport();
 
 // run tests
 describe('JSON-LD', function() {
-  var dir =
-    process.env.JSONLD_TEST_SUITE ||
-    JSONLD_TEST_SUITE;
+  var dir;
+  if(_nodejs) {
+    dir = process.env.JSONLD_TEST_SUITE;
+  }
+  dir = dir || JSONLD_TEST_SUITE;
   dir = resolvePath(dir);
   var filename = joinPath(dir, 'manifest.jsonld');
   var rootManifest = readJson(filename);
@@ -103,12 +124,18 @@ describe('JSON-LD', function() {
 });
 
 // FIXME: add command line params for outputting earl report
-/*
-describe('EARL report', function() {
-  it('should print the earl report', function() {
+/*describe('EARL report', function() {
+  it('should print the earl report', function(done) {
     earl.write('/tmp/jsonld.js-earl.jsonld');
+    done();
   });
 });*/
+
+if(!_nodejs) {
+  mocha.run(function() {
+    phantom.exit();
+  });
+}
 
 /**
  * Adds the tests for all entries in the given manifest.
@@ -301,17 +328,7 @@ function resolvePath(to) {
 }
 
 function joinPath(dir, filename) {
-  if(_nodejs) {
-    return path.join(dir, filename);
-  }
-  else {
-    var rval = dir;
-    if(dir.substr(-1) !== fs.separator &&
-      filename.substr(0) !== fs.separator) {
-      rval += fs.separator;
-    }
-    return rval;
-  }
+  return (_nodejs ? path : fs).join(dir, filename);
 }
 
 function dirname(filename) {

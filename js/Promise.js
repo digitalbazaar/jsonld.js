@@ -410,6 +410,11 @@ Promise.reject = function(reason) {
 
 global.Promise = Promise;
 
+// hack to support phantomJS
+if(typeof window !== 'undefined') {
+  window.DomPromise = Promise;
+}
+
 })(this,
   (typeof window !== 'undefined') ? window : {},
   this.runningUnderTest||false);

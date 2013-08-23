@@ -30,7 +30,10 @@
     "xmldom": "0.1.16"
   },
   "devDependencies": {
+    "chai": "~1.7.0",
+    "phantomjs": "~1.9.0",
     "mocha": "~1.12.0",
+    "mocha-phantomjs": "~3.1.0",
     "visionmedia-jscoverage": "~1.0.0"
   },
   "engines": {
@@ -47,6 +50,8 @@
     "jsonld": "./bin/jsonld"
   },
   "scripts": {
-    "test": "make test"
+    "test-node": "mocha -R list tests/test.js",
+    "test-browser": "./node_modules/phantomjs/bin/phantomjs tests/test.js",
+    "test": "mocha -R list tests/test.js"
   }
 }
