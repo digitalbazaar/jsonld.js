@@ -23,6 +23,7 @@ if(_nodejs) {
   var program = require('commander');
   program
     .option('--earl [filename]', 'Output an earl report')
+    .option('--bail', 'Bail when a test fails')
     .parse(process.argv);
 }
 else {
@@ -196,8 +197,7 @@ function addTest(manifest, test) {
       try {
         if(isPositiveTest(test)) {
           if(err) {
-            earl.addAssertion(test, false);
-            return done(err);
+            throw err;
           }
           testInfo.compare(test, result);
         }
@@ -208,6 +208,14 @@ function addTest(manifest, test) {
         return done();
       }
       catch(ex) {
+        if(program.bail) {
+          if(_nodejs) {
+            process.exit();
+          }
+          else {
+            phantom.exit();
+          }
+        }
         earl.addAssertion(test, false);
         return done(ex);
       }
@@ -285,17 +293,46 @@ function createTestOptions(opts) {
 }
 
 function compareExpectedJson(test, result) {
-  var expect = readTestJson('expect')(test);
-  assert.deepEqual(result, expect);
+  try {
+    var expect = readTestJson('expect')(test);
+    assert.deepEqual(result, expect);
+  }
+  catch(ex) {
+    if(program.bail) {
+      console.log('\nTEST FAILED\n');
+      console.log('EXPECTED: ' + JSON.stringify(expect, null, 2));
+      console.log('ACTUAL: ' + JSON.stringify(result, null, 2));
+    }
+    throw ex;
+  }
 }
 
 function compareExpectedNQuads(test, result) {
-  assert.equal(result, readTestNQuads('expect')(test));
+  try {
+    var expect = readTestNQuads('expect')(test);
+    assert.equal(result, expect);
+  }
+  catch(ex) {
+    if(program.bail) {
+      console.log('\nTEST FAILED\n');
+      console.log('EXPECTED:\n' + expect);
+      console.log('ACTUAL:\n' + result);
+    }
+    throw ex;
+  }
 }
 
 function compareExpectedError(test, err) {
-  // FIXME: check error type against expected
-  assert.ok(err);
+  try {
+    // FIXME: check error type against expected
+    assert.ok(err);
+  }
+  catch(ex) {
+    if(program.bail) {
+      console.log('\nTEST FAILED\n');
+    }
+    throw ex;
+  }
 }
 
 function isJsonLdType(node, type) {
