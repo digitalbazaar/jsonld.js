@@ -37,14 +37,18 @@ else {
   require('mocha-phantomjs/lib/mocha-phantomjs/core_extensions');
   var program = {};
   var system = require('system');
-  if(system.args[1] === '--earl') {
-    program.earl = system.args[2];
+  for(var i = 0; i < system.args.length; ++i) {
+    var arg = system.args[i];
+    if(arg.indexOf('--') === 0) {
+      program[arg.substr(2)] = system.args[i + 1];
+      ++i;
+    }
   }
 
   mocha.setup({
     reporter: 'list',
     ui: 'bdd',
-    timeout: 2000//60000 * 2
+    timeout: (parseInt(program.timeout, 10) * 1000) || 2000
   });
 }
 
@@ -454,6 +458,16 @@ function EarlReport() {
     },
     'subjectOf': []
   };
+  if(_nodejs) {
+    this.report['@id'] += '#node.js';
+    this.report['doap:name'] += ' node.js';
+    this.report['dc:title'] += ' node.js';
+  }
+  else {
+    this.report['@id'] += '#browser';
+    this.report['doap:name'] += ' browser';
+    this.report['dc:title'] += ' browser';
+  }
 }
 
 EarlReport.prototype.addAssertion = function(test, pass) {
