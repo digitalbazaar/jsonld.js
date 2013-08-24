@@ -58,6 +58,11 @@ else {
     ui: 'bdd',
     timeout: (parseInt(program.timeout, 10) * 1000) || 2000
   });
+
+  // HACK: speed up phantomJS by avoiding setTimeout clamping
+  jsonld.nextTick = jsonld.setImmediate = function(callback) {
+    callback();
+  };
 }
 
 var JSONLD_TEST_SUITE = '../json-ld.org/test-suite';
