@@ -7,7 +7,7 @@ test:
 	@NODE_ENV=test ./node_modules/.bin/mocha \
 	  -A \
 	  --reporter $(REPORTER) \
-	  $(TESTS)
+	  $(TESTS) && ./node_modules/.bin/phantomjs tests/test.js
 
 	@#--require should
 

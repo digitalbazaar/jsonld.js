@@ -123,10 +123,10 @@ Remote context tests are also available:
 To generate earl reports:
 
     # generate the earl report for node.js
-    ./node_modules/mocha/bin/mocha -R list tests/test.js --earl earl-node.jsonld
+    ./node_modules/.bin/mocha -R list tests/test.js --earl earl-node.jsonld
 
     # generate the earl report for the browser
-    ./node_modules/phantomjs/bin/phantomjs tests/test.js --timeout 120 --earl earl-browser.jsonld
+    ./node_modules/.bin/phantomjs tests/test.js --timeout 120 --earl earl-browser.jsonld
     
 
 [JSON-LD]: http://json-ld.org/

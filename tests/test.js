@@ -54,7 +54,7 @@ else {
   }
 
   mocha.setup({
-    reporter: 'list',
+    reporter: 'spec',
     ui: 'bdd',
     timeout: (parseInt(program.timeout, 10) * 1000) || 2000
   });

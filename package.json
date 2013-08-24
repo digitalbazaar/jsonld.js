@@ -51,7 +51,7 @@
   },
   "scripts": {
     "test-node": "mocha -R list tests/test.js",
-    "test-browser": "./node_modules/phantomjs/bin/phantomjs tests/test.js",
-    "test": "mocha -R list tests/test.js; ./node_modules/phantomjs/bin/phantomjs tests/test.js"
+    "test-browser": "phantomjs tests/test.js",
+    "test": "mocha -R list tests/test.js; phantomjs tests/test.js"
   }
 }
