@@ -14,7 +14,7 @@ var _nodejs = (typeof process !== 'undefined' &&
   process.versions && process.versions.node);
 
 if(_nodejs) {
-  var _jsdir = process.env.JSDIR || 'js';
+  var _jsdir = getEnv().JSDIR || 'js';
   var fs = require('fs');
   var path = require('path');
   var jsonld = require('../' + _jsdir + '/jsonld')();
@@ -28,15 +28,16 @@ if(_nodejs) {
 }
 else {
   var fs = require('fs');
-  require('../js/jsonld');
+  var system = require('system');
+  var _jsdir = getEnv().JSDIR || 'js';
+  require('../' + _jsdir + '/jsonld');
   jsonld = jsonldjs;
-  require('../js/Promise');
+  require('../' + _jsdir + '/Promise');
   window.Promise = window.DomPromise;
   var assert = require('chai').assert;
   require('mocha/mocha');
   require('mocha-phantomjs/lib/mocha-phantomjs/core_extensions');
   var program = {};
-  var system = require('system');
   for(var i = 0; i < system.args.length; ++i) {
     var arg = system.args[i];
     if(arg.indexOf('--') === 0) {
@@ -139,11 +140,7 @@ var earl = new EarlReport();
 // run tests
 if(!program['webidl-only']) {
   describe('JSON-LD', function() {
-    var dir;
-    if(_nodejs) {
-      dir = process.env.JSONLD_TEST_SUITE;
-    }
-    dir = dir || JSONLD_TEST_SUITE;
+    var dir = getEnv().JSONLD_TEST_SUITE || JSONLD_TEST_SUITE;
     dir = resolvePath(dir);
     var filename = joinPath(dir, 'manifest.jsonld');
     var rootManifest = readJson(filename);
@@ -466,6 +463,13 @@ function basename(filename) {
     return filename;
   }
   return filename.substr(idx + 1);
+}
+
+function getEnv() {
+  if(_nodejs) {
+    return process.env;
+  }
+  return system.env;
 }
 
 function EarlReport() {
