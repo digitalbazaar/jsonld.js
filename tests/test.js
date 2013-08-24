@@ -134,74 +134,74 @@ var SKIP_TESTS = [
 var earl = new EarlReport();
 
 // run tests
-if(!program['webidl-only']) {
-  describe('JSON-LD', function() {
+describe('JSON-LD', function() {
+  if(!program['webidl-only']) {
     var dir = getEnv().JSONLD_TEST_SUITE || JSONLD_TEST_SUITE;
     dir = resolvePath(dir);
     var filename = joinPath(dir, 'manifest.jsonld');
     var rootManifest = readJson(filename);
     rootManifest.filename = filename;
     addManifest(rootManifest);
-  });
-}
+  }
 
-// run Web IDL tests
-if(!_nodejs) {
-  require('./webidl/testharness.js');
-  require('./webidl/WebIDLParser.js');
-  require('./webidl/idlharness.js');
+  // run Web IDL tests
+  if(!_nodejs) {
+    require('./webidl/testharness.js');
+    require('./webidl/WebIDLParser.js');
+    require('./webidl/idlharness.js');
 
-  describe('Web IDL', function() {
-    add_result_callback(function(test) {
-      it(test.name, function(done) {
-        // HACK: phantomJS can't set prototype to non-writable?
-        var msg = test.message || '';
-        if(msg.indexOf(
-          'JsonLdProcessor.prototype is writable expected false') !== -1) {
-          test.status = 0;
+    describe('Web IDL', function() {
+      add_result_callback(function(test) {
+        it(test.name, function(done) {
+          // HACK: phantomJS can't set prototype to non-writable?
+          var msg = test.message || '';
+          if(msg.indexOf(
+            'JsonLdProcessor.prototype is writable expected false') !== -1) {
+            test.status = 0;
+          }
+          // HACK: phantomJS can't set window property to non-enumerable?
+          if(msg.indexOf(
+            '"JsonLdProcessor" is enumerable expected false') !== -1) {
+            test.status = 0;
+          }
+          //earl.addAssertion({'@id': ?}, test.status === 0);
+          assert.equal(test.status, 0, test.message);
+          done();
+        });
+      });
+      //add_completion_callback(function(tests, status) {});
+
+      // ensure that stringification tests are passed
+      var toString = Object.prototype.toString;
+      Object.prototype.toString = function() {
+        if(this === window.JsonLdProcessor.prototype) {
+          return '[object JsonLdProcessorPrototype]';
         }
-        // HACK: phantomJS can't set window property to non-enumerable?
-        if(msg.indexOf(
-          '"JsonLdProcessor" is enumerable expected false') !== -1) {
-          test.status = 0;
+        else if(this && this.constructor === window.JsonLdProcessor) {
+          return '[object JsonLdProcessor]';
         }
-        //earl.addAssertion({'@id': ?}, test.status === 0);
-        assert.equal(test.status, 0, test.message);
+        return toString.apply(this, arguments);
+      };
+
+      window.processor = new JsonLdProcessor();
+
+      var idl_array = new IdlArray();
+      idl_array.add_idls(readFile('./tests/webidl/JsonLdProcessor.idl'));
+      idl_array.add_objects({JsonLdProcessor: ['window.processor']});
+      idl_array.test();
+    });
+  }
+
+  if(program.earl) {
+    var filename = resolvePath(program.earl);
+    describe('Writing EARL report to: ' + filename, function() {
+      it('should print the earl report', function(done) {
+        earl.write(filename);
         done();
       });
     });
-    //add_completion_callback(function(tests, status) {});
-
-    // ensure that stringification tests are passed
-    var toString = Object.prototype.toString;
-    Object.prototype.toString = function() {
-      if(this === window.JsonLdProcessor.prototype) {
-        return '[object JsonLdProcessorPrototype]';
-      }
-      else if(this && this.constructor === window.JsonLdProcessor) {
-        return '[object JsonLdProcessor]';
-      }
-      return toString.apply(this, arguments);
-    };
-
-    window.processor = new JsonLdProcessor();
-
-    var idl_array = new IdlArray();
-    idl_array.add_idls(readFile('./tests/webidl/JsonLdProcessor.idl'));
-    idl_array.add_objects({JsonLdProcessor: ['window.processor']});
-    idl_array.test();
-  });
-}
-
-if(program.earl) {
-  var filename = resolvePath(program.earl);
-  describe('Writing EARL report to: ' + filename, function() {
-    it('should print the earl report', function(done) {
-      earl.write(filename);
-      done();
-    });
-  });
-}
+  }
+});
 
 if(!_nodejs) {
   mocha.run(function() {
