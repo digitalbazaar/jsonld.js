@@ -50,8 +50,8 @@
     "jsonld": "./bin/jsonld"
   },
   "scripts": {
-    "test-node": "mocha -R list tests/test.js",
+    "test-node": "mocha -R spec tests/test.js",
     "test-browser": "phantomjs tests/test.js",
-    "test": "mocha -R list tests/test.js; phantomjs tests/test.js"
+    "test": "mocha -R spec tests/test.js; phantomjs tests/test.js"
   }
 }
