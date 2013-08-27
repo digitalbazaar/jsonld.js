@@ -126,9 +126,7 @@ var TEST_TYPES = {
   }
 };
 
-var SKIP_TESTS = [
-  'jld:ApiErrorTest'
-];
+var SKIP_TESTS = [];
 
 // create earl report
 var earl = new EarlReport();
