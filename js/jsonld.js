@@ -1997,12 +1997,11 @@ Processor.prototype.compact = function(
  * @param activeProperty the property for the element, null for none.
  * @param element the element to expand.
  * @param options the expansion options.
- * @param insideList true if the element is a list, false if not.
  *
  * @return the expanded value.
  */
 Processor.prototype.expand = function(
-  activeCtx, activeProperty, element, options, insideList) {
+  activeCtx, activeProperty, element, options) {
   var self = this;
 
   // nothing to expand
@@ -2013,10 +2012,12 @@ Processor.prototype.expand = function(
   // recursively expand array
   if(_isArray(element)) {
     var rval = [];
+    var container = jsonld.getContextValue(
+      activeCtx, activeProperty, '@container');
+    var insideList = (activeProperty === '@list' || container === '@list');
     for(var i = 0; i < element.length; ++i) {
       // expand element
-      var e = self.expand(
-        activeCtx, activeProperty, element[i], options, insideList);
+      var e = self.expand(activeCtx, activeProperty, element[i], options);
       if(insideList && (_isArray(e) || _isList(e))) {
         // lists of lists are illegal
         throw new JsonLdError(
@@ -2141,8 +2142,7 @@ Processor.prototype.expand = function(
             'jsonld.SyntaxError', {value: value});
         }
 
-        expandedValue = self.expand(
-          activeCtx, '@reverse', value, options, insideList);
+        expandedValue = self.expand(activeCtx, '@reverse', value, options);
 
         // properties double-reversed
         if('@reverse' in expandedValue) {
@@ -2198,7 +2198,7 @@ Processor.prototype.expand = function(
             if(!_isArray(val)) {
               val = [val];
             }
-            val = self.expand(activeCtx, activeProperty, val, options, false);
+            val = self.expand(activeCtx, activeProperty, val, options);
             for(var vi = 0; vi < val.length; ++vi) {
               var item = val[vi];
               if(!('@index' in item)) {
@@ -2219,7 +2219,7 @@ Processor.prototype.expand = function(
             nextActiveProperty = null;
           }
           expandedValue = self.expand(
-            activeCtx, nextActiveProperty, value, options, isList);
+            activeCtx, nextActiveProperty, value, options);
           if(isList && _isList(expandedValue)) {
             throw new JsonLdError(
               'Invalid JSON-LD syntax; lists of lists are not permitted.',
@@ -2228,7 +2228,7 @@ Processor.prototype.expand = function(
         }
         else {
           // recursively expand value with key as new active property
-          expandedValue = self.expand(activeCtx, key, value, options, false);
+          expandedValue = self.expand(activeCtx, key, value, options);
         }
       }
 
@@ -2341,10 +2341,10 @@ Processor.prototype.expand = function(
 
     // drop certain top-level objects that do not occur in lists
     if(_isObject(rval) &&
-      !options.keepFreeFloatingNodes && !insideList &&
+      !options.keepFreeFloatingNodes &&
       (activeProperty === null || expandedActiveProperty === '@graph')) {
-      // drop empty object or top-level @value
-      if(count === 0 || ('@value' in rval)) {
+      // drop empty object or top-level @value/@list
+      if(count === 0 || ('@value' in rval) || ('@list' in rval)) {
         rval = null;
       }
       else {
@@ -2366,9 +2366,8 @@ Processor.prototype.expand = function(
   }
 
   // drop top-level scalars that are not in lists
-  if(!insideList &&
-    (activeProperty === null ||
-    _expandIri(activeCtx, activeProperty, {vocab: true}) === '@graph')) {
+  if(activeProperty === null ||
+    _expandIri(activeCtx, activeProperty, {vocab: true}) === '@graph') {
     return null;
   }
 
@@ -4641,8 +4640,15 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
     }
 
     // expand and add @id mapping
-    mapping['@id'] = _expandIri(
+    var id = _expandIri(
       activeCtx, reverse, {vocab: true, base: false}, localCtx, defined);
+    if(!_isAbsoluteIri(id)) {
+      throw new JsonLdError(
+        'Invalid JSON-LD syntax; a @context @reverse value must be an IRI ' +
+        'or a blank node identifier.',
+        'jsonld.SyntaxError', {context: localCtx});
+    }
+    mapping['@id'] = id;
     mapping.reverse = true;
   }
   else if('@id' in value) {
@@ -4699,14 +4705,26 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
     var type = value['@type'];
     if(!_isString(type)) {
       throw new JsonLdError(
-        'Invalid JSON-LD syntax; @context @type values must be strings.',
+        'Invalid JSON-LD syntax; an @context @type values must be a string.',
         'jsonld.SyntaxError', {context: localCtx});
     }
 
-    if(type !== '@id') {
+    if(type !== '@id' && type !== '@vocab') {
       // expand @type to full IRI
       type = _expandIri(
-        activeCtx, type, {vocab: true, base: true}, localCtx, defined);
+        activeCtx, type, {vocab: true, base: false}, localCtx, defined);
+      if(!_isAbsoluteIri(type)) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; an @context @type value must be an ' +
+          'absolute IRI.',
+          'jsonld.SyntaxError', {context: localCtx});
+      }
+      if(type.indexOf('_:') === 0) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; an @context @type values must be an IRI, ' +
+          'not a blank node identifier.',
+          'jsonld.SyntaxError', {context: localCtx});
+      }
     }
 
     // add @type to mapping
