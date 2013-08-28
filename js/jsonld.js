@@ -2369,22 +2369,10 @@ Processor.prototype.expand = function(
   if(_isObject(rval) &&
     !options.keepFreeFloatingNodes && !insideList &&
     (activeProperty === null || expandedActiveProperty === '@graph')) {
-    // drop empty object or top-level @value
-    if(count === 0 || ('@value' in rval)) {
+    // drop empty object, top-level @value/@list, or object with only @id
+    if(count === 0 || '@value' in rval || '@list' in rval ||
+      (count === 1 && '@id' in rval)) {
       rval = null;
-    }
-    else {
-      // drop nodes that generate no triples
-      var hasTriples = false;
-      var ignore = ['@graph', '@type'];
-      for(var ki = 0; !hasTriples && ki < keys.length; ++ki) {
-        if(!_isKeyword(keys[ki]) || ignore.indexOf(keys[ki]) !== -1) {
-          hasTriples = true;
-        }
-      }
-      if(!hasTriples) {
-        rval = null;
-      }
     }
   }
 
