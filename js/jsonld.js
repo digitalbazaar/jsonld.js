@@ -1997,11 +1997,12 @@ Processor.prototype.compact = function(
  * @param activeProperty the property for the element, null for none.
  * @param element the element to expand.
  * @param options the expansion options.
+ * @param insideList true if the element is a list, false if not.
  *
  * @return the expanded value.
  */
 Processor.prototype.expand = function(
-  activeCtx, activeProperty, element, options) {
+  activeCtx, activeProperty, element, options, insideList) {
   var self = this;
 
   // nothing to expand
@@ -2009,12 +2010,23 @@ Processor.prototype.expand = function(
     return null;
   }
 
+  if(!_isArray(element) && !_isObject(element)) {
+    // drop free-floating scalars that are not in lists
+    if(!insideList && (activeProperty === null ||
+      _expandIri(activeCtx, activeProperty, {vocab: true}) === '@graph')) {
+      return null;
+    }
+
+    // expand element according to value expansion rules
+    return _expandValue(activeCtx, activeProperty, element);
+  }
+
   // recursively expand array
   if(_isArray(element)) {
     var rval = [];
     var container = jsonld.getContextValue(
       activeCtx, activeProperty, '@container');
-    var insideList = (activeProperty === '@list' || container === '@list');
+    insideList = insideList || container === '@list';
     for(var i = 0; i < element.length; ++i) {
       // expand element
       var e = self.expand(activeCtx, activeProperty, element[i], options);
@@ -2025,7 +2037,7 @@ Processor.prototype.expand = function(
           'jsonld.SyntaxError');
       }
       // drop null values
-      else if(e !== null) {
+      if(e !== null) {
         if(_isArray(e)) {
           rval = rval.concat(e);
         }
@@ -2037,224 +2049,141 @@ Processor.prototype.expand = function(
     return rval;
   }
 
-  // recursively expand object
-  if(_isObject(element)) {
-    // if element has a context, process it
-    if('@context' in element) {
-      activeCtx = self.processContext(activeCtx, element['@context'], options);
+  // recursively expand object:
+
+  // if element has a context, process it
+  if('@context' in element) {
+    activeCtx = self.processContext(activeCtx, element['@context'], options);
+  }
+
+  // expand the active property
+  var expandedActiveProperty = _expandIri(
+    activeCtx, activeProperty, {vocab: true});
+
+  var rval = {};
+  var keys = Object.keys(element).sort();
+  for(var ki = 0; ki < keys.length; ++ki) {
+    var key = keys[ki];
+    var value = element[key];
+    var expandedValue;
+
+    // skip @context
+    if(key === '@context') {
+      continue;
     }
 
-    // expand the active property
-    var expandedActiveProperty = _expandIri(
-      activeCtx, activeProperty, {vocab: true});
+    // expand property
+    var expandedProperty = _expandIri(activeCtx, key, {vocab: true});
 
-    var rval = {};
-    var keys = Object.keys(element).sort();
-    for(var ki = 0; ki < keys.length; ++ki) {
-      var key = keys[ki];
-      var value = element[key];
-      var expandedValue;
+    // drop non-absolute IRI keys that aren't keywords
+    if(expandedProperty === null ||
+      !(_isAbsoluteIri(expandedProperty) || _isKeyword(expandedProperty))) {
+      continue;
+    }
 
-      // skip @context
-      if(key === '@context') {
-        continue;
-      }
-
-      // expand key to IRI
-      var expandedProperty = _expandIri(activeCtx, key, {vocab: true});
-
-      // drop non-absolute IRI keys that aren't keywords
-      if(expandedProperty === null ||
-        !(_isAbsoluteIri(expandedProperty) || _isKeyword(expandedProperty))) {
-        continue;
-      }
-
-      if(_isKeyword(expandedProperty) &&
-        expandedActiveProperty === '@reverse') {
+    if(_isKeyword(expandedProperty)) {
+      if(expandedActiveProperty === '@reverse') {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; a keyword cannot be used as a @reverse ' +
           'property.',
           'jsonld.SyntaxError', {value: value});
       }
-
-      // syntax error if @id is not a string
-      if(expandedProperty === '@id' && !_isString(value)) {
-        if(!options.isFrame) {
-          throw new JsonLdError(
-            'Invalid JSON-LD syntax; "@id" value must a string.',
-            'jsonld.SyntaxError', {value: value});
-        }
-        if(!_isObject(value)) {
-          throw new JsonLdError(
-            'Invalid JSON-LD syntax; "@id" value must be a string or an ' +
-            'object.', 'jsonld.SyntaxError', {value: value});
-        }
-      }
-
-      // validate @type value
-      if(expandedProperty === '@type') {
-        _validateTypeValue(value);
-      }
-
-      // @graph must be an array or an object
-      if(expandedProperty === '@graph' &&
-        !(_isObject(value) || _isArray(value))) {
+      if(expandedProperty in rval) {
         throw new JsonLdError(
-          'Invalid JSON-LD syntax; "@value" value must not be an ' +
-          'object or an array.',
+          'Invalid JSON-LD syntax; colliding keywords detected.',
+          'jsonld.SyntaxError', {keyword: expandedProperty});
+      }
+    }
+
+    // syntax error if @id is not a string
+    if(expandedProperty === '@id' && !_isString(value)) {
+      if(!options.isFrame) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; "@id" value must a string.',
+          'jsonld.SyntaxError', {value: value});
+      }
+      if(!_isObject(value)) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; "@id" value must be a string or an ' +
+          'object.', 'jsonld.SyntaxError', {value: value});
+      }
+    }
+
+    if(expandedProperty === '@type') {
+      _validateTypeValue(value);
+    }
+
+    // @graph must be an array or an object
+    if(expandedProperty === '@graph' &&
+      !(_isObject(value) || _isArray(value))) {
+      throw new JsonLdError(
+        'Invalid JSON-LD syntax; "@value" value must not be an ' +
+        'object or an array.',
+        'jsonld.SyntaxError', {value: value});
+    }
+
+    // @value must not be an object or an array
+    if(expandedProperty === '@value' &&
+      (_isObject(value) || _isArray(value))) {
+      throw new JsonLdError(
+        'Invalid JSON-LD syntax; "@value" value must not be an ' +
+        'object or an array.',
+        'jsonld.SyntaxError', {value: value});
+    }
+
+    // @language must be a string
+    if(expandedProperty === '@language') {
+      if(!_isString(value)) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; "@language" value must be a string.',
+          'jsonld.SyntaxError', {value: value});
+      }
+      // ensure language value is lowercase
+      value = value.toLowerCase();
+    }
+
+    // @index must be a string
+    if(expandedProperty === '@index') {
+      if(!_isString(value)) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; "@index" value must be a string.',
+          'jsonld.SyntaxError', {value: value});
+      }
+    }
+
+    // @reverse must be an object
+    if(expandedProperty === '@reverse') {
+      if(!_isObject(value)) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; "@reverse" value must be an object.',
           'jsonld.SyntaxError', {value: value});
       }
 
-      // @value must not be an object or an array
-      if(expandedProperty === '@value' &&
-        (_isObject(value) || _isArray(value))) {
-        throw new JsonLdError(
-          'Invalid JSON-LD syntax; "@value" value must not be an ' +
-          'object or an array.',
-          'jsonld.SyntaxError', {value: value});
-      }
+      expandedValue = self.expand(activeCtx, '@reverse', value, options);
 
-      // @language must be a string
-      if(expandedProperty === '@language') {
-        if(!_isString(value)) {
-          throw new JsonLdError(
-            'Invalid JSON-LD syntax; "@language" value must be a string.',
-            'jsonld.SyntaxError', {value: value});
-        }
-        // ensure language value is lowercase
-        value = value.toLowerCase();
-      }
-
-      // @index must be a string
-      if(expandedProperty === '@index') {
-        if(!_isString(value)) {
-          throw new JsonLdError(
-            'Invalid JSON-LD syntax; "@index" value must be a string.',
-            'jsonld.SyntaxError', {value: value});
+      // properties double-reversed
+      if('@reverse' in expandedValue) {
+        for(var property in expandedValue['@reverse']) {
+          jsonld.addValue(
+            rval, property, expandedValue['@reverse'][property],
+            {propertyIsArray: true});
         }
       }
 
-      // @reverse must be an object
-      if(expandedProperty === '@reverse') {
-        if(!_isObject(value)) {
-          throw new JsonLdError(
-            'Invalid JSON-LD syntax; "@reverse" value must be an object.',
-            'jsonld.SyntaxError', {value: value});
+      // FIXME: can this be merged with code below to simplify?
+      // merge in all reversed properties
+      var reverseMap = rval['@reverse'] || null;
+      for(var property in expandedValue) {
+        if(property === '@reverse') {
+          continue;
         }
-
-        expandedValue = self.expand(activeCtx, '@reverse', value, options);
-
-        // properties double-reversed
-        if('@reverse' in expandedValue) {
-          for(var property in expandedValue['@reverse']) {
-            jsonld.addValue(
-              rval, property, expandedValue['@reverse'][property],
-              {propertyIsArray: true});
-          }
+        if(reverseMap === null) {
+          reverseMap = rval['@reverse'] = {};
         }
-
-        // FIXME: can this be merged with code below to simplify?
-        // merge in all reversed properties
-        var reverseMap = rval['@reverse'] || null;
-        for(var property in expandedValue) {
-          if(property === '@reverse') {
-            continue;
-          }
-          if(reverseMap === null) {
-            reverseMap = rval['@reverse'] = {};
-          }
-          jsonld.addValue(reverseMap, property, [], {propertyIsArray: true});
-          var items = expandedValue[property];
-          for(var ii = 0; ii < items.length; ++ii) {
-            var item = items[ii];
-            if(_isValue(item) || _isList(item)) {
-              throw new JsonLdError(
-                'Invalid JSON-LD syntax; "@reverse" value must not be a ' +
-                '@value or an @list.',
-                'jsonld.SyntaxError', {value: expandedValue});
-            }
-            jsonld.addValue(
-              reverseMap, property, item, {propertyIsArray: true});
-          }
-        }
-
-        continue;
-      }
-
-      var container = jsonld.getContextValue(activeCtx, key, '@container');
-
-      // handle language map container (skip if value is not an object)
-      if(container === '@language' && _isObject(value)) {
-        expandedValue = _expandLanguageMap(value);
-      }
-      // handle index container (skip if value is not an object)
-      else if(container === '@index' && _isObject(value)) {
-        expandedValue = (function _expandIndexMap(activeProperty) {
-          var rval = [];
-          var keys = Object.keys(value).sort();
-          for(var ki = 0; ki < keys.length; ++ki) {
-            var key = keys[ki];
-            var val = value[key];
-            if(!_isArray(val)) {
-              val = [val];
-            }
-            val = self.expand(activeCtx, activeProperty, val, options);
-            for(var vi = 0; vi < val.length; ++vi) {
-              var item = val[vi];
-              if(!('@index' in item)) {
-                item['@index'] = key;
-              }
-              rval.push(item);
-            }
-          }
-          return rval;
-        })(key);
-      }
-      else {
-        // recurse into @list or @set
-        var isList = (expandedProperty === '@list');
-        if(isList || expandedProperty === '@set') {
-          var nextActiveProperty = activeProperty;
-          if(isList && expandedActiveProperty === '@graph') {
-            nextActiveProperty = null;
-          }
-          expandedValue = self.expand(
-            activeCtx, nextActiveProperty, value, options);
-          if(isList && _isList(expandedValue)) {
-            throw new JsonLdError(
-              'Invalid JSON-LD syntax; lists of lists are not permitted.',
-              'jsonld.SyntaxError');
-          }
-        }
-        else {
-          // recursively expand value with key as new active property
-          expandedValue = self.expand(activeCtx, key, value, options);
-        }
-      }
-
-      // drop null values if property is not @value
-      if(expandedValue === null && expandedProperty !== '@value') {
-        continue;
-      }
-
-      // convert expanded value to @list if container specifies it
-      if(expandedProperty !== '@list' && !_isList(expandedValue) &&
-        container === '@list') {
-        // ensure expanded value is an array
-        expandedValue = (_isArray(expandedValue) ?
-          expandedValue : [expandedValue]);
-        expandedValue = {'@list': expandedValue};
-      }
-
-      // FIXME: can this be merged with code above to simplify?
-      // merge in reverse properties
-      if(activeCtx.mappings[key] && activeCtx.mappings[key].reverse) {
-        var reverseMap = rval['@reverse'] = {};
-        if(!_isArray(expandedValue)) {
-          expandedValue = [expandedValue];
-        }
-        for(var ii = 0; ii < expandedValue.length; ++ii) {
-          var item = expandedValue[ii];
+        jsonld.addValue(reverseMap, property, [], {propertyIsArray: true});
+        var items = expandedValue[property];
+        for(var ii = 0; ii < items.length; ++ii) {
+          var item = items[ii];
           if(_isValue(item) || _isList(item)) {
             throw new JsonLdError(
               'Invalid JSON-LD syntax; "@reverse" value must not be a ' +
@@ -2262,117 +2191,195 @@ Processor.prototype.expand = function(
               'jsonld.SyntaxError', {value: expandedValue});
           }
           jsonld.addValue(
-            reverseMap, expandedProperty, item, {propertyIsArray: true});
+            reverseMap, property, item, {propertyIsArray: true});
         }
-        continue;
       }
 
-      // add value for property
-      // use an array except for certain keywords
-      var useArray =
-        ['@index', '@id', '@type', '@value', '@language'].indexOf(
-          expandedProperty) === -1;
-      jsonld.addValue(
-        rval, expandedProperty, expandedValue, {propertyIsArray: useArray});
+      continue;
     }
 
-    // get property count on expanded output
-    keys = Object.keys(rval);
-    var count = keys.length;
+    var container = jsonld.getContextValue(activeCtx, key, '@container');
 
-    if('@value' in rval) {
-      // @value must only have @language or @type
-      if('@type' in rval && '@language' in rval) {
-        throw new JsonLdError(
-          'Invalid JSON-LD syntax; an element containing "@value" may not ' +
-          'contain both "@type" and "@language".',
-          'jsonld.SyntaxError', {element: rval});
-      }
-      var validCount = count - 1;
-      if('@type' in rval) {
-        validCount -= 1;
-      }
-      if('@index' in rval) {
-        validCount -= 1;
-      }
-      if('@language' in rval) {
-        validCount -= 1;
-      }
-      if(validCount !== 0) {
-        throw new JsonLdError(
-          'Invalid JSON-LD syntax; an element containing "@value" may only ' +
-          'have an "@index" property and at most one other property ' +
-          'which can be "@type" or "@language".',
-          'jsonld.SyntaxError', {element: rval});
-      }
-      // drop null @values
-      if(rval['@value'] === null) {
-        rval = null;
-      }
-      // drop @language if @value isn't a string
-      else if('@language' in rval && !_isString(rval['@value'])) {
-        delete rval['@language'];
-      }
+    // handle language map container (skip if value is not an object)
+    if(container === '@language' && _isObject(value)) {
+      expandedValue = _expandLanguageMap(value);
     }
-    // convert @type to an array
-    else if('@type' in rval && !_isArray(rval['@type'])) {
-      rval['@type'] = [rval['@type']];
-    }
-    // handle @set and @list
-    else if('@set' in rval || '@list' in rval) {
-      if(count > 1 && (count !== 2 && '@index' in rval)) {
-        throw new JsonLdError(
-          'Invalid JSON-LD syntax; if an element has the property "@set" ' +
-          'or "@list", then it can have at most one other property that is ' +
-          '"@index".',
-          'jsonld.SyntaxError', {element: rval});
-      }
-      // optimize away @set
-      if('@set' in rval) {
-        rval = rval['@set'];
-        keys = Object.keys(rval);
-        count = keys.length;
-      }
-    }
-    // drop objects with only @language
-    else if(count === 1 && '@language' in rval) {
-      rval = null;
-    }
-
-    // drop certain top-level objects that do not occur in lists
-    if(_isObject(rval) &&
-      !options.keepFreeFloatingNodes &&
-      (activeProperty === null || expandedActiveProperty === '@graph')) {
-      // drop empty object or top-level @value/@list
-      if(count === 0 || ('@value' in rval) || ('@list' in rval)) {
-        rval = null;
-      }
-      else {
-        // drop nodes that generate no triples
-        var hasTriples = false;
-        var ignore = ['@graph', '@type'];
-        for(var ki = 0; !hasTriples && ki < keys.length; ++ki) {
-          if(!_isKeyword(keys[ki]) || ignore.indexOf(keys[ki]) !== -1) {
-            hasTriples = true;
+    // handle index container (skip if value is not an object)
+    else if(container === '@index' && _isObject(value)) {
+      expandedValue = (function _expandIndexMap(activeProperty) {
+        var rval = [];
+        var keys = Object.keys(value).sort();
+        for(var ki = 0; ki < keys.length; ++ki) {
+          var key = keys[ki];
+          var val = value[key];
+          if(!_isArray(val)) {
+            val = [val];
+          }
+          val = self.expand(activeCtx, activeProperty, val, options, false);
+          for(var vi = 0; vi < val.length; ++vi) {
+            var item = val[vi];
+            if(!('@index' in item)) {
+              item['@index'] = key;
+            }
+            rval.push(item);
           }
         }
-        if(!hasTriples) {
-          rval = null;
+        return rval;
+      })(key);
+    }
+    else {
+      // recurse into @list or @set
+      var isList = (expandedProperty === '@list');
+      if(isList || expandedProperty === '@set') {
+        var nextActiveProperty = activeProperty;
+        if(isList && expandedActiveProperty === '@graph') {
+          nextActiveProperty = null;
         }
+        expandedValue = self.expand(
+          activeCtx, nextActiveProperty, value, options, isList);
+        if(isList && _isList(expandedValue)) {
+          throw new JsonLdError(
+            'Invalid JSON-LD syntax; lists of lists are not permitted.',
+            'jsonld.SyntaxError');
+        }
+      }
+      else {
+        // recursively expand value with key as new active property
+        expandedValue = self.expand(activeCtx, key, value, options, false);
       }
     }
 
-    return rval;
+    // drop null values if property is not @value
+    if(expandedValue === null && expandedProperty !== '@value') {
+      continue;
+    }
+
+    // convert expanded value to @list if container specifies it
+    if(expandedProperty !== '@list' && !_isList(expandedValue) &&
+      container === '@list') {
+      // ensure expanded value is an array
+      expandedValue = (_isArray(expandedValue) ?
+        expandedValue : [expandedValue]);
+      expandedValue = {'@list': expandedValue};
+    }
+
+    // FIXME: can this be merged with code above to simplify?
+    // merge in reverse properties
+    if(activeCtx.mappings[key] && activeCtx.mappings[key].reverse) {
+      var reverseMap = rval['@reverse'] = {};
+      if(!_isArray(expandedValue)) {
+        expandedValue = [expandedValue];
+      }
+      for(var ii = 0; ii < expandedValue.length; ++ii) {
+        var item = expandedValue[ii];
+        if(_isValue(item) || _isList(item)) {
+          throw new JsonLdError(
+            'Invalid JSON-LD syntax; "@reverse" value must not be a ' +
+            '@value or an @list.',
+            'jsonld.SyntaxError', {value: expandedValue});
+        }
+        jsonld.addValue(
+          reverseMap, expandedProperty, item, {propertyIsArray: true});
+      }
+      continue;
+    }
+
+    // add value for property
+    // use an array except for certain keywords
+    var useArray =
+      ['@index', '@id', '@type', '@value', '@language'].indexOf(
+        expandedProperty) === -1;
+    jsonld.addValue(
+      rval, expandedProperty, expandedValue, {propertyIsArray: useArray});
   }
 
-  // drop top-level scalars that are not in lists
-  if(activeProperty === null ||
-    _expandIri(activeCtx, activeProperty, {vocab: true}) === '@graph') {
-    return null;
+  // get property count on expanded output
+  keys = Object.keys(rval);
+  var count = keys.length;
+
+  if('@value' in rval) {
+    // @value must only have @language or @type
+    if('@type' in rval && '@language' in rval) {
+      throw new JsonLdError(
+        'Invalid JSON-LD syntax; an element containing "@value" may not ' +
+        'contain both "@type" and "@language".',
+        'jsonld.SyntaxError', {element: rval});
+    }
+    var validCount = count - 1;
+    if('@type' in rval) {
+      validCount -= 1;
+    }
+    if('@index' in rval) {
+      validCount -= 1;
+    }
+    if('@language' in rval) {
+      validCount -= 1;
+    }
+    if(validCount !== 0) {
+      throw new JsonLdError(
+        'Invalid JSON-LD syntax; an element containing "@value" may only ' +
+        'have an "@index" property and at most one other property ' +
+        'which can be "@type" or "@language".',
+        'jsonld.SyntaxError', {element: rval});
+    }
+    // drop null @values
+    if(rval['@value'] === null) {
+      rval = null;
+    }
+    // drop @language if @value isn't a string
+    else if('@language' in rval && !_isString(rval['@value'])) {
+      delete rval['@language'];
+    }
+  }
+  // convert @type to an array
+  else if('@type' in rval && !_isArray(rval['@type'])) {
+    rval['@type'] = [rval['@type']];
+  }
+  // handle @set and @list
+  else if('@set' in rval || '@list' in rval) {
+    if(count > 1 && (count !== 2 && '@index' in rval)) {
+      throw new JsonLdError(
+        'Invalid JSON-LD syntax; if an element has the property "@set" ' +
+        'or "@list", then it can have at most one other property that is ' +
+        '"@index".',
+        'jsonld.SyntaxError', {element: rval});
+    }
+    // optimize away @set
+    if('@set' in rval) {
+      rval = rval['@set'];
+      keys = Object.keys(rval);
+      count = keys.length;
+    }
+  }
+  // drop objects with only @language
+  else if(count === 1 && '@language' in rval) {
+    rval = null;
   }
 
-  // expand element according to value expansion rules
-  return _expandValue(activeCtx, activeProperty, element);
+  // drop certain top-level objects that do not occur in lists
+  if(_isObject(rval) &&
+    !options.keepFreeFloatingNodes && !insideList &&
+    (activeProperty === null || expandedActiveProperty === '@graph')) {
+    // drop empty object or top-level @value
+    if(count === 0 || ('@value' in rval)) {
+      rval = null;
+    }
+    else {
+      // drop nodes that generate no triples
+      var hasTriples = false;
+      var ignore = ['@graph', '@type'];
+      for(var ki = 0; !hasTriples && ki < keys.length; ++ki) {
+        if(!_isKeyword(keys[ki]) || ignore.indexOf(keys[ki]) !== -1) {
+          hasTriples = true;
+        }
+      }
+      if(!hasTriples) {
+        rval = null;
+      }
+    }
+  }
+
+  return rval;
 };
 
 /**
