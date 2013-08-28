@@ -393,12 +393,16 @@ function compareExpectedNQuads(test, result) {
 
 function compareExpectedError(test, err) {
   try {
-    // FIXME: check error type against expected
+    var expect = test.expect;
+    var result = getJsonLdErrorCode(err);
     assert.ok(err);
+    assert.equal(result, expect);
   }
   catch(ex) {
     if(program.bail) {
       console.log('\nTEST FAILED\n');
+      console.log('EXPECTED: ' + expect);
+      console.log('ACTUAL: ' + result);
     }
     throw ex;
   }
@@ -424,6 +428,16 @@ function getJsonLdValues(node, property) {
     }
   }
   return rval;
+}
+
+function getJsonLdErrorCode(err) {
+  if(err.details && err.details.code) {
+    return err.details.code;
+  }
+  if(err.cause) {
+    return getJsonLdErrorCode(err.cause);
+  }
+  return err.name;
 }
 
 function readJson(filename) {
