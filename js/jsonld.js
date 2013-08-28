@@ -2326,9 +2326,11 @@ Processor.prototype.expand = function(
     if(rval['@value'] === null) {
       rval = null;
     }
-    // drop @language if @value isn't a string
+    // if @language is present, @value must be a string
     else if('@language' in rval && !_isString(rval['@value'])) {
-      delete rval['@language'];
+      throw new JsonLdError(
+        'Invalid JSON-LD syntax; only strings may be language-tagged.',
+        'jsonld.SyntaxError', {element: rval});
     }
   }
   // convert @type to an array
