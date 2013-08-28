@@ -86,7 +86,7 @@ var TEST_TYPES = {
     fn: 'flatten',
     params: [
       readTestJson('input'),
-      function() {return null;},
+      readTestJson('context'),
       createTestOptions()
     ],
     compare: compareExpectedJson
@@ -323,6 +323,9 @@ function readManifestEntry(manifest, entry) {
 
 function readTestJson(property) {
   return function(test) {
+    if(!test[property]) {
+      return null;
+    }
     var filename = joinPath(test.dirname, test[property]);
     return readJson(filename);
   };
@@ -330,6 +333,9 @@ function readTestJson(property) {
 
 function readTestNQuads(property) {
   return function(test) {
+    if(!test[property]) {
+      return null;
+    }
     var filename = joinPath(test.dirname, test[property]);
     return readFile(filename);
   };
@@ -338,8 +344,13 @@ function readTestNQuads(property) {
 function createTestOptions(opts) {
   return function(test) {
     var options = {};
-    options.base = test.base;
-    options.useNativeTypes = true;
+    var testOptions = test.option || {
+      base: test.base,
+      useNativeTypes: true
+    };
+    for(var key in testOptions) {
+      options[key] = testOptions[key];
+    }
     if(opts) {
       // extend options
       for(var key in opts) {
