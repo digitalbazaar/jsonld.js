@@ -2332,6 +2332,13 @@ Processor.prototype.expand = function(
         'Invalid JSON-LD syntax; only strings may be language-tagged.',
         'jsonld.SyntaxError', {element: rval});
     }
+    else if('@type' in rval && (!_isAbsoluteIri(rval['@type']) ||
+      rval['@type'].indexOf('_:') === 0)) {
+      throw new JsonLdError(
+        'Invalid JSON-LD syntax; an element containing "@value" and "@type" ' +
+        'must have an absolute IRI for the value of "@type".',
+        'jsonld.SyntaxError', {element: rval});
+    }
   }
   // convert @type to an array
   else if('@type' in rval && !_isArray(rval['@type'])) {
@@ -2339,7 +2346,7 @@ Processor.prototype.expand = function(
   }
   // handle @set and @list
   else if('@set' in rval || '@list' in rval) {
-    if(count > 1 && (count !== 2 && '@index' in rval)) {
+    if(count > 1 && !(count === 2 && '@index' in rval)) {
       throw new JsonLdError(
         'Invalid JSON-LD syntax; if an element has the property "@set" ' +
         'or "@list", then it can have at most one other property that is ' +
