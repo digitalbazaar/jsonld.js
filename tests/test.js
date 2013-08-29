@@ -433,11 +433,13 @@ function getJsonLdValues(node, property) {
 }
 
 function getJsonLdErrorCode(err) {
-  if(err.details && err.details.code) {
-    return err.details.code;
-  }
-  if(err.cause) {
-    return getJsonLdErrorCode(err.cause);
+  if(err.details) {
+    if(err.details.code) {
+      return err.details.code;
+    }
+    if(err.details.cause) {
+      return getJsonLdErrorCode(err.details.cause);
+    }
   }
   return err.name;
 }
