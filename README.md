@@ -38,6 +38,90 @@ to JSON with added semantics. Finally, the format is intended to be fast
 to parse, fast to generate, stream-based and document-based processing
 compatible, and require a very small memory footprint in order to operate.
 
+## Quick Examples
+
+```js
+var doc = {
+  "http://schema.org/name": "Manu Sporny",
+  "http://schema.org/url": {"@id": "http://manu.sporny.org/"},
+  "http://schema.org/image": {"@id": "http://manu.sporny.org/images/manu.png"}
+};
+var context = {
+  "name": "http://schema.org/name",
+  "homepage": {"@id": "http://schema.org/url", "@type": "@id"},
+  "image": {"@id": "http://schema.org/image", "@type": "@id"}
+};
+
+// compact a document according to a particular context
+jsonld.compact(doc, context, function(err, compacted) {
+  console.log(JSON.stringify(compacted, null, 2));
+  /* Output:
+  {
+    "@context": {...},
+    "name": "Manu Sporny",
+    "homepage": "http://manu.sporny.org/",
+    "image": "http://manu.sporny.org/images/manu.png"
+  }
+  */
+});
+
+// compact using URLs
+jsonld.compact('http://example.org/doc', 'http://example.org/context', ...);
+
+// expand a document, removing its context
+jsonld.expand(compacted, function(err, expanded) {
+  /* Output:
+  {
+    "http://schema.org/name": "Manu Sporny",
+    "http://schema.org/url": {"@id": "http://manu.sporny.org/"},
+    "http://schema.org/image": {"@id": "http://manu.sporny.org/images/manu.png"}
+  }
+  */
+});
+
+// expand using URLs
+jsonld.compact('http://example.org/doc', ...);
+
+// flatten a document
+jsonld.flatten(doc, function(err, flattened) {
+  // all deep-level trees flattened to the top-level
+});
+
+// frame a document
+jsonld.frame(doc, frame, function(err, framed) {
+  // document transformed into a particular tree structure per the given frame
+});
+
+// normalize a document
+jsonld.normalize(doc, {format: 'application/nquads'}, function(err, normalized) {
+  // normalized is a string that is a canonical representation of the document
+  // that can be used for hashing
+});
+
+// use the promises API
+var promises = jsonld.promises();
+
+// compaction
+var promise = promises.compact(doc, context);
+promise.then(function(compacted) {...}, function(err) {...});
+
+// expansion
+var promise = promises.expand(doc);
+promise.then(function(expanded) {...}, function(err) {...});
+
+// flattening
+var promise = promises.flatten(doc);
+promise.then(function(flattened) {...}, function(err) {...});
+
+// framing
+var promise = promises.frame(doc, frame);
+promise.then(function(framed) {...}, function(err) {...});
+
+// normalization
+var promise = promises.normalize(doc, {format: 'application/nquads'});
+promise.then(function(normalized) {...}, function(err) {...});
+```
+
 Using the Command-line Tool
 ---------------------------
 
@@ -59,9 +143,9 @@ the Web:
 
     ./bin/jsonld compact -c "https://w3id.org/payswarm/v1" "http://recipes.payswarm.com/?p=10554"
 
-The command above will read in a PaySwarm Asset and Listing in RDFa 1.0 format, 
-convert it to JSON-LD expanded form, compact it using the 
-'https://w3id.org/payswarm/v1' context, and dump it out to the console in 
+The command above will read in a PaySwarm Asset and Listing in RDFa 1.0 format,
+convert it to JSON-LD expanded form, compact it using the
+'https://w3id.org/payswarm/v1' context, and dump it out to the console in
 compacted form.
 
     ./bin/jsonld normalize -q "http://recipes.payswarm.com/?p=10554"
@@ -75,7 +159,7 @@ of the contents of the Dataset.
 Commercial Support
 ------------------
 
-Commercial support for this library is available upon request from 
+Commercial support for this library is available upon request from
 Digital Bazaar: support@digitalbazaar.com
 
 Source
@@ -127,7 +211,7 @@ To generate earl reports:
 
     # generate the earl report for the browser
     ./node_modules/.bin/phantomjs tests/test.js --timeout 120 --earl earl-browser.jsonld
-    
+
 
 [JSON-LD]: http://json-ld.org/
 [json-ld.org]: https://github.com/json-ld/json-ld.org
