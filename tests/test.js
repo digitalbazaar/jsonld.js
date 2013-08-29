@@ -62,7 +62,11 @@ else {
   });
 }
 
+jsonld.documentLoader = createDocumentLoader();
+
 var JSONLD_TEST_SUITE = '../json-ld.org/test-suite';
+var ROOT_MANIFEST_DIR = resolvePath(
+  getEnv().JSONLD_TEST_SUITE || JSONLD_TEST_SUITE);
 
 var TEST_TYPES = {
   'jld:CompactTest': {
@@ -134,9 +138,7 @@ var earl = new EarlReport();
 // run tests
 describe('JSON-LD', function() {
   if(!program['webidl-only']) {
-    var dir = getEnv().JSONLD_TEST_SUITE || JSONLD_TEST_SUITE;
-    dir = resolvePath(dir);
-    var filename = joinPath(dir, 'manifest.jsonld');
+    var filename = joinPath(ROOT_MANIFEST_DIR, 'manifest.jsonld');
     var rootManifest = readJson(filename);
     rootManifest.filename = filename;
     addManifest(rootManifest);
@@ -245,7 +247,7 @@ function addTest(manifest, test) {
   var description = number + ' ' + (test.purpose || test.name);
 
   // get appropriate API and run test
-  var api = _nodejs ? jsonld() : jsonld.promises();
+  var api = _nodejs ? jsonld : jsonld.promises();
   it(description, function(done) {
     var testInfo = TEST_TYPES[getJsonLdTestType(test)];
     var fn = testInfo.fn;
@@ -458,8 +460,9 @@ function resolvePath(to) {
   return fs.absolute(to);
 }
 
-function joinPath(dir, filename) {
-  return (_nodejs ? path : fs).join(dir, filename);
+function joinPath() {
+  return (_nodejs ? path : fs).join.apply(
+    null, Array.prototype.slice.call(arguments));
 }
 
 function dirname(filename) {
@@ -489,6 +492,29 @@ function getEnv() {
     return process.env;
   }
   return system.env;
+}
+
+/**
+ * Creates a test remote document loader.
+ *
+ * @return the document loader.
+ */
+function createDocumentLoader() {
+  var base = 'http://json-ld.org/test-suite';
+  var loader = jsonld.documentLoader;
+  return function(url, callback) {
+    // load test-suite files locally
+    var idx = url.indexOf(base);
+    if(idx === 0) {
+      var filename = joinPath(ROOT_MANIFEST_DIR, url.substr(base.length));
+      return callback(null, {
+        contextUrl: null,
+        documentUrl: url,
+        document: readJson(filename)
+      });
+    }
+    loader(url, callback);
+  };
 }
 
 function EarlReport() {
