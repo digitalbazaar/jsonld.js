@@ -72,9 +72,9 @@ jsonld.compact('http://example.org/doc', 'http://example.org/context', ...);
 jsonld.expand(compacted, function(err, expanded) {
   /* Output:
   {
-    "http://schema.org/name": "Manu Sporny",
-    "http://schema.org/url": {"@id": "http://manu.sporny.org/"},
-    "http://schema.org/image": {"@id": "http://manu.sporny.org/images/manu.png"}
+    "http://schema.org/name": [{"@value": "Manu Sporny"}],
+    "http://schema.org/url": [{"@id": "http://manu.sporny.org/"}],
+    "http://schema.org/image": [{"@id": "http://manu.sporny.org/images/manu.png"}]
   }
   */
 });
