@@ -53,6 +53,7 @@ var context = {
 };
 
 // compact a document according to a particular context
+// see: http://json-ld.org/spec/latest/json-ld/#compacted-document-form
 jsonld.compact(doc, context, function(err, compacted) {
   console.log(JSON.stringify(compacted, null, 2));
   /* Output:
@@ -69,6 +70,7 @@ jsonld.compact(doc, context, function(err, compacted) {
 jsonld.compact('http://example.org/doc', 'http://example.org/context', ...);
 
 // expand a document, removing its context
+// see: http://json-ld.org/spec/latest/json-ld/#expanded-document-form
 jsonld.expand(compacted, function(err, expanded) {
   /* Output:
   {
@@ -83,11 +85,13 @@ jsonld.expand(compacted, function(err, expanded) {
 jsonld.compact('http://example.org/doc', ...);
 
 // flatten a document
+// see: http://json-ld.org/spec/latest/json-ld/#flattened-document-form
 jsonld.flatten(doc, function(err, flattened) {
   // all deep-level trees flattened to the top-level
 });
 
 // frame a document
+// see: http://json-ld.org/spec/latest/json-ld-framing/#introduction
 jsonld.frame(doc, frame, function(err, framed) {
   // document transformed into a particular tree structure per the given frame
 });
