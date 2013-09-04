@@ -72,7 +72,7 @@ var TEST_TYPES = {
   'jld:CompactTest': {
     fn: 'compact',
     params: [
-      readTestJson('input'),
+      readTestUrl('input'),
       readTestJson('context'),
       createTestOptions()
     ],
@@ -81,7 +81,7 @@ var TEST_TYPES = {
   'jld:ExpandTest': {
     fn: 'expand',
     params: [
-      readTestJson('input'),
+      readTestUrl('input'),
       createTestOptions()
     ],
     compare: compareExpectedJson
@@ -89,7 +89,7 @@ var TEST_TYPES = {
   'jld:FlattenTest': {
     fn: 'flatten',
     params: [
-      readTestJson('input'),
+      readTestUrl('input'),
       readTestJson('context'),
       createTestOptions()
     ],
@@ -98,7 +98,7 @@ var TEST_TYPES = {
   'jld:FrameTest': {
     fn: 'frame',
     params: [
-      readTestJson('input'),
+      readTestUrl('input'),
       readTestJson('frame'),
       createTestOptions()
     ],
@@ -115,7 +115,7 @@ var TEST_TYPES = {
   'jld:NormalizeTest': {
     fn: 'normalize',
     params: [
-      readTestJson('input'),
+      readTestUrl('input'),
       createTestOptions({format: 'application/nquads'})
     ],
     compare: compareExpectedNQuads
@@ -123,7 +123,7 @@ var TEST_TYPES = {
   'jld:ToRDFTest': {
     fn: 'toRDF',
     params: [
-      readTestJson('input'),
+      readTestUrl('input'),
       createTestOptions({format: 'application/nquads'})
     ],
     compare: compareExpectedNQuads
@@ -131,6 +131,7 @@ var TEST_TYPES = {
 };
 
 var SKIP_TESTS = [];
+var PHANTOMJS_SKIP_MANIFESTS = ['Remote document'];
 
 // create earl report
 var earl = new EarlReport();
@@ -215,6 +216,11 @@ if(!_nodejs) {
  * @param manifest the manifest.
  */
 function addManifest(manifest) {
+  if(!_nodejs && PHANTOMJS_SKIP_MANIFESTS.indexOf(manifest.name) !== -1) {
+    console.log('Skipping manifest "' + manifest.name + '"');
+    return;
+  }
+
   describe(manifest.name, function() {
     var sequence = getJsonLdValues(manifest, 'sequence');
     for(var i = 0; i < sequence.length; ++i) {
@@ -244,6 +250,7 @@ function addTest(manifest, test) {
   var number = test['@id'].substr(2);
   test['@id'] = manifest.baseIri + basename(manifest.filename) + test['@id'];
   test.base = manifest.baseIri + test.input;
+  test.manifest = manifest;
   var description = number + ' ' + (test.purpose || test.name);
 
   // get appropriate API and run test
@@ -323,6 +330,15 @@ function readManifestEntry(manifest, entry) {
   return entry;
 }
 
+function readTestUrl(property) {
+  return function(test) {
+    if(!test[property]) {
+      return null;
+    }
+    return test.manifest.baseIri + test[property];
+  };
+}
+
 function readTestJson(property) {
   return function(test) {
     if(!test[property]) {
@@ -346,10 +362,7 @@ function readTestNQuads(property) {
 function createTestOptions(opts) {
   return function(test) {
     var options = {};
-    var testOptions = test.option || {
-      base: test.base,
-      useNativeTypes: true
-    };
+    var testOptions = test.option || {};
     for(var key in testOptions) {
       options[key] = testOptions[key];
     }
@@ -512,6 +525,9 @@ function createDocumentLoader() {
   var base = 'http://json-ld.org/test-suite';
   var loader = jsonld.documentLoader;
   return function(url, callback) {
+    if(_nodejs && url.indexOf('remote-doc') !== -1) {
+      return loader(url, callback);
+    }
     // load test-suite files locally
     var idx = url.indexOf(base);
     if(idx === 0) {
