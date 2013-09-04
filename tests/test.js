@@ -359,6 +359,13 @@ function createTestOptions(opts) {
         options[key] = opts[key];
       }
     }
+    for(var key in options) {
+      if(key === 'expandContext') {
+        var filename = joinPath(test.dirname, options[key]);
+        options[key] = readJson(filename);
+      }
+    }
+
     return options;
   };
 }
