@@ -257,9 +257,6 @@ jsonld.expand = function(input, options, callback) {
   options = options || {};
 
   // set default options
-  if(!('base' in options)) {
-    options.base = (typeof input === 'string') ? input : '';
-  }
   if(!('documentLoader' in options)) {
     options.documentLoader = jsonld.loadDocument;
   }
@@ -274,6 +271,25 @@ jsonld.expand = function(input, options, callback) {
         if(err) {
           return callback(err);
         }
+        try {
+          if(!remoteDoc.document) {
+            throw new JsonLdError(
+              'No remote document found at the given URL.',
+              'jsonld.NullRemoteDocument');
+          }
+          if(typeof remoteDoc.document === 'string') {
+            remoteDoc.document = JSON.parse(remoteDoc.document);
+          }
+        }
+        catch(ex) {
+          return callback(new JsonLdError(
+            'Could not retrieve a JSON-LD document from the URL. URL ' +
+            'derefencing not implemented.', 'jsonld.LoadDocumentError', {
+              code: 'loading document failed',
+              cause: ex,
+              remoteDoc: remoteDoc
+          }));
+        }
         expand(remoteDoc);
       });
     }
@@ -282,6 +298,10 @@ jsonld.expand = function(input, options, callback) {
   });
 
   function expand(remoteDoc) {
+    // set default base
+    if(!('base' in options)) {
+      options.base = remoteDoc.documentUrl || '';
+    }
     // build meta-object and retrieve all @context URLs
     var input = {
       document: _clone(remoteDoc.document),
@@ -459,6 +479,25 @@ jsonld.frame = function(input, frame, options, callback) {
       return options.documentLoader(frame, function(err, remoteDoc) {
         if(err) {
           return callback(err);
+        }
+        try {
+          if(!remoteDoc.document) {
+            throw new JsonLdError(
+              'No remote document found at the given URL.',
+              'jsonld.NullRemoteDocument');
+          }
+          if(typeof remoteDoc.document === 'string') {
+            remoteDoc.document = JSON.parse(remoteDoc.document);
+          }
+        }
+        catch(ex) {
+          return callback(new JsonLdError(
+            'Could not retrieve a JSON-LD document from the URL. URL ' +
+            'derefencing not implemented.', 'jsonld.LoadDocumentError', {
+              code: 'loading document failed',
+              cause: ex,
+              remoteDoc: remoteDoc
+          }));
         }
         doFrame(remoteDoc);
       });
@@ -1100,7 +1139,7 @@ jsonld.parseLinkHeader = function(header) {
     while(match = rParams.exec(params)) {
       result[match[1]] = (match[2] === undefined) ? match[3] : match[2];
     }
-    var rel = result['rel'];
+    var rel = result['rel'] || '';
     if(_isArray(rval[rel])) {
       rval[rel].push(result);
     }
@@ -1225,8 +1264,9 @@ jsonld.documentLoaders['jquery'] = function($, options) {
         var doc = {contextUrl: null, documentUrl: url, document: data};
 
         // handle Link Header
+        var contentType = jqXHR.getResponseHeader('Content-Type');
         var linkHeader = jqXHR.getResponseHeader('Link');
-        if(linkHeader) {
+        if(linkHeader && contentType !== 'application/ld+json') {
           // only 1 related link header permitted
           linkHeader = jsonld.parseLinkHeader(linkHeader)[LINK_HEADER_REL];
           if(_isArray(linkHeader)) {
@@ -1236,7 +1276,9 @@ jsonld.documentLoaders['jquery'] = function($, options) {
               'jsonld.InvalidUrl',
               {code: 'multiple context link headers', url: url}), doc);
           }
-          doc.contextUrl = linkHeader.target;
+          if(linkHeader) {
+            doc.contextUrl = linkHeader.target;
+          }
         }
 
         cache.set(url, doc);
@@ -1307,7 +1349,8 @@ jsonld.documentLoaders['node'] = function(options) {
       }
 
       // handle Link Header
-      if(res.headers.link) {
+      if(res.headers.link &&
+        res.headers['content-type'] !== 'application/ld+json') {
         // only 1 related link header permitted
         var linkHeader = jsonld.parseLinkHeader(
           res.headers.link)[LINK_HEADER_REL];
@@ -1318,7 +1361,9 @@ jsonld.documentLoaders['node'] = function(options) {
             'jsonld.InvalidUrl',
             {code: 'multiple context link headers', url: url}), doc);
         }
-        doc.contextUrl = linkHeader.target;
+        if(linkHeader) {
+          doc.contextUrl = linkHeader.target;
+        }
       }
 
       // handle redirect
