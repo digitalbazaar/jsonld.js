@@ -4719,8 +4719,8 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
       activeCtx, reverse, {vocab: true, base: false}, localCtx, defined);
     if(!_isAbsoluteIri(id)) {
       throw new JsonLdError(
-        'Invalid JSON-LD syntax; a @context @reverse value must be an IRI ' +
-        'or a blank node identifier.',
+        'Invalid JSON-LD syntax; a @context @reverse value must be an ' +
+        'absolute IRI or a blank node identifier.',
         'jsonld.SyntaxError', {code: 'invalid IRI mapping', context: localCtx});
     }
     mapping['@id'] = id;
@@ -4736,8 +4736,16 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
     }
     if(id !== term) {
       // expand and add @id mapping
-      mapping['@id'] = _expandIri(
+      id = _expandIri(
         activeCtx, id, {vocab: true, base: false}, localCtx, defined);
+      if(!_isAbsoluteIri(id) && !_isKeyword(id)) {
+        throw new JsonLdError(
+          'Invalid JSON-LD syntax; a @context @id value must be an ' +
+          'absolute IRI, a blank node identifier, or a keyword.',
+          'jsonld.SyntaxError',
+          {code: 'invalid IRI mapping', context: localCtx});
+      }
+      mapping['@id'] = id;
     }
   }
 
@@ -4936,16 +4944,6 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
   var rval = value;
   if(relativeTo.base) {
     rval = _prependBase(activeCtx['@base'], rval);
-  }
-
-  if(localCtx) {
-    // value must now be an absolute IRI
-    if(!_isAbsoluteIri(rval)) {
-      throw new JsonLdError(
-        'Invalid JSON-LD syntax; a @context value does not expand to ' +
-        'an absolute IRI.', 'jsonld.SyntaxError',
-        {code: 'invalid IRI mapping', context: localCtx, value: value});
-    }
   }
 
   return rval;
