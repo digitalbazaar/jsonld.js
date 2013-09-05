@@ -742,7 +742,7 @@ jsonld.normalize = function(input, options, callback) {
   // convert to RDF dataset then do normalization
   var opts = _clone(options);
   delete opts.format;
-  opts.produceGeneralizedRDF = false;
+  opts.produceGeneralizedRdf = false;
   jsonld.toRDF(input, opts, function(err, dataset) {
     if(err) {
       return callback(new JsonLdError(
@@ -827,7 +827,7 @@ jsonld.fromRDF = function(dataset, options, callback) {
  *          [expandContext] a context to expand with.
  *          [format] the format to use to output a string:
  *            'application/nquads' for N-Quads.
- *          [produceGeneralizedRDF] true to output generalized RDF, false
+ *          [produceGeneralizedRdf] true to output generalized RDF, false
  *            to produce only standard RDF (default: false).
  *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
  * @param callback(err, dataset) called once the operation completes.
@@ -3250,7 +3250,7 @@ function _graphToRDF(graph, namer, options) {
         }
 
         // skip blank node predicates unless producing generalized RDF
-        if(predicate.type === 'blank node' && !options.produceGeneralizedRDF) {
+        if(predicate.type === 'blank node' && !options.produceGeneralizedRdf) {
           continue;
         }
 
