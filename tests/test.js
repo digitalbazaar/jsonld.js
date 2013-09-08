@@ -18,7 +18,6 @@ if(_nodejs) {
   var fs = require('fs');
   var path = require('path');
   var jsonld = require('../' + _jsdir + '/jsonld')();
-  require('../' + _jsdir + '/Promise');
   var assert = require('assert');
   var program = require('commander');
   program
@@ -45,7 +44,6 @@ else {
       var argname = arg.substr(2);
       switch(argname) {
       case 'earl':
-      case 'timeout':
         program[argname] = system.args[i + 1];
         ++i;
         break;
@@ -57,8 +55,7 @@ else {
 
   mocha.setup({
     reporter: 'spec',
-    ui: 'bdd',
-    timeout: (parseInt(program.timeout, 10) * 1000) || 2000
+    ui: 'bdd'
   });
 }
 
@@ -254,6 +251,7 @@ function addTest(manifest, test) {
   // get appropriate API and run test
   var api = _nodejs ? jsonld : jsonld.promises();
   it(description, function(done) {
+    this.timeout(5000);
     var testInfo = TEST_TYPES[getJsonLdTestType(test)];
     var fn = testInfo.fn;
     var params = testInfo.params;
@@ -362,9 +360,12 @@ function createTestOptions(opts) {
     var options = {
       documentLoader: createDocumentLoader(test)
     };
+    var httpOptions = ['contentType', 'httpLink', 'httpStatus', 'redirectTo'];
     var testOptions = test.option || {};
     for(var key in testOptions) {
-      options[key] = testOptions[key];
+      if(httpOptions.indexOf(key) === -1) {
+        options[key] = testOptions[key];
+      }
     }
     if(opts) {
       // extend options
@@ -529,22 +530,72 @@ function getEnv() {
 function createDocumentLoader(test) {
   var base = 'http://json-ld.org/test-suite';
   var loader = jsonld.documentLoader;
-  return function(url, callback) {
+  var localLoader = function(url, callback) {
+    // always load remote-doc tests remotely in node
     if(_nodejs && url.indexOf('remote-doc') !== -1) {
       return loader(url, callback);
     }
-    // load test-suite files locally
+
+    // attempt to load locally
     var idx = url.indexOf(base);
     if(idx === 0) {
-      var filename = joinPath(ROOT_MANIFEST_DIR, url.substr(base.length));
-      return callback(null, {
-        contextUrl: null,
-        documentUrl: url,
-        document: readJson(filename)
-      });
+      try {
+        callback(null, loadLocally(url));
+      }
+      catch(ex) {
+        callback(ex);
+      }
+      return;
     }
-    loader(url, callback);
+
+    // load remotely
+    return loader(url, callback);
   };
+
+  return _nodejs ? localLoader : function(url) {
+    return jsonld.promisify(localLoader, url);
+  };
+
+  function loadLocally(url) {
+    var doc = {contextUrl: null, documentUrl: url, document: null};
+    var options = test.option;
+    if(options) {
+      if('redirectTo' in options && parseInt(options.httpStatus, 10) >= 300) {
+        doc.documentUrl = test.manifest.baseIri + options.redirectTo;
+      }
+      else if('httpLink' in options) {
+        var contentType = options.contentType || null;
+        // if url uses .jsonld, override content type (fixes ambiguity issue
+        // where document loader can't tell if it's loading an input doc or a
+        // context and it should only apply content type for the input doc)
+        if(url.indexOf('.jsonld', url.length - 7) !== -1) {
+          contentType = 'application/ld+json';
+        }
+        var linkHeader = options.httpLink;
+        if(Array.isArray(linkHeader)) {
+          linkHeader = linkHeader.join(',');
+        }
+        linkHeader = jsonld.parseLinkHeader(
+          linkHeader)['http://www.w3.org/ns/json-ld#context'];
+        if(linkHeader && contentType !== 'application/ld+json') {
+          if(Array.isArray(linkHeader)) {
+            throw {name: 'multiple context link headers'};
+          }
+          doc.contextUrl = linkHeader.target;
+        }
+      }
+    }
+
+    var filename = joinPath(
+      ROOT_MANIFEST_DIR, doc.documentUrl.substr(base.length));
+    try {
+      doc.document = readJson(filename);
+    }
+    catch(ex) {
+      throw {name: 'loading document failed'};
+    }
+    return doc;
+  }
 }
 
 function EarlReport() {
