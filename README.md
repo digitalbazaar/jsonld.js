@@ -214,7 +214,7 @@ To generate earl reports:
     ./node_modules/.bin/mocha -R list tests/test.js --earl earl-node.jsonld
 
     # generate the earl report for the browser
-    ./node_modules/.bin/phantomjs tests/test.js --timeout 120 --earl earl-browser.jsonld
+    ./node_modules/.bin/phantomjs tests/test.js --earl earl-browser.jsonld
 
 
 [JSON-LD]: http://json-ld.org/
