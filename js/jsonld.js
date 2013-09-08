@@ -5680,8 +5680,7 @@ function _retrieveContextUrls(input, options, callback) {
         }
         var _cycles = _clone(cycles);
         _cycles[url] = true;
-
-        documentLoader(url, function(err, remoteDoc) {
+        var done = function(err, remoteDoc) {
           // short-circuit if there was an error with another URL
           if(error) {
             return;
@@ -5750,7 +5749,11 @@ function _retrieveContextUrls(input, options, callback) {
               finished();
             }
           });
-        });
+        };
+        var promise = documentLoader(url, done);
+        if(promise && 'then' in promise) {
+          promise.then(done.bind(null, null), done);
+        }
       }(queue[i]));
     }
   };
