@@ -267,7 +267,7 @@ jsonld.expand = function(input, options, callback) {
   jsonld.nextTick(function() {
     // if input is a string, attempt to dereference remote document
     if(typeof input === 'string') {
-      return options.documentLoader(input, function(err, remoteDoc) {
+      var done = function(err, remoteDoc) {
         if(err) {
           return callback(err);
         }
@@ -291,7 +291,12 @@ jsonld.expand = function(input, options, callback) {
           }));
         }
         expand(remoteDoc);
-      });
+      };
+      var promise = options.documentLoader(input, done);
+      if(promise && 'then' in promise) {
+        promise.then(done.bind(null, null), done);
+      }
+      return;
     }
     // nothing to load
     expand({contextUrl: null, documentUrl: null, document: input});
@@ -476,7 +481,7 @@ jsonld.frame = function(input, frame, options, callback) {
   jsonld.nextTick(function() {
     // if frame is a string, attempt to dereference remote document
     if(typeof frame === 'string') {
-      return options.documentLoader(frame, function(err, remoteDoc) {
+      var done = function(err, remoteDoc) {
         if(err) {
           return callback(err);
         }
@@ -500,7 +505,12 @@ jsonld.frame = function(input, frame, options, callback) {
           }));
         }
         doFrame(remoteDoc);
-      });
+      };
+      var promise = options.documentLoader(frame, done);
+      if(promise && 'then' in promise) {
+        promise.then(done.bind(null, null), done);
+      }
+      return;
     }
     // nothing to load
     doFrame({contextUrl: null, documentUrl: null, document: frame});
@@ -918,44 +928,12 @@ jsonld.promises = function() {
   var Promise = _nodejs ? require('./Promise').Promise : global.Promise;
   var slice = Array.prototype.slice;
 
-  // converts a node.js async op into a promise w/boxed resolved value(s)
-  function promisify(op) {
-    var args = slice.call(arguments, 1);
-    return new Promise(function(resolver) {
-      op.apply(null, args.concat(function(err, value) {
-        if(err) {
-          resolver.reject(err);
-        }
-        else {
-          resolver.resolve(value);
-        }
-      }));
-    });
-  }
-
-  // converts a load document promise callback to a node-style callback
-  function createDocumentLoader(promise) {
-    return function(url, callback) {
-      promise(url).then(
-        // success
-        function(remoteDocument) {
-          callback(null, remoteDocument);
-        },
-        // failure
-        callback
-      );
-    };
-  }
-
   var api = {};
   api.expand = function(input) {
     if(arguments.length < 1) {
       throw new TypeError('Could not expand, too few arguments.');
     }
     var options = (arguments.length > 1) ? arguments[1] : {};
-    if('documentLoader' in options) {
-      options.documentLoader = createDocumentLoader(options.documentLoader);
-    }
     return promisify.apply(null, [jsonld.expand].concat(slice.call(arguments)));
   };
   api.compact = function(input, ctx) {
@@ -963,9 +941,6 @@ jsonld.promises = function() {
       throw new TypeError('Could not compact, too few arguments.');
     }
     var options = (arguments.length > 2) ? arguments[2] : {};
-    if('documentLoader' in options) {
-      options.documentLoader = createDocumentLoader(options.documentLoader);
-    }
     var compact = function(input, ctx, options, callback) {
       // ensure only one value is returned in callback
       jsonld.compact(input, ctx, options, function(err, compacted) {
@@ -979,9 +954,6 @@ jsonld.promises = function() {
       throw new TypeError('Could not flatten, too few arguments.');
     }
     var options = (arguments.length > 2) ? arguments[2] : {};
-    if('documentLoader' in options) {
-      options.documentLoader = createDocumentLoader(options.documentLoader);
-    }
     return promisify.apply(
       null, [jsonld.flatten].concat(slice.call(arguments)));
   };
@@ -990,9 +962,6 @@ jsonld.promises = function() {
       throw new TypeError('Could not frame, too few arguments.');
     }
     var options = (arguments.length > 2) ? arguments[2] : {};
-    if('documentLoader' in options) {
-      options.documentLoader = createDocumentLoader(options.documentLoader);
-    }
     return promisify.apply(null, [jsonld.frame].concat(slice.call(arguments)));
   };
   api.fromRDF = function(dataset) {
@@ -1007,9 +976,6 @@ jsonld.promises = function() {
       throw new TypeError('Could not convert to RDF, too few arguments.');
     }
     var options = (arguments.length > 1) ? arguments[1] : {};
-    if('documentLoader' in options) {
-      options.documentLoader = createDocumentLoader(options.documentLoader);
-    }
     return promisify.apply(null, [jsonld.toRDF].concat(slice.call(arguments)));
   };
   api.normalize = function(input) {
@@ -1017,13 +983,31 @@ jsonld.promises = function() {
       throw new TypeError('Could not normalize, too few arguments.');
     }
     var options = (arguments.length > 1) ? arguments[1] : {};
-    if('documentLoader' in options) {
-      options.documentLoader = createDocumentLoader(options.documentLoader);
-    }
     return promisify.apply(
       null, [jsonld.normalize].concat(slice.call(arguments)));
   };
   return api;
+};
+
+/**
+ * Converts a node.js async op into a promise w/boxed resolved value(s).
+ *
+ * @param op the operation to convert.
+ *
+ * @return the promise.
+ */
+jsonld.promisify = function(op) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  return new Promise(function(resolver) {
+    op.apply(null, args.concat(function(err, value) {
+      if(err) {
+        resolver.reject(err);
+      }
+      else {
+        resolver.resolve(value);
+      }
+    }));
+  });
 };
 
 /* WebIDL API */
@@ -1233,18 +1217,19 @@ jsonld.cache = {
 jsonld.documentLoaders = {};
 
 /**
- * The built-in jquery document loader.
+ * Creates a built-in jquery document loader.
  *
  * @param $ the jquery instance to use.
  * @param options the options to use:
  *          secure: require all URLs to use HTTPS.
+ *          usePromise: true to use a promises API, false not to.
  *
  * @return the jquery document loader.
  */
-jsonld.documentLoaders['jquery'] = function($, options) {
+jsonld.documentLoaders.jquery = function($, options) {
   options = options || {};
   var cache = new jsonld.DocumentCache();
-  return function(url, callback) {
+  var loader = function(url, callback) {
     if(options.secure && url.indexOf('https') !== 0) {
       return callback(new JsonLdError(
         'URL could not be dereferenced; secure mode is enabled and ' +
@@ -1293,19 +1278,25 @@ jsonld.documentLoaders['jquery'] = function($, options) {
       }
     });
   };
+
+  if(options.usePromise) {
+    return jsonld.promisify(loader);
+  }
+  return loader;
 };
 
 /**
- * The built-in node document loader.
+ * Creates a built-in node document loader.
  *
  * @param options the options to use:
  *          secure: require all URLs to use HTTPS.
  *          maxRedirects: the maximum number of redirects to permit, none by
  *            default.
+ *          usePromise: true to use a promises API, false not to.
  *
  * @return the node document loader.
  */
-jsonld.documentLoaders['node'] = function(options) {
+jsonld.documentLoaders.node = function(options) {
   options = options || {};
   var maxRedirects = ('maxRedirects' in options) ? options.maxRedirects : -1;
   var request = require('request');
@@ -1403,9 +1394,13 @@ jsonld.documentLoaders['node'] = function(options) {
     });
   }
 
-  return function(url, callback) {
+  var loader = function(url, callback) {
     loadDocument(url, [], callback);
   };
+  if(options.usePromise) {
+    return jsonld.promisify(loader);
+  }
+  return loader;
 };
 
 /**
