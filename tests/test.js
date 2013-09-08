@@ -559,18 +559,12 @@ function createDocumentLoader(test) {
   function loadLocally(url) {
     var doc = {contextUrl: null, documentUrl: url, document: null};
     var options = test.option;
-    if(options) {
+    if(options && url === test.base) {
       if('redirectTo' in options && parseInt(options.httpStatus, 10) >= 300) {
         doc.documentUrl = test.manifest.baseIri + options.redirectTo;
       }
       else if('httpLink' in options) {
         var contentType = options.contentType || null;
-        // if url uses .jsonld, override content type (fixes ambiguity issue
-        // where document loader can't tell if it's loading an input doc or a
-        // context and it should only apply content type for the input doc)
-        if(url.indexOf('.jsonld', url.length - 7) !== -1) {
-          contentType = 'application/ld+json';
-        }
         var linkHeader = options.httpLink;
         if(Array.isArray(linkHeader)) {
           linkHeader = linkHeader.join(',');
