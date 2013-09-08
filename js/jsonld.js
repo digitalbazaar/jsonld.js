@@ -919,7 +919,10 @@ jsonld.documentLoader = function(url, callback) {
  * instead.
  */
 jsonld.loadDocument = function(url, callback) {
-  jsonld.documentLoader(url, callback);
+  var promise = jsonld.documentLoader(url, callback);
+  if(promise && 'then' in promise) {
+    promise.then(callback.bind(null, null), callback);
+  }
 };
 
 /* Promises API */
@@ -927,6 +930,7 @@ jsonld.loadDocument = function(url, callback) {
 jsonld.promises = function() {
   var Promise = _nodejs ? require('./Promise').Promise : global.Promise;
   var slice = Array.prototype.slice;
+  var promisify = jsonld.promisify;
 
   var api = {};
   api.expand = function(input) {
@@ -1222,7 +1226,8 @@ jsonld.documentLoaders = {};
  * @param $ the jquery instance to use.
  * @param options the options to use:
  *          secure: require all URLs to use HTTPS.
- *          usePromise: true to use a promises API, false not to.
+ *          usePromise: true to use a promises API, false for a
+ *            callback-continuation-style API; true by default.
  *
  * @return the jquery document loader.
  */
@@ -1279,8 +1284,10 @@ jsonld.documentLoaders.jquery = function($, options) {
     });
   };
 
-  if(options.usePromise) {
-    return jsonld.promisify(loader);
+  if(!('usePromise' in options) || options.usePromise) {
+    return function(url) {
+      return jsonld.promisify(loader, url);
+    };
   }
   return loader;
 };
@@ -1292,7 +1299,8 @@ jsonld.documentLoaders.jquery = function($, options) {
  *          secure: require all URLs to use HTTPS.
  *          maxRedirects: the maximum number of redirects to permit, none by
  *            default.
- *          usePromise: true to use a promises API, false not to.
+ *          usePromise: true to use a promises API, false for a
+ *            callback-continuation-style API; false by default.
  *
  * @return the node document loader.
  */
@@ -1398,7 +1406,9 @@ jsonld.documentLoaders.node = function(options) {
     loadDocument(url, [], callback);
   };
   if(options.usePromise) {
-    return jsonld.promisify(loader);
+    return function(url) {
+      return jsonld.promisify(loader, url);
+    };
   }
   return loader;
 };
@@ -1407,7 +1417,7 @@ jsonld.documentLoaders.node = function(options) {
  * Assigns the default document loader for external document URLs to a built-in
  * default. Supported types currently include: 'jquery' and 'node'.
  *
- * To use the jquery document loader, the 'data' parameter must be a reference
+ * To use the jquery document loader, the first parameter must be a reference
  * to the main jquery object.
  *
  * @param type the type to set.
