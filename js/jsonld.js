@@ -901,17 +901,27 @@ jsonld.relabelBlankNodes = function(input) {
 };
 
 /**
- * The default document loader for external documents.
+ * The default document loader for external documents. If the environment
+ * is node.js, a callback-continuation-style document loader is used; otherwise,
+ * a promises-style document loader is used. *
  *
  * @param url the URL to load.
- * @param callback(err, remoteDoc) called once the operation completes.
+ * @param callback(err, remoteDoc) called once the operation completes,
+ *          if using a non-promises API.
+ *
+ * @return a promise, if using a promises API.
  */
 jsonld.documentLoader = function(url, callback) {
-  return callback(new JsonLdError(
+  var err = new JsonLdError(
     'Could not retrieve a JSON-LD document from the URL. URL derefencing not ' +
     'implemented.', 'jsonld.LoadDocumentError',
-    {code: 'loading document failed'}),
-    {contextUrl: null, documentUrl: url, document: null});
+    {code: 'loading document failed'});
+  if(_nodejs) {
+    return callback(err, {contextUrl: null, documentUrl: url, document: null});
+  }
+  return jsonld.promisify(function(callback) {
+    callback(err);
+  });
 };
 
 /**
@@ -936,14 +946,12 @@ jsonld.promises = function() {
     if(arguments.length < 1) {
       throw new TypeError('Could not expand, too few arguments.');
     }
-    var options = (arguments.length > 1) ? arguments[1] : {};
     return promisify.apply(null, [jsonld.expand].concat(slice.call(arguments)));
   };
   api.compact = function(input, ctx) {
     if(arguments.length < 2) {
       throw new TypeError('Could not compact, too few arguments.');
     }
-    var options = (arguments.length > 2) ? arguments[2] : {};
     var compact = function(input, ctx, options, callback) {
       // ensure only one value is returned in callback
       jsonld.compact(input, ctx, options, function(err, compacted) {
@@ -956,7 +964,6 @@ jsonld.promises = function() {
     if(arguments.length < 1) {
       throw new TypeError('Could not flatten, too few arguments.');
     }
-    var options = (arguments.length > 2) ? arguments[2] : {};
     return promisify.apply(
       null, [jsonld.flatten].concat(slice.call(arguments)));
   };
@@ -964,7 +971,6 @@ jsonld.promises = function() {
     if(arguments.length < 2) {
       throw new TypeError('Could not frame, too few arguments.');
     }
-    var options = (arguments.length > 2) ? arguments[2] : {};
     return promisify.apply(null, [jsonld.frame].concat(slice.call(arguments)));
   };
   api.fromRDF = function(dataset) {
@@ -978,14 +984,12 @@ jsonld.promises = function() {
     if(arguments.length < 1) {
       throw new TypeError('Could not convert to RDF, too few arguments.');
     }
-    var options = (arguments.length > 1) ? arguments[1] : {};
     return promisify.apply(null, [jsonld.toRDF].concat(slice.call(arguments)));
   };
   api.normalize = function(input) {
     if(arguments.length < 1) {
       throw new TypeError('Could not normalize, too few arguments.');
     }
-    var options = (arguments.length > 1) ? arguments[1] : {};
     return promisify.apply(
       null, [jsonld.normalize].concat(slice.call(arguments)));
   };
