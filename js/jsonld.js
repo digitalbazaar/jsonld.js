@@ -928,7 +928,6 @@ jsonld.loadDocument = function(url, callback) {
 /* Promises API */
 
 jsonld.promises = function() {
-  var Promise = _nodejs ? require('./Promise').Promise : global.Promise;
   var slice = Array.prototype.slice;
   var promisify = jsonld.promisify;
 
@@ -1001,6 +1000,7 @@ jsonld.promises = function() {
  * @return the promise.
  */
 jsonld.promisify = function(op) {
+  var Promise = _nodejs ? require('./Promise').Promise : global.Promise;
   var args = Array.prototype.slice.call(arguments, 1);
   return new Promise(function(resolver) {
     op.apply(null, args.concat(function(err, value) {

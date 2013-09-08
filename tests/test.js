@@ -62,8 +62,6 @@ else {
   });
 }
 
-jsonld.documentLoader = createDocumentLoader();
-
 var JSONLD_TEST_SUITE = '../json-ld.org/test-suite';
 var ROOT_MANIFEST_DIR = resolvePath(
   getEnv().JSONLD_TEST_SUITE || JSONLD_TEST_SUITE);
@@ -361,7 +359,9 @@ function readTestNQuads(property) {
 
 function createTestOptions(opts) {
   return function(test) {
-    var options = {};
+    var options = {
+      documentLoader: createDocumentLoader(test)
+    };
     var testOptions = test.option || {};
     for(var key in testOptions) {
       options[key] = testOptions[key];
@@ -453,6 +453,9 @@ function getJsonLdValues(node, property) {
 }
 
 function getJsonLdErrorCode(err) {
+  if(!err) {
+    return null;
+  }
   if(err.details) {
     if(err.details.code) {
       return err.details.code;
@@ -519,9 +522,11 @@ function getEnv() {
 /**
  * Creates a test remote document loader.
  *
+ * @param test the test to use the document loader for.
+ *
  * @return the document loader.
  */
-function createDocumentLoader() {
+function createDocumentLoader(test) {
   var base = 'http://json-ld.org/test-suite';
   var loader = jsonld.documentLoader;
   return function(url, callback) {
