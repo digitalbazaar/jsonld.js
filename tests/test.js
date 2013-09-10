@@ -532,7 +532,7 @@ function createDocumentLoader(test) {
   var loader = jsonld.documentLoader;
   var localLoader = function(url, callback) {
     // always load remote-doc tests remotely in node
-    if(_nodejs && url.indexOf('remote-doc') !== -1) {
+    if(_nodejs && test.manifest.name === 'Remote document') {
       return loader(url, callback);
     }
 
