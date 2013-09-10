@@ -126,7 +126,6 @@ var TEST_TYPES = {
 };
 
 var SKIP_TESTS = [];
-var PHANTOMJS_SKIP_MANIFESTS = ['Remote document'];
 
 // create earl report
 var earl = new EarlReport();
@@ -211,11 +210,6 @@ if(!_nodejs) {
  * @param manifest the manifest.
  */
 function addManifest(manifest) {
-  if(!_nodejs && PHANTOMJS_SKIP_MANIFESTS.indexOf(manifest.name) !== -1) {
-    console.log('Skipping manifest "' + manifest.name + '"');
-    return;
-  }
-
   describe(manifest.name, function() {
     var sequence = getJsonLdValues(manifest, 'sequence');
     for(var i = 0; i < sequence.length; ++i) {
@@ -565,6 +559,9 @@ function createDocumentLoader(test) {
       }
       else if('httpLink' in options) {
         var contentType = options.contentType || null;
+        if(!contentType && url.indexOf('.jsonld', url.length - 7) !== -1) {
+          contentType = 'application/ld+json';
+        }
         var linkHeader = options.httpLink;
         if(Array.isArray(linkHeader)) {
           linkHeader = linkHeader.join(',');
