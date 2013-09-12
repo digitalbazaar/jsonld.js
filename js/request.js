@@ -101,6 +101,7 @@ function _typedParse(loc, type, data, callback) {
       // input is RDFa
       try {
         jsdom.env({
+          url: loc,
           html: data,
           done: function(errors, window) {
             if(errors && errors.length > 0) {
