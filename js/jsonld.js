@@ -5686,7 +5686,7 @@ function _retrieveContextUrls(input, options, callback) {
             return;
           }
 
-          var ctx = remoteDoc.document;
+          var ctx = remoteDoc ? remoteDoc.document : null;
 
           // parse string context as JSON
           if(!err && _isString(ctx)) {
