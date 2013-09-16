@@ -903,7 +903,7 @@ jsonld.relabelBlankNodes = function(input) {
 /**
  * The default document loader for external documents. If the environment
  * is node.js, a callback-continuation-style document loader is used; otherwise,
- * a promises-style document loader is used. *
+ * a promises-style document loader is used.
  *
  * @param url the URL to load.
  * @param callback(err, remoteDoc) called once the operation completes,
@@ -1410,6 +1410,77 @@ jsonld.documentLoaders.node = function(options) {
     loadDocument(url, [], callback);
   };
   if(options.usePromise) {
+    return function(url) {
+      return jsonld.promisify(loader, url);
+    };
+  }
+  return loader;
+};
+
+/**
+ * Creates a built-in XMLHttpRequest document loader.
+ *
+ * @param options the options to use:
+ *          secure: require all URLs to use HTTPS.
+ *          usePromise: true to use a promises API, false for a
+ *            callback-continuation-style API; true by default.
+ *          [xhr]: the XMLHttpRequest API to use.
+ *
+ * @return the XMLHttpRequest document loader.
+ */
+jsonld.documentLoaders.xhr = function(options) {
+  options = options || {};
+  var cache = new jsonld.DocumentCache();
+  var loader = function(url, callback) {
+    if(options.secure && url.indexOf('https') !== 0) {
+      return callback(new JsonLdError(
+        'URL could not be dereferenced; secure mode is enabled and ' +
+        'the URL\'s scheme is not "https".',
+        'jsonld.InvalidUrl', {code: 'loading document failed', url: url}),
+        {contextUrl: null, documentUrl: url, document: null});
+    }
+    var doc = cache.get(url);
+    if(doc !== null) {
+      return callback(null, doc);
+    }
+    var xhr = options.xhr || XMLHttpRequest;
+    var req = new xhr();
+    req.onload = function(e) {
+      var doc = {contextUrl: null, documentUrl: url, document: req.response};
+
+      // handle Link Header
+      var contentType = req.getResponseHeader('Content-Type');
+      var linkHeader = req.getResponseHeader('Link');
+      if(linkHeader && contentType !== 'application/ld+json') {
+        // only 1 related link header permitted
+        linkHeader = jsonld.parseLinkHeader(linkHeader)[LINK_HEADER_REL];
+        if(_isArray(linkHeader)) {
+          return callback(new JsonLdError(
+            'URL could not be dereferenced, it has more than one ' +
+            'associated HTTP Link Header.',
+            'jsonld.InvalidUrl',
+            {code: 'multiple context link headers', url: url}), doc);
+        }
+        if(linkHeader) {
+          doc.contextUrl = linkHeader.target;
+        }
+      }
+
+      cache.set(url, doc);
+      callback(null, doc);
+    };
+    req.onerror = function() {
+      callback(new JsonLdError(
+        'URL could not be dereferenced, an error occurred.',
+        'jsonld.LoadDocumentError',
+        {code: 'loading document failed', url: url}),
+        {contextUrl: null, documentUrl: url, document: null});
+    };
+    req.open('GET', url, true);
+    req.send();
+  };
+
+  if(!('usePromise' in options) || options.usePromise) {
     return function(url) {
       return jsonld.promisify(loader, url);
     };
@@ -6760,9 +6831,13 @@ function _removeDotSegments(path, hasAuthority) {
   return rval + output.join('/');
 }
 
+// use node document loader by default
 if(_nodejs) {
-  // use node document loader by default
   jsonld.useDocumentLoader('node');
+}
+// use xhr document loader by default
+else if(typeof XMLHttpRequest !== 'undefined') {
+  jsonld.useDocumentLoader('xhr');
 }
 
 if(_nodejs) {
