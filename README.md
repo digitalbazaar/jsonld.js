@@ -82,7 +82,7 @@ jsonld.expand(compacted, function(err, expanded) {
 });
 
 // expand using URLs
-jsonld.compact('http://example.org/doc', ...);
+jsonld.expand('http://example.org/doc', ...);
 
 // flatten a document
 // see: http://json-ld.org/spec/latest/json-ld/#flattened-document-form
