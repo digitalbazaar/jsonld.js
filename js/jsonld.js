@@ -3464,12 +3464,14 @@ function _RDFToObject(o, useNativeTypes) {
   var rval = {'@value': o.value};
 
   // add language
-  if('language' in o) {
+  if(o['language']) {
     rval['@language'] = o.language;
   }
-  // add datatype
   else {
     var type = o.datatype;
+    if(!type) {
+      type = XSD_STRING;
+    }
     // use native types for certain xsd types
     if(useNativeTypes) {
       if(type === XSD_BOOLEAN) {
