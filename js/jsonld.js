@@ -1209,7 +1209,7 @@ jsonld.ActiveContextCache.prototype.set = function(
   if(!(key1 in this.cache)) {
     this.cache[key1] = {};
   }
-  this.cache[key1][key2] = result;
+  this.cache[key1][key2] = _clone(result);
 };
 
 /**
