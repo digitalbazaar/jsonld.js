@@ -773,6 +773,7 @@ jsonld.normalize = function(input, options, callback) {
  * @param [options] the options to use:
  *          [format] the format if input is not an array:
  *            'application/nquads' for N-Quads (default).
+ *          [rdfParser] a custom RDF-parser to use to parse the input.
  *          [useRdfType] true to use rdf:type, false to use @type
  *            (default: false).
  *          [useNativeTypes] true to convert XSD types into native types
@@ -813,14 +814,15 @@ jsonld.fromRDF = function(dataset, options, callback) {
     // handle special format
     if(options.format) {
       // check supported formats
-      if(!(options.format in _rdfParsers)) {
+      var rdfParser = options.rdfParser || _rdfParsers[options.format];
+      if(!rdfParser) {
         throw new JsonLdError(
           'Unknown input format.',
           'jsonld.UnknownFormat', {format: options.format});
       }
 
       // rdf parser may be async or sync, always pass callback
-      dataset = _rdfParsers[options.format](dataset, function(err, dataset) {
+      dataset = rdfParser(dataset, function(err, dataset) {
         if(err) {
           return callback(err);
         }
