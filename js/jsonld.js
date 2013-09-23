@@ -812,19 +812,37 @@ jsonld.fromRDF = function(dataset, options, callback) {
   jsonld.nextTick(function() {
     // handle special format
     if(options.format) {
-      // supported formats
-      if(options.format in _rdfParsers) {
-        dataset = _rdfParsers[options.format](dataset);
-      }
-      else {
+      // check supported formats
+      if(!(options.format in _rdfParsers)) {
         throw new JsonLdError(
           'Unknown input format.',
           'jsonld.UnknownFormat', {format: options.format});
       }
+
+      // rdf parser may be async or sync, always pass callback
+      dataset = _rdfParsers[options.format](dataset, function(err, dataset) {
+        if(err) {
+          return callback(err);
+        }
+        fromRDF(dataset, options, callback);
+      });
+      // handle synchronous or promise-based parser
+      if(dataset) {
+        // if dataset is actually a promise
+        if('then' in dataset) {
+          return dataset.then(function(dataset) {
+            fromRDF(dataset, options, callback);
+          }, callback);
+        }
+        // parser is synchronous
+        fromRDF(dataset, options, callback);
+      }
     }
 
-    // convert from RDF
-    new Processor().fromRDF(dataset, options, callback);
+    function fromRDF(dataset, options, callback) {
+      // convert from RDF
+      new Processor().fromRDF(dataset, options, callback);
+    }
   });
 };
 
@@ -1809,11 +1827,24 @@ var _rdfParsers = {};
 
 /**
  * Registers an RDF dataset parser by content-type, for use with
- * jsonld.fromRDF.
+ * jsonld.fromRDF. An RDF dataset parser will always be given two parameters,
+ * a string of input and a callback. An RDF dataset parser can be synchronous
+ * or asynchronous.
+ *
+ * If the parser function returns undefined or null then it will be assumed to
+ * be asynchronous w/a continuation-passing style and the callback parameter
+ * given to the parser MUST be invoked.
+ *
+ * If it returns a Promise, then it will be assumed to be asynchronous, but the
+ * callback parameter MUST NOT be invoked. It should instead be ignored.
+ *
+ * If it returns an RDF dataset, it will be assumed to be synchronous and the
+ * callback parameter MUST NOT be invoked. It should instead be ignored.
  *
  * @param contentType the content-type for the parser.
- * @param parser(input) the parser function (takes a string as a parameter
- *          and returns an RDF dataset).
+ * @param parser(input, callback(err, dataset)) the parser function (takes a
+ *          string as a parameter and either returns null/undefined and uses
+ *          the given callback, returns a Promise, or returns an RDF dataset).
  */
 jsonld.registerRDFParser = function(contentType, parser) {
   _rdfParsers[contentType] = parser;
