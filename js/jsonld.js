@@ -2884,7 +2884,7 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
         nodeMap[o.value] = {'@id': o.value};
       }
 
-      if(p === RDF_TYPE && objectIsId) {
+      if(p === RDF_TYPE && !options.useRdfType && objectIsId) {
         jsonld.addValue(node, '@type', o.value, {propertyIsArray: true});
         continue;
       }
