@@ -211,7 +211,7 @@ Remote context tests are also available:
 To generate earl reports:
 
     # generate the earl report for node.js
-    ./node_modules/.bin/mocha -R list tests/test.js --earl earl-node.jsonld
+    ./node_modules/.bin/mocha -R spec tests/test.js --earl earl-node.jsonld
 
     # generate the earl report for the browser
     ./node_modules/.bin/phantomjs tests/test.js --earl earl-browser.jsonld
