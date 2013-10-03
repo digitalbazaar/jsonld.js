@@ -102,6 +102,28 @@ jsonld.normalize(doc, {format: 'application/nquads'}, function(err, normalized) 
   // that can be used for hashing
 });
 
+// serialize a document to N-Quads (RDF)
+jsonld.toRDF(doc, {format: 'application/nquads'}, function(err, nquads) {
+  // nquads is a string of nquads
+});
+
+// deserialize N-Quads (RDF) to JSON-LD
+jsonld.fromRDF(nquads, {format: 'application/nquads'}, function(err, doc) {
+  // doc is JSON-LD
+});
+
+// register a custom async-callback-based RDF parser
+jsonld.registerRDFParser = function(contentType, function(input, callback) {
+  // parse input to a jsonld.js RDF dataset object...
+  callback(err, dataset);
+});
+
+// register a custom synchronous RDF parser
+jsonld.registerRDFParser = function(contentType, function(input) {
+  // parse input to a jsonld.js RDF dataset object... and return it
+  return dataset;
+});
+
 // use the promises API
 var promises = jsonld.promises();
 
@@ -124,6 +146,20 @@ promise.then(function(framed) {...}, function(err) {...});
 // normalization
 var promise = promises.normalize(doc, {format: 'application/nquads'});
 promise.then(function(normalized) {...}, function(err) {...});
+
+// serialize to RDF
+var promise = promises.toRDF(doc, {format: 'application/nquads'});
+promise.then(function(nquads) {...}, function(err) {...});
+
+// deserialize from RDF
+var promise = promises.fromRDF(nquads, {format: 'application/nquads'});
+promise.then(function(doc) {...}, function(err) {...});
+
+// register a custom promise-based RDF parser
+jsonld.registerRDFParser = function(contentType, function(input) {
+  // parse input into a jsonld.js RDF dataset object...
+  return new Promise(...);
+});
 ```
 
 Using the Command-line Tool
