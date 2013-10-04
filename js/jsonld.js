@@ -1455,6 +1455,7 @@ jsonld.documentLoaders.node = function(options) {
  * @return the XMLHttpRequest document loader.
  */
 jsonld.documentLoaders.xhr = function(options) {
+  var rlink = /(^|(\r\n))link:/i;
   options = options || {};
   var cache = new jsonld.DocumentCache();
   var loader = function(url, callback) {
@@ -1474,9 +1475,12 @@ jsonld.documentLoaders.xhr = function(options) {
     req.onload = function(e) {
       var doc = {contextUrl: null, documentUrl: url, document: req.response};
 
-      // handle Link Header
+      // handle Link Header (avoid unsafe header warning by existence testing)
       var contentType = req.getResponseHeader('Content-Type');
-      var linkHeader = req.getResponseHeader('Link');
+      var linkHeader;
+      if(rlink.test(req.getAllResponseHeaders())) {
+        linkHeader = req.getResponseHeader('Link');
+      }
       if(linkHeader && contentType !== 'application/ld+json') {
         // only 1 related link header permitted
         linkHeader = jsonld.parseLinkHeader(linkHeader)[LINK_HEADER_REL];
