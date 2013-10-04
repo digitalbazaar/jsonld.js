@@ -1251,7 +1251,8 @@ jsonld.documentLoaders = {};
  * @param options the options to use:
  *          secure: require all URLs to use HTTPS.
  *          usePromise: true to use a promises API, false for a
- *            callback-continuation-style API; true by default.
+ *            callback-continuation-style API; defaults to true if Promise
+ *            is globally defined, false if not.
  *
  * @return the jquery document loader.
  */
@@ -1308,7 +1309,11 @@ jsonld.documentLoaders.jquery = function($, options) {
     });
   };
 
-  if(!('usePromise' in options) || options.usePromise) {
+  var usePromise = (typeof Promise !== 'undefined');
+  if('usePromise' in options) {
+    usePromise = options.usePromise;
+  }
+  if(usePromise) {
     return function(url) {
       return jsonld.promisify(loader, url);
     };
@@ -1443,7 +1448,8 @@ jsonld.documentLoaders.node = function(options) {
  * @param options the options to use:
  *          secure: require all URLs to use HTTPS.
  *          usePromise: true to use a promises API, false for a
- *            callback-continuation-style API; true by default.
+ *            callback-continuation-style API; defaults to true if Promise
+ *            is globally defined, false if not.
  *          [xhr]: the XMLHttpRequest API to use.
  *
  * @return the XMLHttpRequest document loader.
@@ -1500,7 +1506,11 @@ jsonld.documentLoaders.xhr = function(options) {
     req.send();
   };
 
-  if(!('usePromise' in options) || options.usePromise) {
+  var usePromise = (typeof Promise !== 'undefined');
+  if('usePromise' in options) {
+    usePromise = options.usePromise;
+  }
+  if(usePromise) {
     return function(url) {
       return jsonld.promisify(loader, url);
     };
@@ -6872,9 +6882,7 @@ if(_nodejs) {
 }
 // use xhr document loader by default
 else if(typeof XMLHttpRequest !== 'undefined') {
-  jsonld.useDocumentLoader('xhr', {
-    usePromise: (typeof Promise !== 'undefined')
-  });
+  jsonld.useDocumentLoader('xhr');
 }
 
 if(_nodejs) {
