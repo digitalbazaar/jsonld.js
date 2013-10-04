@@ -6872,7 +6872,9 @@ if(_nodejs) {
 }
 // use xhr document loader by default
 else if(typeof XMLHttpRequest !== 'undefined') {
-  jsonld.useDocumentLoader('xhr');
+  jsonld.useDocumentLoader('xhr', {
+    usePromise: (typeof Promise !== 'undefined')
+  });
 }
 
 if(_nodejs) {
