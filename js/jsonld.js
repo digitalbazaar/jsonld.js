@@ -5180,11 +5180,12 @@ function _removeBase(base, iri) {
   // remove root from IRI and parse remainder
   var rel = jsonld.url.parse(iri.substr(root.length));
 
-  // remove path segments that match
+  // remove path segments that match (do not remove last segment unless there
+  // is a hash or query)
   var baseSegments = base.normalizedPath.split('/');
   var iriSegments = rel.normalizedPath.split('/');
-
-  while(baseSegments.length > 0 && iriSegments.length > 0) {
+  var last = (rel.hash || rel.query) ? 0 : 1;
+  while(baseSegments.length > 0 && iriSegments.length > last) {
     if(baseSegments[0] !== iriSegments[0]) {
       break;
     }
