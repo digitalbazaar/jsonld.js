@@ -393,6 +393,11 @@ jsonld.flatten = function(input, ctx, options, callback) {
     callback = options;
     options = {};
   }
+  else if(typeof ctx === 'function') {
+    callback = ctx;
+    ctx = null;
+    options = {};
+  }
   options = options || {};
 
   // set default options
