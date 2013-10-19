@@ -37,21 +37,21 @@
           jsonld.compact(function(err, compacted){
             should.exist(err);
             done();
-          })
+          });
         });
         
         it("should FAIL on null context", function(done){
           jsonld.compact(doc, null, function(err, compacted){
             should.exist(err);
             done();
-          })
+          });
         });
         
         it("should WIN with `null` input", function(done){
           jsonld.compact(null, ctx, function(err, compacted){
             should.not.exist(err);
             done();
-          })
+          });
         });
         
         it("should WIN without options", function(done){
@@ -71,5 +71,5 @@
       
       
     });
-  }
+  };
 }).call(this);
