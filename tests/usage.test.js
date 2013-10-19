@@ -38,7 +38,30 @@
         ],
         "http://schema.org/name": [{"@value": "Manu Sporny"}],
         "http://schema.org/url": [{"@id": "http://manu.sporny.org/"}]
-      }]
+      }],
+      flattened: {
+        no_ctx: [
+          {
+            "@id": "_:b0",
+            "http://schema.org/image": [
+              {"@id": "http://manu.sporny.org/images/manu.png"}
+            ],
+            "http://schema.org/name": [{"@value": "Manu Sporny"}],
+            "http://schema.org/url": [{"@id": "http://manu.sporny.org/"}]
+          }
+        ],
+        ctx: {
+          "@context": ctx,
+          "@graph": [
+            {
+              "@id": "_:b0",
+              "image": "http://manu.sporny.org/images/manu.png",
+              "name": "Manu Sporny",
+              "homepage": "http://manu.sporny.org/"
+            }
+          ]
+        }
+      }
     },
     cb = {
       error: function(done){
@@ -49,6 +72,7 @@
       },
       deep: function(expected, done){
         return function(err, actual){
+          //console.log(JSON.stringify(actual, null, 2));
           assert.deepEqual(actual, expected);
           done();
         };
@@ -56,7 +80,7 @@
     };
 
   module.exports = function(jsonld){
-    describe("API", function(){
+    describe("Callback API", function(){
 
       describe("jsonld.compact", function(){
         it("should FAIL on 1 parameter", function(done){
@@ -94,9 +118,28 @@
         });
       });
 
-      describe("jsonld.flatten", function(){});
+      describe("jsonld.flatten", function(){
+        it("should FAIL on 1 parameter", function(done){
+          jsonld.flatten(cb.error(done));
+        });
+
+        it("should WIN without context", function(done){
+          jsonld.flatten(doc, cb.deep(output.flattened.no_ctx, done));
+        });
+
+        it("should WIN without options", function(done){
+          jsonld.flatten(doc, ctx, cb.deep(output.flattened.ctx, done));
+        });
+
+        it("should WIN with degenerate optons", function(done){
+          jsonld.flatten(doc, ctx, {}, cb.deep(output.flattened.ctx, done));
+        });
+
+      });
 
       describe("jsonld.frame", function(){});
+
+      describe("jsonld.objectify", function(){});
 
       describe("jsonld.normalize", function(){});
 
