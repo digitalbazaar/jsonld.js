@@ -1,4 +1,3 @@
-/* jshint trailing:false */
 /**
  * Tests for API parameter usage for JSON-LD.
  *
@@ -36,21 +35,21 @@
 
       describe("jsonld.compact", function(){
         it("should FAIL on 1 parameter", function(done){
-          jsonld.compact(function(err, compacted){
+          jsonld.compact(function(err){
             should.exist(err);
             done();
           });
         });
 
         it("should FAIL on null context", function(done){
-          jsonld.compact(doc, null, function(err, compacted){
+          jsonld.compact(doc, null, function(err){
             should.exist(err);
             done();
           });
         });
 
         it("should WIN with `null` input", function(done){
-          jsonld.compact(null, ctx, function(err, compacted){
+          jsonld.compact(null, ctx, function(err){
             should.not.exist(err);
             done();
           });
@@ -76,7 +75,7 @@
       describe("jsonld.frame", function(){});
       describe("jsonld.normalize", function(){});
       describe("jsonld.toRDF", function(){});
-      describe("jsonld.registerRDFParser", function(){})
+      describe("jsonld.registerRDFParser", function(){});
     });
   };
 }).call(this);
