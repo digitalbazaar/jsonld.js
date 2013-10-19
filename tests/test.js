@@ -132,6 +132,8 @@ var earl = new EarlReport();
 
 // run tests
 describe('JSON-LD', function() {
+  require('./usage.test.js')(jsonld);
+
   if(!program['webidl-only']) {
     var filename = joinPath(ROOT_MANIFEST_DIR, 'manifest.jsonld');
     var rootManifest = readJson(filename);
@@ -197,6 +199,7 @@ describe('JSON-LD', function() {
     });
   }
 });
+
 
 if(!_nodejs) {
   mocha.run(function() {
