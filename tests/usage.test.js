@@ -77,6 +77,28 @@
           done();
         };
       }
+    },
+    throw_done = function(func, args, done){
+      var err;
+      try{
+        func.apply(null, args);
+      }catch(e){
+        err = e;
+      }
+      should.exist(err);
+      done();
+    },
+    noop = function(){},
+    pcb = {
+      error: function(done){
+        return function(err){ should.exist(err); done(); };
+      },
+      deep: function(expected, done){
+        return function(actual){
+          assert.deepEqual(actual, expected);
+          done();
+        };
+      }
     };
 
   module.exports = function(jsonld){
@@ -145,8 +167,39 @@
 
       describe("jsonld.toRDF", function(){});
 
+      describe("jsonld.fromRDF", function(){});
+
       describe("jsonld.registerRDFParser", function(){});
 
-    }); // describe("API")
+    }); // Callback API
+
+    describe("Promise API", function(){
+      var promises = jsonld.promises();
+
+      describe("jsonld.promise.compact", function(){
+        it("should FAIL with just doc", function(done){
+          throw_done(promises.compact, [doc], done);
+        });
+
+        it("should WIN with doc and context", function(done){
+          promises.compact(doc, ctx)
+            .then(pcb.deep(output.compacted, done), noop);
+        });
+      });
+
+      describe("jsonld.promise.expand", function(){});
+
+      describe("jsonld.promise.flatten", function(){});
+
+      describe("jsonld.promise.frame", function(){});
+
+      describe("jsonld.promise.normalize", function(){});
+
+      describe("jsonld.promise.fromRDF", function(){});
+
+      describe("jsonld.promise.toRDF", function(){});
+
+    }); // Promise API
+
   }; // module.exports
 }).call(this);
