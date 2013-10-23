@@ -61,7 +61,52 @@
             }
           ]
         }
-      }
+      },
+      framed: {
+        "@graph": [{
+          "@id": "_:b0",
+          "http://schema.org/image": {
+            "@id": "http://manu.sporny.org/images/manu.png"
+          },
+          "http://schema.org/name": "Manu Sporny",
+          "http://schema.org/url": {
+            "@id": "http://manu.sporny.org/"
+          }
+        }, {
+          "@id": "http://manu.sporny.org/"
+        }, {
+          "@id": "http://manu.sporny.org/images/manu.png"
+        }]
+      },
+      normalized: {
+        native: {
+          "@default": [
+            {"subject": {"type": "blank node", "value": "_:c14n0"},
+              "predicate": {"type": "IRI", "value": "http://schema.org/image"},
+              "object": {"type": "IRI",
+                "value": "http://manu.sporny.org/images/manu.png"
+              }
+            },
+            {"subject": {"type": "blank node", "value": "_:c14n0"},
+              "predicate": {"type": "IRI", "value": "http://schema.org/name"},
+              "object": {
+                "type": "literal",
+                "datatype": "http://www.w3.org/2001/XMLSchema#string",
+                "value": "Manu Sporny"
+              }
+            },
+            {"subject": {"type": "blank node", "value": "_:c14n0"},
+              "predicate": {"type": "IRI", "value": "http://schema.org/url"},
+              "object": {"type": "IRI", "value": "http://manu.sporny.org/"}
+            }
+          ]
+        },
+      nquads: [
+        '_:c14n0 <http://schema.org/image> <http://manu.sporny.org/images/manu.png> .',
+        '_:c14n0 <http://schema.org/name> "Manu Sporny" .',
+        '_:c14n0 <http://schema.org/url> <http://manu.sporny.org/> .',
+        ''
+      ].join("\n")}
     },
     cb = {
       error: function(done){
@@ -69,6 +114,12 @@
       },
       no_error: function(done){
         return function(err){ should.not.exist(err); done(); };
+      },
+      equal: function(expected, done){
+        return function(err, actual){
+          actual.should.equal(expected);
+          done();
+        };
       },
       deep: function(expected, done){
         return function(err, actual){
@@ -159,11 +210,38 @@
 
       });
 
-      describe("jsonld.frame", function(){});
+      describe("jsonld.frame", function(){
+        it("should FAIL on 1 parameter", function(done){
+          jsonld.frame(cb.error(done));
+        });
+        it("should FAIL without frame", function(done){
+          jsonld.frame(doc, cb.error(done));
+        });
+        it("should WIN without options parameters", function(done){
+          jsonld.frame(doc, {}, cb.deep(output.framed, done));
+        });
+        it("should WIN with degenerate options", function(done){
+          jsonld.frame(doc, {}, {}, cb.deep(output.framed, done));
+        });
+      });
 
       describe("jsonld.objectify", function(){});
 
-      describe("jsonld.normalize", function(){});
+      describe("jsonld.normalize", function(){
+        it("should FAIL on 1 parameter", function(done){
+          jsonld.normalize(cb.error(done));
+        });
+        it("should WIN without options parameters", function(done){
+          jsonld.normalize(doc, cb.deep(output.normalized.native, done));
+        });
+        it("should WIN with degenerate options", function(done){
+          jsonld.normalize(doc, {}, cb.deep(output.normalized.native, done));
+        });
+        it("should WIN as nquads", function(done){
+          jsonld.normalize(doc,  {format: "application/nquads"},
+            cb.equal(output.normalized.nquads, done));
+        });
+      });
 
       describe("jsonld.toRDF", function(){});
 
