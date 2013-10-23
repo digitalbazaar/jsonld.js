@@ -81,13 +81,15 @@
       normalized: {
         native: {
           "@default": [
-            {"subject": {"type": "blank node", "value": "_:c14n0"},
+            {
+              "subject": {"type": "blank node", "value": "_:c14n0"},
               "predicate": {"type": "IRI", "value": "http://schema.org/image"},
               "object": {"type": "IRI",
                 "value": "http://manu.sporny.org/images/manu.png"
               }
             },
-            {"subject": {"type": "blank node", "value": "_:c14n0"},
+            {
+              "subject": {"type": "blank node", "value": "_:c14n0"},
               "predicate": {"type": "IRI", "value": "http://schema.org/name"},
               "object": {
                 "type": "literal",
@@ -95,18 +97,20 @@
                 "value": "Manu Sporny"
               }
             },
-            {"subject": {"type": "blank node", "value": "_:c14n0"},
+            {
+              "subject": {"type": "blank node", "value": "_:c14n0"},
               "predicate": {"type": "IRI", "value": "http://schema.org/url"},
               "object": {"type": "IRI", "value": "http://manu.sporny.org/"}
             }
           ]
         },
-      nquads: [
-        '_:c14n0 <http://schema.org/image> <http://manu.sporny.org/images/manu.png> .',
-        '_:c14n0 <http://schema.org/name> "Manu Sporny" .',
-        '_:c14n0 <http://schema.org/url> <http://manu.sporny.org/> .',
-        ''
-      ].join("\n")}
+        nquads: [
+          '_:c14n0 <http://schema.org/image> <http://manu.sporny.org/images/manu.png> .',
+          '_:c14n0 <http://schema.org/name> "Manu Sporny" .',
+          '_:c14n0 <http://schema.org/url> <http://manu.sporny.org/> .',
+          ''
+        ].join("\n")
+      }
     },
     cb = {
       error: function(done){
