@@ -302,7 +302,7 @@
           jsonld.fromRDF(output.toRDFed.native, cb.deep(doc, done));
         });
         it("should WIN as nquads", function(done){
-          jsonld.fromRDF(output.normalized.nquads, 
+          jsonld.fromRDF(output.normalized.nquads,
             {format: "application/nquads"},
             cb.deep(output.fromRDFed, done));
         });
