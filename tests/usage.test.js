@@ -94,7 +94,7 @@
               "object": {
                 "type": "literal",
                 "datatype": "http://www.w3.org/2001/XMLSchema#string",
-                "value": "Manu Sporny"
+                "value": "Manu Sporny",
               }
             },
             {
@@ -110,6 +110,33 @@
           '_:c14n0 <http://schema.org/url> <http://manu.sporny.org/> .',
           ''
         ].join("\n")
+      },
+      toRDFed: {
+        native: {
+          "@default": [
+            {
+              "subject": {"type": "blank node", "value": "_:b0"},
+              "predicate": {"type": "IRI", "value": "http://schema.org/image"},
+              "object": {"type": "IRI",
+                "value": "http://manu.sporny.org/images/manu.png"
+              }
+            },
+            {
+              "subject": {"type": "blank node", "value": "_:b0"},
+              "predicate": {"type": "IRI", "value": "http://schema.org/name"},
+              "object": {
+                "type": "literal",
+                "value": "Manu Sporny",
+                "datatype": "http://www.w3.org/2001/XMLSchema#string"
+              }
+            },
+            {
+              "subject": {"type": "blank node", "value": "_:b0"},
+              "predicate": {"type": "IRI", "value": "http://schema.org/url"},
+              "object": {"type": "IRI", "value": "http://manu.sporny.org/"}
+            }
+          ]
+        }
       }
     },
     cb = {
@@ -247,7 +274,17 @@
         });
       });
 
-      describe("jsonld.toRDF", function(){});
+      describe("jsonld.toRDF", function(){
+        it("should FAIL on 1 parameter", function(done){
+          jsonld.toRDF(cb.error(done));
+        });
+        it("should WIN without options parameters", function(done){
+          jsonld.toRDF(doc, cb.deep(output.toRDFed.native, done));
+        });
+        it("should WIN with degenerate parameters", function(done){
+          jsonld.toRDF(doc, {}, cb.deep(output.toRDFed.native, done));
+        });
+      });
 
       describe("jsonld.fromRDF", function(){});
 
