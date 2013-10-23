@@ -137,7 +137,15 @@
             }
           ]
         }
-      }
+      },
+      fromRDFed: [{
+        "@id": "_:c14n0",
+        "http://schema.org/image": [{
+          "@id": "http://manu.sporny.org/images/manu.png"
+        }],
+        "http://schema.org/name": [{"@value": "Manu Sporny"}],
+        "http://schema.org/url": [{"@id": "http://manu.sporny.org/"}]
+      }]
     },
     cb = {
       error: function(done){
@@ -286,9 +294,19 @@
         });
       });
 
-      describe("jsonld.fromRDF", function(){});
-
-      describe("jsonld.registerRDFParser", function(){});
+      describe("jsonld.fromRDF", function(){
+        it("should FAIL on 1 parameter", function(done){
+          jsonld.fromRDF(cb.error(done));
+        });
+        it("should WIN without options parameters", function(done){
+          jsonld.fromRDF(output.toRDFed.native, cb.deep(doc, done));
+        });
+        it("should WIN as nquads", function(done){
+          jsonld.fromRDF(output.normalized.nquads, 
+            {format: "application/nquads"},
+            cb.deep(output.fromRDFed, done));
+        });
+      });
 
     }); // Callback API
 
