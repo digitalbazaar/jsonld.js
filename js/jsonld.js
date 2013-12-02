@@ -147,9 +147,10 @@ jsonld.compact = function(input, ctx, options, callback) {
           'jsonld.CompactError', {cause: err}));
       }
 
+      var compacted;
       try {
         // do compaction
-        var compacted = new Processor().compact(
+        compacted = new Processor().compact(
           activeCtx, null, expanded, options);
       }
       catch(ex) {
@@ -326,6 +327,7 @@ jsonld.expand = function(input, options, callback) {
         return callback(err);
       }
 
+      var expanded;
       try {
         var processor = new Processor();
         var activeCtx = _getInitialContext(options);
@@ -345,7 +347,7 @@ jsonld.expand = function(input, options, callback) {
         }
 
         // expand document
-        var expanded = processor.expand(
+        expanded = processor.expand(
           activeCtx, null, document, options, false);
 
         // optimize away @graph with no other properties
@@ -416,9 +418,10 @@ jsonld.flatten = function(input, ctx, options, callback) {
         'jsonld.FlattenError', {cause: err}));
     }
 
+    var flattened;
     try {
       // do flattening
-      var flattened = new Processor().flatten(_input);
+      flattened = new Processor().flatten(_input);
     }
     catch(ex) {
       return callback(ex);
@@ -524,14 +527,15 @@ jsonld.frame = function(input, frame, options, callback) {
   function doFrame(remoteFrame) {
     // preserve frame context and add any Link header context
     var frame = remoteFrame.document;
+    var ctx;
     if(frame) {
-      var ctx = frame['@context'] || {};
+      ctx = frame['@context'] || {};
       if(remoteFrame.contextUrl) {
         if(!ctx) {
           ctx = remoteFrame.contextUrl;
         }
         else if(_isArray(ctx)) {
-          ctx.push[remoteFrame.contextUrl];
+          ctx.push(remoteFrame.contextUrl);
         }
         else {
           ctx = [ctx, remoteFrame.contextUrl];
@@ -562,9 +566,10 @@ jsonld.frame = function(input, frame, options, callback) {
             'jsonld.FrameError', {cause: err}));
         }
 
+        var framed;
         try {
           // do framing
-          var framed = new Processor().frame(expanded, expandedFrame, opts);
+          framed = new Processor().frame(expanded, expandedFrame, opts);
         }
         catch(ex) {
           return callback(ex);
@@ -625,9 +630,10 @@ jsonld.objectify = function(input, ctx, options, callback) {
         'jsonld.FrameError', {cause: err}));
     }
 
+    var flattened;
     try {
       // flatten the graph
-      var flattened = new Processor().flatten(_input);
+      flattened = new Processor().flatten(_input);
     }
     catch(ex) {
       return callback(ex);
@@ -897,9 +903,10 @@ jsonld.toRDF = function(input, options, callback) {
         'jsonld.RdfError', {cause: err}));
     }
 
+    var dataset;
     try {
       // output RDF dataset
-      var dataset = Processor.prototype.toRDF(expanded, options);
+      dataset = Processor.prototype.toRDF(expanded, options);
       if(options.format) {
         if(options.format === 'application/nquads') {
           return callback(null, _toNQuads(dataset));
@@ -6275,7 +6282,7 @@ function UniqueNamer(prefix) {
   this.prefix = prefix;
   this.counter = 0;
   this.existing = {};
-};
+}
 
 /**
  * Copies this UniqueNamer.
@@ -6767,7 +6774,7 @@ if(!XMLSerializer) {
 
 var _defineXMLSerializer = function() {
   XMLSerializer = require('xmldom').XMLSerializer;
-}
+};
 
 } // end _defineXMLSerializer
 

@@ -8,6 +8,8 @@
  * All rights reserved.
  */
 
+(function() {
+
 'use strict';
 
 var fs = require('fs');
@@ -294,9 +296,9 @@ function _request(loc, options, callback) {
           return _parse(loc, null, body, function(err, data) {
             if(err) {
               // failed to parse, just use raw body
-              data = body
+              data = body;
             }
-            msg.body = data
+            msg.body = data;
             callback(msg);
           });
         }
@@ -332,3 +334,5 @@ function _request(loc, options, callback) {
 }
 
 module.exports = _request;
+
+}());
