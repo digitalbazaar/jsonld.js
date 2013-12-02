@@ -6332,7 +6332,7 @@ UniqueNamer.prototype.isNamed = function(oldName) {
  *
  * @param list the array of elements to iterate over.
  */
-Permutator = function(list) {
+var Permutator = function(list) {
   // original array
   this.list = list.sort();
   // indicates whether there are more permutations
@@ -6765,7 +6765,7 @@ _sha1.update = function(s, w, input) {
 
 if(!XMLSerializer) {
 
-function _defineXMLSerializer() {
+var _defineXMLSerializer = function() {
   XMLSerializer = require('xmldom').XMLSerializer;
 }
 
