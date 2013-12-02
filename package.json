@@ -56,6 +56,8 @@
   "scripts": {
     "test-node": "mocha -R spec tests/test.js",
     "test-browser": "phantomjs tests/test.js",
-    "test": "mocha -R spec tests/test.js; phantomjs tests/test.js"
+    "test": "npm run test-node; npm run test-browser",
+    "lint": "jshint js/jsonld.js js/request.js tests/*.js",
+    "coverage": "make test-cov"
   }
 }
