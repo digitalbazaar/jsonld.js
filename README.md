@@ -8,16 +8,16 @@ jsonld.js
 Introduction
 ------------
 
-JSON, as specified in RFC4627, is a simple language for representing
+JSON, as specified in [RFC4627][], is a simple language for representing
 objects on the Web. Linked Data is a way of describing content across
 different documents or Web sites. Web resources are described using
 IRIs, and typically are dereferencable entities that may be used to find
-more information, creating a "Web of Knowledge". JSON-LD is intended to
-be a simple publishing method for expressing not only Linked Data in
+more information, creating a "Web of Knowledge". [JSON-LD][] is intended
+to be a simple publishing method for expressing not only Linked Data in
 JSON, but for adding semantics to existing JSON.
 
-This library is an implementation of the [JSON-LD] specification
-in JavaScript.
+This library is an implementation of the [JSON-LD][] specification in
+JavaScript.
 
 JSON-LD is designed as a light-weight syntax that can be used to express
 Linked Data. It is primarily intended to be a way to express Linked Data
@@ -26,9 +26,9 @@ useful when building interoperable Web Services and when storing Linked
 Data in JSON-based document storage engines. It is practical and
 designed to be as simple as possible, utilizing the large number of JSON
 parsers and existing code that is in use today. It is designed to be
-able to express key-value pairs, RDF data, RDFa [RDFA-CORE] data,
-Microformats [MICROFORMATS] data, and Microdata [MICRODATA]. That is, it
-supports every major Web-based structured data model in use today.
+able to express key-value pairs, RDF data, [RDFa][] data,
+[Microformats][] data, and [Microdata][]. That is, it supports every
+major Web-based structured data model in use today.
 
 The syntax does not require many applications to change their JSON, but
 easily add meaning by adding context in a way that is either in-band or
@@ -255,4 +255,8 @@ To generate earl reports:
 
 [JSON-LD]: http://json-ld.org/
 [json-ld.org]: https://github.com/json-ld/json-ld.org
+[RDFa]: http://www.w3.org/TR/rdfa-core/
+[Microdata]: http://www.w3.org/TR/microdata/
+[Microformats]: http://microformats.org/
+[RFC4627]: http://www.ietf.org/rfc/rfc4627.txt
 
