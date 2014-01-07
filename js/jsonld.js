@@ -3146,7 +3146,9 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
           'jsonld.SyntaxError', {code: 'invalid base IRI', context: ctx});
       }
 
-      base = jsonld.url.parse(base || '');
+      if(base !== null) {
+        base = jsonld.url.parse(base || '');
+      }
       rval['@base'] = base;
       defined['@base'] = true;
     }
@@ -5103,6 +5105,10 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
  * @return the absolute IRI.
  */
 function _prependBase(base, iri) {
+  // skip IRI processing
+  if(base === null) {
+    return iri;
+  }
   // already an absolute IRI
   if(iri.indexOf(':') !== -1) {
     return iri;
@@ -5174,6 +5180,11 @@ function _prependBase(base, iri) {
  * @return the relative IRI if relative to base, otherwise the absolute IRI.
  */
 function _removeBase(base, iri) {
+  // skip IRI processing
+  if(base === null) {
+    return iri;
+  }
+
   if(_isString(base)) {
     base = jsonld.url.parse(base || '');
   }
