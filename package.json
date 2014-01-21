@@ -48,7 +48,8 @@
     "Linked Data",
     "JSON-LD",
     "RDF",
-    "Semantic Web"
+    "Semantic Web",
+    "jsonld"
   ],
   "bin": {
     "jsonld": "./bin/jsonld"
