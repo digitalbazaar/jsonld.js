@@ -782,9 +782,9 @@ jsonld.normalize = function(input, options, callback) {
  * @param dataset a serialized string of RDF in a format specified by the
  *          format option or an RDF dataset to convert.
  * @param [options] the options to use:
- *          [format] the format if input is not an array:
+ *          [format] the format if dataset param must first be parsed:
  *            'application/nquads' for N-Quads (default).
- *          [rdfParser] a custom RDF-parser to use to parse the input.
+ *          [rdfParser] a custom RDF-parser to use to parse the dataset.
  *          [useRdfType] true to use rdf:type, false to use @type
  *            (default: false).
  *          [useNativeTypes] true to convert XSD types into native types
@@ -823,33 +823,40 @@ jsonld.fromRDF = function(dataset, options, callback) {
 
   jsonld.nextTick(function() {
     // handle special format
+    var rdfParser;
     if(options.format) {
       // check supported formats
-      var rdfParser = options.rdfParser || _rdfParsers[options.format];
+      rdfParser = options.rdfParser || _rdfParsers[options.format];
       if(!rdfParser) {
         throw new JsonLdError(
           'Unknown input format.',
           'jsonld.UnknownFormat', {format: options.format});
       }
+    }
+    else {
+      // no-op parser, assume dataset already parsed
+      rdfParser = function() {
+        return dataset;
+      };
+    }
 
-      // rdf parser may be async or sync, always pass callback
-      dataset = rdfParser(dataset, function(err, dataset) {
-        if(err) {
-          return callback(err);
-        }
-        fromRDF(dataset, options, callback);
-      });
-      // handle synchronous or promise-based parser
-      if(dataset) {
-        // if dataset is actually a promise
-        if('then' in dataset) {
-          return dataset.then(function(dataset) {
-            fromRDF(dataset, options, callback);
-          }, callback);
-        }
-        // parser is synchronous
-        fromRDF(dataset, options, callback);
+    // rdf parser may be async or sync, always pass callback
+    dataset = rdfParser(dataset, function(err, dataset) {
+      if(err) {
+        return callback(err);
       }
+      fromRDF(dataset, options, callback);
+    });
+    // handle synchronous or promise-based parser
+    if(dataset) {
+      // if dataset is actually a promise
+      if('then' in dataset) {
+        return dataset.then(function(dataset) {
+          fromRDF(dataset, options, callback);
+        }, callback);
+      }
+      // parser is synchronous
+      fromRDF(dataset, options, callback);
     }
 
     function fromRDF(dataset, options, callback) {
