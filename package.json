@@ -31,7 +31,8 @@
     "jsdom": "~0.7.0",
     "pkginfo": "~0.3.0",
     "request": "~2.22.0",
-    "xmldom": "0.1.16"
+    "xmldom": "0.1.16",
+    "through": "~2.3.4"
   },
   "devDependencies": {
     "chai": "~1.7.0",
@@ -60,5 +61,18 @@
     "test": "npm run test-node; npm run test-browser",
     "lint": "jshint js/jsonld.js js/request.js tests/*.js",
     "coverage": "make test-cov"
+  },
+  "browser": {
+    "./js/request.js": "./browser/ignore.js",
+    "xmldom": "./browser/ignore.js",
+    "util": "./browser/ignore.js",
+    "crypto": "./browser/ignore.js",
+    "url": "./browser/ignore.js",
+    "http": "./browser/ignore.js"
+  },
+  "browserify": {
+    "transform": [
+      "./jsonldify.js"
+    ]
   }
 }
