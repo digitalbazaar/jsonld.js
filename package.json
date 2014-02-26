@@ -64,6 +64,7 @@
   },
   "browser": {
     "./js/request.js": "./browser/ignore.js",
+    "request": "./browser/ignore.js",
     "xmldom": "./browser/ignore.js",
     "util": "./browser/ignore.js",
     "crypto": "./browser/ignore.js",
