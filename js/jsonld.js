@@ -1120,8 +1120,7 @@ if(_browser && typeof global.JsonLdProcessor === 'undefined') {
 // define setImmediate and nextTick
 if(typeof process === 'undefined' || !process.nextTick) {
   if(typeof setImmediate === 'function') {
-    jsonld.setImmediate = setImmediate;
-    jsonld.nextTick = function(callback) {
+    jsonld.setImmediate = jsonld.nextTick = function(callback) {
       return setImmediate(callback);
     };
   }
