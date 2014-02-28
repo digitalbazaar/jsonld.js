@@ -32,8 +32,7 @@ else {
   var _jsdir = getEnv().JSDIR || 'js';
   require('../' + _jsdir + '/jsonld');
   jsonld = jsonldjs;
-  require('../' + _jsdir + '/Promise');
-  window.Promise = window.DomPromise;
+  window.Promise = require('es6-promise').Promise;
   var assert = require('chai').assert;
   require('mocha/mocha');
   require('mocha-phantomjs/lib/mocha-phantomjs/core_extensions');
