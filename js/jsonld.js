@@ -1379,6 +1379,9 @@ jsonld.documentLoaders.node = function(options) {
     }
     request({
       url: url,
+      headers: {
+        'Accept': 'application/ld+json, application/json'
+      },
       strictSSL: true,
       followRedirect: false
     }, function(err, res, body) {
@@ -1533,6 +1536,8 @@ jsonld.documentLoaders.xhr = function(options) {
         {contextUrl: null, documentUrl: url, document: null});
     };
     req.open('GET', url, true);
+    req.setRequestHeader('Accept', 'application/ld+json, application/json');
+    req.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
     req.send();
   };
 
