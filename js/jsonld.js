@@ -1044,7 +1044,7 @@ jsonld.promises = function() {
  */
 jsonld.promisify = function(op) {
   try {
-    var Promise = global.Promise || require('./Promise').Promise;
+    var Promise = global.Promise || require('es6-promise').Promise;
   }
   catch(e) {
     throw new Error('Unable to find a Promise implementation.');
