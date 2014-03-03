@@ -1502,6 +1502,16 @@ jsonld.documentLoaders.xhr = function(options) {
     var xhr = options.xhr || XMLHttpRequest;
     var req = new xhr();
     req.onload = function(e) {
+      if(req.status >= 400) {
+        return callback(new JsonLdError(
+          'URL could not be dereferenced: ' + req.statusText,
+          'jsonld.LoadDocumentError', {
+            code: 'loading document failed',
+            url: url,
+            httpStatusCode: req.status
+          }), {contextUrl: null, documentUrl: url, document: null});
+      }
+
       var doc = {contextUrl: null, documentUrl: url, document: req.response};
 
       // handle Link Header (avoid unsafe header warning by existence testing)
