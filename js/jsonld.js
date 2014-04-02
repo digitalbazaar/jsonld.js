@@ -830,7 +830,7 @@ jsonld.fromRDF = function(dataset, options, callback) {
       // check supported formats
       rdfParser = options.rdfParser || _rdfParsers[options.format];
       if(!rdfParser) {
-        return callback(JsonLdError(
+        return callback(new JsonLdError(
           'Unknown input format.',
           'jsonld.UnknownFormat', {format: options.format}));
       }
