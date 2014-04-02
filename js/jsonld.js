@@ -792,7 +792,6 @@ jsonld.normalize = function(input, options, callback) {
  *            (default: false).
  *          [useNativeTypes] true to convert XSD types into native types
  *            (boolean, integer, double), false not to (default: false).
- *
  * @param callback(err, output) called once the operation completes.
  */
 jsonld.fromRDF = function(dataset, options, callback) {
@@ -831,9 +830,9 @@ jsonld.fromRDF = function(dataset, options, callback) {
       // check supported formats
       rdfParser = options.rdfParser || _rdfParsers[options.format];
       if(!rdfParser) {
-        throw new JsonLdError(
+        return callback(JsonLdError(
           'Unknown input format.',
-          'jsonld.UnknownFormat', {format: options.format});
+          'jsonld.UnknownFormat', {format: options.format}));
       }
     }
     else {
