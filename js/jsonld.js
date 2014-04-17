@@ -1299,7 +1299,7 @@ jsonld.documentLoaders.jquery = function($, options) {
     $.ajax({
       url: url,
       accepts: {
-        json: 'application/ld+json'
+        json: 'application/ld+json, application/json'
       },
       dataType: 'json',
       crossDomain: true,
