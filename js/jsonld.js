@@ -285,7 +285,7 @@ jsonld.expand = function(input, options, callback) {
         catch(ex) {
           return callback(new JsonLdError(
             'Could not retrieve a JSON-LD document from the URL. URL ' +
-            'derefencing not implemented.', 'jsonld.LoadDocumentError', {
+            'dereferencing not implemented.', 'jsonld.LoadDocumentError', {
               code: 'loading document failed',
               cause: ex,
               remoteDoc: remoteDoc
@@ -506,7 +506,7 @@ jsonld.frame = function(input, frame, options, callback) {
         catch(ex) {
           return callback(new JsonLdError(
             'Could not retrieve a JSON-LD document from the URL. URL ' +
-            'derefencing not implemented.', 'jsonld.LoadDocumentError', {
+            'dereferencing not implemented.', 'jsonld.LoadDocumentError', {
               code: 'loading document failed',
               cause: ex,
               remoteDoc: remoteDoc
@@ -954,8 +954,8 @@ jsonld.relabelBlankNodes = function(input) {
  */
 jsonld.documentLoader = function(url, callback) {
   var err = new JsonLdError(
-    'Could not retrieve a JSON-LD document from the URL. URL derefencing not ' +
-    'implemented.', 'jsonld.LoadDocumentError',
+    'Could not retrieve a JSON-LD document from the URL. URL ' +
+    'dereferencing not implemented.', 'jsonld.LoadDocumentError',
     {code: 'loading document failed'});
   if(_nodejs) {
     return callback(err, {contextUrl: null, documentUrl: url, document: null});
@@ -5877,7 +5877,7 @@ function _retrieveContextUrls(input, options, callback) {
           // ensure ctx is an object
           if(err) {
             err = new JsonLdError(
-              'Derefencing a URL did not result in a valid JSON-LD object. ' +
+              'Dereferencing a URL did not result in a valid JSON-LD object. ' +
               'Possible causes are an inaccessible URL perhaps due to ' +
               'a same-origin policy (ensure the server uses CORS if you are ' +
               'using client-side JavaScript), too many redirects, a ' +
@@ -5888,7 +5888,7 @@ function _retrieveContextUrls(input, options, callback) {
           }
           else if(!_isObject(ctx)) {
             err = new JsonLdError(
-              'Derefencing a URL did not result in a JSON object. The ' +
+              'Dereferencing a URL did not result in a JSON object. The ' +
               'response was valid JSON, but it was not a JSON object.',
               'jsonld.InvalidUrl',
               {code: 'invalid remote context', url: url, cause: err});
