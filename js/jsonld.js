@@ -1298,6 +1298,9 @@ jsonld.documentLoaders.jquery = function($, options) {
     }
     $.ajax({
       url: url,
+      accepts: {
+        json: 'application/ld+json'
+      },
       dataType: 'json',
       crossDomain: true,
       success: function(data, textStatus, jqXHR) {
