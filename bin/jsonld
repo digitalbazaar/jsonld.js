@@ -52,11 +52,9 @@ function _output(data, cmd, callback) {
   if(typeof data === 'object') {
     var output = JSON.stringify(data, null, cmd.indent);
     process.stdout.write(output);
-  }
-  else if(typeof data === 'string') {
+  } else if(typeof data === 'string') {
     process.stdout.write(data.trim());
-  }
-  else {
+  } else {
     process.stdout.write(data);
   }
   if(cmd.newline) {
@@ -70,11 +68,9 @@ function _final(err, results) {
   if(err) {
     if(err instanceof Error) {
       console.log(err.toString());
-    }
-    else if(typeof err === 'object') {
+    } else if(typeof err === 'object') {
       console.log('Error:', JSON.stringify(err, null, 2));
-    }
-    else {
+    } else {
       console.log('Error:', err);
     }
     process.exit(1);
@@ -285,13 +281,11 @@ _jsonLdCommand(program.command('flatten [filename|URL|-]'))
           if(_isHTTP(cmd.context)) {
             return callback(null, cmd.context);
           }
-          jsonld.request(cmd.context, reqopts, function(err, res, data) {
+          return jsonld.request(cmd.context, reqopts, function(err, res, data) {
             callback(err, data);
           });
         }
-        else {
-          callback(null, null);
-        }
+        callback(null, null);
       },
       process: ['readInput', 'readContext', function(callback, results) {
         var options = _jsonLdOptions(cmd);

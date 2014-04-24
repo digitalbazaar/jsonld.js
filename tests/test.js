@@ -24,8 +24,7 @@ if(_nodejs) {
     .option('--earl [filename]', 'Output an earl report')
     .option('--bail', 'Bail when a test fails')
     .parse(process.argv);
-}
-else {
+} else {
   var fs = require('fs');
   var system = require('system');
   require('./setImmediate');
@@ -170,8 +169,7 @@ describe('JSON-LD', function() {
       Object.prototype.toString = function() {
         if(this === window.JsonLdProcessor.prototype) {
           return '[object JsonLdProcessorPrototype]';
-        }
-        else if(this && this.constructor === window.JsonLdProcessor) {
+        } else if(this && this.constructor === window.JsonLdProcessor) {
           return '[object JsonLdProcessor]';
         }
         return toString.apply(this, arguments);
@@ -256,19 +254,16 @@ function addTest(manifest, test) {
             throw err;
           }
           testInfo.compare(test, result);
-        }
-        else if(isNegativeTest(test)) {
+        } else if(isNegativeTest(test)) {
           compareExpectedError(test, err);
         }
         earl.addAssertion(test, true);
         return done();
-      }
-      catch(ex) {
+      } catch(ex) {
         if(program.bail) {
           if(_nodejs) {
             process.exit();
-          }
-          else {
+          } else {
             phantom.exit();
           }
         }
@@ -381,8 +376,7 @@ function compareExpectedJson(test, result) {
   try {
     var expect = readTestJson('expect')(test);
     assert.deepEqual(result, expect);
-  }
-  catch(ex) {
+  } catch(ex) {
     if(program.bail) {
       console.log('\nTEST FAILED\n');
       console.log('EXPECTED: ' + JSON.stringify(expect, null, 2));
@@ -396,8 +390,7 @@ function compareExpectedNQuads(test, result) {
   try {
     var expect = readTestNQuads('expect')(test);
     assert.equal(result, expect);
-  }
-  catch(ex) {
+  } catch(ex) {
     if(program.bail) {
       console.log('\nTEST FAILED\n');
       console.log('EXPECTED:\n' + expect);
@@ -413,8 +406,7 @@ function compareExpectedError(test, err) {
     var result = getJsonLdErrorCode(err);
     assert.ok(err);
     assert.equal(result, expect);
-  }
-  catch(ex) {
+  } catch(ex) {
     if(program.bail) {
       console.log('\nTEST FAILED\n');
       console.log('EXPECTED: ' + expect);
@@ -534,8 +526,7 @@ function createDocumentLoader(test) {
     if(idx === 0) {
       try {
         callback(null, loadLocally(url));
-      }
-      catch(ex) {
+      } catch(ex) {
         callback(ex);
       }
       return;
@@ -555,8 +546,7 @@ function createDocumentLoader(test) {
     if(options && url === test.base) {
       if('redirectTo' in options && parseInt(options.httpStatus, 10) >= 300) {
         doc.documentUrl = test.manifest.baseIri + options.redirectTo;
-      }
-      else if('httpLink' in options) {
+      } else if('httpLink' in options) {
         var contentType = options.contentType || null;
         if(!contentType && url.indexOf('.jsonld', url.length - 7) !== -1) {
           contentType = 'application/ld+json';
@@ -580,8 +570,7 @@ function createDocumentLoader(test) {
       ROOT_MANIFEST_DIR, doc.documentUrl.substr(base.length));
     try {
       doc.document = readJson(filename);
-    }
-    catch(ex) {
+    } catch(ex) {
       throw {name: 'loading document failed'};
     }
     return doc;
@@ -645,8 +634,7 @@ function EarlReport() {
     this.report['@id'] += '#node.js';
     this.report['doap:name'] += ' node.js';
     this.report['dc:title'] += ' node.js';
-  }
-  else {
+  } else {
     this.report['@id'] += '#browser';
     this.report['doap:name'] += ' browser';
     this.report['dc:title'] += ' browser';
@@ -672,8 +660,7 @@ EarlReport.prototype.write = function(filename) {
   var json = JSON.stringify(this.report, null, 2);
   if(_nodejs) {
     fs.writeFileSync(filename, json);
-  }
-  else {
+  } else {
     fs.write(filename, json, 'w');
   }
   return this;

@@ -69,8 +69,7 @@ function _typedParse(loc, type, data, callback) {
     case 'application/ld+json':
       try {
         callback(null, JSON.parse(data));
-      }
-      catch(ex) {
+      } catch(ex) {
         callback({
           message: 'Error parsing JSON.',
           contentType: type,
@@ -119,8 +118,7 @@ function _typedParse(loc, type, data, callback) {
               RDFa.attach(window.document);
               jsonld.fromRDF(window.document.data,
                 {format: 'rdfa-api'}, callback);
-            }
-            catch(ex) {
+            } catch(ex) {
               // FIXME: expose RDFa/jsonld ex?
               callback({
                 message: 'RDFa extraction error.',
@@ -130,8 +128,7 @@ function _typedParse(loc, type, data, callback) {
             }
           }
         });
-      }
-      catch(ex) {
+      } catch(ex) {
         // FIXME: expose jsdom(?) ex?
         callback({
           message: 'jsdom error.',
@@ -254,8 +251,7 @@ function _request(loc, options, callback) {
         callback(err, null, data);
       });
     });
-  }
-  else if(loc.indexOf('http://') === 0 || loc.indexOf('https://') === 0) {
+  } else if(loc.indexOf('http://') === 0 || loc.indexOf('https://') === 0) {
     // read URL via request module
     if(typeof request === 'undefined') {
       callback({
@@ -301,8 +297,7 @@ function _request(loc, options, callback) {
             msg.body = data;
             callback(msg);
           });
-        }
-        else {
+        } else {
           return callback(msg);
         }
       }
@@ -319,8 +314,7 @@ function _request(loc, options, callback) {
         callback(err, res, data);
       });
     });
-  }
-  else {
+  } else {
     // read file
     fs.readFile(loc, options.encoding || 'utf8', function(error, data) {
       if(error) {
