@@ -1268,6 +1268,10 @@ jsonld.documentLoaders.jquery = function($, options) {
       accepts: {
         json: 'application/ld+json, application/json'
       },
+      // ensure Accept header is very specific for JSON-LD/JSON
+      headers: {
+        'Accept': 'application/ld+json, application/json'
+      },
       dataType: 'json',
       crossDomain: true,
       success: function(data, textStatus, jqXHR) {
@@ -1516,7 +1520,6 @@ jsonld.documentLoaders.xhr = function(options) {
     };
     req.open('GET', url, true);
     req.setRequestHeader('Accept', 'application/ld+json, application/json');
-    req.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
     req.send();
   };
 
