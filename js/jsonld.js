@@ -955,6 +955,11 @@ jsonld.loadDocument = function(url, callback) {
 /* Promises API */
 
 jsonld.promises = function() {
+  try {
+    jsonld.Promise = global.Promise || require('es6-promise').Promise;
+  } catch(e) {
+    throw new Error('Unable to find a Promise implementation.');
+  }
   var slice = Array.prototype.slice;
   var promisify = jsonld.promisify;
 
@@ -1021,13 +1026,15 @@ jsonld.promises = function() {
  * @return the promise.
  */
 jsonld.promisify = function(op) {
-  try {
-    var Promise = global.Promise || require('es6-promise').Promise;
-  } catch(e) {
-    throw new Error('Unable to find a Promise implementation.');
+  if(!jsonld.Promise) {
+    try {
+      jsonld.Promise = global.Promise || require('es6-promise').Promise;
+    } catch(e) {
+      throw new Error('Unable to find a Promise implementation.');
+    }
   }
   var args = Array.prototype.slice.call(arguments, 1);
-  return new Promise(function(resolve, reject) {
+  return new jsonld.Promise(function(resolve, reject) {
     op.apply(null, args.concat(function(err, value) {
       if(!err) {
         resolve(value);
