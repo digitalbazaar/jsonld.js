@@ -1332,6 +1332,8 @@ jsonld.documentLoaders.jquery = function($, options) {
  *
  * @param options the options to use:
  *          secure: require all URLs to use HTTPS.
+ *          strictSSL: true to require SSL certificates to be valid,
+ *            false not to (default: true).
  *          maxRedirects: the maximum number of redirects to permit, none by
  *            default.
  *          usePromise: true to use a promises API, false for a
@@ -1341,6 +1343,7 @@ jsonld.documentLoaders.jquery = function($, options) {
  */
 jsonld.documentLoaders.node = function(options) {
   options = options || {};
+  var strictSSL = ('strictSSL' in options) ? options.strictSSL : true;
   var maxRedirects = ('maxRedirects' in options) ? options.maxRedirects : -1;
   var request = require('request');
   var http = require('http');
@@ -1362,7 +1365,7 @@ jsonld.documentLoaders.node = function(options) {
       headers: {
         'Accept': 'application/ld+json, application/json'
       },
-      strictSSL: true,
+      strictSSL: strictSSL,
       followRedirect: false
     }, function(err, res, body) {
       doc = {contextUrl: null, documentUrl: url, document: body || null};
