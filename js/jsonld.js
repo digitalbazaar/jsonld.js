@@ -4746,6 +4746,13 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
       'jsonld.SyntaxError', {code: 'keyword redefinition', context: localCtx});
   }
 
+  if(term === '') {
+    throw new JsonLdError(
+      'Invalid JSON-LD syntax; a term cannot be an empty string.',
+      'jsonld.SyntaxError',
+      {code: 'invalid term definition', context: localCtx});
+  }
+
   // remove old mapping
   if(activeCtx.mappings[term]) {
     delete activeCtx.mappings[term];
