@@ -2465,7 +2465,7 @@ Processor.prototype.expand = function(
     // FIXME: can this be merged with code above to simplify?
     // merge in reverse properties
     if(activeCtx.mappings[key] && activeCtx.mappings[key].reverse) {
-      var reverseMap = rval['@reverse'] = {};
+      var reverseMap = rval['@reverse'] = rval['@reverse'] || {};
       if(!_isArray(expandedValue)) {
         expandedValue = [expandedValue];
       }
