@@ -4743,7 +4743,8 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
   if(_isKeyword(term)) {
     throw new JsonLdError(
       'Invalid JSON-LD syntax; keywords cannot be overridden.',
-      'jsonld.SyntaxError', {code: 'keyword redefinition', context: localCtx});
+      'jsonld.SyntaxError',
+      {code: 'keyword redefinition', context: localCtx, term: term});
   }
 
   if(term === '') {
