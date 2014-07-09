@@ -3065,16 +3065,15 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
     return activeCtx.clone();
   }
 
-  // process each context in order
+  // process each context in order, update active context
+  // on each iteration to ensure proper caching
   var rval = activeCtx;
-  var mustClone = true;
   for(var i = 0; i < ctxs.length; ++i) {
     var ctx = ctxs[i];
 
     // reset to initial context
     if(ctx === null) {
-      rval = _getInitialContext(options);
-      mustClone = false;
+      rval = activeCtx = _getInitialContext(options);
       continue;
     }
 
@@ -3094,17 +3093,14 @@ Processor.prototype.processContext = function(activeCtx, localCtx, options) {
     if(jsonld.cache.activeCtx) {
       var cached = jsonld.cache.activeCtx.get(activeCtx, ctx);
       if(cached) {
-        rval = cached;
-        mustClone = true;
+        rval = activeCtx = cached;
         continue;
       }
     }
 
-    // clone context, if required, before updating
-    if(mustClone) {
-      rval = rval.clone();
-      mustClone = false;
-    }
+    // update active context and clone new one before updating
+    activeCtx = rval;
+    rval = rval.clone();
 
     // define context mappings for keys in local context
     var defined = {};
