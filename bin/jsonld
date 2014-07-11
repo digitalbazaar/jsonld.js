@@ -162,6 +162,9 @@ _jsonLdCommand(program.command('format [filename|URL|-]'))
         if(cmd.json) {
           options.format = 'application/json';
         }
+        if(_isHTTP(input) && !('base' in options)) {
+          options.base = input;
+        }
 
         switch(options.format.toLowerCase()) {
           case 'nquads':
@@ -223,6 +226,9 @@ _jsonLdCommand(program.command('compact [filename|URL]'))
         options.strict = cmd.strict;
         options.compactArrays = cmd.compactArrays;
         options.graph = !!cmd.graph;
+        if(_isHTTP(input) && !('base' in options)) {
+          options.base = input;
+        }
 
         jsonld.compact(results.readInput, results.readContext, options,
           function(err, compacted) {
@@ -247,9 +253,12 @@ _jsonLdCommand(program.command('expand [filename|URL|-]'))
           callback(err, data);
         });
       },
-      expand: ['readInput', function(callback, results) {
+      process: ['readInput', function(callback, results) {
         var options = _jsonLdOptions(cmd);
         options.keepFreeFloatingNodes = cmd.keepFreeFloatingNodes;
+        if(_isHTTP(input) && !('base' in options)) {
+          options.base = input;
+        }
 
         jsonld.expand(results.readInput, options,
           function(err, expanded) {
@@ -289,6 +298,9 @@ _jsonLdCommand(program.command('flatten [filename|URL|-]'))
       },
       process: ['readInput', 'readContext', function(callback, results) {
         var options = _jsonLdOptions(cmd);
+        if(_isHTTP(input) && !('base' in options)) {
+          options.base = input;
+        }
 
         jsonld.flatten(results.readInput, results.readContext, options,
           function(err, flattened) {
@@ -327,6 +339,9 @@ _jsonLdCommand(program.command('frame [filename|URL|-]'))
         options.embed = cmd.embed;
         options.explicit = cmd.explicit;
         options.omitDefault = cmd.omitDefault;
+        if(_isHTTP(input) && !('base' in options)) {
+          options.base = input;
+        }
 
         jsonld.frame(results.readInput, results.readFrame, options,
           function(err, framed) {
@@ -360,6 +375,9 @@ _jsonLdCommand(program.command('normalize [filename|URL|-]'))
         }
         if(cmd.format) {
           options.format = cmd.format;
+        }
+        if(_isHTTP(input) && !('base' in options)) {
+          options.base = input;
         }
 
         jsonld.normalize(results.readInput, options,
