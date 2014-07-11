@@ -323,6 +323,7 @@ _jsonLdCommand(program.command('frame [filename|URL|-]'))
     'default @omitDefault flag [false]', boolify, false)
   .action(function(input, cmd) {
     input = input || '-';
+    var reqopts = _requestOptions(cmd);
     async.auto({
       readInput: function(callback, results) {
         jsonld.request(input, reqopts, function(err, res, data) {
