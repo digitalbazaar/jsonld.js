@@ -3262,7 +3262,7 @@ function _labelBlankNodes(namer, element) {
  */
 function _expandValue(activeCtx, activeProperty, value) {
   // nothing to expand
-  if(value === null) {
+  if(value === null || value === undefined) {
     return null;
   }
 
@@ -3303,6 +3303,10 @@ function _expandValue(activeCtx, activeProperty, value) {
     if(language !== null) {
       rval['@language'] = language;
     }
+  }
+  // do conversion of values that aren't basic JSON types to strings
+  if(['boolean', 'number', 'string'].indexOf(typeof value) === -1) {
+    value = value.toString();
   }
   rval['@value'] = value;
 
@@ -5580,7 +5584,8 @@ function _isAbsoluteIri(v) {
 }
 
 /**
- * Clones an object, array, or string/number.
+ * Clones an object, array, or string/number. If a typed JavaScript object
+ * is given, such as a Date, it will be converted to a string.
  *
  * @param value the value to clone.
  *
@@ -5594,11 +5599,13 @@ function _clone(value) {
       for(var i = 0; i < value.length; ++i) {
         rval[i] = _clone(value[i]);
       }
-    } else {
+    } else if(_isObject(value)) {
       rval = {};
       for(var key in value) {
         rval[key] = _clone(value[key]);
       }
+    } else {
+      rval = value.toString();
     }
     return rval;
   }
