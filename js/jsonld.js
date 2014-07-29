@@ -2867,6 +2867,8 @@ Processor.prototype.normalize = function(dataset, options, callback) {
 Processor.prototype.fromRDF = function(dataset, options, callback) {
   var defaultGraph = {};
   var graphMap = {'@default': defaultGraph};
+  // TODO: seems like 'usages' could be replaced with this single map
+  var nodeReferences = {};
 
   for(var name in dataset) {
     var graph = dataset[name];
@@ -2906,6 +2908,8 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
       // object may be an RDF list/partial list node but we can't know easily
       // until all triples are read
       if(objectIsId) {
+        jsonld.addValue(
+          nodeReferences, o.value, node['@id'], {propertyIsArray: true});
         var object = nodeMap[o.value];
         if(!('usages' in object)) {
           object.usages = [];
@@ -2939,13 +2943,16 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
       var listNodes = [];
 
       // ensure node is a well-formed list node; it must:
-      // 1. Be used only once in a list.
+      // 1. Be referenced only once and used only once in a list.
       // 2. Have an array for rdf:first that has 1 item.
       // 3. Have an array for rdf:rest that has 1 item.
       // 4. Have no keys other than: @id, usages, rdf:first, rdf:rest, and,
       //   optionally, @type where the value is rdf:List.
       var nodeKeyCount = Object.keys(node).length;
-      while(property === RDF_REST && node.usages.length === 1 &&
+      while(property === RDF_REST &&
+        nodeReferences[node['@id']] &&
+        nodeReferences[node['@id']].length === 1 &&
+        node.usages.length === 1 &&
         _isArray(node[RDF_FIRST]) && node[RDF_FIRST].length === 1 &&
         _isArray(node[RDF_REST]) && node[RDF_REST].length === 1 &&
         (nodeKeyCount === 4 || (nodeKeyCount === 5 && _isArray(node['@type']) &&
