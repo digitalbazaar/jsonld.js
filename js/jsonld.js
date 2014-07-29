@@ -443,6 +443,7 @@ jsonld.flatten = function(input, ctx, options, callback) {
  *          [expandContext] a context to expand with.
  *          [embed] default @embed flag (default: true).
  *          [explicit] default @explicit flag (default: false).
+ *          [requireAll] default @requireAll flag (default: true).
  *          [omitDefault] default @omitDefault flag (default: false).
  *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
  * @param callback(err, framed) called once the operation completes.
@@ -3950,13 +3951,19 @@ function _frame(state, subjects, frame, parent, property) {
   _validateFrame(state, frame);
   frame = frame[0];
 
-  // filter out subjects that match the frame
-  var matches = _filterSubjects(state, subjects, frame);
-
   // get flags for current frame
   var options = state.options;
   var embedOn = _getFrameFlag(frame, options, 'embed');
   var explicitOn = _getFrameFlag(frame, options, 'explicit');
+  var requireAllOn = _getFrameFlag(frame, options, 'requireAll');
+  var flags = {
+    embed: embedOn,
+    explicit: explicitOn,
+    requireAll: requireAllOn
+  };
+
+  // filter out subjects that match the frame
+  var matches = _filterSubjects(state, subjects, frame, flags);
 
   // add matches to output
   var ids = Object.keys(matches).sort();
@@ -4007,97 +4014,98 @@ function _frame(state, subjects, frame, parent, property) {
     // not embedding, add output without any other properties
     if(!embedOn) {
       _addFrameOutput(state, parent, property, output);
-    } else {
-      // add embed meta info
-      state.embeds[id] = embed;
-
-      // iterate over subject properties
-      var subject = matches[id];
-      var props = Object.keys(subject).sort();
-      for(var i = 0; i < props.length; i++) {
-        var prop = props[i];
-
-        // copy keywords to output
-        if(_isKeyword(prop)) {
-          output[prop] = _clone(subject[prop]);
-          continue;
-        }
-
-        // if property isn't in the frame
-        if(!(prop in frame)) {
-          // if explicit is off, embed values
-          if(!explicitOn) {
-            _embedValues(state, subject, prop, output);
-          }
-          continue;
-        }
-
-        // add objects
-        var objects = subject[prop];
-        for(var oi = 0; oi < objects.length; ++oi) {
-          var o = objects[oi];
-
-          // recurse into list
-          if(_isList(o)) {
-            // add empty list
-            var list = {'@list': []};
-            _addFrameOutput(state, output, prop, list);
-
-            // add list objects
-            var src = o['@list'];
-            for(var n in src) {
-              o = src[n];
-              if(_isSubjectReference(o)) {
-                // recurse into subject reference
-                _frame(state, [o['@id']], frame[prop][0]['@list'],
-                list, '@list');
-              } else {
-                // include other values automatically
-                _addFrameOutput(state, list, '@list', _clone(o));
-              }
-            }
-            continue;
-          }
-
-          if(_isSubjectReference(o)) {
-            // recurse into subject reference
-            _frame(state, [o['@id']], frame[prop], output, prop);
-          } else {
-            // include other values automatically
-            _addFrameOutput(state, output, prop, _clone(o));
-          }
-        }
-      }
-
-      // handle defaults
-      var props = Object.keys(frame).sort();
-      for(var i = 0; i < props.length; ++i) {
-        var prop = props[i];
-
-        // skip keywords
-        if(_isKeyword(prop)) {
-          continue;
-        }
-
-        // if omit default is off, then include default values for properties
-        // that appear in the next frame but are not in the matching subject
-        var next = frame[prop][0];
-        var omitDefaultOn = _getFrameFlag(next, options, 'omitDefault');
-        if(!omitDefaultOn && !(prop in output)) {
-          var preserve = '@null';
-          if('@default' in next) {
-            preserve = _clone(next['@default']);
-          }
-          if(!_isArray(preserve)) {
-            preserve = [preserve];
-          }
-          output[prop] = [{'@preserve': preserve}];
-        }
-      }
-
-      // add output to parent
-      _addFrameOutput(state, parent, property, output);
+      continue;
     }
+
+    // add embed meta info
+    state.embeds[id] = embed;
+
+    // iterate over subject properties
+    var subject = matches[id];
+    var props = Object.keys(subject).sort();
+    for(var i = 0; i < props.length; i++) {
+      var prop = props[i];
+
+      // copy keywords to output
+      if(_isKeyword(prop)) {
+        output[prop] = _clone(subject[prop]);
+        continue;
+      }
+
+      // if property isn't in the frame
+      if(!(prop in frame)) {
+        // if explicit is off, embed values
+        if(!explicitOn) {
+          _embedValues(state, subject, prop, output);
+        }
+        continue;
+      }
+
+      // add objects
+      var objects = subject[prop];
+      for(var oi = 0; oi < objects.length; ++oi) {
+        var o = objects[oi];
+
+        // recurse into list
+        if(_isList(o)) {
+          // add empty list
+          var list = {'@list': []};
+          _addFrameOutput(state, output, prop, list);
+
+          // add list objects
+          var src = o['@list'];
+          for(var n in src) {
+            o = src[n];
+            if(_isSubjectReference(o)) {
+              // recurse into subject reference
+              _frame(state, [o['@id']], frame[prop][0]['@list'],
+              list, '@list');
+            } else {
+              // include other values automatically
+              _addFrameOutput(state, list, '@list', _clone(o));
+            }
+          }
+          continue;
+        }
+
+        if(_isSubjectReference(o)) {
+          // recurse into subject reference
+          _frame(state, [o['@id']], frame[prop], output, prop);
+        } else {
+          // include other values automatically
+          _addFrameOutput(state, output, prop, _clone(o));
+        }
+      }
+    }
+
+    // handle defaults
+    var props = Object.keys(frame).sort();
+    for(var i = 0; i < props.length; ++i) {
+      var prop = props[i];
+
+      // skip keywords
+      if(_isKeyword(prop)) {
+        continue;
+      }
+
+      // if omit default is off, then include default values for properties
+      // that appear in the next frame but are not in the matching subject
+      var next = frame[prop][0];
+      var omitDefaultOn = _getFrameFlag(next, options, 'omitDefault');
+      if(!omitDefaultOn && !(prop in output)) {
+        var preserve = '@null';
+        if('@default' in next) {
+          preserve = _clone(next['@default']);
+        }
+        if(!_isArray(preserve)) {
+          preserve = [preserve];
+        }
+        output[prop] = [{'@preserve': preserve}];
+      }
+    }
+
+    // add output to parent
+    _addFrameOutput(state, parent, property, output);
   }
 }
 
@@ -4135,16 +4143,17 @@ function _validateFrame(state, frame) {
  * @param state the current framing state.
  * @param subjects the set of subjects to filter.
  * @param frame the parsed frame.
+ * @param flags the frame flags.
  *
  * @return all of the matched subjects.
  */
-function _filterSubjects(state, subjects, frame) {
+function _filterSubjects(state, subjects, frame, flags) {
   // filter subjects in @id order
   var rval = {};
   for(var i = 0; i < subjects.length; ++i) {
     var id = subjects[i];
     var subject = state.subjects[id];
-    if(_filterSubject(subject, frame)) {
+    if(_filterSubject(subject, frame, flags)) {
       rval[id] = subject;
     }
   }
@@ -4156,10 +4165,11 @@ function _filterSubjects(state, subjects, frame) {
  *
  * @param subject the subject to check.
  * @param frame the frame to check.
+ * @param flags the frame flags.
  *
  * @return true if the subject matches, false if not.
  */
-function _filterSubject(subject, frame) {
+function _filterSubject(subject, frame, flags) {
   // check @type (object value means 'any' type, fall through to ducktyping)
   if('@type' in frame &&
     !(frame['@type'].length === 1 && _isObject(frame['@type'][0]))) {
@@ -4174,13 +4184,48 @@ function _filterSubject(subject, frame) {
   }
 
   // check ducktype
+  var wildcard = true;
+  var matchesSome = false;
   for(var key in frame) {
-    // only not a duck if @id or non-keyword isn't in subject
-    if((key === '@id' || !_isKeyword(key)) && !(key in subject)) {
+    if(_isKeyword(key)) {
+      // skip non-@id and non-@type
+      if(key !== '@id' && key !== '@type') {
+        continue;
+      }
+      wildcard = false;
+
+      // check @id for a specific @id value
+      if(key === '@id' && _isString(frame[key])) {
+        if(subject[key] !== frame[key]) {
+          return false;
+        }
+        matchesSome = true;
+        continue;
+      }
+    }
+
+    wildcard = false;
+
+    if(key in subject) {
+      // frame[key] === [] means do not match if property is present
+      if(_isArray(frame[key]) && frame[key].length === 0 &&
+        subject[key] !== undefined) {
+        return false;
+      }
+      matchesSome = true;
+      continue;
+    }
+
+    // all properties must match to be a duck unless a @default is specified
+    var hasDefault = (_isArray(frame[key]) && _isObject(frame[key][0]) &&
+      '@default' in frame[key][0]);
+    if(flags.requireAll && !hasDefault) {
       return false;
     }
   }
-  return true;
+
+  // return true if wildcard or subject matches some properties
+  return wildcard || matchesSome;
 }
 
 /**
@@ -5341,6 +5386,7 @@ function _isKeyword(v) {
   case '@list':
   case '@omitDefault':
   case '@preserve':
+  case '@requireAll':
   case '@reverse':
   case '@set':
   case '@type':
