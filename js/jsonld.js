@@ -473,6 +473,9 @@ jsonld.frame = function(input, frame, options, callback) {
     options.embed = true;
   }
   options.explicit = options.explicit || false;
+  if(!('requireAll' in options)) {
+    options.requireAll = true;
+  }
   options.omitDefault = options.omitDefault || false;
 
   jsonld.nextTick(function() {
