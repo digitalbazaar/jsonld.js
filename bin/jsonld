@@ -206,6 +206,10 @@ _jsonLdCommand(program.command('compact [filename|URL]'))
     var reqopts = _requestOptions(cmd);
     async.auto({
       readContext: function(callback, results) {
+        if(!cmd.context) {
+          return callback(
+            new Error('ERROR: Context not specified, use -c/--context'));
+        }
         // use built-in context loader
         if(_isHTTP(cmd.context)) {
           return callback(null, cmd.context);
