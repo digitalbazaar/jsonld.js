@@ -63,12 +63,13 @@ function _output(data, cmd, callback) {
 // final async call to handle errors
 function _final(err, results) {
   if(err) {
-    if(err instanceof Error) {
-      console.log(err.toString());
-    } else if(typeof err === 'object') {
-      console.log('Error:', JSON.stringify(err, null, 2));
+    if(err.stack) {
+      console.log(err.stack);
     } else {
-      console.log('Error:', err);
+      console.log(err.toString());
+    }
+    if(typeof err === 'object') {
+      console.log('Error:', JSON.stringify(err, null, 2));
     }
     process.exit(1);
   }
