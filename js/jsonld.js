@@ -1263,6 +1263,13 @@ jsonld.documentLoaders.jquery = function($, options) {
   options = options || {};
   var cache = new jsonld.DocumentCache();
   var loader = function(url, callback) {
+    if(url.indexOf('http:') !== 0 && url.indexOf('https:') !== 0) {
+      return callback(new JsonLdError(
+        'URL could not be dereferenced; only "http" and "https" URLs are ' +
+        'supported.',
+        'jsonld.InvalidUrl', {code: 'loading document failed', url: url}),
+        {contextUrl: null, documentUrl: url, document: null});
+    }
     if(options.secure && url.indexOf('https') !== 0) {
       return callback(new JsonLdError(
         'URL could not be dereferenced; secure mode is enabled and ' +
@@ -1353,6 +1360,13 @@ jsonld.documentLoaders.node = function(options) {
   var http = require('http');
   var cache = new jsonld.DocumentCache();
   function loadDocument(url, redirects, callback) {
+    if(url.indexOf('http:') !== 0 && url.indexOf('https:') !== 0) {
+      return callback(new JsonLdError(
+        'URL could not be dereferenced; only "http" and "https" URLs are ' +
+        'supported.',
+        'jsonld.InvalidUrl', {code: 'loading document failed', url: url}),
+        {contextUrl: null, documentUrl: url, document: null});
+    }
     if(options.secure && url.indexOf('https') !== 0) {
       return callback(new JsonLdError(
         'URL could not be dereferenced; secure mode is enabled and ' +
@@ -1475,6 +1489,13 @@ jsonld.documentLoaders.xhr = function(options) {
   options = options || {};
   var cache = new jsonld.DocumentCache();
   var loader = function(url, callback) {
+    if(url.indexOf('http:') !== 0 && url.indexOf('https:') !== 0) {
+      return callback(new JsonLdError(
+        'URL could not be dereferenced; only "http" and "https" URLs are ' +
+        'supported.',
+        'jsonld.InvalidUrl', {code: 'loading document failed', url: url}),
+        {contextUrl: null, documentUrl: url, document: null});
+    }
     if(options.secure && url.indexOf('https') !== 0) {
       return callback(new JsonLdError(
         'URL could not be dereferenced; secure mode is enabled and ' +
@@ -5750,7 +5771,6 @@ function _findContextUrls(input, urls, replace, base) {
 function _retrieveContextUrls(input, options, callback) {
   // if any error occurs during URL resolution, quit
   var error = null;
-  var regex = /(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
 
   // recursive document loader
   var documentLoader = options.documentLoader;
@@ -5784,9 +5804,9 @@ function _retrieveContextUrls(input, options, callback) {
     for(var url in urls) {
       if(urls[url] === false) {
         // validate URL
-        if(!regex.test(url)) {
+        if(!_isAbsoluteIri(url)) {
           error = new JsonLdError(
-            'Malformed URL.', 'jsonld.InvalidUrl',
+            'Could not resolve URL.', 'jsonld.InvalidUrl',
             {code: 'loading remote context failed', url: url});
           return callback(error);
         }
