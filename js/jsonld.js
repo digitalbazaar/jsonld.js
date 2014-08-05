@@ -5791,13 +5791,6 @@ function _retrieveContextUrls(input, options, callback) {
     var queue = [];
     for(var url in urls) {
       if(urls[url] === false) {
-        // validate URL
-        if(!_isAbsoluteIri(url)) {
-          error = new JsonLdError(
-            'Could not resolve URL.', 'jsonld.InvalidUrl',
-            {code: 'loading remote context failed', url: url});
-          return callback(error);
-        }
         queue.push(url);
       }
     }
