@@ -13,6 +13,7 @@
 
 var async = require('async');
 var jsonld = require('../js/jsonld')();
+var path = require('path');
 var program = require('commander');
 
 // use 'request' extension to load JSON-LD
@@ -104,10 +105,20 @@ function _requestOptions(command) {
 }
 
 // init common jsonld options
-function _jsonLdOptions(command) {
+function _jsonLdOptions(command, input) {
   var options = {};
+  // explicit base set
   if(command.base) {
     options.base = command.base;
+  } else if(input !== '-') {
+    // only setup base if not stdin
+    // use input as base if it looks like a URL
+    // use a file URL otherwise
+    if(_isHTTP(input)) {
+      options.base = input;
+    } else {
+      options.base = 'file://' + path.resolve(process.cwd(), input);
+    }
   }
   return options;
 }
@@ -152,16 +163,13 @@ _jsonLdCommand(program.command('format [filename|URL|-]'))
         });
       },
       process: ['readInput', function(callback, results) {
-        var options = _jsonLdOptions(cmd);
+        var options = _jsonLdOptions(cmd, input);
         options.format = cmd.format || 'json';
         if(cmd.nquads) {
           options.format = 'application/nquads';
         }
         if(cmd.json) {
           options.format = 'application/json';
-        }
-        if(_isHTTP(input) && !('base' in options)) {
-          options.base = input;
         }
 
         switch(options.format.toLowerCase()) {
@@ -224,13 +232,10 @@ _jsonLdCommand(program.command('compact [filename|URL]'))
         });
       },
       process: ['readContext', 'readInput', function(callback, results) {
-        var options = _jsonLdOptions(cmd);
+        var options = _jsonLdOptions(cmd, input);
         options.strict = cmd.strict;
         options.compactArrays = cmd.compactArrays;
         options.graph = !!cmd.graph;
-        if(_isHTTP(input) && !('base' in options)) {
-          options.base = input;
-        }
 
         jsonld.compact(results.readInput, results.readContext, options,
           function(err, compacted) {
@@ -256,11 +261,8 @@ _jsonLdCommand(program.command('expand [filename|URL|-]'))
         });
       },
       process: ['readInput', function(callback, results) {
-        var options = _jsonLdOptions(cmd);
+        var options = _jsonLdOptions(cmd, input);
         options.keepFreeFloatingNodes = cmd.keepFreeFloatingNodes;
-        if(_isHTTP(input) && !('base' in options)) {
-          options.base = input;
-        }
 
         jsonld.expand(results.readInput, options,
           function(err, expanded) {
@@ -299,10 +301,7 @@ _jsonLdCommand(program.command('flatten [filename|URL|-]'))
         callback(null, null);
       },
       process: ['readInput', 'readContext', function(callback, results) {
-        var options = _jsonLdOptions(cmd);
-        if(_isHTTP(input) && !('base' in options)) {
-          options.base = input;
-        }
+        var options = _jsonLdOptions(cmd, input);
 
         jsonld.flatten(results.readInput, results.readContext, options,
           function(err, flattened) {
@@ -338,13 +337,10 @@ _jsonLdCommand(program.command('frame [filename|URL|-]'))
         });
       },
       process: ['readInput', 'readFrame', function(callback, results) {
-        var options = _jsonLdOptions(cmd);
+        var options = _jsonLdOptions(cmd, input);
         options.embed = cmd.embed;
         options.explicit = cmd.explicit;
         options.omitDefault = cmd.omitDefault;
-        if(_isHTTP(input) && !('base' in options)) {
-          options.base = input;
-        }
 
         jsonld.frame(results.readInput, results.readFrame, options,
           function(err, framed) {
@@ -372,15 +368,12 @@ _jsonLdCommand(program.command('normalize [filename|URL|-]'))
         });
       },
       process: ['readInput', function(callback, results) {
-        var options = _jsonLdOptions(cmd);
+        var options = _jsonLdOptions(cmd, input);
         if(cmd.nquads) {
           options.format = 'application/nquads';
         }
         if(cmd.format) {
           options.format = cmd.format;
-        }
-        if(_isHTTP(input) && !('base' in options)) {
-          options.base = input;
         }
 
         jsonld.normalize(results.readInput, options,
