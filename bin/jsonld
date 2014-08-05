@@ -315,7 +315,7 @@ _jsonLdCommand(program.command('flatten [filename|URL|-]'))
   });
 
 _jsonLdCommand(program.command('frame [filename|URL|-]'))
-  .description('flatten JSON-LD')
+  .description('frame JSON-LD')
   .option('-f, --frame <filename|URL>', 'frame to use')
   .option('    --embed <embed>', 'default @embed flag [true]', boolify, true)
   .option('    --explicit <explicit>',
