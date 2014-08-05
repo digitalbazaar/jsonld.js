@@ -1261,7 +1261,6 @@ jsonld.documentLoaders = {};
  */
 jsonld.documentLoaders.jquery = function($, options) {
   options = options || {};
-  var cache = new jsonld.DocumentCache();
   var loader = function(url, callback) {
     if(url.indexOf('http:') !== 0 && url.indexOf('https:') !== 0) {
       return callback(new JsonLdError(
@@ -1276,10 +1275,6 @@ jsonld.documentLoaders.jquery = function($, options) {
         'the URL\'s scheme is not "https".',
         'jsonld.InvalidUrl', {code: 'loading document failed', url: url}),
         {contextUrl: null, documentUrl: url, document: null});
-    }
-    var doc = cache.get(url);
-    if(doc !== null) {
-      return callback(null, doc);
     }
     $.ajax({
       url: url,
@@ -1313,7 +1308,6 @@ jsonld.documentLoaders.jquery = function($, options) {
           }
         }
 
-        cache.set(url, doc);
         callback(null, doc);
       },
       error: function(jqXHR, textStatus, err) {
@@ -1487,7 +1481,6 @@ jsonld.documentLoaders.node = function(options) {
 jsonld.documentLoaders.xhr = function(options) {
   var rlink = /(^|(\r\n))link:/i;
   options = options || {};
-  var cache = new jsonld.DocumentCache();
   var loader = function(url, callback) {
     if(url.indexOf('http:') !== 0 && url.indexOf('https:') !== 0) {
       return callback(new JsonLdError(
@@ -1502,10 +1495,6 @@ jsonld.documentLoaders.xhr = function(options) {
         'the URL\'s scheme is not "https".',
         'jsonld.InvalidUrl', {code: 'loading document failed', url: url}),
         {contextUrl: null, documentUrl: url, document: null});
-    }
-    var doc = cache.get(url);
-    if(doc !== null) {
-      return callback(null, doc);
     }
     var xhr = options.xhr || XMLHttpRequest;
     var req = new xhr();
@@ -1543,7 +1532,6 @@ jsonld.documentLoaders.xhr = function(options) {
         }
       }
 
-      cache.set(url, doc);
       callback(null, doc);
     };
     req.onerror = function() {
