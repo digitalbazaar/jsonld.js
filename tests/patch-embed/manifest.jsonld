@@ -1,0 +1,16 @@
+{
+  "@context": "http://json-ld.org/test-suite/context.jsonld",
+  "@id": "",
+  "@type": "mf:Manifest",
+  "name": "Aggressive Embed Framing",
+  "description": "JSON-LD framing tests use object comparison.",
+  "baseIri": "https://github.com/datalanguage/jsonld.js/tree/patch-fix/tests/patch-embed/",
+  "sequence": [{
+    "@id": "#t0001",
+    "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
+    "name": "simple",
+    "input": "frame-0001-in.jsonld",
+    "frame": "frame-0001-frame.jsonld",
+    "expect": "frame-0001-out.jsonld"
+  }]
+}
