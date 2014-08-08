@@ -2,6 +2,8 @@
 *~
 .cproject
 .project
+.sublime-project
+.sublime-workspace
 .settings
 coverage.html
 js-cov
