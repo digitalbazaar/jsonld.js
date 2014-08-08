@@ -2,8 +2,9 @@
 *~
 .cproject
 .project
-.sublime-project
-.sublime-workspace
+*.sublime-project
+*.sublime-workspace
+.DS_Store
 .settings
 coverage.html
 js-cov
