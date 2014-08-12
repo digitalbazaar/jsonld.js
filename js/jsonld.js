@@ -3986,7 +3986,6 @@ function _frame(state, subjects, frame, parent, property) {
 
   // add matches to output
   var ids = Object.keys(matches).sort();
-
   for(var idx in ids) {
     var id = ids[idx];
 
@@ -4016,15 +4015,12 @@ function _frame(state, subjects, frame, parent, property) {
     // iterate over subject properties
     var subject = matches[id];
     var props = Object.keys(subject).sort();
-
     for(var i = 0; i < props.length; i++) {
       var prop = props[i];
 
       // copy keywords to output
       if(_isKeyword(prop)) {
-
         output[prop] = _clone(subject[prop]);
-
         continue;
       }
 
@@ -4039,7 +4035,6 @@ function _frame(state, subjects, frame, parent, property) {
 
       // add objects
       var objects = subject[prop];
-
       for(var oi = 0; oi < objects.length; ++oi) {
         var o = objects[oi];
 
@@ -4076,7 +4071,6 @@ function _frame(state, subjects, frame, parent, property) {
 
     // handle defaults
     var props = Object.keys(frame).sort();
-
     for(var i = 0; i < props.length; ++i) {
       var prop = props[i];
 
