@@ -6,11 +6,12 @@
   "@type": "ex:Library",
   "ex:contains": {
     "@type": "ex:Book",
+    "@omitDefault": "true",
     "ex:contains": {
-      "@type": "ex:Chapter"
-    },
-    "ex:bookmark": {
-      "@type": "ex:Chapter"
-    }    
+      "@type": "ex:Chapter",
+      "ex:topic": {
+        "@type": "ex:Library"
+      }          
+    }
   }
 }

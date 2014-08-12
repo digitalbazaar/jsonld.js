@@ -9,8 +9,8 @@
     "ex:contains": {
       "@type": "ex:Chapter"
     },
-    "ex:bookmark": {
-      "@type": "ex:Chapter"
+    "ex:topic": {
+      "@type": "ex:Library"
     }    
   }
 }

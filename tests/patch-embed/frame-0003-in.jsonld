@@ -3,7 +3,7 @@
     "dc": "http://purl.org/dc/elements/1.1/",
     "ex": "http://example.org/vocab#",
     "ex:contains": {"@type": "@id"},
-    "ex:bookmark": {"@type": "@id"}
+    "ex:topic": {"@type": "@id"}
   },
   "@graph": [
     {
@@ -15,15 +15,15 @@
       "@id": "http://example.org/test#book",
       "@type": "ex:Book",
       "dc:contributor": "Writer",
-      "dc:title": "My Book",
-      "ex:contains": "http://example.org/test#chapter",
-      "ex:bookmark": "http://example.org/test#chapter"
+      "dc:title": "My Book about a library",
+      "ex:contains": "http://example.org/test#chapter"
     },
     {
       "@id": "http://example.org/test#chapter",
       "@type": "ex:Chapter",
       "dc:description": "Fun",
-      "dc:title": "Chapter One"
+      "dc:title": "Chapter One",
+      "ex:topic": "http://example.org/test/#library"
     }
   ]
 }

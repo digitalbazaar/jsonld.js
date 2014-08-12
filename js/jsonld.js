@@ -469,7 +469,7 @@ jsonld.frame = function(input, frame, options, callback) {
     options.documentLoader = jsonld.loadDocument;
   }
   if(!('embed' in options)) {
-    options.embed = true;
+    options.embed = 'once';
   }
   options.explicit = options.explicit || false;
   if(!('requireAll' in options)) {
@@ -3990,13 +3990,10 @@ function _frame(state, subjects, frame, parent, property) {
 
   // get flags for current frame
   var options = state.options;
-  var embedOn = _getFrameFlag(frame, options, 'embed');
-  var explicitOn = _getFrameFlag(frame, options, 'explicit');
-  var requireAllOn = _getFrameFlag(frame, options, 'requireAll');
   var flags = {
-    embed: embedOn,
-    explicit: explicitOn,
-    requireAll: requireAllOn
+    embed: _getFrameFlag(frame, options, 'embed'),
+    explicit: _getFrameFlag(frame, options, 'explicit'),
+    requireAll: _getFrameFlag(frame, options, 'requireAll')
   };
 
   // filter out subjects that match the frame
@@ -4021,6 +4018,7 @@ function _frame(state, subjects, frame, parent, property) {
     // prepare embed meta info
     var embed = {parent: parent, property: property};
 
+    /* TODO: if embed is "once"
     // if embed is on and there is an existing embed
     if(embedOn && (id in state.embeds)) {
       // only overwrite an existing embed if it has already been added to its
@@ -4047,9 +4045,10 @@ function _frame(state, subjects, frame, parent, property) {
         _removeEmbed(state, id);
       }
     }
+    */
 
     // not embedding, add output without any other properties
-    if(!embedOn) {
+    if(!flags.embed) {
       _addFrameOutput(state, parent, property, output);
       continue;
     }
@@ -4072,7 +4071,7 @@ function _frame(state, subjects, frame, parent, property) {
       // if property isn't in the frame
       if(!(prop in frame)) {
         // if explicit is off, embed values
-        if(!explicitOn) {
+        if(!flags.explicit) {
           _embedValues(state, subject, prop, output);
         }
         continue;
@@ -4093,10 +4092,11 @@ function _frame(state, subjects, frame, parent, property) {
           var src = o['@list'];
           for(var n in src) {
             o = src[n];
-            if(_isSubjectReference(o)) {
+            // TODO: (only check circular reference if embed is "always")
+            if(_isSubjectReference(o) &&
+              !_createsCircularReference(id, o, state.embeds)) {
               // recurse into subject reference
-              _frame(state, [o['@id']], frame[prop][0]['@list'],
-              list, '@list');
+              _frame(state, [o['@id']], frame[prop][0]['@list'], list, '@list');
             } else {
               // include other values automatically
               _addFrameOutput(state, list, '@list', _clone(o));
@@ -4105,7 +4105,9 @@ function _frame(state, subjects, frame, parent, property) {
           continue;
         }
 
-        if(_isSubjectReference(o)) {
+        // TODO: only check circular reference if embed is "always"
+        if(_isSubjectReference(o) &&
+          !_createsCircularReference(id, o, state.embeds)) {
           // recurse into subject reference
           _frame(state, [o['@id']], frame[prop], output, prop);
         } else {
@@ -4146,6 +4148,18 @@ function _frame(state, subjects, frame, parent, property) {
   }
 }
 
+function _createsCircularReference(
+  embedLocation, resourceToBeEmbedded, embedsObjectGraphIndex) {
+  var reference = embedsObjectGraphIndex[embedLocation];
+  while(reference !== undefined) {
+    if(reference.parent['@id'] === resourceToBeEmbedded['@id']) {
+      return true;
+    }
+    reference = embedsObjectGraphIndex[reference.parent['@id']];
+  }
+  return false;
+}
+
 /**
  * Gets the frame flag value for the given flag name.
  *
@@ -4157,7 +4171,8 @@ function _frame(state, subjects, frame, parent, property) {
  */
 function _getFrameFlag(frame, options, name) {
   var flag = '@' + name;
-  return (flag in frame) ? frame[flag][0] : options[name];
+  var rval = (flag in frame ? frame[flag][0] : options[name]);
+  return rval;
 }
 
 /**
