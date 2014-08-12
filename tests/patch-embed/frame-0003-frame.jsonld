@@ -7,10 +7,10 @@
   "ex:contains": {
     "@type": "ex:Book",
     "ex:contains": {
-      "@type": "ex:Chapter"
-    },
-    "ex:bookmark": {
-      "@type": "ex:Chapter"
-    }    
+      "@type": "ex:Chapter",
+      "ex:topic": {
+        "@type": "ex:Library"
+      }          
+    }
   }
 }

@@ -10,18 +10,15 @@
       "@id": "http://example.org/test#book",
       "@type": "ex:Book",
       "dc:contributor": "Writer",
-      "dc:title": "My Book",
+      "dc:title": "My Book about a library",
       "ex:contains": {
         "@id": "http://example.org/test#chapter",
         "@type": "ex:Chapter",
         "dc:description": "Fun",
         "dc:title": "Chapter One"
       },
-      "ex:bookmark": {
-        "@id": "http://example.org/test#chapter",
-        "@type": "ex:Chapter",
-        "dc:description": "Fun",
-        "dc:title": "Chapter One"
+      "ex:topic": {
+        "@id": "http://example.org/test/#library"
       }
     }
   }]
