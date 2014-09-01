@@ -3986,7 +3986,7 @@ function _frame(state, subjects, frame, parent, property) {
 
   // add matches to output
   var ids = Object.keys(matches).sort();
-  for(var idx in ids) {
+  for(var idx = 0; idx < ids.length; idx++) {
     var id = ids[idx];
 
     /* Note: In order to treat each top-level match as a compartmentalized
