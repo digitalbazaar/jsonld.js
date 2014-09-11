@@ -31,7 +31,7 @@
     "es6-promise": "~1.0.0",
     "jsdom": "~0.7.0",
     "pkginfo": "~0.3.0",
-    "request": "~2.22.0",
+    "request": "~2.42.0",
     "xmldom": "0.1.16",
     "through": "~2.3.4",
     "jsonldify": "~0.1.0"
