@@ -2920,7 +2920,7 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
       // until all triples are read
       if(objectIsId) {
         if(o.value === RDF_NIL) {
-          // track uniquely rdf:nil per graph
+          // track rdf:nil uniquely per graph
           var object = nodeMap[o.value];
           if(!('usages' in object)) {
             object.usages = [];
