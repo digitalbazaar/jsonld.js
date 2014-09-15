@@ -2965,7 +2965,7 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
       var listNodes = [];
 
       // ensure node is a well-formed list node; it must:
-      // 1. Be referenced only once and used only once in a list.
+      // 1. Be referenced only once.
       // 2. Have an array for rdf:first that has 1 item.
       // 3. Have an array for rdf:rest that has 1 item.
       // 4. Have no keys other than: @id, usages, rdf:first, rdf:rest, and,
