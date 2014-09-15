@@ -2968,7 +2968,7 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
       // 1. Be referenced only once.
       // 2. Have an array for rdf:first that has 1 item.
       // 3. Have an array for rdf:rest that has 1 item.
-      // 4. Have no keys other than: @id, usages, rdf:first, rdf:rest, and,
+      // 4. Have no keys other than: @id, rdf:first, rdf:rest, and,
       //   optionally, @type where the value is rdf:List.
       var nodeKeyCount = Object.keys(node).length;
       while(property === RDF_REST &&
