@@ -2879,8 +2879,7 @@ Processor.prototype.normalize = function(dataset, options, callback) {
 Processor.prototype.fromRDF = function(dataset, options, callback) {
   var defaultGraph = {};
   var graphMap = {'@default': defaultGraph};
-  // TODO: seems like 'usages' could be replaced with this single map
-  var nodeReferences = {};
+  var referencedOnce = {};
 
   for(var name in dataset) {
     var graph = dataset[name];
@@ -2920,17 +2919,28 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
       // object may be an RDF list/partial list node but we can't know easily
       // until all triples are read
       if(objectIsId) {
-        jsonld.addValue(
-          nodeReferences, o.value, node['@id'], {propertyIsArray: true});
-        var object = nodeMap[o.value];
-        if(!('usages' in object)) {
-          object.usages = [];
+        if(o.value === RDF_NIL) {
+          // track uniquely rdf:nil per graph
+          var object = nodeMap[o.value];
+          if(!('usages' in object)) {
+            object.usages = [];
+          }
+          object.usages.push({
+            node: node,
+            property: p,
+            value: value
+          });
+        } else if(o.value in referencedOnce) {
+          // object referenced more than once
+          referencedOnce[o.value] = false;
+        } else {
+          // keep track of single reference
+          referencedOnce[o.value] = {
+            node: node,
+            property: p,
+            value: value
+          };
         }
-        object.usages.push({
-          node: node,
-          property: p,
-          value: value
-        });
       }
     }
   }
@@ -2962,18 +2972,16 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
       //   optionally, @type where the value is rdf:List.
       var nodeKeyCount = Object.keys(node).length;
       while(property === RDF_REST &&
-        nodeReferences[node['@id']] &&
-        nodeReferences[node['@id']].length === 1 &&
-        node.usages.length === 1 &&
+        _isObject(referencedOnce[node['@id']]) &&
         _isArray(node[RDF_FIRST]) && node[RDF_FIRST].length === 1 &&
         _isArray(node[RDF_REST]) && node[RDF_REST].length === 1 &&
-        (nodeKeyCount === 4 || (nodeKeyCount === 5 && _isArray(node['@type']) &&
+        (nodeKeyCount === 3 || (nodeKeyCount === 4 && _isArray(node['@type']) &&
           node['@type'].length === 1 && node['@type'][0] === RDF_LIST))) {
         list.push(node[RDF_FIRST][0]);
         listNodes.push(node['@id']);
 
         // get next node, moving backwards through list
-        usage = node.usages[0];
+        usage = referencedOnce[node['@id']];
         node = usage.node;
         property = usage.property;
         head = usage.value;
@@ -3007,6 +3015,8 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
         delete graphObject[listNodes[j]];
       }
     }
+
+    delete nil.usages;
   }
 
   var result = [];
@@ -3020,14 +3030,12 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
       var subjects_ = Object.keys(graphObject).sort();
       for(var si = 0; si < subjects_.length; ++si) {
         var node_ = graphObject[subjects_[si]];
-        delete node_.usages;
         // only add full subjects to top-level
         if(!_isSubjectReference(node_)) {
           graph.push(node_);
         }
       }
     }
-    delete node.usages;
     // only add full subjects to top-level
     if(!_isSubjectReference(node)) {
       result.push(node);
