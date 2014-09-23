@@ -161,14 +161,14 @@ jsonld.registerRDFParser = function(contentType, function(input) {
   return new Promise(...);
 });
 
-// override the default document loader with a custom one that uses
-// preloaded contexts:
+// how to override the default document loader with a custom one -- for
+// example, one that uses pre-loaded contexts:
 
-// define a mapping of context URL => context docs
+// define a mapping of context URL => context doc
 var CONTEXTS = {
   "http://example.com": {
     "@context": ...
-  }
+  }, ...
 };
 
 // grab the built-in node.js doc loader
@@ -183,9 +183,9 @@ var customLoader = function(url, callback) {
   if(url in CONTEXTS) {
     return callback(
       null, {
-        contextUrl: null,
-        document: CONTEXTS[url],
-        documentUrl: url
+        contextUrl: null, // this is for a contetx via a link header
+        document: CONTEXTS[url], // this is the actual document that was loaded
+        documentUrl: url // this is the actual context URL after redirects
       });
   }
   nodeDocumentLoader(url, callback);
