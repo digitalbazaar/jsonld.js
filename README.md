@@ -183,7 +183,7 @@ var customLoader = function(url, callback) {
   if(url in CONTEXTS) {
     return callback(
       null, {
-        contextUrl: null, // this is for a contetx via a link header
+        contextUrl: null, // this is for a context via a link header
         document: CONTEXTS[url], // this is the actual document that was loaded
         documentUrl: url // this is the actual context URL after redirects
       });
