@@ -160,6 +160,41 @@ jsonld.registerRDFParser = function(contentType, function(input) {
   // parse input into a jsonld.js RDF dataset object...
   return new Promise(...);
 });
+
+// override the default document loader with a custom one that uses
+// preloaded contexts:
+
+// define a mapping of context URL => context docs
+var CONTEXTS = {
+  "http://example.com": {
+    "@context": ...
+  }
+};
+
+// grab the built-in node.js doc loader
+var nodeDocumentLoader = jsonld.documentLoaders.node();
+// or grab the XHR one: jsonld.documentLoaders.xhr()
+// or grab the jquery one: jsonld.documentLoaders.jquery()
+
+// change the default document loader using the callback API
+// (you can also do this using the promise-based API, return a promise instead
+// of using a callback)
+var customLoader = function(url, callback) {
+  if(url in CONTEXTS) {
+    return callback(
+      null, {
+        contextUrl: null,
+        document: CONTEXTS[url],
+        documentUrl: url
+      });
+  }
+  nodeDocumentLoader(url, callback);
+};
+jsonld.documentLoader = customLoader;
+
+// alternatively, pass the custom loader for just a specific call:
+jsonld.compact(doc, context, {documentLoader: customLoader},
+  function(err, compacted) { ... });
 ```
 
 Using the Command-line Tool
