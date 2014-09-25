@@ -1379,7 +1379,9 @@ jsonld.documentLoaders.node = function(options) {
       },
       strictSSL: strictSSL,
       followRedirect: false
-    }, function(err, res, body) {
+    }, handleResponse);
+
+    function handleResponse(err, res, body) {
       doc = {contextUrl: null, documentUrl: url, document: body || null};
 
       // handle error
@@ -1452,7 +1454,7 @@ jsonld.documentLoaders.node = function(options) {
           {contextUrl: null, documentUrl: redirects[i], document: body});
       }
       callback(err, doc);
-    });
+    }
   }
 
   var loader = function(url, callback) {
