@@ -264,9 +264,15 @@ If you installed the test suite elsewhere:
 
     make test JSONLD_TEST_SUITE={PATH_TO_YOUR_JSON_LD_ORG}/test-suite}
 
-Code coverage output can be generated in `coverage.html`:
+The standard tests will run node and browser tests. Just one type can also
+be run:
 
-    make test-cov
+    make test-node
+    make test-browser
+
+Code coverage of node tests can be generated in `coverage/`:
+
+    make test-coverage
 
 The Mocha output reporter can be changed to min, dot, list, nyan, etc:
 
@@ -294,4 +300,3 @@ To generate earl reports:
 [Microdata]: http://www.w3.org/TR/microdata/
 [Microformats]: http://microformats.org/
 [RFC4627]: http://www.ietf.org/rfc/rfc4627.txt
-

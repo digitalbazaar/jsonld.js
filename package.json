@@ -38,10 +38,10 @@
   },
   "devDependencies": {
     "chai": "~1.9.1",
-    "phantomjs": "~1.9.0",
+    "istanbul": "^0.3.2",
     "mocha": "~1.21.4",
     "mocha-phantomjs": "~3.5.0",
-    "visionmedia-jscoverage": "~1.0.0"
+    "phantomjs": "~1.9.0"
   },
   "engines": {
     "node": "*"
@@ -58,11 +58,11 @@
     "jsonld": "./bin/jsonld"
   },
   "scripts": {
-    "test-node": "mocha -R spec tests/test.js",
-    "test-browser": "phantomjs tests/test.js",
-    "test": "npm run test-node; npm run test-browser",
-    "lint": "jshint js/jsonld.js js/request.js tests/*.js",
-    "coverage": "make test-cov"
+    "test-node": "make test-node",
+    "test-browser": "make test-browser",
+    "test": "make test",
+    "coverage": "make test-coverage",
+    "lint": "jshint js/jsonld.js js/request.js tests/*.js"
   },
   "browser": {
     "./js/request.js": "./browser/ignore.js",

@@ -3,7 +3,6 @@
 .cproject
 .project
 .settings
-coverage.html
-js-cov
+coverage
 node_modules
 v8.log
