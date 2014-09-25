@@ -316,6 +316,10 @@ function _request(loc, options, callback) {
     });
   } else {
     // read file
+    var fileprefix = 'file://';
+    if(loc.indexOf('file://') === 0) {
+      loc = loc.substr(fileprefix.length);
+    }
     fs.readFile(loc, options.encoding || 'utf8', function(error, data) {
       if(error) {
         return callback(error);
