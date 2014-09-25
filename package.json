@@ -31,16 +31,16 @@
     "es6-promise": "~1.0.0",
     "jsdom": "~0.7.0",
     "pkginfo": "~0.3.0",
-    "request": "~2.42.0",
-    "xmldom": "0.1.16",
+    "request": "~2.44.0",
+    "xmldom": "0.1.19",
     "through": "~2.3.4",
     "jsonldify": "~0.1.0"
   },
   "devDependencies": {
-    "chai": "~1.7.0",
+    "chai": "~1.9.1",
     "phantomjs": "~1.9.0",
-    "mocha": "~1.15.0",
-    "mocha-phantomjs": "~3.1.0",
+    "mocha": "~1.21.4",
+    "mocha-phantomjs": "~3.5.0",
     "visionmedia-jscoverage": "~1.0.0"
   },
   "engines": {
