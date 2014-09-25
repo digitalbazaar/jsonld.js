@@ -4,26 +4,30 @@
   "description": "A JSON-LD Processor and API implementation in JavaScript.",
   "homepage": "http://github.com/digitalbazaar/jsonld.js",
   "author": {
-    "name" : "Digital Bazaar, Inc.",
-    "email" : "support@digitalbazaar.com",
-    "url" : "http://digitalbazaar.com/"
+    "name": "Digital Bazaar, Inc.",
+    "email": "support@digitalbazaar.com",
+    "url": "http://digitalbazaar.com/"
   },
-  "contributors": [{
-    "name" : "Dave Longley",
-    "email" : "dlongley@digitalbazaar.com"
-  }],
+  "contributors": [
+    {
+      "name": "Dave Longley",
+      "email": "dlongley@digitalbazaar.com"
+    }
+  ],
   "repository": {
-    "type" : "git",
-    "url" : "http://github.com/digitalbazaar/jsonld.js"
+    "type": "git",
+    "url": "http://github.com/digitalbazaar/jsonld.js"
   },
   "bugs": {
     "url": "https://github.com/digitalbazaar/jsonld.js/issues",
     "email": "support@digitalbazaar.com"
   },
-  "licenses": [{
-    "type": "BSD",
-    "url": "https://github.com/digitalbazaar/jsonld.js/raw/master/LICENSE"
-  }],
+  "licenses": [
+    {
+      "type": "BSD",
+      "url": "https://github.com/digitalbazaar/jsonld.js/raw/master/LICENSE"
+    }
+  ],
   "main": "js/jsonld.js",
   "dependencies": {
     "async": "~0.9.0",
