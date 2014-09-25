@@ -107,8 +107,10 @@ function _requestOptions(command) {
 // init common jsonld options
 function _jsonLdOptions(command, input) {
   var options = {};
-  // explicit base set
+
+  // setup base
   if(command.base) {
+    // explicit base set
     options.base = command.base;
   } else if(input !== '-') {
     // only setup base if not stdin
@@ -120,6 +122,19 @@ function _jsonLdOptions(command, input) {
       options.base = 'file://' + path.resolve(process.cwd(), input);
     }
   }
+
+  // setup documentLoader
+  options.documentLoader = function(url, callback) {
+    var reqopts = _requestOptions(command);
+    jsonld.request(url, reqopts, function(err, res, data) {
+      callback(err, {
+        contextUrl: null,
+        documentUrl: url,
+        document: data || null
+      });
+    });
+  };
+
   return options;
 }
 
@@ -155,14 +170,8 @@ _jsonLdCommand(program.command('format [filename|URL|-]'))
   .option('-j, --json', 'output application/json [true]')
   .action(function(input, cmd) {
     input = input || '-';
-    var reqopts = _requestOptions(cmd);
     async.auto({
-      readInput: function(callback, results) {
-        jsonld.request(input, reqopts, function(err, res, data) {
-          callback(err, data);
-        });
-      },
-      process: ['readInput', function(callback, results) {
+      process: function(callback, results) {
         var options = _jsonLdOptions(cmd, input);
         options.format = cmd.format || 'json';
         if(cmd.nquads) {
@@ -178,10 +187,7 @@ _jsonLdCommand(program.command('format [filename|URL|-]'))
           case 'application/nquads':
             // normalize format for toRDF
             options.format = 'application/nquads';
-            jsonld.toRDF(results.readInput, options,
-              function(err, dataset) {
-                callback(err, dataset);
-              });
+            jsonld.toRDF(input, options, callback);
             break;
           case 'json':
           case 'jsonld':
@@ -190,12 +196,15 @@ _jsonLdCommand(program.command('format [filename|URL|-]'))
           case 'application/json':
           case 'application/ld+json':
             // just doing basic JSON formatting
-            callback(null, results.readInput);
+            var reqopts = _requestOptions(cmd);
+            jsonld.request(input, reqopts, function(err, res, data) {
+              callback(err, data);
+            });
             break;
           default:
             throw new Error('ERROR: Unknown format: ' + options.format);
         }
-      }],
+      },
       output: ['process', function(callback, results) {
         _output(results.process, cmd, callback);
       }]
@@ -211,36 +220,21 @@ _jsonLdCommand(program.command('compact [filename|URL]'))
   .option('-g, --graph', 'always output top-level graph [false]')
   .action(function(input, cmd) {
     input = input || '-';
-    var reqopts = _requestOptions(cmd);
     async.auto({
-      readContext: function(callback, results) {
+      check: function(callback) {
         if(!cmd.context) {
           return callback(
             new Error('ERROR: Context not specified, use -c/--context'));
         }
-        // use built-in context loader
-        if(_isHTTP(cmd.context)) {
-          return callback(null, cmd.context);
-        }
-        jsonld.request(cmd.context, reqopts, function(err, res, data) {
-          callback(err, data);
-        });
+        callback(null);
       },
-      readInput: function(callback, results) {
-        jsonld.request(input, reqopts, function(err, res, data) {
-          callback(err, data);
-        });
-      },
-      process: ['readContext', 'readInput', function(callback, results) {
+      process: ['check', function(callback, results) {
         var options = _jsonLdOptions(cmd, input);
         options.strict = cmd.strict;
         options.compactArrays = cmd.compactArrays;
         options.graph = !!cmd.graph;
 
-        jsonld.compact(results.readInput, results.readContext, options,
-          function(err, compacted) {
-            callback(err, compacted);
-          });
+        jsonld.compact(input, cmd.context, options, callback);
       }],
       output: ['process', function(callback, results) {
         _output(results.process, cmd, callback);
@@ -253,22 +247,13 @@ _jsonLdCommand(program.command('expand [filename|URL|-]'))
   .option('    --keep-free-floating-nodes', 'keep free-floating nodes')
   .action(function(input, cmd) {
     input = input || '-';
-    var reqopts = _requestOptions(cmd);
     async.auto({
-      readInput: function(callback, results) {
-        jsonld.request(input, reqopts, function(err, res, data) {
-          callback(err, data);
-        });
-      },
-      process: ['readInput', function(callback, results) {
+      process: function(callback, results) {
         var options = _jsonLdOptions(cmd, input);
         options.keepFreeFloatingNodes = cmd.keepFreeFloatingNodes;
 
-        jsonld.expand(results.readInput, options,
-          function(err, expanded) {
-            callback(err, expanded);
-          });
-      }],
+        jsonld.expand(input, options, callback);
+      },
       output: ['process', function(callback, results) {
         _output(results.process, cmd, callback);
       }]
@@ -281,33 +266,12 @@ _jsonLdCommand(program.command('flatten [filename|URL|-]'))
     'context filename or URL for compaction [none]')
   .action(function(input, cmd) {
     input = input || '-';
-    var reqopts = _requestOptions(cmd);
     async.auto({
-      readInput: function(callback, results) {
-        jsonld.request(input, reqopts, function(err, res, data) {
-          callback(err, data);
-        });
-      },
-      readContext: function(callback, results) {
-        if(cmd.context) {
-          // use built-in context loader
-          if(_isHTTP(cmd.context)) {
-            return callback(null, cmd.context);
-          }
-          return jsonld.request(cmd.context, reqopts, function(err, res, data) {
-            callback(err, data);
-          });
-        }
-        callback(null, null);
-      },
-      process: ['readInput', 'readContext', function(callback, results) {
+      process: function(callback, results) {
         var options = _jsonLdOptions(cmd, input);
 
-        jsonld.flatten(results.readInput, results.readContext, options,
-          function(err, flattened) {
-            callback(err, flattened);
-          });
-      }],
+        jsonld.flatten(input, cmd.context, options, callback);
+      },
       output: ['process', function(callback, results) {
         _output(results.process, cmd, callback);
       }]
@@ -324,28 +288,21 @@ _jsonLdCommand(program.command('frame [filename|URL|-]'))
     'default @omitDefault flag [false]', boolify, false)
   .action(function(input, cmd) {
     input = input || '-';
-    var reqopts = _requestOptions(cmd);
     async.auto({
-      readInput: function(callback, results) {
-        jsonld.request(input, reqopts, function(err, res, data) {
-          callback(err, data);
-        });
+      check: function(callback) {
+        if(!cmd.frame) {
+          return callback(
+            new Error('ERROR: Frame not specified, use -f/--frame'));
+        }
+        callback(null);
       },
-      readFrame: function(callback, results) {
-        jsonld.request(cmd.frame, reqopts, function(err, res, data) {
-          callback(err, data);
-        });
-      },
-      process: ['readInput', 'readFrame', function(callback, results) {
+      process: ['check', function(callback, results) {
         var options = _jsonLdOptions(cmd, input);
         options.embed = cmd.embed;
         options.explicit = cmd.explicit;
         options.omitDefault = cmd.omitDefault;
 
-        jsonld.frame(results.readInput, results.readFrame, options,
-          function(err, framed) {
-            callback(err, framed);
-          });
+        jsonld.frame(input, cmd.frame, options, callback);
       }],
       output: ['process', function(callback, results) {
         _output(results.process, cmd, callback);
@@ -360,14 +317,8 @@ _jsonLdCommand(program.command('normalize [filename|URL|-]'))
   .option('-q, --nquads', 'use \'application/nquads\' format')
   .action(function(input, cmd) {
     input = input || '-';
-    var reqopts = _requestOptions(cmd);
     async.auto({
-      readInput: function(callback, results) {
-        jsonld.request(input, reqopts, function(err, res, data) {
-          callback(err, data);
-        });
-      },
-      process: ['readInput', function(callback, results) {
+      process: function(callback, results) {
         var options = _jsonLdOptions(cmd, input);
         if(cmd.nquads) {
           options.format = 'application/nquads';
@@ -376,11 +327,8 @@ _jsonLdCommand(program.command('normalize [filename|URL|-]'))
           options.format = cmd.format;
         }
 
-        jsonld.normalize(results.readInput, options,
-          function(err, normalized) {
-            callback(err, normalized);
-          });
-      }],
+        jsonld.normalize(input, options, callback);
+      },
       output: ['process', function(callback, results) {
         _output(results.process, cmd, callback);
       }]
