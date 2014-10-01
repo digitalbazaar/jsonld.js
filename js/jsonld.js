@@ -148,8 +148,7 @@ jsonld.compact = function(input, ctx, options, callback) {
       var compacted;
       try {
         // do compaction
-        compacted = new Processor().compact(
-          activeCtx, null, expanded, options);
+        compacted = new Processor().compact(activeCtx, null, expanded, options);
       } catch(ex) {
         return callback(ex);
       }
@@ -2091,6 +2090,15 @@ Processor.prototype.compact = function(
         }
 
         // use keyword alias and add value
+        var alias = _compactIri(activeCtx, expandedProperty);
+        jsonld.addValue(rval, alias, expandedValue);
+        continue;
+      }
+
+      // skip array processing for keywords that aren't @graph or @list
+      if(expandedProperty !== '@graph' && expandedProperty !== '@list' &&
+        _isKeyword(expandedProperty)) {
+        // use keyword alias and add value as is
         var alias = _compactIri(activeCtx, expandedProperty);
         jsonld.addValue(rval, alias, expandedValue);
         continue;
