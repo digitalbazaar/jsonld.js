@@ -4021,33 +4021,6 @@ function _frame(state, subjects, frame, parent, property) {
     // prepare embed meta info
     var embed = {parent: parent, property: property};
 
-    // if embed is on and there is an existing embed
-    if(embedOn && (id in state.embeds)) {
-      // only overwrite an existing embed if it has already been added to its
-      // parent -- otherwise its parent is somewhere up the tree from this
-      // embed and the embed would occur twice once the tree is added
-      embedOn = false;
-
-      // existing embed's parent is an array
-      var existing = state.embeds[id];
-      if(_isArray(existing.parent)) {
-        for(var i = 0; i < existing.parent.length; ++i) {
-          if(jsonld.compareValues(output, existing.parent[i])) {
-            embedOn = true;
-            break;
-          }
-        }
-      } else if(jsonld.hasValue(existing.parent, existing.property, output)) {
-        // existing embed's parent is an object
-        embedOn = true;
-      }
-
-      // existing embed has already been added, so allow an overwrite
-      if(embedOn) {
-        _removeEmbed(state, id);
-      }
-    }
-
     // not embedding, add output without any other properties
     if(!embedOn) {
       _addFrameOutput(state, parent, property, output);
@@ -4093,10 +4066,9 @@ function _frame(state, subjects, frame, parent, property) {
           var src = o['@list'];
           for(var n in src) {
             o = src[n];
-            if(_isSubjectReference(o)) {
+            if(_isSubjectReference(o) && !_createsCircularReference(id, o, state.embeds)) {
               // recurse into subject reference
-              _frame(state, [o['@id']], frame[prop][0]['@list'],
-              list, '@list');
+              _frame(state, [o['@id']], frame[prop][0]['@list'], list, '@list');
             } else {
               // include other values automatically
               _addFrameOutput(state, list, '@list', _clone(o));
@@ -4105,7 +4077,7 @@ function _frame(state, subjects, frame, parent, property) {
           continue;
         }
 
-        if(_isSubjectReference(o)) {
+        if(_isSubjectReference(o) && !_createsCircularReference(id, o, state.embeds)) {
           // recurse into subject reference
           _frame(state, [o['@id']], frame[prop], output, prop);
         } else {
@@ -4144,6 +4116,17 @@ function _frame(state, subjects, frame, parent, property) {
     // add output to parent
     _addFrameOutput(state, parent, property, output);
   }
+}
+
+function _createsCircularReference(embedLocation, resourceToBeEmbedded, embedsObjectGraphIndex) {
+  var reference = embedsObjectGraphIndex[embedLocation];
+  while (reference !== undefined) {
+    if (reference.parent['@id'] === resourceToBeEmbedded['@id']) {
+      return true;
+    }
+    reference = embedsObjectGraphIndex[reference.parent['@id']];
+  }
+  return false;
 }
 
 /**
