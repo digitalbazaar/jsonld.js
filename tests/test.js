@@ -261,6 +261,9 @@ function addTest(manifest, test) {
         return done();
       } catch(ex) {
         if(program.bail) {
+          if(ex.name !== 'AssertionError') {
+            console.log('\nError: ', JSON.stringify(ex, null, 2));
+          }
           if(_nodejs) {
             process.exit();
           } else {
@@ -521,15 +524,16 @@ function createDocumentLoader(test) {
       return loader(url, callback);
     }
 
-    // attempt to load locally
     var idx = url.indexOf(base);
-    if(idx === 0) {
+    if(idx === 0 || url.indexOf(':') === -1) {
+      // attempt to load official test-suite files or relative URLs locally
+      var rval;
       try {
-        callback(null, loadLocally(url));
+        rval = loadLocally(url);
       } catch(ex) {
-        callback(ex);
+        return callback(ex);
       }
-      return;
+      return callback(null, rval);
     }
 
     // load remotely
@@ -566,8 +570,14 @@ function createDocumentLoader(test) {
       }
     }
 
-    var filename = joinPath(
-      ROOT_MANIFEST_DIR, doc.documentUrl.substr(base.length));
+    var filename;
+    if(doc.documentUrl.indexOf(':') === -1) {
+      filename = joinPath(ROOT_MANIFEST_DIR, doc.documentUrl);
+      doc.documentUrl = 'file://' + filename;
+    } else {
+      filename = joinPath(
+        ROOT_MANIFEST_DIR, doc.documentUrl.substr(base.length));
+    }
     try {
       doc.document = readJson(filename);
     } catch(ex) {
