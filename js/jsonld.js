@@ -440,7 +440,8 @@ jsonld.flatten = function(input, ctx, options, callback) {
  * @param [options] the framing options.
  *          [base] the base IRI to use.
  *          [expandContext] a context to expand with.
- *          [embed] default @embed flag (default: true).
+ *          [embed] default @embed flag: '@once', '@always', '@never'
+ *            (default: 'once').
  *          [explicit] default @explicit flag (default: false).
  *          [requireAll] default @requireAll flag (default: true).
  *          [omitDefault] default @omitDefault flag (default: false).
