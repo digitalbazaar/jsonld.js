@@ -138,7 +138,11 @@ describe('JSON-LD', function() {
   }
 
   // run Web IDL tests
-  if(!_nodejs) {
+  // FIXME: hack to prevent Web IDL tests from running when running
+  // local manifest tests that aren't part of the main JSON-LD test suite;
+  // testing arch needs to be reworked to better support local tests and
+  // separate them from official ones and what goes into EARL report, etc.
+  if(!_nodejs && ROOT_MANIFEST_DIR.indexOf('json-ld.org/test-suite') !== -1) {
     require('./webidl/testharness.js');
     require('./webidl/WebIDLParser.js');
     require('./webidl/idlharness.js');
