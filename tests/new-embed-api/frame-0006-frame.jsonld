@@ -1,0 +1,24 @@
+{
+  "@context": {
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "ex": "http://example.org/vocab#"
+  },
+  "@type": "ex:Library",
+  "@embed": "@always",
+  "ex:contains": {
+    "@type": "ex:Book",
+    "@embed": "@always",
+    "ex:bookmark": {
+      "@type": "ex:Chapter",
+      "@embed": "@always"
+    },
+    "ex:contains": {
+      "@type": "ex:Chapter",
+      "@embed": "@always",
+      "ex:topic" : {
+        "@type": "ex:Topic",
+        "@embed": "@always"
+      }
+    }
+  }
+}

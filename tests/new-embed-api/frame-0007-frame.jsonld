@@ -4,21 +4,28 @@
     "ex": "http://example.org/vocab#"
   },
   "@type": "ex:Library",
+  "@embed": "@always",
   "ex:contains": {
     "@type": "ex:Book",
+    "@embed": "@always",
     "ex:bookmark": {
-      "@type": "ex:Chapter"
-    },    
+      "@type": "ex:Chapter",
+      "@embed": "@always"
+    },
     "ex:contains": {
       "@type": "ex:Chapter",
+      "@embed": "@always",
       "dc:subject": {
         "@omitDefault": "true",
+        "@embed": "@always",
         "@type": "ex:Library"
-      },    
+      },
       "ex:topic" : {
         "@type": "ex:Topic",
+        "@embed": "@always",
         "ex:relatesTo" : {
           "@omitDefault": "true",
+          "@embed": "@always",
           "@type": "ex:Library"
         }
       }

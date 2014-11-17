@@ -4,15 +4,16 @@
     "ex": "http://example.org/vocab#"
   },
   "@type": "ex:Library",
+  "@embed": "@always",
   "ex:contains": {
     "@type": "ex:Book",
-    "ex:bookmark": {
-      "@type": "ex:Chapter"
-    },    
+    "@embed": "@always",
     "ex:contains": {
       "@type": "ex:Chapter",
-      "ex:topic" : {
-        "@type": "ex:Topic"
+      "@embed": "@always",
+      "ex:topic": {
+        "@type": "ex:Library",
+        "@embed": "@always"
       }
     }
   }
