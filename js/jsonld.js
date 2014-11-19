@@ -585,6 +585,8 @@ jsonld.frame = function(input, frame, options, callback) {
 };
 
 /**
+ * **Experimental**
+ *
  * Performs JSON-LD objectification.
  *
  * @param input the JSON-LD input to objectify.
@@ -913,12 +915,187 @@ jsonld.toRDF = function(input, options, callback) {
 };
 
 /**
+ * **Experimental**
+ *
+ * Recursively flattens the nodes in the given JSON-LD input into a map of
+ * node ID => node.
+ *
+ * @param input the JSON-LD input.
+ * @param [options] the options to use:
+ *          [base] the base IRI to use.
+ *          [expandContext] a context to expand with.
+ *          [namer] a jsonld.UniqueNamer to use to label blank nodes.
+ *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
+ * @param callback(err, nodeMap) called once the operation completes.
+ */
+jsonld.createNodeMap = function(input, options, callback) {
+  if(arguments.length < 1) {
+    return jsonld.nextTick(function() {
+      callback(new TypeError('Could not create node map, too few arguments.'));
+    });
+  }
+
+  // get arguments
+  if(typeof options === 'function') {
+    callback = options;
+    options = {};
+  }
+  options = options || {};
+
+  // set default options
+  if(!('base' in options)) {
+    options.base = (typeof input === 'string') ? input : '';
+  }
+  if(!('documentLoader' in options)) {
+    options.documentLoader = jsonld.loadDocument;
+  }
+
+  // expand input
+  jsonld.expand(input, options, function(err, _input) {
+    if(err) {
+      return callback(new JsonLdError(
+        'Could not expand input before creating node map.',
+        'jsonld.CreateNodeMapError', {cause: err}));
+    }
+
+    var nodeMap;
+    try {
+      nodeMap = new Processor().createNodeMap(_input, options);
+    } catch(ex) {
+      return callback(ex);
+    }
+
+    callback(null, nodeMap);
+  });
+};
+
+/**
+ * **Experimental**
+ *
+ * Merges two or more JSON-LD documents into a single flattened document.
+ *
+ * @param docs the JSON-LD documents to merge together.
+ * @param ctx the context to use to compact the merged result, or null.
+ * @param [options] the options to use:
+ *          [base] the base IRI to use.
+ *          [expandContext] a context to expand with.
+ *          [namer] a jsonld.UniqueNamer to use to label blank nodes.
+ *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
+ * @param callback(err, merged) called once the operation completes.
+ */
+jsonld.merge = function(docs, ctx, options, callback) {
+  if(arguments.length < 1) {
+    return jsonld.nextTick(function() {
+      callback(new TypeError('Could not merge, too few arguments.'));
+    });
+  }
+  if(!_isArray(docs)) {
+    return jsonld.nextTick(function() {
+      callback(new TypeError('Could not merge, "docs" must be an array.'));
+    });
+  }
+
+  // get arguments
+  if(typeof options === 'function') {
+    callback = options;
+    options = {};
+  } else if(typeof ctx === 'function') {
+    callback = ctx;
+    ctx = null;
+    options = {};
+  }
+  options = options || {};
+
+  // expand all documents
+  var expanded = [];
+  var error = null;
+  var count = docs.length;
+  for(var i = 0; i < docs.length; ++i) {
+    var opts = {};
+    for(var key in options) {
+      opts[key] = options[key];
+    }
+    jsonld.expand(docs[i], opts, expandComplete);
+  }
+
+  function expandComplete(err, _input) {
+    if(error) {
+      return;
+    }
+    if(err) {
+      error = err;
+      return callback(new JsonLdError(
+        'Could not expand input before flattening.',
+        'jsonld.FlattenError', {cause: err}));
+    }
+    expanded.push(_input);
+    if(--count === 0) {
+      merge(expanded);
+    }
+  }
+
+  function merge(expanded) {
+    var namer = options.namer || new UniqueNamer('_:b');
+    var graphs = {'@default': {}};
+
+    var defaultGraph;
+    try {
+      for(var i = 0; i < expanded.length; ++i) {
+        // uniquely relabel blank nodes
+        var doc = expanded[i];
+        doc = jsonld.relabelBlankNodes(doc, {
+          namer: new UniqueNamer('_:b' + i + '-')
+        });
+        // add nodes to the shared node map graphs
+        _createNodeMap(doc, graphs, '@default', namer);
+      }
+
+      // add all non-default graphs to default graph
+      defaultGraph = _mergeNodeMaps(graphs);
+    } catch(ex) {
+      return callback(ex);
+    }
+
+    // produce flattened output
+    var flattened = [];
+    var keys = Object.keys(defaultGraph).sort();
+    for(var ki = 0; ki < keys.length; ++ki) {
+      var node = defaultGraph[keys[ki]];
+      // only add full subjects to top-level
+      if(!_isSubjectReference(node)) {
+        flattened.push(node);
+      }
+    }
+
+    if(ctx === null) {
+      return callback(null, flattened);
+    }
+
+    // compact result (force @graph option to true, skip expansion)
+    options.graph = true;
+    options.skipExpansion = true;
+    jsonld.compact(flattened, ctx, options, function(err, compacted) {
+      if(err) {
+        return callback(new JsonLdError(
+          'Could not compact merged output.',
+          'jsonld.MergeError', {cause: err}));
+      }
+      callback(null, compacted);
+    });
+  }
+};
+
+/**
  * Relabels all blank nodes in the given JSON-LD input.
  *
  * @param input the JSON-LD input.
+ * @param [options] the options to use:
+ *          [namer] a jsonld.UniqueNamer to use.
  */
-jsonld.relabelBlankNodes = function(input) {
-  _labelBlankNodes(new UniqueNamer('_:b', input));
+jsonld.relabelBlankNodes = function(input, options) {
+  options = options || {};
+  var namer = options.namer || new UniqueNamer('_:b');
+  return _labelBlankNodes(namer, input);
 };
 
 /**
@@ -958,7 +1135,19 @@ jsonld.loadDocument = function(url, callback) {
 
 /* Promises API */
 
-jsonld.promises = function() {
+/**
+ * Creates a new promises API object.
+ *
+ * @param [options] the options to use:
+ *          [api] 'json-ld-1.0' to output a standard JSON-LD 1.0 promises API,
+ *            'jsonld.js' to output the same with augmented proprietary
+ *            methods (default: 'jsonld.js')
+ *
+ * @return the promises API object.
+ */
+jsonld.promises = function(options) {
+  options = options || {};
+  options.api = options.api || 'jsonld.js';
   try {
     jsonld.Promise = global.Promise || require('es6-promise').Promise;
   } catch(e) {
@@ -1019,6 +1208,22 @@ jsonld.promises = function() {
     return promisify.apply(
       null, [jsonld.normalize].concat(slice.call(arguments)));
   };
+
+  if(options.api === 'jsonld.js') {
+    api.objectify = function(input) {
+      return promisify.apply(
+        null, [jsonld.objectify].concat(slice.call(arguments)));
+    };
+    api.createNodeMap = function(input) {
+      return promisify.apply(
+        null, [jsonld.createNodeMap].concat(slice.call(arguments)));
+    };
+    api.merge = function(input) {
+      return promisify.apply(
+        null, [jsonld.merge].concat(slice.call(arguments)));
+    };
+  }
+
   return api;
 };
 
@@ -1052,7 +1257,7 @@ jsonld.promisify = function(op) {
 /* WebIDL API */
 
 function JsonLdProcessor() {}
-JsonLdProcessor.prototype = jsonld.promises();
+JsonLdProcessor.prototype = jsonld.promises({api: 'json-ld-1.0'});
 JsonLdProcessor.prototype.toString = function() {
   if(this instanceof JsonLdProcessor) {
     return '[object JsonLdProcessor]';
@@ -2599,6 +2804,27 @@ Processor.prototype.expand = function(
 };
 
 /**
+ * Creates a JSON-LD node map (node ID => node).
+ *
+ * @param input the expanded JSON-LD to create a node map of.
+ * @param [options] the options to use:
+ *          [namer] the UniqueNamer to use.
+ *
+ * @return the node map.
+ */
+Processor.prototype.createNodeMap = function(input, options) {
+  options = options || {};
+
+  // produce a map of all subjects and name each bnode
+  var namer = options.namer || new UniqueNamer('_:b');
+  var graphs = {'@default': {}};
+  _createNodeMap(input, graphs, '@default', namer);
+
+  // add all non-default graphs to default graph
+  return _mergeNodeMaps(graphs);
+};
+
+/**
  * Performs JSON-LD flattening.
  *
  * @param input the expanded JSON-LD to flatten.
@@ -2606,39 +2832,7 @@ Processor.prototype.expand = function(
  * @return the flattened output.
  */
 Processor.prototype.flatten = function(input) {
-  // produce a map of all subjects and name each bnode
-  var namer = new UniqueNamer('_:b');
-  var graphs = {'@default': {}};
-  _createNodeMap(input, graphs, '@default', namer);
-
-  // add all non-default graphs to default graph
-  var defaultGraph = graphs['@default'];
-  var graphNames = Object.keys(graphs).sort();
-  for(var i = 0; i < graphNames.length; ++i) {
-    var graphName = graphNames[i];
-    if(graphName === '@default') {
-      continue;
-    }
-    var nodeMap = graphs[graphName];
-    var subject = defaultGraph[graphName];
-    if(!subject) {
-      defaultGraph[graphName] = subject = {
-        '@id': graphName,
-        '@graph': []
-      };
-    } else if(!('@graph' in subject)) {
-      subject['@graph'] = [];
-    }
-    var graph = subject['@graph'];
-    var ids = Object.keys(nodeMap).sort();
-    for(var ii = 0; ii < ids.length; ++ii) {
-      var node = nodeMap[ids[ii]];
-      // only add full subjects
-      if(!_isSubjectReference(node)) {
-        graph.push(node);
-      }
-    }
-  }
+  var defaultGraph = this.createNodeMap(input);
 
   // produce flattened output
   var flattened = [];
@@ -2743,7 +2937,7 @@ Processor.prototype.normalize = function(dataset, options, callback) {
 
       // hash unnamed bnode
       var bnode = unnamed[i];
-      var hash = _hashQuads(bnode, bnodes, namer);
+      var hash = _hashQuads(bnode, bnodes);
 
       // store hash as unique or a duplicate
       if(hash in duplicates) {
@@ -3529,7 +3723,7 @@ function _RDFToObject(o, useNativeTypes) {
   var rval = {'@value': o.value};
 
   // add language
-  if(o['language']) {
+  if(o.language) {
     rval['@language'] = o.language;
   } else {
     var type = o.datatype;
@@ -3546,7 +3740,7 @@ function _RDFToObject(o, useNativeTypes) {
         }
       } else if(_isNumeric(rval['@value'])) {
         if(type === XSD_INTEGER) {
-          var i = parseInt(rval['@value']);
+          var i = parseInt(rval['@value'], 10);
           if(i.toFixed(0) === rval['@value']) {
             rval['@value'] = i;
           }
@@ -3597,11 +3791,10 @@ function _compareRDFTriples(t1, t2) {
  *
  * @param id the ID of the bnode to hash quads for.
  * @param bnodes the mapping of bnodes to quads.
- * @param namer the canonical bnode namer.
  *
  * @return the new hash.
  */
-function _hashQuads(id, bnodes, namer) {
+function _hashQuads(id, bnodes) {
   // return cached hash
   if('hash' in bnodes[id]) {
     return bnodes[id].hash;
@@ -3672,7 +3865,7 @@ function _hashPaths(id, bnodes, namer, pathNamer, callback) {
       } else if(pathNamer.isNamed(bnode)) {
         name = pathNamer.getName(bnode);
       } else {
-        name = _hashQuads(bnode, bnodes, namer);
+        name = _hashQuads(bnode, bnodes);
       }
 
       // hash direction, property, and bnode name/hash
@@ -3973,6 +4166,38 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
       }
     }
   }
+}
+
+function _mergeNodeMaps(graphs) {
+  // add all non-default graphs to default graph
+  var defaultGraph = graphs['@default'];
+  var graphNames = Object.keys(graphs).sort();
+  for(var i = 0; i < graphNames.length; ++i) {
+    var graphName = graphNames[i];
+    if(graphName === '@default') {
+      continue;
+    }
+    var nodeMap = graphs[graphName];
+    var subject = defaultGraph[graphName];
+    if(!subject) {
+      defaultGraph[graphName] = subject = {
+        '@id': graphName,
+        '@graph': []
+      };
+    } else if(!('@graph' in subject)) {
+      subject['@graph'] = [];
+    }
+    var graph = subject['@graph'];
+    var ids = Object.keys(nodeMap).sort();
+    for(var ii = 0; ii < ids.length; ++ii) {
+      var node = nodeMap[ids[ii]];
+      // only add full subjects
+      if(!_isSubjectReference(node)) {
+        graph.push(node);
+      }
+    }
+  }
+  return defaultGraph;
 }
 
 /**
@@ -5296,8 +5521,8 @@ function _removeBase(base, iri) {
 /**
  * Gets the initial context.
  *
- * @param options the options to use.
- *          base the document base IRI.
+ * @param options the options to use:
+ *          [base] the document base IRI.
  *
  * @return the initial context.
  */
@@ -6295,6 +6520,7 @@ function UniqueNamer(prefix) {
   this.counter = 0;
   this.existing = {};
 }
+jsonld.UniqueNamer = UniqueNamer;
 
 /**
  * Copies this UniqueNamer.
