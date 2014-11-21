@@ -1139,24 +1139,28 @@ jsonld.loadDocument = function(url, callback) {
  * Creates a new promises API object.
  *
  * @param [options] the options to use:
- *          [api] 'json-ld-1.0' to output a standard JSON-LD 1.0 promises API,
- *            'jsonld.js' to output the same with augmented proprietary
+ *          [api] an object to attach the API to.
+ *          [version] 'json-ld-1.0' to output a standard JSON-LD 1.0 promises
+ *            API, 'jsonld.js' to output the same with augmented proprietary
  *            methods (default: 'jsonld.js')
  *
  * @return the promises API object.
  */
 jsonld.promises = function(options) {
   options = options || {};
-  options.api = options.api || 'jsonld.js';
-  try {
-    jsonld.Promise = global.Promise || require('es6-promise').Promise;
-  } catch(e) {
-    throw new Error('Unable to find a Promise implementation.');
-  }
   var slice = Array.prototype.slice;
   var promisify = jsonld.promisify;
 
-  var api = {};
+  // handle 'api' option as version, set defaults
+  var api = options.api || {};
+  var version = options.version || 'jsonld.js';
+  if(typeof options.api === 'string') {
+    if(!options.version) {
+      version = options.api;
+    }
+    api = {};
+  }
+
   api.expand = function(input) {
     if(arguments.length < 1) {
       throw new TypeError('Could not expand, too few arguments.');
@@ -1209,7 +1213,7 @@ jsonld.promises = function(options) {
       null, [jsonld.normalize].concat(slice.call(arguments)));
   };
 
-  if(options.api === 'jsonld.js') {
+  if(version === 'jsonld.js') {
     api.objectify = function(input) {
       return promisify.apply(
         null, [jsonld.objectify].concat(slice.call(arguments)));
@@ -1222,6 +1226,17 @@ jsonld.promises = function(options) {
       return promisify.apply(
         null, [jsonld.merge].concat(slice.call(arguments)));
     };
+  }
+
+  try {
+    jsonld.Promise = global.Promise || require('es6-promise').Promise;
+  } catch(e) {
+    var f = function() {
+      throw new Error('Unable to find a Promise implementation.');
+    };
+    for(var method in api) {
+      api[method] = f;
+    }
   }
 
   return api;
@@ -1254,10 +1269,13 @@ jsonld.promisify = function(op) {
   });
 };
 
+// extend jsonld.promises w/jsonld.js methods
+jsonld.promises({api: jsonld.promises});
+
 /* WebIDL API */
 
 function JsonLdProcessor() {}
-JsonLdProcessor.prototype = jsonld.promises({api: 'json-ld-1.0'});
+JsonLdProcessor.prototype = jsonld.promises({version: 'json-ld-1.0'});
 JsonLdProcessor.prototype.toString = function() {
   if(this instanceof JsonLdProcessor) {
     return '[object JsonLdProcessor]';

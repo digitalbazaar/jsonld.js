@@ -244,7 +244,7 @@ function addTest(manifest, test) {
   var description = number + ' ' + (test.purpose || test.name);
 
   // get appropriate API and run test
-  var api = _nodejs ? jsonld : jsonld.promises();
+  var api = _nodejs ? jsonld : jsonld.promises;
   it(description, function(done) {
     this.timeout(5000);
     var testInfo = TEST_TYPES[getJsonLdTestType(test)];

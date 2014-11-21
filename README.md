@@ -125,7 +125,7 @@ jsonld.registerRDFParser = function(contentType, function(input) {
 });
 
 // use the promises API
-var promises = jsonld.promises();
+var promises = jsonld.promises;
 
 // compaction
 var promise = promises.compact(doc, context);
