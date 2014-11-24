@@ -6008,8 +6008,8 @@ function _findContextUrls(input, urls, replace, base) {
               if(_isArray(_ctx)) {
                 // add flattened context
                 Array.prototype.splice.apply(ctx, [i, 1].concat(_ctx));
-                i += _ctx.length;
-                length += _ctx.length;
+                i += _ctx.length - 1;
+                length = ctx.length;
               } else {
                 ctx[i] = _ctx;
               }
