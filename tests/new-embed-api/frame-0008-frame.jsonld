@@ -1,0 +1,15 @@
+{
+  "@context": {
+    "ex": "http://example.com/",
+    "embed": {
+      "@id": "ex:embed",
+      "@container": "@set"
+    },
+    "shouldExist": "ex:shouldExist"
+  },
+  "@type": "http://example.com/TreeRoot",
+  "@embed": "@always",
+  "embed": {
+    "@embed": "@always"
+  }
+}
