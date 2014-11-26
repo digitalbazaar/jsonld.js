@@ -440,8 +440,8 @@ jsonld.flatten = function(input, ctx, options, callback) {
  * @param [options] the framing options.
  *          [base] the base IRI to use.
  *          [expandContext] a context to expand with.
- *          [embed] default @embed flag: '@once', '@always', '@never'
- *            (default: 'once').
+ *          [embed] default @embed flag: '@last', '@always', '@never'
+ *            (default: '@last').
  *          [explicit] default @explicit flag (default: false).
  *          [requireAll] default @requireAll flag (default: true).
  *          [omitDefault] default @omitDefault flag (default: false).
@@ -2878,7 +2878,8 @@ Processor.prototype.frame = function(input, frame, options) {
   // create framing state
   var state = {
     options: options,
-    graphs: {'@default': {}, '@merged': {}}
+    graphs: {'@default': {}, '@merged': {}},
+    subjectStack: []
   };
 
   // produce a map of all graphs and name each bnode
@@ -4229,7 +4230,7 @@ function _mergeNodeMaps(graphs) {
  */
 function _frame(state, subjects, frame, parent, property) {
   // validate the frame
-  _validateFrame(state, frame);
+  _validateFrame(frame);
   frame = frame[0];
 
   // get flags for current frame
@@ -4239,7 +4240,6 @@ function _frame(state, subjects, frame, parent, property) {
     explicit: _getFrameFlag(frame, options, 'explicit'),
     requireAll: _getFrameFlag(frame, options, 'requireAll')
   };
-  var embedOn = (flags.embed !== '@never');
 
   // filter out subjects that match the frame
   var matches = _filterSubjects(state, subjects, frame, flags);
@@ -4248,59 +4248,40 @@ function _frame(state, subjects, frame, parent, property) {
   var ids = Object.keys(matches).sort();
   for(var idx in ids) {
     var id = ids[idx];
+    var subject = matches[id];
 
     /* Note: In order to treat each top-level match as a compartmentalized
-    result, create an independent copy of the embedded subjects map when the
-    property is null, which only occurs at the top-level. */
+    result, clear the unique embedded subjects map when the property is null,
+    which only occurs at the top-level. */
     if(property === null) {
-      state.embeds = {};
+      state.uniqueEmbeds = {};
     }
 
-    // start output
+    // start output for subject
     var output = {};
     output['@id'] = id;
 
-    // prepare embed meta info
-    var embed = {parent: parent, property: property};
-
-    // if embed mode is 'once' and there is an existing embed
-    if(embedOn && flags.embed === '@once' && (id in state.embeds)) {
-      // only overwrite an existing embed if it has already been added to its
-      // parent -- otherwise its parent is somewhere up the tree from this
-      // embed and the embed would occur twice once the tree is added
-      embedOn = false;
-
-      // existing embed's parent is an array
-      var existing = state.embeds[id];
-      if(_isArray(existing.parent)) {
-        for(var i = 0; i < existing.parent.length; ++i) {
-          if(jsonld.compareValues(output, existing.parent[i])) {
-            embedOn = true;
-            break;
-          }
-        }
-      } else if(jsonld.hasValue(existing.parent, existing.property, output)) {
-        // existing embed's parent is an object
-        embedOn = true;
-      }
-
-      // existing embed has already been added, so allow an overwrite
-      if(embedOn) {
-        _removeEmbed(state, id);
-      }
-    }
-
-    // not embedding, add output without any other properties
-    if(!embedOn) {
-      _addFrameOutput(state, parent, property, output);
+    // if embed is @never or if a circular reference would be created by an
+    // embed, the subject cannot be embedded
+    if(flags.embed === '@never' ||
+      _createsCircularReference(subject, state.subjectStack)) {
+      _addFrameOutput(parent, property, output);
       continue;
     }
 
-    // add embed meta info
-    state.embeds[id] = embed;
+    // if only the last match should be embedded
+    if(flags.embed === '@last') {
+      // remove any existing embed
+      if(id in state.uniqueEmbeds) {
+        _removeEmbed(state, id);
+      }
+      state.uniqueEmbeds[id] = {parent: parent, property: property};
+    }
+
+    // push matching subject onto stack to enable circular embed checks
+    state.subjectStack.push(subject);
 
     // iterate over subject properties
-    var subject = matches[id];
     var props = Object.keys(subject).sort();
     for(var i = 0; i < props.length; i++) {
       var prop = props[i];
@@ -4311,12 +4292,8 @@ function _frame(state, subjects, frame, parent, property) {
         continue;
       }
 
-      // if property isn't in the frame
-      if(!(prop in frame)) {
-        // if explicit is off, embed values
-        if(!flags.explicit) {
-          _embedValues(state, subject, prop, output);
-        }
+      // explicit is on and property isn't in the frame, skip processing
+      if(flags.explicit && !(prop in frame)) {
         continue;
       }
 
@@ -4329,35 +4306,34 @@ function _frame(state, subjects, frame, parent, property) {
         if(_isList(o)) {
           // add empty list
           var list = {'@list': []};
-          _addFrameOutput(state, output, prop, list);
+          _addFrameOutput(output, prop, list);
 
           // add list objects
           var src = o['@list'];
           for(var n in src) {
             o = src[n];
-            // only recurse if not embedding always and circular ref detected
-            if(_isSubjectReference(o) &&
-              !(flags.embed === '@always' &&
-                _createsCircularReference(id, o, state.embeds))) {
+            if(_isSubjectReference(o)) {
+              var subframe = (prop in frame ?
+                frame[prop][0]['@list'] : _createImplicitFrame(flags));
               // recurse into subject reference
-              _frame(state, [o['@id']], frame[prop][0]['@list'], list, '@list');
+              _frame(state, [o['@id']], subframe, list, '@list');
             } else {
               // include other values automatically
-              _addFrameOutput(state, list, '@list', _clone(o));
+              _addFrameOutput(list, '@list', _clone(o));
             }
           }
           continue;
         }
 
         // only recurse if not embedding always and circular ref detected
-        if(_isSubjectReference(o) &&
-          !(flags.embed === '@always' &&
-            _createsCircularReference(id, o, state.embeds))) {
+        if(_isSubjectReference(o)) {
           // recurse into subject reference
-          _frame(state, [o['@id']], frame[prop], output, prop);
+          var subframe = (prop in frame ?
+            frame[prop] : _createImplicitFrame(flags));
+          _frame(state, [o['@id']], subframe, output, prop);
         } else {
           // include other values automatically
-          _addFrameOutput(state, output, prop, _clone(o));
+          _addFrameOutput(output, prop, _clone(o));
         }
       }
     }
@@ -4389,17 +4365,47 @@ function _frame(state, subjects, frame, parent, property) {
     }
 
     // add output to parent
-    _addFrameOutput(state, parent, property, output);
+    _addFrameOutput(parent, property, output);
+
+    // pop matching subject from circular ref-checking stack
+    state.subjectStack.pop();
   }
 }
 
-function _createsCircularReference(embedId, nodeToEmbed, idToEmbeddedNode) {
-  var reference = idToEmbeddedNode[embedId];
-  while(reference !== undefined) {
-    if(reference.parent['@id'] === nodeToEmbed['@id']) {
+/**
+ * Creates an implicit frame when recursing through subject matches. If
+ * a frame doesn't have an explicit frame for a particular property, then
+ * a wildcard child frame will be created that uses the same flags that the
+ * parent frame used.
+ *
+ * @param flags the current framing flags.
+ *
+ * @return the implicit frame.
+ */
+function _createImplicitFrame(flags) {
+  var frame = {};
+  for(var key in flags) {
+    if(flags[key] !== undefined) {
+      frame['@' + key] = [flags[key]];
+    }
+  }
+  return [frame];
+}
+
+/**
+ * Checks the current subject stack to see if embedding the given subject
+ * would cause a circular reference.
+ *
+ * @param subjectToEmbed the subject to embed.
+ * @param subjectStack the current stack of subjects.
+ *
+ * @return true if a circular reference would be created, false if not.
+ */
+function _createsCircularReference(subjectToEmbed, subjectStack) {
+  for(var i = subjectStack.length - 1; i >= 0; --i) {
+    if(subjectStack[i]['@id'] === subjectToEmbed['@id']) {
       return true;
     }
-    reference = idToEmbeddedNode[reference.parent['@id']];
   }
   return false;
 }
@@ -4417,16 +4423,16 @@ function _getFrameFlag(frame, options, name) {
   var flag = '@' + name;
   var rval = (flag in frame ? frame[flag][0] : options[name]);
   if(name === 'embed') {
-    // default is "once"
+    // default is "@last"
     // backwards-compatibility support for "embed" maps:
-    // true => "once"
-    // false => "never"
+    // true => "@last"
+    // false => "@never"
     if(rval === true) {
-      rval = '@once';
+      rval = '@last';
     } else if(rval === false) {
       rval = '@never';
     } else if(rval !== '@always' && rval !== '@never') {
-      rval = '@once';
+      rval = '@last';
     }
   }
   return rval;
@@ -4435,10 +4441,9 @@ function _getFrameFlag(frame, options, name) {
 /**
  * Validates a JSON-LD frame, throwing an exception if the frame is invalid.
  *
- * @param state the current frame state.
  * @param frame the frame to validate.
  */
-function _validateFrame(state, frame) {
+function _validateFrame(frame) {
   if(!_isArray(frame) || frame.length !== 1 || !_isObject(frame[0])) {
     throw new JsonLdError(
       'Invalid JSON-LD syntax; a JSON-LD frame must be a single object.',
@@ -4538,58 +4543,6 @@ function _filterSubject(subject, frame, flags) {
 }
 
 /**
- * Embeds values for the given subject and property into the given output
- * during the framing algorithm.
- *
- * @param state the current framing state.
- * @param subject the subject.
- * @param property the property.
- * @param output the output.
- */
-function _embedValues(state, subject, property, output) {
-  // embed subject properties in output
-  var objects = subject[property];
-  for(var i = 0; i < objects.length; ++i) {
-    var o = objects[i];
-
-    // recurse into @list
-    if(_isList(o)) {
-      var list = {'@list': []};
-      _addFrameOutput(state, output, property, list);
-      return _embedValues(state, o, '@list', list['@list']);
-    }
-
-    // handle subject reference
-    if(_isSubjectReference(o)) {
-      var id = o['@id'];
-
-      // embed full subject if isn't already embedded
-      if(!(id in state.embeds)) {
-        // add embed
-        var embed = {parent: output, property: property};
-        state.embeds[id] = embed;
-
-        // recurse into subject
-        o = {};
-        var s = state.subjects[id];
-        for(var prop in s) {
-          // copy keywords
-          if(_isKeyword(prop)) {
-            o[prop] = _clone(s[prop]);
-            continue;
-          }
-          _embedValues(state, s, prop, o);
-        }
-      }
-      _addFrameOutput(state, output, property, o);
-    } else {
-      // copy non-subject value
-      _addFrameOutput(state, output, property, _clone(o));
-    }
-  }
-}
-
-/**
  * Removes an existing embed.
  *
  * @param state the current framing state.
@@ -4597,7 +4550,7 @@ function _embedValues(state, subject, property, output) {
  */
 function _removeEmbed(state, id) {
   // get existing embed
-  var embeds = state.embeds;
+  var embeds = state.uniqueEmbeds;
   var embed = embeds[id];
   var parent = embed.parent;
   var property = embed.property;
@@ -4640,12 +4593,11 @@ function _removeEmbed(state, id) {
 /**
  * Adds framing output to the given parent.
  *
- * @param state the current framing state.
  * @param parent the parent to add to.
  * @param property the parent property.
  * @param output the output to add.
  */
-function _addFrameOutput(state, parent, property, output) {
+function _addFrameOutput(parent, property, output) {
   if(_isObject(parent)) {
     jsonld.addValue(parent, property, output, {propertyIsArray: true});
   } else {
