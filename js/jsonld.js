@@ -4321,6 +4321,10 @@ function _frame(state, subjects, frame, parent, property) {
     var subject = matches[id];
 
     if(flags.embed === '@link' && id in state.link) {
+      // TODO: may want to also match an existing linked subject against
+      // the current frame ... so different frames could produce different
+      // subjects that are only shared in-memory when the frames are the same
+
       // add existing linked subject
       _addFrameOutput(parent, property, state.link[id]);
       continue;
