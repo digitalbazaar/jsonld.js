@@ -2182,6 +2182,8 @@ var JsonLdError = function(msg, type, details) {
   if(_nodejs) {
     Error.call(this);
     Error.captureStackTrace(this, this.constructor);
+  } else if(typeof Error !== 'undefined') {
+    this.stack = (new Error()).stack;
   }
   this.name = type || 'jsonld.Error';
   this.message = msg || 'An unspecified JSON-LD error occurred.';
@@ -2189,6 +2191,8 @@ var JsonLdError = function(msg, type, details) {
 };
 if(_nodejs) {
   require('util').inherits(JsonLdError, Error);
+} else if(typeof Error !== 'undefined') {
+  JsonLdError.prototype = new Error();
 }
 
 /**
