@@ -614,6 +614,7 @@ jsonld.link = function(input, ctx, options, callback) {
   var frame = {};
   if(ctx) {
     frame['@context'] = ctx;
+    frame['@embed'] = '@link';
   }
   jsonld.frame(input, frame, options, callback);
 };
@@ -4724,6 +4725,7 @@ function _removePreserve(ctx, input, options) {
       return input;
     }
 
+    // handle in-memory linked nodes
     var idAlias = _compactIri(ctx, '@id');
     if(idAlias in input) {
       var id = input[idAlias];
@@ -4734,7 +4736,7 @@ function _removePreserve(ctx, input, options) {
           options.link[id].push(input);
         } else {
           // already visited
-          return options.link[id];
+          return options.link[id][idx];
         }
       } else {
         // prevent circular visitation
