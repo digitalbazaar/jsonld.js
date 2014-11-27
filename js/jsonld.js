@@ -118,6 +118,14 @@ jsonld.compact = function(input, ctx, options, callback) {
   if(!('documentLoader' in options)) {
     options.documentLoader = jsonld.loadDocument;
   }
+  if(!('link' in options)) {
+    options.link = false;
+  }
+  if(options.link) {
+    // force skip expansion when linking, "link" is not part of the public
+    // API, it should only be called from framing
+    options.skipExpansion = true;
+  }
 
   var expand = function(input, options, callback) {
     jsonld.nextTick(function() {
@@ -440,7 +448,7 @@ jsonld.flatten = function(input, ctx, options, callback) {
  * @param [options] the framing options.
  *          [base] the base IRI to use.
  *          [expandContext] a context to expand with.
- *          [embed] default @embed flag: '@last', '@always', '@never'
+ *          [embed] default @embed flag: '@last', '@always', '@never', '@link'
  *            (default: '@last').
  *          [explicit] default @explicit flag (default: false).
  *          [requireAll] default @requireAll flag (default: true).
@@ -470,7 +478,7 @@ jsonld.frame = function(input, frame, options, callback) {
     options.documentLoader = jsonld.loadDocument;
   }
   if(!('embed' in options)) {
-    options.embed = 'once';
+    options.embed = '@last';
   }
   options.explicit = options.explicit || false;
   if(!('requireAll' in options)) {
@@ -564,9 +572,11 @@ jsonld.frame = function(input, frame, options, callback) {
           return callback(ex);
         }
 
-        // compact result (force @graph option to true, skip expansion)
+        // compact result (force @graph option to true, skip expansion,
+        // check for linked embeds)
         opts.graph = true;
         opts.skipExpansion = true;
+        opts.link = {};
         jsonld.compact(framed, ctx, opts, function(err, compacted, ctx) {
           if(err) {
             return callback(new JsonLdError(
@@ -576,6 +586,7 @@ jsonld.frame = function(input, frame, options, callback) {
           // get graph alias
           var graph = _compactIri(ctx, '@graph');
           // remove @preserve from results
+          opts.link = {};
           compacted[graph] = _removePreserve(ctx, compacted[graph], opts);
           callback(null, compacted);
         });
@@ -597,8 +608,30 @@ jsonld.frame = function(input, frame, options, callback) {
  *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
  * @param callback(err, linked) called once the operation completes.
  */
-jsonld.link = jsonld.objectify = function(input, ctx, options, callback) {
+jsonld.link = function(input, ctx, options, callback) {
+  // API matches running frame with a wildcard frame and embed: '@link'
   // get arguments
+  var frame = {};
+  if(ctx) {
+    frame['@context'] = ctx;
+  }
+  jsonld.frame(input, frame, options, callback);
+};
+
+/**
+ * **Deprecated**
+ *
+ * Performs JSON-LD objectification.
+ *
+ * @param input the JSON-LD document to objectify.
+ * @param ctx the JSON-LD context to apply.
+ * @param [options] the options to use:
+ *          [base] the base IRI to use.
+ *          [expandContext] a context to expand with.
+ *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
+ * @param callback(err, linked) called once the operation completes.
+ */
+jsonld.objectify = function(input, ctx, options, callback) {
   if(typeof options === 'function') {
     callback = options;
     options = {};
@@ -1211,6 +1244,13 @@ jsonld.promises = function(options) {
   };
 
   if(version === 'jsonld.js') {
+    api.link = function(input, ctx) {
+      if(arguments.length < 2) {
+        throw new TypeError('Could not link, too few arguments.');
+      }
+      return promisify.apply(
+        null, [jsonld.link].concat(slice.call(arguments)));
+    };
     api.objectify = function(input) {
       return promisify.apply(
         null, [jsonld.objectify].concat(slice.call(arguments)));
@@ -2235,17 +2275,44 @@ Processor.prototype.compact = function(
 
   // recursively compact object
   if(_isObject(element)) {
+    if(options.link && '@id' in element && element['@id'] in options.link) {
+      // check for a linked element to reuse
+      var linked = options.link[element['@id']].filter(function(e) {
+        return (e.expanded === element);
+      });
+      if(linked.length > 0) {
+        return linked[0].compacted;
+      }
+    }
+
     // do value compaction on @values and subject references
     if(_isValue(element) || _isSubjectReference(element)) {
-      return _compactValue(activeCtx, activeProperty, element);
+      var rval = _compactValue(activeCtx, activeProperty, element);
+      if(options.link && _isSubjectReference(element)) {
+        // store linked element
+        if(!(element['@id'] in options.link)) {
+          options.link[element['@id']] = [];
+        }
+        options.link[element['@id']].push({expanded: element, compacted: rval});
+      }
+      return rval;
     }
 
     // FIXME: avoid misuse of active property as an expanded property?
     var insideReverse = (activeProperty === '@reverse');
 
+    var rval = {};
+
+    if(options.link && '@id' in element) {
+      // store linked element
+      if(!(element['@id'] in options.link)) {
+        options.link[element['@id']] = [];
+      }
+      options.link[element['@id']].push({expanded: element, compacted: rval});
+    }
+
     // process element keys in order
     var keys = Object.keys(element).sort();
-    var rval = {};
     for(var ki = 0; ki < keys.length; ++ki) {
       var expandedProperty = keys[ki];
       var expandedValue = element[expandedProperty];
@@ -2880,7 +2947,8 @@ Processor.prototype.frame = function(input, frame, options) {
   var state = {
     options: options,
     graphs: {'@default': {}, '@merged': {}},
-    subjectStack: []
+    subjectStack: [],
+    link: {}
   };
 
   // produce a map of all graphs and name each bnode
@@ -4251,6 +4319,12 @@ function _frame(state, subjects, frame, parent, property) {
     var id = ids[idx];
     var subject = matches[id];
 
+    if(flags.embed === '@link' && id in state.link) {
+      // add existing linked subject
+      _addFrameOutput(parent, property, state.link[id]);
+      continue;
+    }
+
     /* Note: In order to treat each top-level match as a compartmentalized
     result, clear the unique embedded subjects map when the property is null,
     which only occurs at the top-level. */
@@ -4261,9 +4335,12 @@ function _frame(state, subjects, frame, parent, property) {
     // start output for subject
     var output = {};
     output['@id'] = id;
+    state.link[id] = output;
 
     // if embed is @never or if a circular reference would be created by an
-    // embed, the subject cannot be embedded
+    // embed, the subject cannot be embedded, just add the reference;
+    // note that a circular reference won't occur when the embed flag is
+    // `@link` as the above check will short-circuit before reaching this point
     if(flags.embed === '@never' ||
       _createsCircularReference(subject, state.subjectStack)) {
       _addFrameOutput(parent, property, output);
@@ -4432,7 +4509,7 @@ function _getFrameFlag(frame, options, name) {
       rval = '@last';
     } else if(rval === false) {
       rval = '@never';
-    } else if(rval !== '@always' && rval !== '@never') {
+    } else if(rval !== '@always' && rval !== '@never' && rval !== '@link') {
       rval = '@last';
     }
   }
@@ -4645,6 +4722,24 @@ function _removePreserve(ctx, input, options) {
     if(_isList(input)) {
       input['@list'] = _removePreserve(ctx, input['@list'], options);
       return input;
+    }
+
+    var idAlias = _compactIri(ctx, '@id');
+    if(idAlias in input) {
+      var id = input[idAlias];
+      if(id in options.link) {
+        var idx = options.link[id].indexOf(input);
+        if(idx === -1) {
+          // prevent circular visitation
+          options.link[id].push(input);
+        } else {
+          // already visited
+          return options.link[id];
+        }
+      } else {
+        // prevent circular visitation
+        options.link[id] = [input];
+      }
     }
 
     // recurse through properties
