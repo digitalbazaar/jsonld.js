@@ -587,17 +587,17 @@ jsonld.frame = function(input, frame, options, callback) {
 /**
  * **Experimental**
  *
- * Performs JSON-LD objectification.
+ * Links a JSON-LD document's nodes in memory.
  *
- * @param input the JSON-LD input to objectify.
+ * @param input the JSON-LD document to link.
  * @param ctx the JSON-LD context to apply.
- * @param [options] the framing options.
+ * @param [options] the options to use:
  *          [base] the base IRI to use.
  *          [expandContext] a context to expand with.
  *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
- * @param callback(err, objectified) called once the operation completes.
+ * @param callback(err, linked) called once the operation completes.
  */
-jsonld.objectify = function(input, ctx, options, callback) {
+jsonld.link = jsonld.objectify = function(input, ctx, options, callback) {
   // get arguments
   if(typeof options === 'function') {
     callback = options;
@@ -617,8 +617,8 @@ jsonld.objectify = function(input, ctx, options, callback) {
   jsonld.expand(input, options, function(err, _input) {
     if(err) {
       return callback(new JsonLdError(
-        'Could not expand input before framing.',
-        'jsonld.FrameError', {cause: err}));
+        'Could not expand input before linking.',
+        'jsonld.LinkError', {cause: err}));
     }
 
     var flattened;
@@ -635,14 +635,11 @@ jsonld.objectify = function(input, ctx, options, callback) {
     jsonld.compact(flattened, ctx, options, function(err, compacted, ctx) {
       if(err) {
         return callback(new JsonLdError(
-          'Could not compact flattened output.',
-          'jsonld.FrameError', {cause: err}));
+          'Could not compact flattened output before linking.',
+          'jsonld.LinkError', {cause: err}));
       }
       // get graph alias
       var graph = _compactIri(ctx, '@graph');
-      // remove @preserve from results (named graphs?)
-      compacted[graph] = _removePreserve(ctx, compacted[graph], options);
-
       var top = compacted[graph][0];
 
       var recurse = function(subject) {
