@@ -1011,6 +1011,11 @@ jsonld.createNodeMap = function(input, options, callback) {
  *          [base] the base IRI to use.
  *          [expandContext] a context to expand with.
  *          [namer] a jsonld.UniqueNamer to use to label blank nodes.
+ *          [mergeNodes] true to merge properties for nodes with the same ID,
+ *            false to ignore new properties for nodes with the same ID once
+ *            the ID has been defined; note that this may not prevent merging
+ *            new properties where a node is in the `object` position
+ *            (default: true).
  *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
  * @param callback(err, merged) called once the operation completes.
  */
@@ -1066,6 +1071,11 @@ jsonld.merge = function(docs, ctx, options, callback) {
   }
 
   function merge(expanded) {
+    var mergeNodes = true;
+    if('mergeNodes' in options) {
+      mergeNodes = options.mergeNodes;
+    }
+
     var namer = options.namer || new UniqueNamer('_:b');
     var graphs = {'@default': {}};
 
@@ -1077,8 +1087,28 @@ jsonld.merge = function(docs, ctx, options, callback) {
         doc = jsonld.relabelBlankNodes(doc, {
           namer: new UniqueNamer('_:b' + i + '-')
         });
-        // add nodes to the shared node map graphs
-        _createNodeMap(doc, graphs, '@default', namer);
+
+        // add nodes to the shared node map graphs if merging nodes, to a
+        // separate graph set if not
+        var _graphs = (mergeNodes || i === 0) ? graphs : {'@default': {}};
+        _createNodeMap(doc, _graphs, '@default', namer);
+
+        if(_graphs !== graphs) {
+          // merge document graphs but don't merge existing nodes
+          for(var graphName in _graphs) {
+            var _nodeMap = _graphs[graphName];
+            if(!(graphName in graphs)) {
+              graphs[graphName] = _nodeMap;
+              continue;
+            }
+            var nodeMap = graphs[graphName];
+            for(var key in _nodeMap) {
+              if(!(key in nodeMap)) {
+                nodeMap[key] = _nodeMap[key];
+              }
+            }
+          }
+        }
       }
 
       // add all non-default graphs to default graph
