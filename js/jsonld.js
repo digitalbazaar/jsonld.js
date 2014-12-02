@@ -5498,36 +5498,34 @@ function _prependBase(base, iri) {
 
   // per RFC3986 5.2.2
   var transform = {
-    hierPart: base.protocol || ''
+    protocol: base.protocol || ''
   };
 
-  if(rel.authority) {
-    transform.hierPart += '//' + rel.authority;
-    transform.path = rel.pathname;
+  if(rel.authority !== null) {
+    transform.authority = rel.authority;
+    transform.path = rel.path;
     transform.query = rel.query;
   } else {
-    if(base.href !== '') {
-      transform.hierPart += '//' + base.authority;
-    }
+    transform.authority = base.authority;
 
-    if(rel.pathname === '') {
-      transform.path = base.pathname;
+    if(rel.path === '') {
+      transform.path = base.path;
       transform.query = rel.query || base.query;
     } else {
-      if(rel.pathname.indexOf('/') === 0) {
+      if(rel.path.indexOf('/') === 0) {
         // IRI represents an absolute path
-        transform.path = rel.pathname;
+        transform.path = rel.path;
       } else {
         // merge paths
-        var path = base.pathname;
+        var path = base.path;
 
         // append relative path to the end of the last directory from base
-        if(rel.pathname !== '') {
+        if(rel.path !== '') {
           path = path.substr(0, path.lastIndexOf('/') + 1);
           if(path.length > 0 && path.substr(-1) !== '/') {
             path += '/';
           }
-          path += rel.pathname;
+          path += rel.path;
         }
 
         transform.path = path;
@@ -5537,19 +5535,22 @@ function _prependBase(base, iri) {
   }
 
   // remove slashes and dots in path
-  transform.path = _removeDotSegments(
-    transform.path, transform.hierPart !== '');
+  transform.path = _removeDotSegments(transform.path, !!transform.authority);
 
   // construct URL
-  var rval = transform.hierPart + transform.path;
-  if(transform.query) {
+  var rval = transform.protocol;
+  if(transform.authority !== null) {
+    rval += '//' + transform.authority;
+  }
+  rval += transform.path;
+  if(transform.query !== null) {
     rval += '?' + transform.query;
   }
-  if(rel.hash) {
-    rval += rel.hash;
+  if(rel.fragment !== null) {
+    rval += '#' + rel.fragment;
   }
 
-  // handle empty base case
+  // handle empty base
   if(rval === '') {
     rval = './';
   }
@@ -5578,7 +5579,7 @@ function _removeBase(base, iri) {
   // establish base root
   var root = '';
   if(base.href !== '') {
-    root += (base.protocol || '') + '//' + base.authority;
+    root += (base.protocol || '') + '//' + (base.authority || '');
   } else if(iri.indexOf('//')) {
     // support network-path reference with empty base
     root += '//';
@@ -5596,7 +5597,7 @@ function _removeBase(base, iri) {
   // is a hash or query)
   var baseSegments = base.normalizedPath.split('/');
   var iriSegments = rel.normalizedPath.split('/');
-  var last = (rel.hash || rel.query) ? 0 : 1;
+  var last = (rel.fragment || rel.query) ? 0 : 1;
   while(baseSegments.length > 0 && iriSegments.length > last) {
     if(baseSegments[0] !== iriSegments[0]) {
       break;
@@ -5620,13 +5621,14 @@ function _removeBase(base, iri) {
   rval += iriSegments.join('/');
 
   // add query and hash
-  if(rel.query) {
+  if(rel.query !== null) {
     rval += '?' + rel.query;
   }
-  if(rel.hash) {
-    rval += rel.hash;
+  if(rel.fragment !== null) {
+    rval += '#' + rel.fragment;
   }
 
+  // handle empty base
   if(rval === '') {
     rval = './';
   }
@@ -7131,84 +7133,33 @@ var _defineXMLSerializer = function() {
 } // end _defineXMLSerializer
 
 // define URL parser
+// parseUri 1.2.2
+// (c) Steven Levithan <stevenlevithan.com>
+// MIT License
+// with local jsonld.js modifications
 jsonld.url = {};
-if(_nodejs) {
-  var parse = require('url').parse;
-  jsonld.url.parse = function(url) {
-    var parsed = parse(url);
-    parsed.pathname = parsed.pathname || '';
-    _parseAuthority(parsed);
-    parsed.normalizedPath = _removeDotSegments(
-      parsed.pathname, parsed.authority !== '');
-    return parsed;
-  };
-} else {
-  // parseUri 1.2.2
-  // (c) Steven Levithan <stevenlevithan.com>
-  // MIT License
-  var parseUri = {};
-  parseUri.options = {
-    key: ['href','protocol','host','auth','user','password','hostname','port','relative','path','directory','file','query','hash'],
-    parser: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/
-  };
-  jsonld.url.parse = function(str) {
-    var o = parseUri.options;
-    var m = o.parser.exec(str);
-    var uri = {};
-    var i = 14;
-    while(i--) {
-      uri[o.key[i]] = m[i] || '';
-    }
-    // normalize to node.js API
-    if(uri.host && uri.path === '') {
-      uri.path = '/';
-    }
-    uri.pathname = uri.path || '';
-    _parseAuthority(uri);
-    uri.normalizedPath = _removeDotSegments(uri.pathname, uri.authority !== '');
-    if(uri.query) {
-      uri.path = uri.path + '?' + uri.query;
-    }
-    if(uri.protocol) {
-      uri.protocol += ':';
-    }
-    if(uri.hash) {
-      uri.hash = '#' + uri.hash;
-    } else if(uri.href.indexOf('#') !== -1) {
-      // ensure empty fragment is parsed
-      uri.hash = '#';
-    }
-    return uri;
-  };
-}
-
-/**
- * Parses the authority for the pre-parsed given URL.
- *
- * @param parsed the pre-parsed URL.
- */
-function _parseAuthority(parsed) {
-  // parse authority for unparsed relative network-path reference
-  if(parsed.href.indexOf(':') === -1 && parsed.href.indexOf('//') === 0 &&
-    !parsed.host) {
-    // must parse authority from pathname
-    parsed.pathname = parsed.pathname.substr(2);
-    var idx = parsed.pathname.indexOf('/');
-    if(idx === -1) {
-      parsed.authority = parsed.pathname;
-      parsed.pathname = '';
-    } else {
-      parsed.authority = parsed.pathname.substr(0, idx);
-      parsed.pathname = parsed.pathname.substr(idx);
-    }
-  } else {
-    // construct authority
-    parsed.authority = parsed.host || '';
-    if(parsed.auth) {
-      parsed.authority = parsed.auth + '@' + parsed.authority;
-    }
+jsonld.url.parsers = {
+  simple: {
+    // RFC 3986 basic parts
+    key: ['href','scheme','authority','path','query','fragment'],
+    regex: /^(?:([^:\/?#]+):)?(?:\/\/([^\/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/
+  },
+  full: {
+    key: ['href','protocol','scheme','authority','auth','user','password','hostname','port','path','directory','file','query','fragment'],
+    regex: /^(([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?(?:(((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/
   }
-}
+};
+jsonld.url.parse = function(str, parser) {
+  var parsed = {};
+  var o = jsonld.url.parsers[parser || 'full'];
+  var m = o.regex.exec(str);
+  var i = o.key.length;
+  while(i--) {
+    parsed[o.key[i]] = (m[i] === undefined) ? null : m[i];
+  }
+  parsed.normalizedPath = _removeDotSegments(parsed.path, !!parsed.authority);
+  return parsed;
+};
 
 /**
  * Removes dot segments from a URL path.
