@@ -7146,11 +7146,11 @@ jsonld.url = {};
 jsonld.url.parsers = {
   simple: {
     // RFC 3986 basic parts
-    key: ['href','scheme','authority','path','query','fragment'],
+    keys: ['href','scheme','authority','path','query','fragment'],
     regex: /^(?:([^:\/?#]+):)?(?:\/\/([^\/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/
   },
   full: {
-    key: ['href','protocol','scheme','authority','auth','user','password','hostname','port','path','directory','file','query','fragment'],
+    keys: ['href','protocol','scheme','authority','auth','user','password','hostname','port','path','directory','file','query','fragment'],
     regex: /^(([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?(?:(((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/
   }
 };
@@ -7158,9 +7158,9 @@ jsonld.url.parse = function(str, parser) {
   var parsed = {};
   var o = jsonld.url.parsers[parser || 'full'];
   var m = o.regex.exec(str);
-  var i = o.key.length;
+  var i = o.keys.length;
   while(i--) {
-    parsed[o.key[i]] = (m[i] === undefined) ? null : m[i];
+    parsed[o.keys[i]] = (m[i] === undefined) ? null : m[i];
   }
   parsed.normalizedPath = _removeDotSegments(parsed.path, !!parsed.authority);
   return parsed;
