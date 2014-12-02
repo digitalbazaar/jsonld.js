@@ -5512,11 +5512,7 @@ function _prependBase(base, iri) {
 
     if(rel.pathname === '') {
       transform.path = base.pathname;
-      if(rel.query) {
-        transform.query = rel.query;
-      } else {
-        transform.query = base.query;
-      }
+      transform.query = rel.query || base.query;
     } else {
       if(rel.pathname.indexOf('/') === 0) {
         // IRI represents an absolute path
@@ -7178,6 +7174,9 @@ if(_nodejs) {
     }
     if(uri.hash) {
       uri.hash = '#' + uri.hash;
+    }
+    if(uri.href === '#') {
+      uri.hash = '#';
     }
     return uri;
   };
