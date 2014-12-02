@@ -5510,7 +5510,12 @@ function _prependBase(base, iri) {
 
     if(rel.path === '') {
       transform.path = base.path;
-      transform.query = rel.query || base.query;
+      if(rel.query !== null) {
+        transform.query = rel.query;
+      }
+      else {
+        transform.query = base.query;
+      }
     } else {
       if(rel.path.indexOf('/') === 0) {
         // IRI represents an absolute path
