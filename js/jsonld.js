@@ -5496,46 +5496,64 @@ function _prependBase(base, iri) {
   // parse given IRI
   var rel = jsonld.url.parse(iri);
 
-  // start hierarchical part
-  var hierPart = (base.protocol || '');
+  // per RFC3986 5.2.2
+  var transform = {
+    hierPart: base.protocol || ''
+  };
+
   if(rel.authority) {
-    hierPart += '//' + rel.authority;
-  } else if(base.href !== '') {
-    hierPart += '//' + base.authority;
-  }
-
-  // per RFC3986 normalize
-  var path;
-
-  // IRI represents an absolute path
-  if(rel.pathname.indexOf('/') === 0) {
-    path = rel.pathname;
+    transform.hierPart += '//' + rel.authority;
+    transform.path = rel.pathname;
+    transform.query = rel.query;
   } else {
-    path = base.pathname;
+    if(base.href !== '') {
+      transform.hierPart += '//' + base.authority;
+    }
 
-    // append relative path to the end of the last directory from base
-    if(rel.pathname !== '') {
-      path = path.substr(0, path.lastIndexOf('/') + 1);
-      if(path.length > 0 && path.substr(-1) !== '/') {
-        path += '/';
+    if(rel.pathname === '') {
+      transform.path = base.pathname;
+      if(rel.query) {
+        transform.query = rel.query;
+      } else {
+        transform.query = base.query;
       }
-      path += rel.pathname;
+    } else {
+      if(rel.pathname.indexOf('/') === 0) {
+        // IRI represents an absolute path
+        transform.path = rel.pathname;
+      } else {
+        // merge paths
+        var path = base.pathname;
+
+        // append relative path to the end of the last directory from base
+        if(rel.pathname !== '') {
+          path = path.substr(0, path.lastIndexOf('/') + 1);
+          if(path.length > 0 && path.substr(-1) !== '/') {
+            path += '/';
+          }
+          path += rel.pathname;
+        }
+
+        transform.path = path;
+      }
+      transform.query = rel.query;
     }
   }
 
   // remove slashes and dots in path
-  path = _removeDotSegments(path, hierPart !== '');
+  transform.path = _removeDotSegments(
+    transform.path, transform.hierPart !== '');
 
-  // add query and hash
-  if(rel.query) {
-    path += '?' + rel.query;
+  // construct URL
+  var rval = transform.hierPart + transform.path;
+  if(transform.query) {
+    rval += '?' + transform.query;
   }
   if(rel.hash) {
-    path += rel.hash;
+    rval += rel.hash;
   }
 
-  var rval = hierPart + path;
-
+  // handle empty base case
   if(rval === '') {
     rval = './';
   }
