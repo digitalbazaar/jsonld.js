@@ -5512,8 +5512,7 @@ function _prependBase(base, iri) {
       transform.path = base.path;
       if(rel.query !== null) {
         transform.query = rel.query;
-      }
-      else {
+      } else {
         transform.query = base.query;
       }
     } else {
