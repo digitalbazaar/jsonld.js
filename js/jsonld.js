@@ -7174,8 +7174,8 @@ if(_nodejs) {
     }
     if(uri.hash) {
       uri.hash = '#' + uri.hash;
-    }
-    if(uri.href === '#') {
+    } else if(uri.href.indexOf('#') !== -1) {
+      // ensure empty fragment is parsed
       uri.hash = '#';
     }
     return uri;
