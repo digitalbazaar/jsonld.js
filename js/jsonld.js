@@ -614,8 +614,8 @@ jsonld.link = function(input, ctx, options, callback) {
   var frame = {};
   if(ctx) {
     frame['@context'] = ctx;
-    frame['@embed'] = '@link';
   }
+  frame['@embed'] = '@link';
   jsonld.frame(input, frame, options, callback);
 };
 
