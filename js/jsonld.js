@@ -2308,11 +2308,11 @@ Processor.prototype.compact = function(
   if(_isObject(element)) {
     if(options.link && '@id' in element && element['@id'] in options.link) {
       // check for a linked element to reuse
-      var linked = options.link[element['@id']].filter(function(e) {
-        return (e.expanded === element);
-      });
-      if(linked.length > 0) {
-        return linked[0].compacted;
+      var linked = options.link[element['@id']];
+      for(var i = 0; i < linked.length; ++i) {
+        if(linked[i].expanded === element) {
+          return linked[i].compacted;
+        }
       }
     }
 
