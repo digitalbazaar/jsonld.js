@@ -4438,7 +4438,6 @@ function _frame(state, subjects, frame, parent, property) {
           continue;
         }
 
-        // only recurse if not embedding always and circular ref detected
         if(_isSubjectReference(o)) {
           // recurse into subject reference
           var subframe = (prop in frame ?
