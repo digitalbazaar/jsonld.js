@@ -101,7 +101,7 @@ var TEST_TYPES = {
     fn: 'fromRDF',
     params: [
       readTestNQuads('input'),
-      createTestOptions({format: 'application/nquads'}),
+      createTestOptions({format: 'application/nquads'})
     ],
     compare: compareExpectedJson
   },
@@ -216,12 +216,11 @@ function addManifest(manifest) {
     for(var i = 0; i < sequence.length; ++i) {
       var entry = readManifestEntry(manifest, sequence[i]);
 
-      // entry is another manifest
       if(isJsonLdType(entry, 'mf:Manifest')) {
+        // entry is another manifest
         addManifest(entry);
-      }
-      // assume entry is a test
-      else {
+      } else {
+        // assume entry is a test
         addTest(manifest, entry);
       }
     }

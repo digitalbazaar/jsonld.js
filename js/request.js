@@ -285,7 +285,7 @@ function _request(loc, options, callback) {
         var msg = {
           message: 'Bad status code.',
           statusCode: res.statusCode,
-          url: loc,
+          url: loc
         };
         if(body) {
           // attempt to auto-parse error body

@@ -1471,7 +1471,7 @@ jsonld.DocumentCache = function(size) {
   this.order = [];
   this.cache = {};
   this.size = size || 50;
-  this.expires = 30*1000;
+  this.expires = 30 * 1000;
 };
 jsonld.DocumentCache.prototype.get = function(url) {
   if(url in this.cache) {
