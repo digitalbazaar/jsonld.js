@@ -43,6 +43,7 @@
   "devDependencies": {
     "chai": "~1.9.1",
     "istanbul": "^0.3.2",
+    "jscs": "^1.8.0",
     "mocha": "~1.21.4",
     "mocha-phantomjs": "~3.5.0",
     "phantomjs": "~1.9.0"
@@ -66,7 +67,8 @@
     "test-browser": "make test-browser",
     "test": "make test",
     "coverage": "make test-coverage",
-    "lint": "jshint js/jsonld.js js/request.js tests/*.js"
+    "jscs": "jscs js/jsonld.js js/request.js tests/*.js",
+    "jshint": "jshint js/jsonld.js js/request.js tests/*.js"
   },
   "browser": {
     "./js/request.js": "./browser/ignore.js",
