@@ -139,7 +139,7 @@ function _jsonLdOptions(command, input) {
 }
 
 program
-  .version(module.exports.version)
+  .version(jsonld.version)
   .on('--help', function() {
     console.log();
     console.log(

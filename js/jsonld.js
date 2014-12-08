@@ -7223,6 +7223,11 @@ if(_nodejs) {
           'jsonld.UnknownExtension', {extension: extension});
     }
   };
+
+  // expose version
+  var _module = {exports: {}};
+  require('pkginfo')(_module, 'version');
+  jsonld.version = _module.exports.version;
 }
 
 // end of jsonld API factory
