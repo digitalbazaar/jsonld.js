@@ -40,13 +40,23 @@ compatible, and require a very small memory footprint in order to operate.
 
 ## Requiring jsonld.js:
 
-```js
-// node.js
-var jsonld = require('jsonld');
+### node.js + npm
+
+```
+npm install jsonld
 ```
 
 ```js
-// bower + AMD loader in the browser
+var jsonld = require('jsonld');
+```
+
+### Browser (AMD) + bower
+
+```
+bower install jsonld
+```
+
+```js
 require.config({
   paths: {
     jsonld: 'bower_components/jsonld/js/jsonld'
@@ -55,8 +65,9 @@ require.config({
 define(['jsonld'], function(jsonld) { ... });
 ```
 
+### Browser + script tag
+
 ```html
-<!-- script tag in the browser -->
 <!-- For legacy browsers include a Promise polyfill like
   es6-promise before including jsonld.js -->
 <script src="//cdn.jsdelivr.net/g/es6-promise@1.0.0"></script>
