@@ -52,7 +52,7 @@ require.config({
     jsonld: 'bower_components/jsonld/js/jsonld'
   }
 });
-define(['jsonld'], function(jsonld) { ... }
+define(['jsonld'], function(jsonld) { ... });
 ```
 
 ```html
