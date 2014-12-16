@@ -56,7 +56,7 @@ define(['jsonld'], function(jsonld) { ... }
 ```
 
 ```html
-// script tag in the browser
+<!-- script tag in the browser -->
 <!-- For legacy browsers include a Promise polyfill like
   es6-promise before including jsonld.js -->
 <script src="//cdn.jsdelivr.net/g/es6-promise@1.0.0"></script>
