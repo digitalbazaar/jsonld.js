@@ -38,6 +38,31 @@ to JSON with added semantics. Finally, the format is intended to be fast
 to parse, fast to generate, stream-based and document-based processing
 compatible, and require a very small memory footprint in order to operate.
 
+## Requiring jsonld.js:
+
+```js
+// node.js
+var jsonld = require('jsonld');
+```
+
+```js
+// bower + AMD loader in the browser
+require.config({
+  paths: {
+    jsonld: 'bower_components/jsonld/js/jsonld'
+  }
+});
+define(['jsonld'], function(jsonld) { ... }
+```
+
+```html
+// script tag in the browser
+<!-- For legacy browsers include a Promise polyfill like
+  es6-promise before including jsonld.js -->
+<script src="//cdn.jsdelivr.net/g/es6-promise@1.0.0"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jsonld/0.3.15/jsonld.js"></script>
+```
+
 ## Quick Examples
 
 ```js
