@@ -7228,7 +7228,7 @@ if(_nodejs) {
   };
 
   // expose version
-  var _module = {exports: {}};
+  var _module = {exports: {}, filename: __dirname};
   require('pkginfo')(_module, 'version');
   jsonld.version = _module.exports.version;
 }
