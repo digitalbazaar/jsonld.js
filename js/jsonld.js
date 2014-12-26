@@ -3795,6 +3795,9 @@ function _objectToRDF(item) {
       object.value = value.toString();
       object.datatype = datatype || XSD_BOOLEAN;
     } else if(_isDouble(value) || datatype === XSD_DOUBLE) {
+      if(!_isDouble(value)) {
+        value = parseFloat(value);
+      }
       // canonical double representation
       object.value = value.toExponential(15).replace(/(\d)0*e\+?/, '$1E');
       object.datatype = datatype || XSD_DOUBLE;
