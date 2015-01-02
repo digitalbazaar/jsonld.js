@@ -7245,23 +7245,28 @@ var factory = function() {
     return factory();
   });
 };
-// the shared global jsonld API instance
-wrapper(factory);
 
-if(_nodejs) {
-  // export nodejs API
-  module.exports = factory;
-} else if(typeof define === 'function' && define.amd) {
+if(!_nodejs && (typeof define === 'function' && define.amd)) {
   // export AMD API
   define([], function() {
+    // now that module is defined, wrap main jsonld API instance
+    wrapper(factory);
     return factory;
   });
-} else if(_browser) {
-  // export simple browser API
-  if(typeof jsonld === 'undefined') {
-    jsonld = jsonldjs = factory;
-  } else {
-    jsonldjs = factory;
+} else {
+  // wrap the main jsonld API instance
+  wrapper(factory);
+
+  if(_nodejs) {
+    // export nodejs API
+    module.exports = factory;
+  } else if(_browser) {
+    // export simple browser API
+    if(typeof jsonld === 'undefined') {
+      jsonld = jsonldjs = factory;
+    } else {
+      jsonldjs = factory;
+    }
   }
 }
 
