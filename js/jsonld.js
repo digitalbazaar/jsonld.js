@@ -2679,6 +2679,10 @@ Processor.prototype.expand = function(
 
     // @language must be a string
     if(expandedProperty === '@language') {
+      if(value === null) {
+        // drop null @language values, they expand as if they didn't exist
+        continue;
+      }
       if(!_isString(value)) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; "@language" value must be a string.',
