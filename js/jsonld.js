@@ -856,13 +856,22 @@ jsonld.fromRDF = function(dataset, options, callback) {
       };
     }
 
-    // rdf parser may be async or sync, always pass callback
-    dataset = rdfParser(dataset, function(err, dataset) {
-      if(err) {
-        return callback(err);
+    var callbackCalled = false;
+    try {
+      // rdf parser may be async or sync, always pass callback
+      dataset = rdfParser(dataset, function(err, dataset) {
+        callbackCalled = true;
+        if(err) {
+          return callback(err);
+        }
+        fromRDF(dataset, options, callback);
+      });
+    } catch(e) {
+      if(!callbackCalled) {
+        return callback(e);
       }
-      fromRDF(dataset, options, callback);
-    });
+      throw e;
+    }
     // handle synchronous or promise-based parser
     if(dataset) {
       // if dataset is actually a promise
