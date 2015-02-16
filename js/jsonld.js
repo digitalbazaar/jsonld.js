@@ -7270,10 +7270,13 @@ if(!_nodejs && (typeof define === 'function' && define.amd)) {
   // wrap the main jsonld API instance
   wrapper(factory);
 
-  if(_nodejs) {
-    // export nodejs API
+  if(typeof require === 'function' &&
+    typeof module !== 'undefined' && module.exports) {
+    // export CommonJS/nodejs API
     module.exports = factory;
-  } else if(_browser) {
+  }
+
+  if(_browser) {
     // export simple browser API
     if(typeof jsonld === 'undefined') {
       jsonld = jsonldjs = factory;
@@ -7282,5 +7285,7 @@ if(!_nodejs && (typeof define === 'function' && define.amd)) {
     }
   }
 }
+
+return factory;
 
 })();

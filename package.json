@@ -78,10 +78,5 @@
     "crypto": "./browser/ignore.js",
     "url": "./browser/ignore.js",
     "http": "./browser/ignore.js"
-  },
-  "browserify": {
-    "transform": [
-      "jsonldify"
-    ]
   }
 }
