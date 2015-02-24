@@ -31,18 +31,18 @@
   "main": "js/jsonld.js",
   "dependencies": {
     "async": "~0.9.0",
-    "commander": "~1.3.0",
+    "commander": "~2.6.0",
     "es6-promise": "~2.0.1",
-    "jsdom": "~0.7.0",
+    "jsdom": "~3.0.0",
     "pkginfo": "~0.3.0",
-    "request": "~2.44.0",
+    "request": "~2.53.0",
     "xmldom": "0.1.19"
   },
   "devDependencies": {
-    "chai": "~1.9.1",
+    "chai": "~2.1.0",
     "istanbul": "^0.3.2",
     "jscs": "^1.8.0",
-    "mocha": "~1.21.4",
+    "mocha": "~2.1.0",
     "mocha-phantomjs": "~3.5.0",
     "phantomjs": "~1.9.0"
   },
