@@ -224,7 +224,13 @@ var customLoader = function(url, callback) {
         documentUrl: url // this is the actual context URL after redirects
       });
   }
-  nodeDocumentLoader(url, callback);
+  nodeDocumentLoader(url).
+    then(function(resp){
+      callback(null, resp);
+    }).
+    catch(function(err){
+      callback(err, null);
+    });
 };
 jsonld.documentLoader = customLoader;
 
