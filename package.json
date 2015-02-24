@@ -36,9 +36,7 @@
     "jsdom": "~0.7.0",
     "pkginfo": "~0.3.0",
     "request": "~2.44.0",
-    "xmldom": "0.1.19",
-    "through": "~2.3.4",
-    "jsonldify": "~0.1.0"
+    "xmldom": "0.1.19"
   },
   "devDependencies": {
     "chai": "~1.9.1",
