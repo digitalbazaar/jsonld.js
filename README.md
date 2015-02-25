@@ -224,13 +224,18 @@ var customLoader = function(url, callback) {
         documentUrl: url // this is the actual context URL after redirects
       });
   }
-  nodeDocumentLoader(url).
-    then(function(resp){
-      callback(null, resp);
-    }).
-    catch(function(err){
-      callback(err, null);
-    });
+  // Call the underlining documentLoader using the node.js interface.  
+  nodeDocumentLoader(url, callback);
+  // In the browser (jsonld.documentLoaders.xhr() or jsonld.documentLoaders.jquery())
+  // the documentLoader returns a promise instead of taking a callback:
+  //
+  // nodeDocumentLoader(url).
+  //  then(function(resp){
+  //    callback(null, resp);
+  //  }).
+  //  catch(function(err){
+  //    callback(err, null);
+  //  });
 };
 jsonld.documentLoader = customLoader;
 
