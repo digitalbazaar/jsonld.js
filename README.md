@@ -224,7 +224,12 @@ var customLoader = function(url, callback) {
         documentUrl: url // this is the actual context URL after redirects
       });
   }
+  // Call the underlining documentLoader using the callback API.
   nodeDocumentLoader(url, callback);
+  // Notice that, by default, node.js document loader uses callbacks, but browser-based
+  // document loaders (xhr or jquery) return promises if these are supported (or polyfilled)
+  // in the browser. This behaviour can be controlled with the 'usePromise' option when
+  // constructing the document loader. For example: jsonld.documentLoaders.xhr({usePromise: false});
 };
 jsonld.documentLoader = customLoader;
 
