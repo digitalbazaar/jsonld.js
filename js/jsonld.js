@@ -4244,7 +4244,9 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
 
     // copy non-@type keywords
     if(property !== '@type' && _isKeyword(property)) {
-      if(property === '@index' && property in subject && (input[property] !== subject[property] || subject[property]['@id'] !== input[property]['@id'])) {
+      if(property === '@index' && property in subject
+         && (input[property] !== subject[property]
+         || input[property]['@id'] !== subject[property]['@id'])) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; conflicting @index property detected.',
           'jsonld.SyntaxError',
