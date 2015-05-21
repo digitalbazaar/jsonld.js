@@ -22,12 +22,7 @@
     "url": "https://github.com/digitalbazaar/jsonld.js/issues",
     "email": "support@digitalbazaar.com"
   },
-  "licenses": [
-    {
-      "type": "BSD",
-      "url": "https://github.com/digitalbazaar/jsonld.js/raw/master/LICENSE"
-    }
-  ],
+  "license": "BSD-3-Clause",
   "main": "js/jsonld.js",
   "dependencies": {
     "async": "~0.9.0",
