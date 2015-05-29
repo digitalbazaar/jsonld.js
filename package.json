@@ -34,12 +34,12 @@
     "xmldom": "0.1.19"
   },
   "devDependencies": {
-    "chai": "~2.1.0",
-    "istanbul": "^0.3.2",
-    "jscs": "^1.8.0",
-    "mocha": "~2.1.0",
-    "mocha-phantomjs": "~3.5.0",
-    "phantomjs": "~1.9.0"
+    "chai": "~2.3.0",
+    "istanbul": "^0.3.14",
+    "jscs": "^1.13.1",
+    "mocha": "~2.2.5",
+    "mocha-phantomjs": "~3.5.3",
+    "phantomjs": "~1.9.17"
   },
   "engines": {
     "node": "*"
