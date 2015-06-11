@@ -731,7 +731,7 @@ jsonld.objectify = function(input, ctx, options, callback) {
         if(!_isArray(types)) {
           types = [types];
         }
-        for(var t in types) {
+        for(var t = 0; t < types.length; ++t) {
           if(!(types[t] in compacted.of_type)) {
             compacted.of_type[types[t]] = [];
           }
@@ -3134,7 +3134,7 @@ Processor.prototype.normalize = function(dataset, options, callback) {
             b = b.hash;
             return (a < b) ? -1 : ((a > b) ? 1 : 0);
           });
-          for(var r in results) {
+          for(var r = 0; r < results.length; ++r) {
             // name all bnodes in path namer in key-entry order
             // Note: key-order is preserved in javascript
             for(var key in results[r].pathNamer.existing) {
@@ -4364,7 +4364,7 @@ function _frame(state, subjects, frame, parent, property) {
 
   // add matches to output
   var ids = Object.keys(matches).sort();
-  for(var idx = 0; idx < ids.length; idx++) {
+  for(var idx = 0; idx < ids.length; ++idx) {
     var id = ids[idx];
     var subject = matches[id];
 
