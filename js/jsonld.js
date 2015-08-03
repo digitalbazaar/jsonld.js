@@ -5426,6 +5426,9 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
     return value;
   }
 
+  // ensure value is interpreted as a string
+  value = String(value);
+
   // define term dependency if not defined
   if(localCtx && value in localCtx && defined[value] !== true) {
     _createTermDefinition(activeCtx, localCtx, value, defined);
