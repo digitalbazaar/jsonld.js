@@ -1403,25 +1403,25 @@ if(_browser && typeof global.JsonLdProcessor === 'undefined') {
 /* Utility API */
 
 // define setImmediate and nextTick
-if(typeof process === 'undefined' || !process.nextTick) {
-  if(typeof setImmediate === 'function') {
-    jsonld.setImmediate = jsonld.nextTick = function(callback) {
-      return setImmediate(callback);
-    };
-  } else {
-    jsonld.setImmediate = function(callback) {
-      setTimeout(callback, 0);
-    };
-    jsonld.nextTick = jsonld.setImmediate;
-  }
-} else {
+//// nextTick implementation with browser-compatible fallback ////
+// from https://github.com/caolan/async/blob/master/lib/async.js
+
+// capture the global reference to guard against fakeTimer mocks
+var _setImmediate = typeof setImmediate === 'function' && setImmediate;
+
+var _delay = _setImmediate ? function(fn) {
+  // not a direct alias (for IE10 compatibility)
+  _setImmediate(fn);
+} : function(fn) {
+  setTimeout(fn, 0);
+};
+
+if(typeof process === 'object' && typeof process.nextTick === 'function') {
   jsonld.nextTick = process.nextTick;
-  if(typeof setImmediate === 'function') {
-    jsonld.setImmediate = setImmediate;
-  } else {
-    jsonld.setImmediate = jsonld.nextTick;
-  }
+} else {
+  jsonld.nextTick = _delay;
 }
+jsonld.setImmediate = _setImmediate ? _delay : jsonld.nextTick;
 
 /**
  * Parses a link header. The results will be key'd by the value of "rel".
