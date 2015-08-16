@@ -70,6 +70,7 @@
     "util": "./browser/ignore.js",
     "crypto": "./browser/ignore.js",
     "url": "./browser/ignore.js",
-    "http": "./browser/ignore.js"
+    "http": "./browser/ignore.js",
+    "pkginfo": "./browser/ignore.js"
   }
 }
