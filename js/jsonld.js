@@ -3059,6 +3059,12 @@ Processor.prototype.normalize = function(dataset, options, callback) {
     var duplicates = {};
     var unique = {};
 
+    // TODO: instead of N calls to setImmediate, run
+    // atomic normalization parts for a specified
+    // slice of time (perhaps configurable) as this
+    // will better utilize CPU and improve performance
+    // as JS processing speed improves
+
     // hash quads for each unnamed bnode
     jsonld.setImmediate(function() {hashUnnamed(0);});
     function hashUnnamed(i) {
