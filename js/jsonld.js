@@ -3,7 +3,7 @@
  *
  * @author Dave Longley
  *
- * BSD 3-Clause License
+ * @license BSD 3-Clause License
  * Copyright (c) 2011-2014 Digital Bazaar, Inc.
  * All rights reserved.
  *
