@@ -1169,6 +1169,18 @@ jsonld.relabelBlankNodes = function(input, options) {
 };
 
 /**
+ * Prepends a base IRI to the given relative IRI.
+ *
+ * @param base the base IRI.
+ * @param iri the relative IRI.
+ *
+ * @return the absolute IRI.
+ */
+jsonld.prependBase = function(base, iri) {
+  return _prependBase(base, iri);
+};
+
+/**
  * The default document loader for external documents. If the environment
  * is node.js, a callback-continuation-style document loader is used; otherwise,
  * a promises-style document loader is used.
@@ -5490,20 +5502,12 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
   // prepend base
   var rval = value;
   if(relativeTo.base) {
-    rval = _prependBase(activeCtx['@base'], rval);
+    rval = jsonld.prependBase(activeCtx['@base'], rval);
   }
 
   return rval;
 }
 
-/**
- * Prepends a base IRI to the given relative IRI.
- *
- * @param base the base IRI.
- * @param iri the relative IRI.
- *
- * @return the absolute IRI.
- */
 function _prependBase(base, iri) {
   // skip IRI processing
   if(base === null) {
@@ -6131,7 +6135,7 @@ function _findContextUrls(input, urls, replace, base) {
         for(var i = 0; i < length; ++i) {
           var _ctx = ctx[i];
           if(_isString(_ctx)) {
-            _ctx = _prependBase(base, _ctx);
+            _ctx = jsonld.prependBase(base, _ctx);
             // replace w/@context if requested
             if(replace) {
               _ctx = urls[_ctx];
@@ -6151,7 +6155,7 @@ function _findContextUrls(input, urls, replace, base) {
         }
       } else if(_isString(ctx)) {
         // string @context
-        ctx = _prependBase(base, ctx);
+        ctx = jsonld.prependBase(base, ctx);
         // replace w/@context if requested
         if(replace) {
           input[key] = urls[ctx];
