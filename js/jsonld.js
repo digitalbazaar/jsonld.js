@@ -1573,7 +1573,18 @@ jsonld.documentLoaders = {};
  */
 jsonld.documentLoaders.jquery = function($, options) {
   options = options || {};
-  var loader = function(url, callback) {
+
+  // use option or, by default, use Promise when its defined
+  var usePromise = ('usePromise' in options ?
+    options.usePromise : (typeof Promise !== 'undefined'));
+  if(usePromise) {
+    return function(url) {
+      return jsonld.promisify(loader, url);
+    };
+  }
+  return loader;
+
+  function loader(url, callback) {
     if(url.indexOf('http:') !== 0 && url.indexOf('https:') !== 0) {
       return callback(new JsonLdError(
         'URL could not be dereferenced; only "http" and "https" URLs are ' +
@@ -1630,18 +1641,7 @@ jsonld.documentLoaders.jquery = function($, options) {
           {contextUrl: null, documentUrl: url, document: null});
       }
     });
-  };
-
-  var usePromise = (typeof Promise !== 'undefined');
-  if('usePromise' in options) {
-    usePromise = options.usePromise;
   }
-  if(usePromise) {
-    return function(url) {
-      return jsonld.promisify(loader, url);
-    };
-  }
-  return loader;
 };
 
 /**
@@ -1665,6 +1665,16 @@ jsonld.documentLoaders.node = function(options) {
   var request = require('request');
   var http = require('http');
   var cache = new jsonld.DocumentCache();
+
+  if(options.usePromise) {
+    return function loader(url) {
+      return jsonld.promisify(loadDocument, url, []);
+    };
+  }
+  return function loader(url, callback) {
+    loadDocument(url, [], callback);
+  };
+
   function loadDocument(url, redirects, callback) {
     if(url.indexOf('http:') !== 0 && url.indexOf('https:') !== 0) {
       return callback(new JsonLdError(
@@ -1768,16 +1778,6 @@ jsonld.documentLoaders.node = function(options) {
       callback(err, doc);
     }
   }
-
-  var loader = function(url, callback) {
-    loadDocument(url, [], callback);
-  };
-  if(options.usePromise) {
-    return function(url) {
-      return jsonld.promisify(loader, url);
-    };
-  }
-  return loader;
 };
 
 /**
@@ -1795,7 +1795,18 @@ jsonld.documentLoaders.node = function(options) {
 jsonld.documentLoaders.xhr = function(options) {
   var rlink = /(^|(\r\n))link:/i;
   options = options || {};
-  var loader = function(url, callback) {
+
+  // use option or, by default, use Promise when its defined
+  var usePromise = ('usePromise' in options ?
+    options.usePromise : (typeof Promise !== 'undefined'));
+  if(usePromise) {
+    return function(url) {
+      return jsonld.promisify(loader, url);
+    };
+  }
+  return loader;
+
+  function loader(url, callback) {
     if(url.indexOf('http:') !== 0 && url.indexOf('https:') !== 0) {
       return callback(new JsonLdError(
         'URL could not be dereferenced; only "http" and "https" URLs are ' +
@@ -1812,7 +1823,7 @@ jsonld.documentLoaders.xhr = function(options) {
     }
     var xhr = options.xhr || XMLHttpRequest;
     var req = new xhr();
-    req.onload = function(e) {
+    req.onload = function() {
       if(req.status >= 400) {
         return callback(new JsonLdError(
           'URL could not be dereferenced: ' + req.statusText,
@@ -1858,18 +1869,7 @@ jsonld.documentLoaders.xhr = function(options) {
     req.open('GET', url, true);
     req.setRequestHeader('Accept', 'application/ld+json, application/json');
     req.send();
-  };
-
-  var usePromise = (typeof Promise !== 'undefined');
-  if('usePromise' in options) {
-    usePromise = options.usePromise;
   }
-  if(usePromise) {
-    return function(url) {
-      return jsonld.promisify(loader, url);
-    };
-  }
-  return loader;
 };
 
 /**
