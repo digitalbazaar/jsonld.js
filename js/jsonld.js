@@ -1481,6 +1481,64 @@ jsonld.parseLinkHeader = function(header) {
 };
 
 /**
+ * Creates a simple queue for requesting documents.
+ */
+jsonld.RequestQueue = function() {
+  this._requests = {};
+};
+jsonld.RequestQueue.prototype.wrapLoader = function(loader) {
+  this._loader = loader;
+  this._usePromise = (loader.length === 1);
+  return this.add.bind(this);
+};
+jsonld.RequestQueue.prototype.add = function(url, callback) {
+  var self = this;
+
+  // callback must be given if not using promises
+  if(!callback && !self._usePromise) {
+    throw new Error('callback must be specified.');
+  }
+
+  // Promise-based API
+  if(self._usePromise) {
+    return new jsonld.Promise(function(resolve, reject) {
+      var load = self._requests[url];
+      if(!load) {
+        // load URL then remove from queue
+        load = self._requests[url] = self._loader(url)
+          .then(function(remoteDoc) {
+            delete self._requests[url];
+            return remoteDoc;
+          }).catch(function(err) {
+            delete self._requests[url];
+            throw err;
+          });
+      }
+      // resolve/reject promise once URL has been loaded
+      load.then(function(remoteDoc) {
+        resolve(remoteDoc);
+      }).catch(function(err) {
+        reject(err);
+      });
+    });
+  }
+
+  // callback-based API
+  if(url in self._requests) {
+    self._requests[url].push(callback);
+  } else {
+    self._requests[url] = [callback];
+    self._loader(url, function(err, remoteDoc) {
+      var callbacks = self._requests[url];
+      delete self._requests[url];
+      for(var i = 0; i < callbacks.length; ++i) {
+        callbacks[i](err, remoteDoc);
+      }
+    });
+  }
+};
+
+/**
  * Creates a simple document cache that retains documents for a short
  * period of time.
  *
@@ -1573,16 +1631,17 @@ jsonld.documentLoaders = {};
  */
 jsonld.documentLoaders.jquery = function($, options) {
   options = options || {};
+  var queue = new jsonld.RequestQueue();
 
   // use option or, by default, use Promise when its defined
   var usePromise = ('usePromise' in options ?
     options.usePromise : (typeof Promise !== 'undefined'));
   if(usePromise) {
-    return function(url) {
+    return queue.wrapLoader(function(url) {
       return jsonld.promisify(loader, url);
-    };
+    });
   }
-  return loader;
+  return queue.wrapLoader(loader);
 
   function loader(url, callback) {
     if(url.indexOf('http:') !== 0 && url.indexOf('https:') !== 0) {
@@ -1666,14 +1725,15 @@ jsonld.documentLoaders.node = function(options) {
   var http = require('http');
   var cache = new jsonld.DocumentCache();
 
+  var queue = new jsonld.RequestQueue();
   if(options.usePromise) {
-    return function loader(url) {
+    return queue.wrapLoader(function(url) {
       return jsonld.promisify(loadDocument, url, []);
-    };
+    });
   }
-  return function loader(url, callback) {
+  return queue.wrapLoader(function(url, callback) {
     loadDocument(url, [], callback);
-  };
+  });
 
   function loadDocument(url, redirects, callback) {
     if(url.indexOf('http:') !== 0 && url.indexOf('https:') !== 0) {
@@ -1793,18 +1853,19 @@ jsonld.documentLoaders.node = function(options) {
  * @return the XMLHttpRequest document loader.
  */
 jsonld.documentLoaders.xhr = function(options) {
-  var rlink = /(^|(\r\n))link:/i;
   options = options || {};
+  var rlink = /(^|(\r\n))link:/i;
+  var queue = new jsonld.RequestQueue();
 
   // use option or, by default, use Promise when its defined
   var usePromise = ('usePromise' in options ?
     options.usePromise : (typeof Promise !== 'undefined'));
   if(usePromise) {
-    return function(url) {
+    return queue.wrapLoader(function(url) {
       return jsonld.promisify(loader, url);
-    };
+    });
   }
-  return loader;
+  return queue.wrapLoader(loader);
 
   function loader(url, callback) {
     if(url.indexOf('http:') !== 0 && url.indexOf('https:') !== 0) {
