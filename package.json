@@ -59,11 +59,12 @@
     "jshint": "jshint js/jsonld.js tests/*.js"
   },
   "browser": {
-    "request": "./browser/ignore.js",
-    "xmldom": "./browser/ignore.js",
-    "util": "./browser/ignore.js",
     "crypto": "./browser/ignore.js",
+    "http": "./browser/ignore.js",
+    "jsonld-request": "./browser/ignore.js",
+    "request": "./browser/ignore.js",
     "url": "./browser/ignore.js",
-    "http": "./browser/ignore.js"
+    "util": "./browser/ignore.js",
+    "xmldom": "./browser/ignore.js"
   }
 }
