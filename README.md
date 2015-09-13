@@ -238,39 +238,14 @@ jsonld.compact(doc, context, {documentLoader: customLoader},
   function(err, compacted) { ... });
 ```
 
-Using the Command-line Tool
----------------------------
 
-The jsonld command line tool can be used to:
+Related Modules
+---------------
 
- * Transform JSON-LD to compact, expanded, normalized, or flattened form
- * Transform RDFa to JSON-LD
- * Normalize JSON-LD/RDFa Datasets to NQuads
-
-To install the tool, do the following (you will need git, nodejs, and
-npm installed):
-
-    git clone https://github.com/digitalbazaar/jsonld.js.git
-    cd jsonld.js
-    npm install
-
-To compact a document on the Web using a JSON-LD context published on
-the Web:
-
-    ./bin/jsonld compact -c "https://w3id.org/payswarm/v1" "http://recipes.payswarm.com/?p=10554"
-
-The command above will read in a PaySwarm Asset and Listing in RDFa 1.0 format,
-convert it to JSON-LD expanded form, compact it using the
-'https://w3id.org/payswarm/v1' context, and dump it out to the console in
-compacted form.
-
-    ./bin/jsonld normalize -q "http://recipes.payswarm.com/?p=10554"
-
-The command above will read in a PaySwarm Asset and Listing in RDFa 1.0 format,
-normalize the data using the RDF Dataset normalization algorithm, and
-then dump the output to normalized NQuads format. The NQuads can then be
-processed via SHA-256, or similar algorithm, to get a deterministic hash
-of the contents of the Dataset.
+* [jsonld-cli][]: A command line interface tool called `jsonld` that exposes
+  most of the basic jsonld.js API.
+* [jsonld-request][]: A module that can read data from stdin, URLs, and files
+  and in various formats and return JSON-LD.
 
 Commercial Support
 ------------------
@@ -341,3 +316,5 @@ To generate earl reports:
 [RDFa]: http://www.w3.org/TR/rdfa-core/
 [RFC7159]: http://tools.ietf.org/html/rfc7159
 [json-ld.org]: https://github.com/json-ld/json-ld.org
+[jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
+[jsonld-request]: https://github.com/digitalbazaar/jsonld-request

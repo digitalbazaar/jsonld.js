@@ -7305,9 +7305,10 @@ if(_nodejs) {
 if(_nodejs) {
   jsonld.use = function(extension) {
     switch(extension) {
+      // TODO: Deprecated as of 0.4.0. Remove at some point.
       case 'request':
         // use node JSON-LD request extension
-        jsonld.request = require('./request');
+        jsonld.request = require('jsonld-request');
         break;
       default:
         throw new JsonLdError(

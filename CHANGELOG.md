@@ -1,0 +1,25 @@
+# jsonld ChangeLog
+
+## [Unreleased]
+
+### Breaking Changes
+- "request" extension moved to [jsonld-request][]. This was done to simplify
+  the core JSON-LD processing library. In particular, the extension pulled in
+  RDFa processing code and related dependencies. The old method of using this
+  exension of `jsonld.use('request')` is deprecated in favor of using the new
+  module directly.
+- The `jsonld` tool moved to [jsonld-cli][]. This was also done to simplify the
+  core JSON-LD processing library and because it uses the [jsonld-request][]
+  module.
+
+## [0.3.26] - 2015-09-01
+
+## Before 0.3.26
+
+- See git history for changes.
+
+[jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
+[jsonld-request]: https://github.com/digitalbazaar/jsonld-request
+
+[Unreleased]: https://github.com/digitalbazaar/jsonld/compare/0.3.26...HEAD
+[0.3.26]: https://github.com/digitalbazaar/jsonld/compare/0.3.25...0.3.26

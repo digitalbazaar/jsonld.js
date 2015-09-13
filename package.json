@@ -25,16 +25,14 @@
   "license": "BSD-3-Clause",
   "main": "js/jsonld.js",
   "dependencies": {
-    "async": "^1.4.0",
-    "commander": "^2.8.0",
     "es6-promise": "~2.0.1",
-    "jsdom": "^3.1.0",
     "pkginfo": "~0.3.0",
-    "request": "^2.53.0",
+    "request": "^2.61.0",
     "xmldom": "0.1.19"
   },
   "devDependencies": {
     "chai": "^2.3.0",
+    "commander": "^2.8.0",
     "istanbul": "^0.3.14",
     "jscs": "^2.1.1",
     "mocha": "^2.2.5",
@@ -52,19 +50,15 @@
     "Semantic Web",
     "jsonld"
   ],
-  "bin": {
-    "jsonld": "./bin/jsonld"
-  },
   "scripts": {
     "test-node": "make test-node",
     "test-browser": "make test-browser",
     "test": "make test",
     "coverage": "make test-coverage",
-    "jscs": "jscs js/jsonld.js js/request.js tests/*.js",
-    "jshint": "jshint js/jsonld.js js/request.js tests/*.js"
+    "jscs": "jscs js/jsonld.js tests/*.js",
+    "jshint": "jshint js/jsonld.js tests/*.js"
   },
   "browser": {
-    "./js/request.js": "./browser/ignore.js",
     "request": "./browser/ignore.js",
     "xmldom": "./browser/ignore.js",
     "util": "./browser/ignore.js",
