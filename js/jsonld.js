@@ -3645,6 +3645,10 @@ function _expandLanguageMap(languageMap) {
     }
     for(var vi = 0; vi < val.length; ++vi) {
       var item = val[vi];
+      if(item === null) {
+          // null values are allowed (8.5) but ignored (3.1)
+          continue;
+      }
       if(!_isString(item)) {
         throw new JsonLdError(
           'Invalid JSON-LD syntax; language map values must be strings.',
