@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2015-09-12
+
 ### Breaking Changes
 - "request" extension moved to [jsonld-request][]. This was done to simplify
   the core JSON-LD processing library. In particular, the extension pulled in
@@ -21,5 +23,6 @@
 [jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
 [jsonld-request]: https://github.com/digitalbazaar/jsonld-request
 
-[Unreleased]: https://github.com/digitalbazaar/jsonld/compare/0.3.26...HEAD
+[Unreleased]: https://github.com/digitalbazaar/jsonld/compare/0.4.0...HEAD
+[0.4.0]: https://github.com/digitalbazaar/jsonld/compare/0.3.26...0.4.0
 [0.3.26]: https://github.com/digitalbazaar/jsonld/compare/0.3.25...0.3.26
