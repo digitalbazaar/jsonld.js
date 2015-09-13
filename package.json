@@ -31,13 +31,13 @@
     "xmldom": "0.1.19"
   },
   "devDependencies": {
-    "chai": "^2.3.0",
+    "chai": "^3.2.0",
     "commander": "^2.8.0",
-    "istanbul": "^0.3.14",
+    "istanbul": "^0.3.19",
     "jscs": "^2.1.1",
     "mocha": "^2.2.5",
-    "mocha-phantomjs": "~3.5.3",
-    "phantomjs": "~1.9.17"
+    "mocha-phantomjs": "~3.5.6",
+    "phantomjs": "~1.9.18"
   },
   "engines": {
     "node": "*"
