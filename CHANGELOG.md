@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.4.1] - 2015-09-12
+
+### Changed
+- Ignore jsonld-request and pkginfo for browserify.
+
 ## [0.4.0] - 2015-09-12
 
 ### Breaking Changes
@@ -23,6 +28,7 @@
 [jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
 [jsonld-request]: https://github.com/digitalbazaar/jsonld-request
 
-[Unreleased]: https://github.com/digitalbazaar/jsonld/compare/0.4.0...HEAD
+[Unreleased]: https://github.com/digitalbazaar/jsonld/compare/0.4.1...HEAD
+[0.4.1]: https://github.com/digitalbazaar/jsonld/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/digitalbazaar/jsonld/compare/0.3.26...0.4.0
 [0.3.26]: https://github.com/digitalbazaar/jsonld/compare/0.3.25...0.3.26
