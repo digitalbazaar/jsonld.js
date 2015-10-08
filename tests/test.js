@@ -152,7 +152,31 @@ var TEST_TYPES = {
       createTestOptions({format: 'application/nquads'})
     ],
     compare: compareExpectedNQuads
-  }
+  },
+  'rdfn:Urgna2012EvalTest': {
+    fn: 'normalize',
+    params: [
+      readTestNQuads('action'),
+      createTestOptions({
+        algorithm: 'URGNA2012',
+        inputFormat: 'application/nquads',
+        format: 'application/nquads'
+      })
+    ],
+    compare: compareExpectedNQuads
+  },
+  'rdfn:Urdna2015EvalTest': {
+    fn: 'normalize',
+    params: [
+      readTestNQuads('action'),
+      createTestOptions({
+        algorithm: 'URDNA2015',
+        inputFormat: 'application/nquads',
+        format: 'application/nquads'
+      })
+    ],
+    compare: compareExpectedNQuads
+  },
 };
 
 var SKIP_TESTS = [];
@@ -243,10 +267,22 @@ if(!_nodejs) {
  * @param manifest the manifest.
  */
 function addManifest(manifest) {
-  describe(manifest.name, function() {
-    var sequence = getJsonLdValues(manifest, 'sequence');
-    for(var i = 0; i < sequence.length; ++i) {
-      var entry = readManifestEntry(manifest, sequence[i]);
+  describe(manifest.name || manifest.label, function() {
+    // get entries and sequence (alias for entries)
+    var entries = [].concat(
+      getJsonLdValues(manifest, 'entries'),
+      getJsonLdValues(manifest, 'sequence')
+    );
+
+    var includes = getJsonLdValues(manifest, 'include');
+    // add includes to sequence as jsonld files
+    for(var i = 0; i < includes.length; ++i) {
+      entries.push(includes[i] + '.jsonld');
+    }
+
+    // process entries
+    for(var i = 0; i < entries.length; ++i) {
+      var entry = readManifestEntry(manifest, entries[i]);
 
       if(isJsonLdType(entry, 'mf:Manifest')) {
         // entry is another manifest
@@ -263,16 +299,20 @@ function addTest(manifest, test) {
   // skip unknown and explicitly skipped test types
   var testTypes = Object.keys(TEST_TYPES);
   if(!isJsonLdType(test, testTypes) || isJsonLdType(test, SKIP_TESTS)) {
-    console.log('Skipping test "' + test.name + '" of type: ' +
-      getJsonLdValues(test, '@type'));
+    var type = [].concat(
+      getJsonLdValues(test, '@type'),
+      getJsonLdValues(test, 'type')
+    );
+    console.log('Skipping test "' + test.name + '" of type: ' + type);
   }
 
   // expand @id and input base
-  var number = test['@id'].substr(2);
-  test['@id'] = manifest.baseIri + basename(manifest.filename) + test['@id'];
+  var test_id = test['@id'] || test['id'];
+  //var number = test_id.substr(2);
+  test['@id'] = manifest.baseIri + basename(manifest.filename) + test_id;
   test.base = manifest.baseIri + test.input;
   test.manifest = manifest;
-  var description = number + ' ' + (test.purpose || test.name);
+  var description = test_id + ' ' + (test.purpose || test.name);
 
   // get appropriate API and run test
   var api = _nodejs ? jsonld : jsonld.promises;
@@ -284,13 +324,14 @@ function addTest(manifest, test) {
     params = params.map(function(param) {return param(test);});
     var callback = function(err, result) {
       try {
-        if(isPositiveTest(test)) {
+        if(isNegativeTest(test)) {
+          compareExpectedError(test, err);
+        // default is to assume positive and skip isPositiveTest(test) check
+        } else {
           if(err) {
             throw err;
           }
           testInfo.compare(test, result);
-        } else if(isNegativeTest(test)) {
-          compareExpectedError(test, err);
         }
         earl.addAssertion(test, true);
         return done();
@@ -410,9 +451,20 @@ function createTestOptions(opts) {
   };
 }
 
+// find a result property or throw error
+function _getResultProperty(test) {
+  if('expect' in test) {
+    return 'expect';
+  } else if('result' in test) {
+    return 'result';
+  } else {
+    throw Error('No test result property found');
+  }
+}
+
 function compareExpectedJson(test, result) {
   try {
-    var expect = readTestJson('expect')(test);
+    var expect = readTestJson(_getResultProperty(test))(test);
     assert.deepEqual(result, expect);
   } catch(ex) {
     if(program.bail) {
@@ -426,7 +478,7 @@ function compareExpectedJson(test, result) {
 
 function compareExpectedNQuads(test, result) {
   try {
-    var expect = readTestNQuads('expect')(test);
+    var expect = readTestNQuads(_getResultProperty(test))(test);
     assert.equal(result, expect);
   } catch(ex) {
     if(program.bail) {
@@ -440,7 +492,7 @@ function compareExpectedNQuads(test, result) {
 
 function compareExpectedError(test, err) {
   try {
-    var expect = test.expect;
+    var expect = test[_getResultProperty(test)];
     var result = getJsonLdErrorCode(err);
     assert.ok(err);
     assert.equal(result, expect);
@@ -455,7 +507,10 @@ function compareExpectedError(test, err) {
 }
 
 function isJsonLdType(node, type) {
-  var nodeType = getJsonLdValues(node, '@type');
+  var nodeType = [].concat(
+    getJsonLdValues(node, '@type'),
+    getJsonLdValues(node, 'type')
+  );
   type = Array.isArray(type) ? type : [type];
   for(var i = 0; i < type.length; ++i) {
     if(nodeType.indexOf(type[i]) !== -1) {
@@ -466,7 +521,7 @@ function isJsonLdType(node, type) {
 }
 
 function getJsonLdValues(node, property) {
-  var rval = null;
+  var rval = [];
   if(property in node) {
     rval = node[property];
     if(!Array.isArray(rval)) {

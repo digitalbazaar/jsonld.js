@@ -17,6 +17,12 @@ test-local-node:
 test-local-browser:
 	@NODE_ENV=test JSONLD_TEST_SUITE=./tests/new-embed-api ./node_modules/.bin/phantomjs $(TESTS)
 
+test-normalization-node:
+	@NODE_ENV=test JSONLD_TEST_SUITE=../normalization/tests ./node_modules/.bin/mocha -A -R $(REPORTER) $(TESTS); 
+
+test-normalization-browser:
+	@NODE_ENV=test JSONLD_TEST_SUITE=../normalization/tests ./node_modules/.bin/phantomjs $(TESTS)
+
 test-coverage:
 	./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha -- \
 		-u exports -R $(REPORTER) $(TESTS)
