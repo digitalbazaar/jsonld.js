@@ -744,13 +744,17 @@ jsonld.objectify = function(input, ctx, options, callback) {
 };
 
 /**
- * Performs RDF dataset normalization on the given JSON-LD input. The output
- * is an RDF dataset unless the 'format' option is used.
+ * Performs RDF dataset normalization on the given input. The input is JSON-LD
+ * unless the 'inputFormat' options is used. The output is an RDF dataset
+ * unless the 'format' option is used.
  *
- * @param input the JSON-LD input to normalize.
+ * @param input the input to normalize as JSON-LD or as a format specified by
+ *          the 'inputFormat' option.
  * @param [options] the options to use:
  *          [base] the base IRI to use.
  *          [expandContext] a context to expand with.
+ *          [inputFormat] the format if input is not JSON-LD:
+ *            'application/nquads' for N-Quads.
  *          [format] the format if output is a string:
  *            'application/nquads' for N-Quads.
  *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
@@ -778,20 +782,30 @@ jsonld.normalize = function(input, options, callback) {
     options.documentLoader = jsonld.loadDocument;
   }
 
-  // convert to RDF dataset then do normalization
-  var opts = _clone(options);
-  delete opts.format;
-  opts.produceGeneralizedRdf = false;
-  jsonld.toRDF(input, opts, function(err, dataset) {
-    if(err) {
+  if('inputFormat' in options) {
+    if(options.inputFormat !== 'application/nquads') {
       return callback(new JsonLdError(
-        'Could not convert input to RDF dataset before normalization.',
-        'jsonld.NormalizeError', {cause: err}));
+        'Unknown normalization input format.',
+        'jsonld.NormalizeError'));
     }
-
+    var parsedInput = _parseNQuads(input);
     // do normalization
-    new Processor().normalize(dataset, options, callback);
-  });
+    new Processor().normalize(parsedInput, options, callback);
+  } else {
+    // convert to RDF dataset then do normalization
+    var opts = _clone(options);
+    delete opts.format;
+    opts.produceGeneralizedRdf = false;
+    jsonld.toRDF(input, opts, function(err, dataset) {
+      if(err) {
+        return callback(new JsonLdError(
+          'Could not convert input to RDF dataset before normalization.',
+          'jsonld.NormalizeError', {cause: err}));
+      }
+      // do normalization
+      new Processor().normalize(dataset, options, callback);
+    });
+  }
 };
 
 /**
