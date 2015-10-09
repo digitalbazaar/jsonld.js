@@ -451,20 +451,20 @@ function createTestOptions(opts) {
   };
 }
 
-// find a result property or throw error
-function _getResultProperty(test) {
+// find the expected output property or throw error
+function _getExpectProperty(test) {
   if('expect' in test) {
     return 'expect';
   } else if('result' in test) {
     return 'result';
   } else {
-    throw Error('No test result property found');
+    throw Error('No expected output property found');
   }
 }
 
 function compareExpectedJson(test, result) {
   try {
-    var expect = readTestJson(_getResultProperty(test))(test);
+    var expect = readTestJson(_getExpectProperty(test))(test);
     assert.deepEqual(result, expect);
   } catch(ex) {
     if(program.bail) {
@@ -478,7 +478,7 @@ function compareExpectedJson(test, result) {
 
 function compareExpectedNQuads(test, result) {
   try {
-    var expect = readTestNQuads(_getResultProperty(test))(test);
+    var expect = readTestNQuads(_getExpectProperty(test))(test);
     assert.equal(result, expect);
   } catch(ex) {
     if(program.bail) {
@@ -492,7 +492,7 @@ function compareExpectedNQuads(test, result) {
 
 function compareExpectedError(test, err) {
   try {
-    var expect = test[_getResultProperty(test)];
+    var expect = test[_getExpectProperty(test)];
     var result = getJsonLdErrorCode(err);
     assert.ok(err);
     assert.equal(result, expect);
