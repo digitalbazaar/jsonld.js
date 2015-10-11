@@ -3107,205 +3107,11 @@ Processor.prototype.frame = function(input, frame, options) {
  * @param callback(err, normalized) called once the operation completes.
  */
 Processor.prototype.normalize = function(dataset, options, callback) {
-  // TODO: remodel and rename functions to match RDF Dataset Normalization Spec
-
-  // create quads and map bnodes to their associated quads
-  var quads = [];
-  var bnodes = {};
-  for(var graphName in dataset) {
-    var triples = dataset[graphName];
-    if(graphName === '@default') {
-      graphName = null;
-    }
-    for(var ti = 0; ti < triples.length; ++ti) {
-      var quad = triples[ti];
-      if(graphName !== null) {
-        if(graphName.indexOf('_:') === 0) {
-          quad.name = {type: 'blank node', value: graphName};
-        } else {
-          quad.name = {type: 'IRI', value: graphName};
-        }
-      }
-      quads.push(quad);
-
-      var attrs = ['subject', 'object', 'name'];
-      for(var ai = 0; ai < attrs.length; ++ai) {
-        var attr = attrs[ai];
-        if(quad[attr] && quad[attr].type === 'blank node') {
-          var id = quad[attr].value;
-          if(id in bnodes) {
-            bnodes[id].quads.push(quad);
-          } else {
-            bnodes[id] = {quads: [quad]};
-          }
-        }
-      }
-    }
+  if(options.algorithm === 'URDNA2015') {
+    return new URDNA2015(options).main(dataset, callback);
   }
-
-  // mapping complete, start canonical naming
-  var namer = new UniqueNamer('_:c14n');
-  return hashBlankNodes(Object.keys(bnodes));
-
-  // generates unique and duplicate hashes for bnodes
-  function hashBlankNodes(unnamed) {
-    var nextUnnamed = [];
-    var duplicates = {};
-    var unique = {};
-
-    // TODO: instead of N calls to setImmediate, run
-    // atomic normalization parts for a specified
-    // slice of time (perhaps configurable) as this
-    // will better utilize CPU and improve performance
-    // as JS processing speed improves
-
-    // hash quads for each unnamed bnode
-    jsonld.setImmediate(function() {hashUnnamed(0);});
-    function hashUnnamed(i) {
-      if(i === unnamed.length) {
-        // done, name blank nodes
-        return nameBlankNodes(unique, duplicates, nextUnnamed);
-      }
-
-      // hash unnamed bnode
-      var bnode = unnamed[i];
-      var hash = _hashQuads(bnode, bnodes, options);
-
-      // store hash as unique or a duplicate
-      if(hash in duplicates) {
-        duplicates[hash].push(bnode);
-        nextUnnamed.push(bnode);
-      } else if(hash in unique) {
-        duplicates[hash] = [unique[hash], bnode];
-        nextUnnamed.push(unique[hash]);
-        nextUnnamed.push(bnode);
-        delete unique[hash];
-      } else {
-        unique[hash] = bnode;
-      }
-
-      // hash next unnamed bnode
-      jsonld.setImmediate(function() {hashUnnamed(i + 1);});
-    }
-  }
-
-  // names unique hash bnodes
-  function nameBlankNodes(unique, duplicates, unnamed) {
-    // name unique bnodes in sorted hash order
-    var named = false;
-    var hashes = Object.keys(unique).sort();
-    for(var i = 0; i < hashes.length; ++i) {
-      var bnode = unique[hashes[i]];
-      namer.getName(bnode);
-      named = true;
-    }
-
-    if(named) {
-      // continue to hash bnodes if a bnode was assigned a name
-      hashBlankNodes(unnamed);
-    } else {
-      // name the duplicate hash bnodes
-      nameDuplicates(duplicates);
-    }
-  }
-
-  // names duplicate hash bnodes
-  function nameDuplicates(duplicates) {
-    // enumerate duplicate hash groups in sorted order
-    var hashes = Object.keys(duplicates).sort();
-
-    // process each group
-    processGroup(0);
-    function processGroup(i) {
-      if(i === hashes.length) {
-        // done, create JSON-LD array
-        return createArray();
-      }
-
-      // name each group member
-      var group = duplicates[hashes[i]];
-      var results = [];
-      nameGroupMember(group, 0);
-      function nameGroupMember(group, n) {
-        if(n === group.length) {
-          // name bnodes in hash order
-          results.sort(function(a, b) {
-            a = a.hash;
-            b = b.hash;
-            return (a < b) ? -1 : ((a > b) ? 1 : 0);
-          });
-          for(var r = 0; r < results.length; ++r) {
-            // name all bnodes in path namer in key-entry order
-            // Note: key-order is preserved in javascript
-            for(var key in results[r].pathNamer.existing) {
-              namer.getName(key);
-            }
-          }
-          return processGroup(i + 1);
-        }
-
-        // skip already-named bnodes
-        var bnode = group[n];
-        if(namer.isNamed(bnode)) {
-          return nameGroupMember(group, n + 1);
-        }
-
-        // hash bnode paths
-        var pathNamer = new UniqueNamer('_:b');
-        pathNamer.getName(bnode);
-        _hashPaths(
-          bnode, bnodes, namer, pathNamer, options,
-          function(err, result) {
-            if(err) {
-              return callback(err);
-            }
-            results.push(result);
-            nameGroupMember(group, n + 1);
-          });
-      }
-    }
-  }
-
-  // creates the sorted array of RDF quads
-  function createArray() {
-    var normalized = [];
-
-    /* Note: At this point all bnodes in the set of RDF quads have been
-     assigned canonical names, which have been stored in the 'namer' object.
-     Here each quad is updated by assigning each of its bnodes its new name
-     via the 'namer' object. */
-
-    // update bnode names in each quad and serialize
-    for(var i = 0; i < quads.length; ++i) {
-      var quad = quads[i];
-      var attrs = ['subject', 'object', 'name'];
-      for(var ai = 0; ai < attrs.length; ++ai) {
-        var attr = attrs[ai];
-        if(quad[attr] && quad[attr].type === 'blank node' &&
-          quad[attr].value.indexOf('_:c14n') !== 0) {
-          quad[attr].value = namer.getName(quad[attr].value);
-        }
-      }
-      normalized.push(
-        _toNQuad(quad, quad.name ? quad.name.value : null, undefined, options));
-    }
-
-    // sort normalized output
-    normalized.sort();
-
-    // handle output format
-    if(options.format) {
-      if(options.format === 'application/nquads') {
-        return callback(null, normalized.join(''));
-      }
-      return callback(new JsonLdError(
-        'Unknown output format.',
-        'jsonld.UnknownFormat', {format: options.format}));
-    }
-
-    // output RDF dataset
-    callback(null, _parseNQuads(normalized.join('')));
-  }
+  // assume URGNA2012
+  return new URGNA2012(options).main(dataset, callback);
 };
 
 /**
@@ -4027,256 +3833,801 @@ function _compareRDFTriples(t1, t2) {
   return true;
 }
 
-/**
- * Hashes all of the quads about a blank node.
- *
- * @param id the ID of the bnode to hash quads for.
- * @param bnodes the mapping of bnodes to quads.
- * @param options the options to use:
- *          [algorithm] the normalization algorithm to use, `URDNA2015` or
- *            `URGNA2012` (default: `URGNA2012`).
- *
- * @return the new hash.
- */
-function _hashQuads(id, bnodes, options) {
-  // return cached hash
-  if('hash' in bnodes[id]) {
-    return bnodes[id].hash;
+/////////////////////////////// DEFINE URDNA2015 //////////////////////////////
+
+var URDNA2015 = (function() {
+
+var POSITIONS = {'subject': 's', 'object': 'o', 'name': 'g'};
+
+var Normalize = function(options) {
+  options = options || {};
+  this.name = 'URDNA2015';
+  this.options = options;
+  this.blankNodeInfo = {};
+  this.hashToBlankNodes = {};
+  // FIXME: use `IdentifierIssuer`
+  this.canonicalIssuer = new UniqueNamer('_:c14n');//IdentifierIssuer('_:c14n');
+  this.quads = [];
+  this.schedule = {};
+  if('maxCallStackDepth' in options) {
+    this.schedule.MAX_DEPTH = options.maxCallStackDepth;
+  } else {
+    this.schedule.MAX_DEPTH = 500;
+  }
+  if('maxTotalCallStackDepth' in options) {
+    this.schedule.MAX_TOTAL_DEPTH = options.maxCallStackDepth;
+  } else {
+    this.schedule.MAX_TOTAL_DEPTH = 0xFFFFFFFF;
+  }
+  this.schedule.depth = 0;
+  this.schedule.totalDepth = 0;
+  if('timeSlice' in options) {
+    this.schedule.timeSlice = options.timeSlice;
+  } else {
+    // milliseconds
+    this.schedule.timeSlice = 10;
+  }
+};
+
+// do some work in a time slice, but in serial
+Normalize.prototype.doWork = function(fn, callback) {
+  var schedule = this.schedule;
+
+  if(schedule.totalDepth >= schedule.MAX_TOTAL_DEPTH) {
+    return callback(new Error(
+      'Maximum total call stack depth exceeded; normalization aborting.'));
   }
 
-  // serialize all of bnode's quads
-  var quads = bnodes[id].quads;
-  var nquads = [];
-  for(var i = 0; i < quads.length; ++i) {
-    nquads.push(_toNQuad(
-      quads[i], quads[i].name ? quads[i].name.value : null, id, options));
-  }
-  // sort serialized quads
-  nquads.sort();
-  // return hashed quads
-  var hash = bnodes[id].hash = NormalizeHash.hashNQuads(
-    options.algorithm, nquads);
-  return hash;
-}
-
-/**
- * Produces a hash for the paths of adjacent bnodes for a bnode,
- * incorporating all information about its subgraph of bnodes. This
- * method will recursively pick adjacent bnode permutations that produce the
- * lexicographically-least 'path' serializations.
- *
- * @param id the ID of the bnode to hash paths for.
- * @param bnodes the map of bnode quads.
- * @param namer the canonical bnode namer.
- * @param pathNamer the namer used to assign names to adjacent bnodes.
- * @param options the options to use.
- *          [algorithm] the normalization algorithm to use, `URDNA2015` or
- *            `URGNA2012` (default: `URGNA2012`).
- * @param callback(err, result) called once the operation completes.
- */
-function _hashPaths(id, bnodes, namer, pathNamer, options, callback) {
-  var md = new NormalizeHash(options.algorithm);
-
-  var POSITIONS = {'subject': 's', 'object': 'o', 'name': 'g'};
-
-  // group adjacent bnodes by hash, keep properties and references separate
-  var groups = {};
-  var groupHashes;
-  var quads = bnodes[id].quads;
-  jsonld.setImmediate(function() {groupNodes(0);});
-  function groupNodes(i) {
-    if(i === quads.length) {
-      // done, hash groups
-      groupHashes = Object.keys(groups).sort();
-      return hashGroup(0);
+  (function work() {
+    if(schedule.depth === schedule.MAX_DEPTH) {
+      // stack too deep, run on next tick
+      schedule.depth = 0;
+      schedule.running = false;
+      return jsonld.nextTick(work);
     }
 
-    var quad = quads[i];
-    if(options.algorithm === 'URDNA2015') {
-      for(var key in quad) {
-        if(key === 'predicate') {
-          continue;
-        }
-        var component = quad[key];
-        if(component.type === 'blank node' && component.value !== id) {
-          var position = POSITIONS[key];
-          var hash = hashRelatedBlankNode(
-            quad, component.value, namer, pathNamer, position, options);
-          // add related bnode to hash group
-          if(hash in groups) {
-            groups[hash].push(component.value);
-          } else {
-            groups[hash] = [component.value];
-          }
-        }
-      }
-    } else {
-      // assume URGNA2012
-      // get adjacent bnode
-      var related = _getAdjacentBlankNodeName(quad.subject, id);
-      var direction = null;
-      if(related !== null) {
-        // normal property
-        direction = 'p';
-      } else {
-        related = _getAdjacentBlankNodeName(quad.object, id);
-        if(related !== null) {
-          // reverse property
-          direction = 'r';
-        }
-      }
-      if(related !== null) {
-        var hash = hashRelatedBlankNode(
-          quad, related, namer, pathNamer, direction, options);
-        // add bnode to hash group
-        if(hash in groups) {
-          groups[hash].push(related);
-        } else {
-          groups[hash] = [related];
-        }
-      }
+    // if not yet running, force run
+    var now = new Date().getTime();
+    if(!schedule.running) {
+      schedule.start = new Date().getTime();
+      schedule.deadline = schedule.start + schedule.timeSlice;
     }
 
-    jsonld.setImmediate(function() {groupNodes(i + 1);});
+    // TODO: should also include an estimate of expectedWorkTime
+    if(now < schedule.deadline) {
+      schedule.running = true;
+      schedule.depth++;
+      schedule.totalDepth++;
+      return fn(function(err, result) {
+        schedule.depth--;
+        schedule.totalDepth--;
+        callback(err, result);
+      });
+    }
+
+    // not enough time left in this slice, run after letting browser
+    // do some other things
+    schedule.depth = 0;
+    schedule.running = false;
+    jsonld.setImmediate(work);
+  })();
+};
+
+// asynchronously loop
+Normalize.prototype.forEach = function(iterable, fn, callback) {
+  var self = this;
+  var iterator;
+  var idx = 0;
+  var length;
+  if(_isArray(iterable)) {
+    length = iterable.length;
+    iterator = function() {
+      if(idx === length) {
+        return false;
+      }
+      iterator.value = iterable[idx++];
+      iterator.key = idx;
+      return true;
+    };
+  } else {
+    var keys = Object.keys(iterable);
+    length = keys.length;
+    iterator = function() {
+      if(idx === length) {
+        return false;
+      }
+      iterator.key = keys[idx++];
+      iterator.value = iterable[iterator.key];
+      return true;
+    };
   }
 
-  // produce a hash for a blank node that depends on its relationship to
-  // another blank node
-  function hashRelatedBlankNode(quad, related, namer, pathNamer, position) {
-    // get bnode name (try canonical, path, then hash)
-    var name;
-    if(namer.isNamed(related)) {
-      name = namer.getName(related);
-    } else if(pathNamer.isNamed(related)) {
-      name = pathNamer.getName(related);
-    } else {
-      name = _hashQuads(related, bnodes, options);
+  (function iterate(err, result) {
+    if(err) {
+      return callback(err);
     }
+    if(iterator()) {
+      return self.doWork(function() {
+        fn(iterator.value, iterator.key, iterate);
+      });
+    }
+    callback();
+  })();
+};
 
-    // hash position, property, and bnode name/hash
-    var md = new NormalizeHash(options.algorithm);
-    md.update(position);
-    if(options.algorithm === 'URDNA2015') {
-      if(position !== 'g') {
-        md.update('<' + quad.predicate.value + '>');
-      }
-    } else {
-      md.update(quad.predicate.value);
+// asynchronous waterfall
+Normalize.prototype.waterfall = function(fns, callback) {
+  var self = this;
+  self.forEach(fns, function(fn, idx, callback) {
+    self.doWork(fn, callback);
+  }, callback);
+};
+
+// asynchronous while
+Normalize.prototype.whilst = function(condition, fn, callback) {
+  var self = this;
+  (function loop(err) {
+    if(err) {
+      return callback(err);
     }
-    md.update(name);
-    return md.digest();
+    if(!condition()) {
+      return callback();
+    }
+    self.doWork(fn, loop);
+  })();
+};
+
+// 4.4) Normalization Algorithm
+Normalize.prototype.main = function(dataset, callback) {
+  var self = this;
+  self.schedule.start = new Date().getTime();
+  var result;
+
+  // handle invalid output format
+  if(self.options.format) {
+    if(self.options.format !== 'application/nquads') {
+      return callback(new JsonLdError(
+        'Unknown output format.',
+        'jsonld.UnknownFormat', {format: self.options.format}));
+    }
   }
 
-  // hashes a group of adjacent bnodes
-  function hashGroup(i) {
-    if(i === groupHashes.length) {
-      // done, return SHA-1 digest and path namer
-      return callback(null, {hash: md.digest(), pathNamer: pathNamer});
-    }
+  // 1) Create the normalization state.
 
-    // digest group hash
-    var groupHash = groupHashes[i];
-    md.update(groupHash);
+  // Note: Optimize by generating non-normalized blank node map concurrently.
+  var nonNormalized = {};
 
-    // choose a path and namer from the permutations
-    var chosenPath = null;
-    var chosenNamer = null;
-    var permutator = new Permutator(groups[groupHash]);
-    jsonld.setImmediate(function() {permutate();});
-    function permutate() {
-      var permutation = permutator.next();
-      var pathNamerCopy = pathNamer.clone();
-
-      // build adjacent path
-      var path = '';
-      var recurse = [];
-      for(var n in permutation) {
-        var bnode = permutation[n];
-
-        // use canonical name if available
-        if(namer.isNamed(bnode)) {
-          path += namer.getName(bnode);
-        } else {
-          // recurse if bnode isn't named in the path yet
-          if(!pathNamerCopy.isNamed(bnode)) {
-            recurse.push(bnode);
-          }
-          path += pathNamerCopy.getName(bnode);
+  self.waterfall([
+    function(callback) {
+      // 2) For every quad in input dataset:
+      self.forEach(dataset, function(triples, graphName, callback) {
+        if(graphName === '@default') {
+          graphName = null;
         }
-
-        // skip permutation if path is already >= chosen path
-        if(chosenPath !== null && path.length >= chosenPath.length &&
-          path > chosenPath) {
-          return nextPermutation(true);
-        }
-      }
-
-      // does the next recursion
-      nextRecursion(0);
-      function nextRecursion(n) {
-        if(n === recurse.length) {
-          // done, do next permutation
-          return nextPermutation(false);
-        }
-
-        // do recursion
-        var bnode = recurse[n];
-        _hashPaths(
-          bnode, bnodes, namer, pathNamerCopy, options,
-          function(err, result) {
-            if(err) {
-              return callback(err);
+        self.forEach(triples, function(quad, idx, callback) {
+          if(graphName !== null) {
+            if(graphName.indexOf('_:') === 0) {
+              quad.name = {type: 'blank node', value: graphName};
+            } else {
+              quad.name = {type: 'IRI', value: graphName};
             }
-            path += pathNamerCopy.getName(bnode) + '<' + result.hash + '>';
-            pathNamerCopy = result.pathNamer;
+          }
+          self.quads.push(quad);
 
-            // skip permutation if path is already >= chosen path
-            if(chosenPath !== null && path.length >= chosenPath.length &&
-              path > chosenPath) {
-              return nextPermutation(true);
+          // 2.1) For each blank node that occurs in the quad, add a reference
+          // to the quad using the blank node identifier in the blank node to
+          // quads map, creating a new entry if necessary.
+          self.forEachComponent(quad, function(component) {
+            if(component.type !== 'blank node') {
+              return;
             }
-
-            // do next recursion
-            nextRecursion(n + 1);
+            var id = component.value;
+            if(id in self.blankNodeInfo) {
+              self.blankNodeInfo[id].quads.push(quad);
+            } else {
+              nonNormalized[id] = true;
+              self.blankNodeInfo[id] = {quads: [quad]};
+            }
           });
-      }
+          callback();
+        }, callback);
+      }, callback);
+    },
+    function(callback) {
+      // 3) Create a list of non-normalized blank node identifiers
+      // non-normalized identifiers and populate it using the keys from the
+      // blank node to quads map.
+      // Note: We use a map here and it was generated during step 2.
 
-      // stores the results of this permutation and runs the next
-      function nextPermutation(skipped) {
-        if(!skipped && (chosenPath === null || path < chosenPath)) {
-          chosenPath = path;
-          chosenNamer = pathNamerCopy;
+      // 4) Initialize simple, a boolean flag, to true.
+      var simple = true;
+
+      // 5) While simple is true, issue canonical identifiers for blank nodes:
+      self.whilst(function() { return simple; }, function(callback) {
+        // 5.1) Set simple to false.
+        simple = false;
+
+        // 5.2) Clear hash to blank nodes map.
+        self.hashToBlankNodes = {};
+
+        self.waterfall([
+          function(callback) {
+            // 5.3) For each blank node identifier identifier in non-normalized
+            // identifiers:
+            self.forEach(nonNormalized, function(value, id, callback) {
+              // 5.3.1) Create a hash, hash, according to the Hash First Degree
+              // Quads algorithm.
+              self.hashFirstDegreeQuads(id, function(err, hash) {
+                if(err) {
+                  return callback(err);
+                }
+                // 5.3.2) Add hash and identifier to hash to blank nodes map,
+                // creating a new entry if necessary.
+                if(hash in self.hashToBlankNodes) {
+                  self.hashToBlankNodes[hash].push(id);
+                } else {
+                  self.hashToBlankNodes[hash] = [id];
+                }
+                callback();
+              });
+            }, callback);
+          },
+          function(callback) {
+            // 5.4) For each hash to identifier list mapping in hash to blank
+            // nodes map, lexicographically-sorted by hash:
+            var hashes = Object.keys(self.hashToBlankNodes).sort();
+            self.forEach(hashes, function(hash, i, callback) {
+              // 5.4.1) If the length of identifier list is greater than 1,
+              // continue to the next mapping.
+              var idList = self.hashToBlankNodes[hash];
+              if(idList.length > 1) {
+                return callback();
+              }
+
+              // 5.4.2) Use the Issue Identifier algorithm, passing canonical
+              // issuer and the single blank node identifier in identifier
+              // list, identifier, to issue a canonical replacement identifier
+              // for identifier.
+              // TODO: consider changing `getId` to `issue`
+              var id = idList[0];
+              self.canonicalIssuer.getId(id);
+
+              // 5.4.3) Remove identifier from non-normalized identifiers.
+              delete nonNormalized[id];
+
+              // 5.4.4) Remove hash from the hash to blank nodes map.
+              delete self.hashToBlankNodes[hash];
+
+              // 5.4.5) Set simple to true.
+              simple = true;
+              callback();
+            }, callback);
+          }
+        ], callback);
+      }, callback);
+    },
+    function(callback) {
+      // 6) For each hash to identifier list mapping in hash to blank nodes map,
+      // lexicographically-sorted by hash:
+      var hashes = Object.keys(self.hashToBlankNodes).sort();
+      self.forEach(hashes, function(hash, idx, callback) {
+        // 6.1) Create hash path list where each item will be a result of
+        // running the Hash N-Degree Quads algorithm.
+        var hashPathList = [];
+
+        // 6.2) For each blank node identifier identifier in identifier list:
+        var idList = self.hashToBlankNodes[hash];
+        self.waterfall([
+          function(callback) {
+            self.forEach(idList, function(id, idx, callback) {
+              // 6.2.1) If a canonical identifier has already been issued for
+              // identifier, continue to the next identifier.
+              if(self.canonicalIssuer.hasId(id)) {
+                return callback();
+              }
+
+              // 6.2.2) Create temporary issuer, an identifier issuer
+              // initialized with the prefix _:b.
+              var issuer = new IdentifierIssuer('_:b');
+
+              // 6.2.3) Use the Issue Identifier algorithm, passing temporary
+              // issuer and identifier, to issue a new temporary blank node
+              // identifier for identifier.
+              issuer.getId(id);
+
+              // 6.2.4) Run the Hash N-Degree Quads algorithm, passing
+              // temporary issuer, and append the result to the hash path list.
+              self.hashNDegreeQuads(id, issuer, function(err, result) {
+                if(err) {
+                  return callback(err);
+                }
+                hashPathList.push(result);
+                callback();
+              });
+            }, callback);
+          },
+          function(callback) {
+            // 6.3) For each result in the hash path list,
+            // lexicographically-sorted by the hash in result:
+            hashPathList.sort(function(a, b) {
+              return (a.hash < b.hash) ? -1 : ((a.hash > b.hash) ? 1 : 0);
+            });
+            self.forEach(hashPathList, function(result, idx, callback) {
+              // 6.3.1) For each blank node identifier, existing identifier,
+              // that was issued a temporary identifier by identifier issuer
+              // in result, issue a canonical identifier, in the same order,
+              // using the Issue Identifier algorithm, passing canonical
+              // issuer and existing identifier.
+              for(var existing in result.issuer.existing) {
+                self.canonicalIssuer.getId(existing);
+              }
+              callback();
+            }, callback);
+          }
+        ], callback);
+      }, callback);
+    }, function(callback) {
+      /* Note: At this point all blank nodes in the set of RDF quads have been
+      assigned canonical identifiers, which have been stored in the canonical
+      issuer. Here each quad is updated by assigning each of its blank nodes
+      its new identifier. */
+
+      // 7) For each quad, quad, in input dataset:
+      var normalized = [];
+      self.waterfall([
+        function(callback) {
+          self.forEach(self.quads, function(quad, idx, callback) {
+            // 7.1) Create a copy, quad copy, of quad and replace any existing
+            // blank node identifiers using the canonical identifiers
+            // previously issued by canonical issuer.
+            // Note: We optimize away the copy here.
+            self.forEachComponent(quad, function(component) {
+              if(component.type === 'blank node' &&
+                component.value.indexOf(self.canonicalIssuer.prefix) !== 0) {
+                component.value = self.canonicalIssuer.getId(component.value);
+              }
+            });
+            // 7.2) Add quad copy to the normalized dataset.
+            normalized.push(_toNQuad(quad));
+            callback();
+          }, callback);
+        },
+        function(callback) {
+          // sort normalized output
+          normalized.sort();
+
+          // 8) Return the normalized dataset.
+          if(self.options.format === 'application/nquads') {
+            result = normalized.join('');
+            return callback();
+          }
+
+          result = _parseNQuads(normalized.join(''));
+          callback();
         }
-
-        // do next permutation
-        if(permutator.hasNext()) {
-          jsonld.setImmediate(function() {permutate();});
-        } else {
-          // digest chosen path and update namer
-          md.update(chosenPath);
-          pathNamer = chosenNamer;
-
-          // hash the next group
-          hashGroup(i + 1);
-        }
-      }
+      ], callback);
     }
-  }
-}
+  ], function(err) {
+    callback(err, result);
+  });
+};
 
-/**
- * A helper function that gets the blank node name from an RDF quad node
- * (subject or object). If the node is a blank node and its value
- * does not match the given blank node ID, it will be returned.
- *
- * @param node the RDF quad node.
- * @param id the ID of the blank node to look next to.
- *
- * @return the adjacent blank node name or null if none was found.
- */
-function _getAdjacentBlankNodeName(node, id) {
-  return (node.type === 'blank node' && node.value !== id ? node.value : null);
-}
+// 4.6) Hash First Degree Quads
+Normalize.prototype.hashFirstDegreeQuads = function(id, callback) {
+  var self = this;
+
+  // return cached hash
+  var info = self.blankNodeInfo[id];
+  if('hash' in info) {
+    return callback(null, info.hash);
+  }
+
+  // 1) Initialize nquads to an empty list. It will be used to store quads in
+  // N-Quads format.
+  var nquads = [];
+
+  // 2) Get the list of quads quads associated with the reference blank node
+  // identifier in the blank node to quads map.
+  var quads = info.quads;
+
+  // 3) For each quad quad in quads:
+  self.forEach(quads, function(quad, idx, callback) {
+    // 3.1) Serialize the quad in N-Quads format with the following special
+    // rule:
+
+    // 3.1.1) If any component in quad is an blank node, then serialize it
+    // using a special identifier as follows:
+    var copy = {predicate: quad.predicate};
+    self.forEachComponent(quad, function(component, key) {
+      // 3.1.2) If the blank node's existing blank node identifier matches the
+      // reference blank node identifier then use the blank node identifier _:a,
+      // otherwise, use the blank node identifier _:z.
+      copy[key] = self.modifyFirstDegreeComponent(id, component, key);
+    });
+    nquads.push(_toNQuad(copy));
+    callback();
+  }, function(err) {
+    if(err) {
+      return callback(err);
+    }
+    // 4) Sort nquads in lexicographical order.
+    nquads.sort();
+
+    // 5) Return the hash that results from passing the sorted, joined nquads
+    // through the hash algorithm.
+    info.hash = NormalizeHash.hashNQuads(self.name, nquads);
+    callback(null, info.hash);
+  });
+};
+
+// helper for modifying component during Hash First Degree Quads
+Normalize.prototype.modifyFirstDegreeComponent = function(id, component) {
+  if(component.type !== 'blank node') {
+    return component;
+  }
+  component = _clone(component);
+  component.value = (component.value === id ? '_:a' : '_:z');
+  return component;
+};
+
+// 4.7) Hash Related Blank Node
+Normalize.prototype.hashRelatedBlankNode = function(
+  related, quad, issuer, position, callback) {
+  var self = this;
+
+  // 1) Set the identifier to use for related, preferring first the canonical
+  // identifier for related if issued, second the identifier issued by issuer
+  // if issued, and last, if necessary, the result of the Hash First Degree
+  // Quads algorithm, passing related.
+  var id;
+  self.waterfall([
+    function(callback) {
+      if(self.canonicalIssuer.hasId(related)) {
+        id = self.canonicalIssuer.getId(related);
+        return callback();
+      }
+      if(issuer.hasId(related)) {
+        id = issuer.getId(related);
+        return callback();
+      }
+      self.hashFirstDegreeQuads(related, function(err, hash) {
+        if(err) {
+          return callback(err);
+        }
+        id = hash;
+        callback();
+      });
+    }
+  ], function(err) {
+    if(err) {
+      return callback(err);
+    }
+
+    // 2) Initialize a string input to the value of position.
+    // Note: We use a hash object instead.
+    var md = new NormalizeHash(self.name);
+    md.update(position);
+
+    // 3) If position is not g, append <, the value of the predicate in quad,
+    // and > to input.
+    if(position !== 'g') {
+      md.update(self.getRelatedPredicate(quad));
+    }
+
+    // 4) Append identifier to input.
+    md.update(id);
+
+    // 5) Return the hash that results from passing input through the hash
+    // algorithm.
+    return callback(null, md.digest());
+  });
+};
+
+// helper for getting a related predicate
+Normalize.prototype.getRelatedPredicate = function(quad) {
+  return '<' + quad.predicate.value + '>';
+};
+
+// 4.8) Hash N-Degree Quads
+Normalize.prototype.hashNDegreeQuads = function(id, issuer, callback) {
+  var self = this;
+
+  // 1) Create a hash to related blank nodes map for storing hashes that
+  // identify related blank nodes.
+  // Note: 2) and 3) handled within `createHashToRelated`
+  var hashToRelated;
+  var md = new NormalizeHash(self.name);
+  self.waterfall([
+    function(callback) {
+      self.createHashToRelated(id, issuer, function(err, result) {
+        if(err) {
+          return callback(err);
+        }
+        hashToRelated = result;
+        callback();
+      });
+    },
+    function(callback) {
+      // 4) Create an empty string, data to hash.
+      // Note: We created a hash object `md` above instead.
+
+      // 5) For each related hash to blank node list mapping in hash to related
+      // blank nodes map, sorted lexicographically by related hash:
+      var hashes = Object.keys(hashToRelated).sort();
+      self.forEach(hashes, function(hash, idx, callback) {
+        // 5.1) Append the related hash to the data to hash.
+        md.update(hash);
+
+        // 5.2) Create a string chosen path.
+        var chosenPath = '';
+
+        // 5.3) Create an unset chosen issuer variable.
+        var chosenIssuer;
+
+        // 5.4) For each permutation of blank node list:
+        var permutator = new Permutator(hashToRelated[hash]);
+        self.whilst(
+          function() { return permutator.hasNext(); },
+          function(nextPermutation) {
+          var permutation = permutator.next();
+
+          // 5.4.1) Create a copy of issuer, issuer copy.
+          var issuerCopy = issuer.clone();
+
+          // 5.4.2) Create a string path.
+          var path = '';
+
+          // 5.4.3) Create a recursion list, to store blank node identifiers
+          // that must be recursively processed by this algorithm.
+          var recursionList = [];
+
+          self.waterfall([
+            function(callback) {
+              // 5.4.4) For each related in permutation:
+              self.forEach(permutation, function(related, idx, callback) {
+                // 5.4.4.1) If a canonical identifier has been issued for related,
+                // append it to path.
+                if(self.canonicalIssuer.hasId(related)) {
+                  path += self.canonicalIssuer.getId(related);
+                } else {
+                  // 5.4.4.2) Otherwise:
+                  // 5.4.4.2.1) If issuer copy has not issued an identifier for
+                  // related, append related to recursion list.
+                  if(!issuerCopy.hasId(related)) {
+                    recursionList.push(related);
+                  }
+                  // 5.4.4.2.2) Use the Issue Identifier algorithm, passing
+                  // issuer copy and related and append the result to path.
+                  path += issuerCopy.getId(related);
+                }
+
+                // 5.4.4.3) If chosen path is not empty and the length of path
+                // is greater than or equal to the length of chosen path and
+                // path is lexicographically greater than chosen path, then
+                // skip to the next permutation.
+                if(chosenPath.length !== 0 &&
+                  path.length >= chosenPath.length && path > chosenPath) {
+                  // FIXME: may cause inaccurate total depth calculation
+                  return nextPermutation();
+                }
+                callback();
+              }, callback);
+            },
+            function(callback) {
+              // 5.4.5) For each related in recursion list:
+              self.forEach(recursionList, function(related, idx, callback) {
+                // 5.4.5.1) Set result to the result of recursively executing
+                // the Hash N-Degree Quads algorithm, passing related for
+                // identifier and issuer copy for path identifier issuer.
+                self.hashNDegreeQuads(
+                  related, issuerCopy, function(err, result) {
+                  if(err) {
+                    return callback(err);
+                  }
+
+                  // 5.4.5.2) Use the Issue Identifier algorithm, passing issuer
+                  // copy and related and append the result to path.
+                  path += issuerCopy.getId(related);
+
+                  // 5.4.5.3) Append <, the hash in result, and > to path.
+                  path += '<' + result.hash + '>';
+
+                  // 5.4.5.4) Set issuer copy to the identifier issuer in result.
+                  issuerCopy = result.issuer;
+
+                  // 5.4.5.5) If chosen path is not empty and the length of path
+                  // is greater than or equal to the length of chosen path and
+                  // path is lexicographically greater than chosen path, then
+                  // skip to the next permutation.
+                  if(chosenPath.length !== 0 &&
+                    path.length >= chosenPath.length && path > chosenPath) {
+                    // FIXME: may cause inaccurate total depth calculation
+                    return nextPermutation();
+                  }
+                  callback();
+                });
+              }, callback);
+            },
+            function(callback) {
+              // 5.4.6) If chosen path is empty or path is lexicographically
+              // less than chosen path, set chosen path to path and chosen
+              // issuer to issuer copy.
+              if(chosenPath.length === 0 || path < chosenPath) {
+                chosenPath = path;
+                chosenIssuer = issuerCopy;
+              }
+              callback();
+            }
+          ], nextPermutation);
+        }, function(err) {
+          if(err) {
+            return callback(err);
+          }
+
+          // 5.5) Append chosen path to data to hash.
+          md.update(chosenPath);
+
+          // 5.6) Replace issuer, by reference, with chosen issuer.
+          issuer = chosenIssuer;
+          callback();
+        });
+      }, callback);
+    }
+  ], function(err) {
+    // 6) Return issuer and the hash that results from passing data to hash
+    // through the hash algorithm.
+    callback(err, {hash: md.digest(), issuer: issuer});
+  });
+};
+
+// helper for creating hash to related blank nodes map
+Normalize.prototype.createHashToRelated = function(id, issuer, callback) {
+  var self = this;
+
+  // 1) Create a hash to related blank nodes map for storing hashes that
+  // identify related blank nodes.
+  var hashToRelated = {};
+
+  // 2) Get a reference, quads, to the list of quads in the blank node to
+  // quads map for the key identifier.
+  var quads = self.blankNodeInfo[id].quads;
+
+  // 3) For each quad in quads:
+  self.forEach(quads, function(quad, idx, callback) {
+    // 3.1) For each component in quad, if component is the subject, object,
+    // and graph name and it is a blank node that is not identified by
+    // identifier:
+    self.forEach(quad, function(component, key, callback) {
+      if(key === 'predicate' ||
+        !(component.type === 'blank node' && component.value !== id)) {
+        return callback();
+      }
+      // 3.1.1) Set hash to the result of the Hash Related Blank Node
+      // algorithm, passing the blank node identifier for component as
+      // related, quad, path identifier issuer as issuer, and position as
+      // either s, o, or g based on whether component is a subject, object,
+      // graph name, respectively.
+      var related = component.value;
+      var position = POSITIONS[key];
+      self.hashRelatedBlankNode(
+        related, quad, issuer, position, function(err, hash) {
+        if(err) {
+          return callback(err);
+        }
+        // 3.1.2) Add a mapping of hash to the blank node identifier for
+        // component to hash to related blank nodes map, adding an entry as
+        // necessary.
+        if(hash in hashToRelated) {
+          hashToRelated[hash].push(related);
+        } else {
+          hashToRelated[hash] = [related];
+        }
+        callback();
+      });
+    }, callback);
+  }, function(err) {
+    callback(err, hashToRelated);
+  });
+};
+
+// helper that iterates over quad components (skips predicate)
+Normalize.prototype.forEachComponent = function(quad, op) {
+  for(var key in quad) {
+    // skip `predicate`
+    if(key === 'predicate') {
+      continue;
+    }
+    op(quad[key], key, quad);
+  }
+};
+
+return Normalize;
+
+})(); // end of define URDNA2015
+
+/////////////////////////////// DEFINE URGNA2012 //////////////////////////////
+
+var URGNA2012 = (function() {
+
+var Normalize = function(options) {
+  URDNA2015.call(this, options);
+  this.name = 'URGNA2012';
+};
+Normalize.prototype = new URDNA2015();
+
+// helper for modifying component during Hash First Degree Quads
+Normalize.prototype.modifyFirstDegreeComponent = function(id, component, key) {
+  if(component.type !== 'blank node') {
+    return component;
+  }
+  component = _clone(component);
+  if(key === 'name') {
+    component.value = '_:g';
+  } else {
+    component.value = (component.value === id ? '_:a' : '_:z');
+  }
+  return component;
+};
+
+// helper for getting a related predicate
+Normalize.prototype.getRelatedPredicate = function(quad) {
+  return quad.predicate.value;
+};
+
+// helper for creating hash to related blank nodes map
+Normalize.prototype.createHashToRelated = function(id, issuer, callback) {
+  var self = this;
+
+  // 1) Create a hash to related blank nodes map for storing hashes that
+  // identify related blank nodes.
+  var hashToRelated = {};
+
+  // 2) Get a reference, quads, to the list of quads in the blank node to
+  // quads map for the key identifier.
+  var quads = self.blankNodeInfo[id].quads;
+
+  // 3) For each quad in quads:
+  self.forEach(quads, function(quad, idx, callback) {
+    // 3.1) If the quad's subject is a blank node that does not match
+    // identifier, set hash to the result of the Hash Related Blank Node
+    // algorithm, passing the blank node identifier for subject as related,
+    // quad, path identifier issuer as issuer, and p as position.
+    var position;
+    var related;
+    if(quad.subject.type === 'blank node' && quad.subject.value !== id) {
+      related = quad.subject.value;
+      position = 'p';
+    } else if(quad.object.type === 'blank node' && quad.object.value !== id) {
+      // 3.2) Otherwise, if quad's object is a blank node that does not match
+      // identifier, to the result of the Hash Related Blank Node algorithm,
+      // passing the blank node identifier for object as related, quad, path
+      // identifier issuer as issuer, and r as position.
+      related = quad.object.value;
+      position = 'r';
+    } else {
+      // 3.3) Otherwise, continue to the next quad.
+      return callback();
+    }
+    // 3.4) Add a mapping of hash to the blank node identifier for the
+    // component that matched (subject or object) to hash to related blank
+    // nodes map, adding an entry as necessary.
+    self.hashRelatedBlankNode(
+      related, quad, issuer, position, function(err, hash) {
+      if(hash in hashToRelated) {
+        hashToRelated[hash].push(related);
+      } else {
+        hashToRelated[hash] = [related];
+      }
+      callback();
+    });
+  }, function(err) {
+    callback(err, hashToRelated);
+  });
+};
+
+return Normalize;
+
+})(); // end of define URGNA2012
 
 /**
  * Recursively flattens the subjects in the given JSON-LD expanded input
@@ -6596,40 +6947,36 @@ function _toNQuads(dataset) {
       quads.push(_toNQuad(triple, graphName));
     }
   }
-  quads.sort();
-  return quads.join('');
+  return quads.sort().join('');
 }
 
 /**
  * Converts an RDF triple and graph name to an N-Quad string (a single quad).
  *
- * @param triple the RDF triple to convert.
+ * @param triple the RDF triple or quad to convert (a triple or quad may be
+ *          passed, if a triple is passed then `graphName` should be given
+ *          to specify the name of the graph the triple is in, `null` for
+ *          the default graph).
  * @param graphName the name of the graph containing the triple, null for
  *          the default graph.
- * @param bnode the bnode the quad is mapped to (optional, for use
- *          during normalization only).
- * @param options the options to use:
- *          [algorithm] the normalization algorithm to use, `URDNA2015` or
- *            `URGNA2012` (default: `URGNA2012`).
  *
  * @return the N-Quad string.
  */
-function _toNQuad(triple, graphName, bnode, options) {
+function _toNQuad(triple, graphName) {
   var s = triple.subject;
   var p = triple.predicate;
   var o = triple.object;
-  var g = graphName;
+  var g = graphName || null;
+  if('name' in triple && triple.name) {
+    g = triple.name.value;
+  }
 
   var quad = '';
 
   // subject is an IRI
   if(s.type === 'IRI') {
     quad += '<' + s.value + '>';
-  } else if(bnode) {
-    // bnode normalization mode
-    quad += (s.value === bnode) ? '_:a' : '_:z';
   } else {
-    // bnode normal mode
     quad += s.value;
   }
   quad += ' ';
@@ -6637,12 +6984,7 @@ function _toNQuad(triple, graphName, bnode, options) {
   // predicate is an IRI
   if(p.type === 'IRI') {
     quad += '<' + p.value + '>';
-  } else if(bnode) {
-    // FIXME: TBD what to do with bnode predicates during normalization
-    // bnode normalization mode
-    quad += '_:p';
   } else {
-    // bnode normal mode
     quad += p.value;
   }
   quad += ' ';
@@ -6651,13 +6993,7 @@ function _toNQuad(triple, graphName, bnode, options) {
   if(o.type === 'IRI') {
     quad += '<' + o.value + '>';
   } else if(o.type === 'blank node') {
-    // normalization mode
-    if(bnode) {
-      quad += (o.value === bnode) ? '_:a' : '_:z';
-    } else {
-      // normal mode
-      quad += o.value;
-    }
+    quad += o.value;
   } else {
     var escaped = o.value
       .replace(/\\/g, '\\\\')
@@ -6676,19 +7012,10 @@ function _toNQuad(triple, graphName, bnode, options) {
   }
 
   // graph
-  if(g !== null) {
+  if(g !== null && g !== undefined) {
     if(g.indexOf('_:') !== 0) {
       quad += ' <' + g + '>';
-    } else if(bnode) {
-      // normalization mode
-      if(options.algorithm === 'URDNA2015') {
-        quad += (o.value === bnode) ? '_:a' : '_:z';
-      } else {
-        // assume URGNA2012
-        quad += ' _:g';
-      }
     } else {
-      // normal mode
       quad += ' ' + g;
     }
   }
@@ -6812,6 +7139,9 @@ function UniqueNamer(prefix) {
   this.existing = {};
 }
 jsonld.UniqueNamer = UniqueNamer;
+// TODO: change this to be the default, keeping `UniqueNamer` alias for
+// backwards-compatibility
+var IdentifierIssuer = jsonld.IdentifierIssuer = UniqueNamer;
 
 /**
  * Copies this UniqueNamer.
@@ -6850,6 +7180,7 @@ UniqueNamer.prototype.getName = function(oldName) {
 
   return name;
 };
+UniqueNamer.prototype.getId = UniqueNamer.prototype.getName;
 
 /**
  * Returns true if the given oldName has already been assigned a new name.
@@ -6861,6 +7192,7 @@ UniqueNamer.prototype.getName = function(oldName) {
 UniqueNamer.prototype.isNamed = function(oldName) {
   return (oldName in this.existing);
 };
+UniqueNamer.prototype.hasId = UniqueNamer.prototype.isNamed;
 
 /**
  * A Permutator iterates over all possible permutations of the given array
