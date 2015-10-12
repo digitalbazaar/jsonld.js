@@ -3114,8 +3114,11 @@ Processor.prototype.normalize = function(dataset, options, callback) {
   if(options.algorithm === 'URDNA2015') {
     return new URDNA2015(options).main(dataset, callback);
   }
-  // assume URGNA2012
-  return new URGNA2012(options).main(dataset, callback);
+  if(options.algorithm === 'URGNA2012') {
+    return new URGNA2012(options).main(dataset, callback);
+  }
+  callback(new Error(
+    'Invalid RDF Dataset Normalization algorithm: ' + options.algorithm));
 };
 
 /**
