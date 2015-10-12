@@ -267,21 +267,24 @@ Tests
 This library includes a sample testing utility which may be used to verify
 that changes to the processor maintain the correct output.
 
-To run the sample tests you will need to get the test suite files by cloning
-the [json-ld.org repository][json-ld.org] hosted on GitHub:
+The main test suites are included in external repositories. Check out each of
+the following:
 
-https://github.com/json-ld/json-ld.org
+    https://github.com/json-ld/json-ld.org
+    https://github.com/json-ld/normalization
 
-If the json-ld.org directory is a sibling of the jsonld.js directory:
+If the above directories are siblings of the jsonld.js directory you can run
+all tests with a simple command:
 
     make test
 
-If you installed the test suite elsewhere:
+If you installed the test suites elsewhere:
 
-    make test JSONLD_TEST_SUITE={PATH_TO_YOUR_JSON_LD_ORG}/test-suite}
+    make test-suite JSONLD_TEST_SUITE={PATH_TO_TEST_SUITE}
 
-The standard tests will run node and browser tests. Just one type can also
-be run:
+See the `Makefile` for various individual test targets as well as split node
+and browser targets. For instance, the json-ld.org test suite can be run
+piecewise with:
 
     make test-node
     make test-browser
@@ -299,7 +302,7 @@ Remote context tests are also available:
     # run the context server in the background or another terminal
     node tests/remote-context-server.js
 
-    make test JSONLD_TEST_SUITE=./tests
+    make test-suite JSONLD_TEST_SUITE=./tests
 
 To generate earl reports:
 
@@ -315,6 +318,5 @@ To generate earl reports:
 [Microformats]: http://microformats.org/
 [RDFa]: http://www.w3.org/TR/rdfa-core/
 [RFC7159]: http://tools.ietf.org/html/rfc7159
-[json-ld.org]: https://github.com/json-ld/json-ld.org
 [jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
 [jsonld-request]: https://github.com/digitalbazaar/jsonld-request

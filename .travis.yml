@@ -10,7 +10,10 @@ sudo: false
 # all of the reference implementations?
 script: 
   - git clone https://github.com/json-ld/json-ld.org.git _json-ld.org
-  - make test JSONLD_TEST_SUITE=./_json-ld.org/test-suite
+  - make test-suite JSONLD_TEST_SUITE=./_json-ld.org/test-suite
+  - git clone https://github.com/json-ld/normalization.git _normalization
+  - make test-suite JSONLD_TEST_SUITE=./_normalization/tests
+  - make test-local-node test-local-browser
 notifications:
   email:
     on_success: change
