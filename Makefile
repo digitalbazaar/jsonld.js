@@ -24,7 +24,7 @@ test-suite-browser:
 		echo "Error: JSONLD_TEST_SUITE env var not set"; \
 		exit 1; \
 	fi
-	@if [ -d ../json-ld.org/test-suite ]; then \
+	@if [ -d $(JSONLD_TEST_SUITE) ]; then \
 		NODE_ENV=test ./node_modules/.bin/phantomjs $(TESTS); \
 	else \
 		echo "Error: tests not found at $(JSONLD_TEST_SUITE)"; \
