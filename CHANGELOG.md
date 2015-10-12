@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [0.4.2] - 2015-10-12
+
+### Added
+- Add inputFormat and algorithm options to normalize.
+
+### Changed
+- Add support for normalization test suite.
+- Support URDNA2015 normalization algorithm.
+- Add async scheduling of normalization algorithms.
+
+### Fixed
+- Ignore null values in language maps.
+
 ## [0.4.1] - 2015-09-12
 
 ### Changed
@@ -28,7 +41,8 @@
 [jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
 [jsonld-request]: https://github.com/digitalbazaar/jsonld-request
 
-[Unreleased]: https://github.com/digitalbazaar/jsonld/compare/0.4.1...HEAD
+[Unreleased]: https://github.com/digitalbazaar/jsonld/compare/0.4.2...HEAD
+[0.4.2]: https://github.com/digitalbazaar/jsonld/compare/0.4.1...0.4.2
 [0.4.1]: https://github.com/digitalbazaar/jsonld/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/digitalbazaar/jsonld/compare/0.3.26...0.4.0
 [0.3.26]: https://github.com/digitalbazaar/jsonld/compare/0.3.25...0.3.26
