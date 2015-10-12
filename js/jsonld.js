@@ -4391,8 +4391,8 @@ Normalize.prototype.hashNDegreeQuads = function(id, issuer, callback) {
             function(callback) {
               // 5.4.4) For each related in permutation:
               self.forEach(permutation, function(related, idx, callback) {
-                // 5.4.4.1) If a canonical identifier has been issued for related,
-                // append it to path.
+                // 5.4.4.1) If a canonical identifier has been issued for
+                // related, append it to path.
                 if(self.canonicalIssuer.hasId(related)) {
                   path += self.canonicalIssuer.getId(related);
                 } else {
@@ -4438,7 +4438,8 @@ Normalize.prototype.hashNDegreeQuads = function(id, issuer, callback) {
                   // 5.4.5.3) Append <, the hash in result, and > to path.
                   path += '<' + result.hash + '>';
 
-                  // 5.4.5.4) Set issuer copy to the identifier issuer in result.
+                  // 5.4.5.4) Set issuer copy to the identifier issuer in
+                  // result.
                   issuerCopy = result.issuer;
 
                   // 5.4.5.5) If chosen path is not empty and the length of path
