@@ -4,7 +4,7 @@
  * @author Dave Longley
  *
  * @license BSD 3-Clause License
- * Copyright (c) 2011-2014 Digital Bazaar, Inc.
+ * Copyright (c) 2011-2015 Digital Bazaar, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -983,7 +983,8 @@ jsonld.toRDF = function(input, options, callback) {
  * @param [options] the options to use:
  *          [base] the base IRI to use.
  *          [expandContext] a context to expand with.
- *          [namer] a jsonld.UniqueNamer to use to label blank nodes.
+ *          [issuer] a jsonld.IdentifierIssuer to use to label blank nodes.
+ *          [namer] (deprecated)
  *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
  * @param callback(err, nodeMap) called once the operation completes.
  */
@@ -1038,7 +1039,8 @@ jsonld.createNodeMap = function(input, options, callback) {
  * @param [options] the options to use:
  *          [base] the base IRI to use.
  *          [expandContext] a context to expand with.
- *          [namer] a jsonld.UniqueNamer to use to label blank nodes.
+ *          [issuer] a jsonld.IdentifierIssuer to use to label blank nodes.
+ *          [namer] (deprecated).
  *          [mergeNodes] true to merge properties for nodes with the same ID,
  *            false to ignore new properties for nodes with the same ID once
  *            the ID has been defined; note that this may not prevent merging
@@ -1104,7 +1106,7 @@ jsonld.merge = function(docs, ctx, options, callback) {
       mergeNodes = options.mergeNodes;
     }
 
-    var namer = options.namer || new UniqueNamer('_:b');
+    var issuer = options.namer || options.issuer || new IdentifierIssuer('_:b');
     var graphs = {'@default': {}};
 
     var defaultGraph;
@@ -1113,13 +1115,13 @@ jsonld.merge = function(docs, ctx, options, callback) {
         // uniquely relabel blank nodes
         var doc = expanded[i];
         doc = jsonld.relabelBlankNodes(doc, {
-          namer: new UniqueNamer('_:b' + i + '-')
+          issuer: new IdentifierIssuer('_:b' + i + '-')
         });
 
         // add nodes to the shared node map graphs if merging nodes, to a
         // separate graph set if not
         var _graphs = (mergeNodes || i === 0) ? graphs : {'@default': {}};
-        _createNodeMap(doc, _graphs, '@default', namer);
+        _createNodeMap(doc, _graphs, '@default', issuer);
 
         if(_graphs !== graphs) {
           // merge document graphs but don't merge existing nodes
@@ -1179,12 +1181,13 @@ jsonld.merge = function(docs, ctx, options, callback) {
  *
  * @param input the JSON-LD input.
  * @param [options] the options to use:
- *          [namer] a jsonld.UniqueNamer to use.
+ *          [issuer] a jsonld.IdentifierIssuer to use to label blank nodes.
+ *          [namer] (deprecated).
  */
 jsonld.relabelBlankNodes = function(input, options) {
   options = options || {};
-  var namer = options.namer || new UniqueNamer('_:b');
-  return _labelBlankNodes(namer, input);
+  var issuer = options.namer || options.issuer || new IdentifierIssuer('_:b');
+  return _labelBlankNodes(issuer, input);
 };
 
 /**
@@ -3030,7 +3033,8 @@ Processor.prototype.expand = function(
  *
  * @param input the expanded JSON-LD to create a node map of.
  * @param [options] the options to use:
- *          [namer] the UniqueNamer to use.
+ *          [issuer] a jsonld.IdentifierIssuer to use to label blank nodes.
+ *          [namer] (deprecated).
  *
  * @return the node map.
  */
@@ -3038,9 +3042,9 @@ Processor.prototype.createNodeMap = function(input, options) {
   options = options || {};
 
   // produce a map of all subjects and name each bnode
-  var namer = options.namer || new UniqueNamer('_:b');
+  var issuer = options.namer || options.issuer || new IdentifierIssuer('_:b');
   var graphs = {'@default': {}};
-  _createNodeMap(input, graphs, '@default', namer);
+  _createNodeMap(input, graphs, '@default', issuer);
 
   // add all non-default graphs to default graph
   return _mergeNodeMaps(graphs);
@@ -3089,8 +3093,8 @@ Processor.prototype.frame = function(input, frame, options) {
 
   // produce a map of all graphs and name each bnode
   // FIXME: currently uses subjects from @merged graph only
-  var namer = new UniqueNamer('_:b');
-  _createNodeMap(input, state.graphs, '@merged', namer);
+  var issuer = new IdentifierIssuer('_:b');
+  _createNodeMap(input, state.graphs, '@merged', issuer);
   state.subjects = state.graphs['@merged'];
 
   // frame the subjects
@@ -3300,9 +3304,9 @@ Processor.prototype.fromRDF = function(dataset, options, callback) {
  */
 Processor.prototype.toRDF = function(input, options) {
   // create node map for default graph (and any named graphs)
-  var namer = new UniqueNamer('_:b');
+  var issuer = new IdentifierIssuer('_:b');
   var nodeMap = {'@default': {}};
-  _createNodeMap(input, nodeMap, '@default', namer);
+  _createNodeMap(input, nodeMap, '@default', issuer);
 
   var dataset = {};
   var graphNames = Object.keys(nodeMap).sort();
@@ -3310,7 +3314,7 @@ Processor.prototype.toRDF = function(input, options) {
     var graphName = graphNames[i];
     // skip relative IRIs
     if(graphName === '@default' || _isAbsoluteIri(graphName)) {
-      dataset[graphName] = _graphToRDF(nodeMap[graphName], namer, options);
+      dataset[graphName] = _graphToRDF(nodeMap[graphName], issuer, options);
     }
   }
   return dataset;
@@ -3494,24 +3498,24 @@ function _expandLanguageMap(languageMap) {
 }
 
 /**
- * Labels the blank nodes in the given value using the given UniqueNamer.
+ * Labels the blank nodes in the given value using the given IdentifierIssuer.
  *
- * @param namer the UniqueNamer to use.
+ * @param issuer the IdentifierIssuer to use.
  * @param element the element with blank nodes to rename.
  *
  * @return the element.
  */
-function _labelBlankNodes(namer, element) {
+function _labelBlankNodes(issuer, element) {
   if(_isArray(element)) {
     for(var i = 0; i < element.length; ++i) {
-      element[i] = _labelBlankNodes(namer, element[i]);
+      element[i] = _labelBlankNodes(issuer, element[i]);
     }
   } else if(_isList(element)) {
-    element['@list'] = _labelBlankNodes(namer, element['@list']);
+    element['@list'] = _labelBlankNodes(issuer, element['@list']);
   } else if(_isObject(element)) {
-    // rename blank node
+    // relabel blank node
     if(_isBlankNode(element)) {
-      element['@id'] = namer.getName(element['@id']);
+      element['@id'] = issuer.getId(element['@id']);
     }
 
     // recursively apply to all keys
@@ -3519,7 +3523,7 @@ function _labelBlankNodes(namer, element) {
     for(var ki = 0; ki < keys.length; ++ki) {
       var key = keys[ki];
       if(key !== '@id') {
-        element[key] = _labelBlankNodes(namer, element[key]);
+        element[key] = _labelBlankNodes(issuer, element[key]);
       }
     }
   }
@@ -3594,12 +3598,12 @@ function _expandValue(activeCtx, activeProperty, value) {
  * Creates an array of RDF triples for the given graph.
  *
  * @param graph the graph to create RDF triples for.
- * @param namer a UniqueNamer for assigning blank node names.
+ * @param issuer a IdentifierIssuer for assigning blank node names.
  * @param options the RDF serialization options.
  *
  * @return the array of RDF triples for the given graph.
  */
-function _graphToRDF(graph, namer, options) {
+function _graphToRDF(graph, issuer, options) {
   var rval = [];
 
   var ids = Object.keys(graph).sort();
@@ -3646,7 +3650,7 @@ function _graphToRDF(graph, namer, options) {
 
         // convert @list to triples
         if(_isList(item)) {
-          _listToRDF(item['@list'], namer, subject, predicate, rval);
+          _listToRDF(item['@list'], issuer, subject, predicate, rval);
         } else {
           // convert value or node object to triple
           var object = _objectToRDF(item);
@@ -3667,12 +3671,12 @@ function _graphToRDF(graph, namer, options) {
  * (an RDF collection).
  *
  * @param list the @list value.
- * @param namer a UniqueNamer for assigning blank node names.
+ * @param issuer a IdentifierIssuer for assigning blank node names.
  * @param subject the subject for the head of the list.
  * @param predicate the predicate for the head of the list.
  * @param triples the array of triples to append to.
  */
-function _listToRDF(list, namer, subject, predicate, triples) {
+function _listToRDF(list, issuer, subject, predicate, triples) {
   var first = {type: 'IRI', value: RDF_FIRST};
   var rest = {type: 'IRI', value: RDF_REST};
   var nil = {type: 'IRI', value: RDF_NIL};
@@ -3680,7 +3684,7 @@ function _listToRDF(list, namer, subject, predicate, triples) {
   for(var i = 0; i < list.length; ++i) {
     var item = list[i];
 
-    var blankNode = {type: 'blank node', value: namer.getName()};
+    var blankNode = {type: 'blank node', value: issuer.getId()};
     triples.push({subject: subject, predicate: predicate, object: blankNode});
 
     subject = blankNode;
@@ -3845,8 +3849,7 @@ var Normalize = function(options) {
   this.options = options;
   this.blankNodeInfo = {};
   this.hashToBlankNodes = {};
-  // FIXME: use `IdentifierIssuer`
-  this.canonicalIssuer = new UniqueNamer('_:c14n');//IdentifierIssuer('_:c14n');
+  this.canonicalIssuer = new IdentifierIssuer('_:c14n');
   this.quads = [];
   this.schedule = {};
   if('maxCallStackDepth' in options) {
@@ -4636,15 +4639,15 @@ return Normalize;
  * @param input the JSON-LD expanded input.
  * @param graphs a map of graph name to subject map.
  * @param graph the name of the current graph.
- * @param namer the blank node namer.
+ * @param issuer the blank node identifier issuer.
  * @param name the name assigned to the current input if it is a bnode.
  * @param list the list to append to, null for none.
  */
-function _createNodeMap(input, graphs, graph, namer, name, list) {
+function _createNodeMap(input, graphs, graph, issuer, name, list) {
   // recurse through array
   if(_isArray(input)) {
     for(var i = 0; i < input.length; ++i) {
-      _createNodeMap(input[i], graphs, graph, namer, undefined, list);
+      _createNodeMap(input[i], graphs, graph, issuer, undefined, list);
     }
     return;
   }
@@ -4663,7 +4666,7 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
       var type = input['@type'];
       // rename @type blank node
       if(type.indexOf('_:') === 0) {
-        input['@type'] = type = namer.getName(type);
+        input['@type'] = type = issuer.getId(type);
       }
     }
     if(list) {
@@ -4680,14 +4683,14 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
     for(var i = 0; i < types.length; ++i) {
       var type = types[i];
       if(type.indexOf('_:') === 0) {
-        namer.getName(type);
+        issuer.getId(type);
       }
     }
   }
 
   // get name for subject
   if(_isUndefined(name)) {
-    name = _isBlankNode(input) ? namer.getName(input['@id']) : input['@id'];
+    name = _isBlankNode(input) ? issuer.getId(input['@id']) : input['@id'];
   }
 
   // add subject reference to list
@@ -4718,9 +4721,9 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
           var item = items[ii];
           var itemName = item['@id'];
           if(_isBlankNode(item)) {
-            itemName = namer.getName(itemName);
+            itemName = issuer.getId(itemName);
           }
-          _createNodeMap(item, graphs, graph, namer, itemName);
+          _createNodeMap(item, graphs, graph, issuer, itemName);
           jsonld.addValue(
             subjects[itemName], reverseProperty, referencedNode,
             {propertyIsArray: true, allowDuplicate: false});
@@ -4736,7 +4739,7 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
         graphs[name] = {};
       }
       var g = (graph === '@merged') ? graph : name;
-      _createNodeMap(input[property], graphs, g, namer);
+      _createNodeMap(input[property], graphs, g, issuer);
       continue;
     }
 
@@ -4759,7 +4762,7 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
 
     // if property is a bnode, assign it a new id
     if(property.indexOf('_:') === 0) {
-      property = namer.getName(property);
+      property = issuer.getId(property);
     }
 
     // ensure property is added for empty arrays
@@ -4772,30 +4775,30 @@ function _createNodeMap(input, graphs, graph, namer, name, list) {
 
       if(property === '@type') {
         // rename @type blank nodes
-        o = (o.indexOf('_:') === 0) ? namer.getName(o) : o;
+        o = (o.indexOf('_:') === 0) ? issuer.getId(o) : o;
       }
 
       // handle embedded subject or subject reference
       if(_isSubject(o) || _isSubjectReference(o)) {
-        // rename blank node @id
-        var id = _isBlankNode(o) ? namer.getName(o['@id']) : o['@id'];
+        // relabel blank node @id
+        var id = _isBlankNode(o) ? issuer.getId(o['@id']) : o['@id'];
 
         // add reference and recurse
         jsonld.addValue(
           subject, property, {'@id': id},
           {propertyIsArray: true, allowDuplicate: false});
-        _createNodeMap(o, graphs, graph, namer, id);
+        _createNodeMap(o, graphs, graph, issuer, id);
       } else if(_isList(o)) {
         // handle @list
         var _list = [];
-        _createNodeMap(o['@list'], graphs, graph, namer, name, _list);
+        _createNodeMap(o['@list'], graphs, graph, issuer, name, _list);
         o = {'@list': _list};
         jsonld.addValue(
           subject, property, o,
           {propertyIsArray: true, allowDuplicate: false});
       } else {
         // handle @value
-        _createNodeMap(o, graphs, graph, namer, name);
+        _createNodeMap(o, graphs, graph, issuer, name);
         jsonld.addValue(
           subject, property, o, {propertyIsArray: true, allowDuplicate: false});
       }
@@ -7128,71 +7131,74 @@ function _parseRdfaApiData(data) {
 jsonld.registerRDFParser('rdfa-api', _parseRdfaApiData);
 
 /**
- * Creates a new UniqueNamer. A UniqueNamer issues unique names, keeping
- * track of any previously issued names.
+ * Creates a new IdentifierIssuer. A IdentifierIssuer issues unique
+ * identifiers, keeping track of any previously issued identifiers.
  *
  * @param prefix the prefix to use ('<prefix><counter>').
  */
-function UniqueNamer(prefix) {
+function IdentifierIssuer(prefix) {
   this.prefix = prefix;
   this.counter = 0;
   this.existing = {};
 }
-jsonld.UniqueNamer = UniqueNamer;
-// TODO: change this to be the default, keeping `UniqueNamer` alias for
-// backwards-compatibility
-var IdentifierIssuer = jsonld.IdentifierIssuer = UniqueNamer;
+jsonld.IdentifierIssuer = IdentifierIssuer;
+// backwards-compability
+jsonld.UniqueNamer = IdentifierIssuer;
 
 /**
- * Copies this UniqueNamer.
+ * Copies this IdentifierIssuer.
  *
- * @return a copy of this UniqueNamer.
+ * @return a copy of this IdentifierIssuer.
  */
-UniqueNamer.prototype.clone = function() {
-  var copy = new UniqueNamer(this.prefix);
+IdentifierIssuer.prototype.clone = function() {
+  var copy = new IdentifierIssuer(this.prefix);
   copy.counter = this.counter;
   copy.existing = _clone(this.existing);
   return copy;
 };
 
 /**
- * Gets the new name for the given old name, where if no old name is given
- * a new name will be generated.
+ * Gets the new identifier for the given old identifier, where if no old
+ * identifier is given a new identifier will be generated.
  *
- * @param [oldName] the old name to get the new name for.
+ * @param [old] the old identifier to get the new identifier for.
  *
- * @return the new name.
+ * @return the new identifier.
  */
-UniqueNamer.prototype.getName = function(oldName) {
-  // return existing old name
-  if(oldName && oldName in this.existing) {
-    return this.existing[oldName];
+IdentifierIssuer.prototype.getId = function(old) {
+  // return existing old identifier
+  if(old && old in this.existing) {
+    return this.existing[old];
   }
 
-  // get next name
-  var name = this.prefix + this.counter;
+  // get next identifier
+  var identifier = this.prefix + this.counter;
   this.counter += 1;
 
   // save mapping
-  if(oldName) {
-    this.existing[oldName] = name;
+  if(old) {
+    this.existing[old] = identifier;
   }
 
-  return name;
+  return identifier;
 };
-UniqueNamer.prototype.getId = UniqueNamer.prototype.getName;
+// alias
+IdentifierIssuer.prototype.getName = IdentifierIssuer.prototype.getName;
 
 /**
- * Returns true if the given oldName has already been assigned a new name.
+ * Returns true if the given old identifer has already been assigned a new
+ * identifier.
  *
- * @param oldName the oldName to check.
+ * @param old the old identifier to check.
  *
- * @return true if the oldName has been assigned a new name, false if not.
+ * @return true if the old identifier has been assigned a new identifier, false
+ *   if not.
  */
-UniqueNamer.prototype.isNamed = function(oldName) {
-  return (oldName in this.existing);
+IdentifierIssuer.prototype.hasId = function(old) {
+  return (old in this.existing);
 };
-UniqueNamer.prototype.hasId = UniqueNamer.prototype.isNamed;
+// alias
+IdentifierIssuer.prototype.isNamed = IdentifierIssuer.prototype.hasId;
 
 /**
  * A Permutator iterates over all possible permutations of the given array
