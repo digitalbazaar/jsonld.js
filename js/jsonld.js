@@ -745,7 +745,7 @@ jsonld.objectify = function(input, ctx, options, callback) {
 
 /**
  * Performs RDF dataset normalization on the given input. The input is JSON-LD
- * unless the 'inputFormat' options is used. The output is an RDF dataset
+ * unless the 'inputFormat' option is used. The output is an RDF dataset
  * unless the 'format' option is used.
  *
  * @param input the input to normalize as JSON-LD or as a format specified by
