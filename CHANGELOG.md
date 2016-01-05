@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.4.3] - 2016-01-05
+
+### Fixed
+- N-Quads may contain comments.
+
 ## [0.4.2] - 2015-10-12
 
 ### Added
@@ -41,7 +46,8 @@
 [jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
 [jsonld-request]: https://github.com/digitalbazaar/jsonld-request
 
-[Unreleased]: https://github.com/digitalbazaar/jsonld/compare/0.4.2...HEAD
+[Unreleased]: https://github.com/digitalbazaar/jsonld/compare/0.4.3...HEAD
+[0.4.3]: https://github.com/digitalbazaar/jsonld/compare/0.4.2...0.4.3
 [0.4.2]: https://github.com/digitalbazaar/jsonld/compare/0.4.1...0.4.2
 [0.4.1]: https://github.com/digitalbazaar/jsonld/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/digitalbazaar/jsonld/compare/0.3.26...0.4.0
