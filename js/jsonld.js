@@ -6828,10 +6828,11 @@ function _parseNQuads(input) {
   var datatype = '(?:\\^\\^' + iri + ')';
   var language = '(?:@([a-z]+(?:-[a-z0-9]+)*))';
   var literal = '(?:' + plain + '(?:' + datatype + '|' + language + ')?)';
+  var comment = '(?:#[^$]*)?';
   var ws = '[ \\t]+';
   var wso = '[ \\t]*';
   var eoln = /(?:\r\n)|(?:\n)|(?:\r)/g;
-  var empty = new RegExp('^' + wso + '$');
+  var empty = new RegExp('^' + wso + comment + '$');
 
   // define quad part regexes
   var subject = '(?:' + iri + '|' + bnode + ')' + ws;
@@ -6841,7 +6842,7 @@ function _parseNQuads(input) {
 
   // full quad regex
   var quad = new RegExp(
-    '^' + wso + subject + property + object + graphName + wso + '$');
+    '^' + wso + subject + property + object + graphName + wso + comment + '$');
 
   // build RDF dataset
   var dataset = {};
