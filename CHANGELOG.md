@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.4.4] - 2016-01-08
+
+### Fixed
+- Document cache in default node document loader is broken; disable
+  until HTTP caching is implemented.
+
 ## [0.4.3] - 2016-01-05
 
 ### Fixed
@@ -46,7 +52,8 @@
 [jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
 [jsonld-request]: https://github.com/digitalbazaar/jsonld-request
 
-[Unreleased]: https://github.com/digitalbazaar/jsonld/compare/0.4.3...HEAD
+[Unreleased]: https://github.com/digitalbazaar/jsonld/compare/0.4.4...HEAD
+[0.4.4]: https://github.com/digitalbazaar/jsonld/compare/0.4.3...0.4.4
 [0.4.3]: https://github.com/digitalbazaar/jsonld/compare/0.4.2...0.4.3
 [0.4.2]: https://github.com/digitalbazaar/jsonld/compare/0.4.1...0.4.2
 [0.4.1]: https://github.com/digitalbazaar/jsonld/compare/0.4.0...0.4.1
