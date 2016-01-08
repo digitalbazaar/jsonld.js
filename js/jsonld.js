@@ -1745,7 +1745,8 @@ jsonld.documentLoaders.node = function(options) {
   var maxRedirects = ('maxRedirects' in options) ? options.maxRedirects : -1;
   var request = require('request');
   var http = require('http');
-  var cache = new jsonld.DocumentCache();
+  // TODO: disable cache until HTTP caching implemented
+  //var cache = new jsonld.DocumentCache();
 
   var queue = new jsonld.RequestQueue();
   if(options.usePromise) {
@@ -1772,7 +1773,8 @@ jsonld.documentLoaders.node = function(options) {
         'jsonld.InvalidUrl', {code: 'loading document failed', url: url}),
         {contextUrl: null, documentUrl: url, document: null});
     }
-    var doc = cache.get(url);
+    // TODO: disable cache until HTTP caching implemented
+    var doc = null;//cache.get(url);
     if(doc !== null) {
       return callback(null, doc);
     }
@@ -1852,11 +1854,12 @@ jsonld.documentLoaders.node = function(options) {
       }
       // cache for each redirected URL
       redirects.push(url);
-      for(var i = 0; i < redirects.length; ++i) {
+      // TODO: disable cache until HTTP caching implemented
+      /*for(var i = 0; i < redirects.length; ++i) {
         cache.set(
           redirects[i],
           {contextUrl: null, documentUrl: redirects[i], document: body});
-      }
+      }*/
       callback(err, doc);
     }
   }
