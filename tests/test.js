@@ -176,7 +176,7 @@ var TEST_TYPES = {
       })
     ],
     compare: compareExpectedNQuads
-  },
+  }
 };
 
 var SKIP_TESTS = [];
