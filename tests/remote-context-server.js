@@ -1,21 +1,13 @@
+var cors = require('cors');
 var express = require('express');
 var path = require('path');
 
-var server = express();
+var app = express();
 
-server.configure(function() {
-  server.use(express.methodOverride());
-  server.use(CORS);
-  server.use(express.static(path.resolve(path.join(__dirname, 'contexts'))));
+app.use(cors());
+app.use(express.static(path.resolve(path.join(__dirname, 'contexts'))));
+
+var port = 8000;
+app.listen(port, function() {
+  console.log('Remote context test server running on port ' + port + '...');
 });
-
-// use CORS
-function CORS(req, res, next) {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
-  next();
-}
-
-server.listen(8000);
-console.log('Remote context test server running...');

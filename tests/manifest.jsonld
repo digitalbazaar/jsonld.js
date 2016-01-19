@@ -4,7 +4,7 @@
   "@type": "mf:Manifest",
   "name": "Custom jsonld.js Tests",
   "description": "Custom jsonld.js Tests",
-  "baseIri": "http://github.com/digitalbazaar/jsonld.js/",
+  "baseIri": "./",
   "sequence": [{
     "@id": "#t0001",
     "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
