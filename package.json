@@ -26,7 +26,9 @@
   "main": "js/jsonld.js",
   "dependencies": {
     "es6-promise": "~2.0.1",
+    "jsonld-url-parse": "git://github.com/ariutta/jsonld-url-parse.git",
     "pkginfo": "~0.3.0",
+    "remove-dot-segments": "git://github.com/ariutta/remove-dot-segments.git",
     "request": "^2.61.0",
     "xmldom": "0.1.19"
   },

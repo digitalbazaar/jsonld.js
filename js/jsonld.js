@@ -7954,72 +7954,10 @@ var _defineXMLSerializer = function() {
 
 } // end _defineXMLSerializer
 
-// define URL parser
-// parseUri 1.2.2
-// (c) Steven Levithan <stevenlevithan.com>
-// MIT License
-// with local jsonld.js modifications
 jsonld.url = {};
-jsonld.url.parsers = {
-  simple: {
-    // RFC 3986 basic parts
-    keys: ['href','scheme','authority','path','query','fragment'],
-    regex: /^(?:([^:\/?#]+):)?(?:\/\/([^\/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/
-  },
-  full: {
-    keys: ['href','protocol','scheme','authority','auth','user','password','hostname','port','path','directory','file','query','fragment'],
-    regex: /^(([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?(?:(((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/
-  }
-};
-jsonld.url.parse = function(str, parser) {
-  var parsed = {};
-  var o = jsonld.url.parsers[parser || 'full'];
-  var m = o.regex.exec(str);
-  var i = o.keys.length;
-  while(i--) {
-    parsed[o.keys[i]] = (m[i] === undefined) ? null : m[i];
-  }
-  parsed.normalizedPath = _removeDotSegments(parsed.path, !!parsed.authority);
-  return parsed;
-};
+jsonld.url.parse = require('jsonld-url-parse');
 
-/**
- * Removes dot segments from a URL path.
- *
- * @param path the path to remove dot segments from.
- * @param hasAuthority true if the URL has an authority, false if not.
- */
-function _removeDotSegments(path, hasAuthority) {
-  var rval = '';
-
-  if(path.indexOf('/') === 0) {
-    rval = '/';
-  }
-
-  // RFC 3986 5.2.4 (reworked)
-  var input = path.split('/');
-  var output = [];
-  while(input.length > 0) {
-    if(input[0] === '.' || (input[0] === '' && input.length > 1)) {
-      input.shift();
-      continue;
-    }
-    if(input[0] === '..') {
-      input.shift();
-      if(hasAuthority ||
-        (output.length > 0 && output[output.length - 1] !== '..')) {
-        output.pop();
-      } else {
-        // leading relative URL '..'
-        output.push('..');
-      }
-      continue;
-    }
-    output.push(input.shift());
-  }
-
-  return rval + output.join('/');
-}
+var _removeDotSegments = require('remove-dot-segments');
 
 if(_nodejs) {
   // use node document loader by default
