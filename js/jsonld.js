@@ -5998,6 +5998,7 @@ function _expandIri(activeCtx, value, relativeTo, localCtx, defined) {
   return rval;
 }
 
+var _removeDotSegments = require('remove-dot-segments');
 function _prependBase(base, iri) {
   // skip IRI processing
   if(base === null) {
@@ -7956,8 +7957,6 @@ var _defineXMLSerializer = function() {
 
 jsonld.url = {};
 jsonld.url.parse = require('jsonld-url-parse');
-
-var _removeDotSegments = require('remove-dot-segments');
 
 if(_nodejs) {
   // use node document loader by default
