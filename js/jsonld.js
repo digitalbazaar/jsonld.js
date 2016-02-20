@@ -1434,28 +1434,7 @@ if(_browser && typeof global.JsonLdProcessor === 'undefined') {
   }
 }
 
-/* Utility API */
-
-// define setImmediate and nextTick
-//// nextTick implementation with browser-compatible fallback ////
-// from https://github.com/caolan/async/blob/master/lib/async.js
-
-// capture the global reference to guard against fakeTimer mocks
-var _setImmediate = typeof setImmediate === 'function' && setImmediate;
-
-var _delay = _setImmediate ? function(fn) {
-  // not a direct alias (for IE10 compatibility)
-  _setImmediate(fn);
-} : function(fn) {
-  setTimeout(fn, 0);
-};
-
-if(typeof process === 'object' && typeof process.nextTick === 'function') {
-  jsonld.nextTick = process.nextTick;
-} else {
-  jsonld.nextTick = _delay;
-}
-jsonld.setImmediate = _setImmediate ? _delay : jsonld.nextTick;
+jsonld.nextTick = require('next-tick');
 
 /**
  * Parses a link header. The results will be key'd by the value of "rel".
@@ -3918,7 +3897,7 @@ Normalize.prototype.doWork = function(fn, callback) {
     // do some other things
     schedule.depth = 0;
     schedule.running = false;
-    jsonld.setImmediate(work);
+    jsonld.nextTick(work);
   })();
 };
 
