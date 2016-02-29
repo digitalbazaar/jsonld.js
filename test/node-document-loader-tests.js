@@ -17,6 +17,17 @@ describe( "For the node.js document loader", function() {
 
 	};
 
+	describe( "When build with no options specified", function() {
+
+		var options = {};
+		it( "loading should work", function( callback ) {
+
+			jsonld.useDocumentLoader( documentLoaderType );
+			jsonld.expand( "http://schema.org/", callback );
+
+		} );
+
+	} );
 	describe( "When built with no explicit headers", function() {
 
 		var options = { request: requestMock };
