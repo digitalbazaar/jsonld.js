@@ -54,6 +54,7 @@
     "jsonld"
   ],
   "scripts": {
+    "test-local": "make test-local",
     "test-node": "make test-node",
     "test-browser": "make test-browser",
     "test": "make test",

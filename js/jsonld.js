@@ -1734,6 +1734,10 @@ jsonld.documentLoaders.jquery = function($, options) {
  *            false not to (default: true).
  *          maxRedirects: the maximum number of redirects to permit, none by
  *            default.
+ *          request: the object which will make the request, default is
+ *            provided by request.js
+ *          headers: an array of headers which will be passed as request
+ *            headers for the requested document. Accept is not allowed.
  *          usePromise: true to use a promises API, false for a
  *            callback-continuation-style API; false by default.
  *
@@ -1743,7 +1747,8 @@ jsonld.documentLoaders.node = function(options) {
   options = options || {};
   var strictSSL = ('strictSSL' in options) ? options.strictSSL : true;
   var maxRedirects = ('maxRedirects' in options) ? options.maxRedirects : -1;
-  var request = require('request');
+  var request = ('request' in options) ? options.request : require('request');
+  var acceptHeader = 'application/ld+json, application/json';
   var http = require('http');
   // TODO: disable cache until HTTP caching implemented
   //var cache = new jsonld.DocumentCache();
@@ -1753,6 +1758,13 @@ jsonld.documentLoaders.node = function(options) {
     return queue.wrapLoader(function(url) {
       return jsonld.promisify(loadDocument, url, []);
     });
+  }
+  var headers = options.headers || {};
+  if( 'Accept' in headers || 'accept' in headers ) {
+
+    throw new RangeError( 'Accept header may not be specified as an option' +
+      '; only "' + acceptHeader + '" is supported.' );
+
   }
   return queue.wrapLoader(function(url, callback) {
     loadDocument(url, [], callback);
@@ -1778,11 +1790,11 @@ jsonld.documentLoaders.node = function(options) {
     if(doc !== null) {
       return callback(null, doc);
     }
+    var headers = { 'Accept': acceptHeader };
+    for( var k in options.headers ) { headers[ k ] = options.headers[ k ]; }
     request({
       url: url,
-      headers: {
-        'Accept': 'application/ld+json, application/json'
-      },
+      headers: headers,
       strictSSL: strictSSL,
       followRedirect: false
     }, handleResponse);
