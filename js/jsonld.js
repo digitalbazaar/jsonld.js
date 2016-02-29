@@ -1735,7 +1735,7 @@ jsonld.documentLoaders.jquery = function($, options) {
  *          maxRedirects: the maximum number of redirects to permit, none by
  *            default.
  *          request: the object which will make the request, default is
- *            provided by request.js
+ *            provided by `https://www.npmjs.com/package/request`.
  *          headers: an array of headers which will be passed as request
  *            headers for the requested document. Accept is not allowed.
  *          usePromise: true to use a promises API, false for a
@@ -1760,11 +1760,10 @@ jsonld.documentLoaders.node = function(options) {
     });
   }
   var headers = options.headers || {};
-  if( 'Accept' in headers || 'accept' in headers ) {
-
-    throw new RangeError( 'Accept header may not be specified as an option' +
-      '; only "' + acceptHeader + '" is supported.' );
-
+  if('Accept' in headers || 'accept' in headers) {
+    throw new RangeError(
+      'Accept header may not be specified as an option; only "' +
+      acceptHeader + '" is supported.');
   }
   return queue.wrapLoader(function(url, callback) {
     loadDocument(url, [], callback);
@@ -1790,8 +1789,8 @@ jsonld.documentLoaders.node = function(options) {
     if(doc !== null) {
       return callback(null, doc);
     }
-    var headers = { 'Accept': acceptHeader };
-    for( var k in options.headers ) { headers[ k ] = options.headers[ k ]; }
+    var headers = {'Accept': acceptHeader};
+    for(var k in options.headers) { headers[k] = options.headers[k]; }
     request({
       url: url,
       headers: headers,
