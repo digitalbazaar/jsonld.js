@@ -17,7 +17,7 @@ describe( "For the node.js document loader", function() {
 
 	};
 
-	describe( "When build with no options specified", function() {
+	describe( "When built with no options specified", function() {
 
 		var options = {};
 		it( "loading should work", function( callback ) {
@@ -28,6 +28,7 @@ describe( "For the node.js document loader", function() {
 		} );
 
 	} );
+
 	describe( "When built with no explicit headers", function() {
 
 		var options = { request: requestMock };
