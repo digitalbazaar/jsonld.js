@@ -1736,6 +1736,8 @@ jsonld.documentLoaders.jquery = function($, options) {
  *            default.
  *          request: the object which will make the request, default is
  *            provided by request.js
+ *          headers: an array of headers which will be passed as request
+ *            headers for the requested document. Accept is not allowed.
  *          usePromise: true to use a promises API, false for a
  *            callback-continuation-style API; false by default.
  *
