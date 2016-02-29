@@ -3,7 +3,7 @@ REPORTER = spec
 
 all:
 
-test: test-node test-browser test-local-node test-local-browser test-normalization-node test-normalization-browser
+test: test-local test-node test-browser test-local-node test-local-browser test-normalization-node test-normalization-browser
 
 test-suite: test-suite-node test-suite-browser
 
