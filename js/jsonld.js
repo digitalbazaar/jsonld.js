@@ -1788,10 +1788,8 @@ jsonld.documentLoaders.node = function(options) {
     if(doc !== null) {
       return callback(null, doc);
     }
-    var headers = Object.assign(
-        { 'Accept': acceptHeader },
-        options.headers
-    );
+    var headers = { 'Accept': acceptHeader };
+    for( var k in options.headers ) { headers[ k ] = options.headers[ k ]; }
     request({
       url: url,
       headers: headers,
