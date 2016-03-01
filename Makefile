@@ -3,7 +3,7 @@ REPORTER = spec
 
 all:
 
-test: test-node test-browser test-local-node test-local-browser test-normalization-node test-normalization-browser
+test: test-local test-node test-browser test-local-node test-local-browser test-normalization-node test-normalization-browser
 
 test-suite: test-suite-node test-suite-browser
 
@@ -53,7 +53,10 @@ test-coverage:
 	./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha -- \
 		-u exports -R $(REPORTER) $(TESTS)
 
+test-local:
+	./node_modules/.bin/mocha
+
 clean:
 	rm -rf coverage
 
-.PHONY: test test-node test-browser test-local-node test-local-browser test-normalization-node test-normalization-browser test-coverage clean
+.PHONY: test test-node test-browser test-local-node test-local-browser test-normalization-node test-normalization-browser test-coverage test-local clean
