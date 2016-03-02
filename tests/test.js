@@ -61,9 +61,9 @@ if(_nodejs) {
   var system = require('system');
   require('./setImmediate');
   var _jsdir = getEnv().JSDIR || 'js';
-  require('../' + _jsdir + '/jsonld');
-  jsonld = jsonldjs;
   window.Promise = require('es6-promise').Promise;
+  var jsonld = require('../' + _jsdir + '/jsonld');
+  window.jsonldjs = window.jsonld = jsonld;
   var assert = require('chai').assert;
   require('mocha/mocha');
   require('mocha-phantomjs/lib/mocha-phantomjs/core_extensions');
