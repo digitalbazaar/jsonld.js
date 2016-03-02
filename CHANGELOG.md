@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [0.4.6] - 2016-03-02
+
+### Added
+- Add `headers` and `request` option for node doc loader.
+
+### Changed
+- Include local tests.
+
 ## [0.4.5] - 2016-01-19
 
 ### Fixed
@@ -58,7 +66,8 @@
 [jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
 [jsonld-request]: https://github.com/digitalbazaar/jsonld-request
 
-[Unreleased]: https://github.com/digitalbazaar/jsonld/compare/0.4.5...HEAD
+[Unreleased]: https://github.com/digitalbazaar/jsonld/compare/0.4.6...HEAD
+[0.4.6]: https://github.com/digitalbazaar/jsonld/compare/0.4.5...0.4.6
 [0.4.5]: https://github.com/digitalbazaar/jsonld/compare/0.4.4...0.4.5
 [0.4.4]: https://github.com/digitalbazaar/jsonld/compare/0.4.3...0.4.4
 [0.4.3]: https://github.com/digitalbazaar/jsonld/compare/0.4.2...0.4.3
