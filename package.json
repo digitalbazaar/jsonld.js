@@ -23,13 +23,16 @@
     "email": "support@digitalbazaar.com"
   },
   "license": "BSD-3-Clause",
-  "main": "js/jsonld.js",
+  "main": "dist/node/jsonld/index.js",
+  "jsnext:main": "js/main.js",
   "dependencies": {
     "es6-promise": "~2.0.1",
-    "jsonld-url-parse": "git://github.com/ariutta/jsonld-url-parse.git",
+    "node-status-codes": "^2.0.0",
     "pkginfo": "~0.3.0",
     "request": "^2.61.0",
     "setimmediate": "^1.0.4",
+    "superagent": "^1.7.2",
+    "superagent-cache": "^1.3.4",
     "xmldom": "0.1.19"
   },
   "devDependencies": {
@@ -59,17 +62,18 @@
     "jsonld"
   ],
   "scripts": {
-    "build": "node ./build.js",
+    "build": "rollup -c ./rollup.config.js && rollup -c ./rollup.browser-config.js",
     "postinstall": "npm run build",
-    "test-local": "export JSDIR='dist' && make test-local",
-    "test-node": "export JSDIR='dist' && make test-node",
-    "test-browser": "export JSDIR='dist' && make test-browser",
-    "test": "export JSDIR='dist' && make test",
+    "test-local": "export JSDIR='dist/node' && make test-local",
+    "test-node": "export JSDIR='dist/node' && make test-node",
+    "test-browser": "export JSDIR='dist/browser' && make test-browser",
+    "test": "export JSDIR='dist/node' && make test",
     "coverage": "make test-coverage",
     "jscs": "jscs js/jsonld.js tests/*.js",
     "jshint": "jshint js/jsonld.js tests/*.js"
   },
   "browser": {
+    "dist/node/jsonld/index.js": "dist/browser/jsonld/index.js",
     "crypto": "./browser/ignore.js",
     "http": "./browser/ignore.js",
     "jsonld-request": "./browser/ignore.js",
@@ -77,6 +81,8 @@
     "request": "./browser/ignore.js",
     "url": "./browser/ignore.js",
     "util": "./browser/ignore.js",
-    "xmldom": "./browser/ignore.js"
+    "xmldom": "./browser/ignore.js",
+    "emitter": "component-emitter",
+    "reduce": "reduce-component"
   }
 }

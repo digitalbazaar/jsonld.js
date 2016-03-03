@@ -1,3 +1,4 @@
 {
-  "maxerr": 9999
+  "maxerr": 9999,
+  "esnext": true
 }
