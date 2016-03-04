@@ -8,7 +8,6 @@ import {_clone} from './_clone';
 import {_isArray} from './_isArray';
 import {JsonLdError} from './JsonLdError';
 import {RDF} from './RDF';
-import {jsonldDOTsetImmediate} from './jsonldDOTsetImmediate';
 export const URDNA2015 = (function() {
 
 var POSITIONS = {'subject': 's', 'object': 'o', 'name': 'g'};
@@ -56,7 +55,7 @@ Normalize.prototype.doWork = function(fn, callback) {
       // stack too deep, run on next tick
       schedule.depth = 0;
       schedule.running = false;
-      return jsonldDOTsetImmediate(work);
+      return setImmediate(work);
     }
 
     // if not yet running, force run
@@ -82,7 +81,7 @@ Normalize.prototype.doWork = function(fn, callback) {
     // do some other things
     schedule.depth = 0;
     schedule.running = false;
-    jsonldDOTsetImmediate(work);
+    setImmediate(work);
   })();
 };
 

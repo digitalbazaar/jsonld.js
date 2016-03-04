@@ -1,24 +1,10 @@
-//import multiEntry from 'rollup-plugin-multi-entry';
-//import commonjs from 'rollup-plugin-commonjs';
-//import nodeResolve from 'rollup-plugin-node-resolve';
+var fs = require('fs-extra');
+var path = require('path');
 
 export default {
-  //entry: ['dist/dev/jsonld.js', 'dist/dev/URGNA2012.js', 'dist/dev/_esnextifiedPrivateJsonLdProcessor.js', 'dist/dev/*.js'],
-  //entry: 'dist/dev/*.js',
   entry: './js/main.js',
-  format: 'umd',
   moduleName: 'jsonld',
-  dest: './dist/node/jsonld/index.js',
-  //plugins: [multiEntry()]
-  /*
-  plugins: [
-    nodeResolve({
-      jsnext: true,
-      main: true
-    }),
-    commonjs({
-      include: ['node_modules/**']
-    })
-  ]
-  //*/
+  outro: [
+    fs.readFileSync(path.join('./js/outro.js')),
+  ].join('\n')
 };

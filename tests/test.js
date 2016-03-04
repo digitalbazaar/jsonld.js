@@ -62,7 +62,7 @@ if(_nodejs) {
   require('./setImmediate');
   var _jsdir = getEnv().JSDIR || 'js';
   require('../' + _jsdir + '/jsonld');
-  window.jsonld = window.jsonldjs;
+  jsonld = jsonldjs;
   window.Promise = require('es6-promise').Promise;
   var assert = require('chai').assert;
   require('mocha/mocha');

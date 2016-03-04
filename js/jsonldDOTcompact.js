@@ -6,11 +6,10 @@ import {_compactIri} from './_compactIri';
 import {Processor} from './Processor';
 import {JsonLdError} from './JsonLdError';
 import {jsonldDOTprocessContext} from './jsonldDOTprocessContext';
-import {jsonldDOTsetImmediate} from './jsonldDOTsetImmediate';
 import {jsonldDOTexpand} from './jsonldDOTexpand';
 export const jsonldDOTcompact = function(input, ctx, options, callback) {
   if(arguments.length < 2) {
-    return jsonldDOTsetImmediate(function() {
+    return setImmediate(function() {
       callback(new TypeError('Could not compact, too few arguments.'));
     });
   }
@@ -23,7 +22,7 @@ export const jsonldDOTcompact = function(input, ctx, options, callback) {
   options = options || {};
 
   if(ctx === null) {
-    return jsonldDOTsetImmediate(function() {
+    return setImmediate(function() {
       callback(new JsonLdError(
         'The compaction context must not be null.',
         'jsonld.CompactError', {code: 'invalid local context'}));
@@ -32,7 +31,7 @@ export const jsonldDOTcompact = function(input, ctx, options, callback) {
 
   // nothing to compact
   if(input === null) {
-    return jsonldDOTsetImmediate(function() {
+    return setImmediate(function() {
       callback(null, null);
     });
   }
@@ -63,7 +62,7 @@ export const jsonldDOTcompact = function(input, ctx, options, callback) {
   }
 
   var expand = function(input, options, callback) {
-    jsonldDOTsetImmediate(function() {
+    setImmediate(function() {
       if(options.skipExpansion) {
         return callback(null, input);
       }

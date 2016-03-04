@@ -1,11 +1,10 @@
 import {Processor} from './Processor';
 import {JsonLdError} from './JsonLdError';
-import {jsonldDOTsetImmediate} from './jsonldDOTsetImmediate';
 import {jsonldDOTexpand} from './jsonldDOTexpand';
 import {jsonldDOTcompact} from './jsonldDOTcompact';
 export const jsonldDOTflatten = function(input, ctx, options, callback) {
   if(arguments.length < 1) {
-    return jsonldDOTsetImmediate(function() {
+    return setImmediate(function() {
       callback(new TypeError('Could not flatten, too few arguments.'));
     });
   }

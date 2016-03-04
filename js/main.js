@@ -1,7 +1,8 @@
 import _assign from 'lodash/assign';
 import * as jsonldModule from './jsonld.js';
 import documentLoaderCreator from './documentLoaderCreator.js';
-import {JsonLdProcessor} from './JsonLdProcessor.js';
+
+import 'setimmediate';
 
 function wrapper(jsonld) {
   jsonld.documentLoader = documentLoaderCreator();
@@ -21,4 +22,4 @@ var factory = function() {
 
 wrapper(factory);
 
-export default wrapper(factory);  
+export default wrapper(factory);

@@ -4,18 +4,17 @@ import {_isArray} from './_isArray';
 import {_mergeNodeMaps} from './_mergeNodeMaps';
 import {_createNodeMap} from './_createNodeMap';
 import {JsonLdError} from './JsonLdError';
-import {jsonldDOTsetImmediate} from './jsonldDOTsetImmediate';
 import {jsonldDOTrelabelBlankNodes} from './jsonldDOTrelabelBlankNodes';
 import {jsonldDOTexpand} from './jsonldDOTexpand';
 import {jsonldDOTcompact} from './jsonldDOTcompact';
 export const jsonldDOTmerge = function(docs, ctx, options, callback) {
   if(arguments.length < 1) {
-    return jsonldDOTsetImmediate(function() {
+    return setImmediate(function() {
       callback(new TypeError('Could not merge, too few arguments.'));
     });
   }
   if(!_isArray(docs)) {
-    return jsonldDOTsetImmediate(function() {
+    return setImmediate(function() {
       callback(new TypeError('Could not merge, "docs" must be an array.'));
     });
   }

@@ -99,16 +99,7 @@ export const jsonldDOTpromises = function(options) {
     };
   }
 
-  try {
-    jsonld.Promise = global.Promise || require('es6-promise').Promise;
-  } catch(e) {
-    var f = function() {
-      throw new Error('Unable to find a Promise implementation.');
-    };
-    for(var method in api) {
-      api[method] = f;
-    }
-  }
+  
 
   return api;
 };

@@ -19,7 +19,7 @@ jsonldDOTRequestQueue.prototype.add = function(url, callback) {
 
   // Promise-based API
   if(self._usePromise) {
-    return new jsonld.Promise(function(resolve, reject) {
+    return new Promise(function(resolve, reject) {
       var load = self._requests[url];
       if(!load) {
         // load URL then remove from queue

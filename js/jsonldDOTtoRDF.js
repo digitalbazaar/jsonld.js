@@ -2,11 +2,10 @@ import {_toNQuads} from './_toNQuads';
 import {Processor} from './Processor';
 import {JsonLdError} from './JsonLdError';
 import {RDF} from './RDF';
-import {jsonldDOTsetImmediate} from './jsonldDOTsetImmediate';
 import {jsonldDOTexpand} from './jsonldDOTexpand';
 export const jsonldDOTtoRDF = function(input, options, callback) {
   if(arguments.length < 1) {
-    return jsonldDOTsetImmediate(function() {
+    return setImmediate(function() {
       callback(new TypeError('Could not convert to RDF, too few arguments.'));
     });
   }

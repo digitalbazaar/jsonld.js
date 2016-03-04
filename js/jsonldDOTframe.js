@@ -4,12 +4,11 @@ import {_compactIri} from './_compactIri';
 import {_removePreserve} from './_removePreserve';
 import {Processor} from './Processor';
 import {JsonLdError} from './JsonLdError';
-import {jsonldDOTsetImmediate} from './jsonldDOTsetImmediate';
 import {jsonldDOTexpand} from './jsonldDOTexpand';
 import {jsonldDOTcompact} from './jsonldDOTcompact';
 export const jsonldDOTframe = function(input, frame, options, callback) {
   if(arguments.length < 2) {
-    return jsonldDOTsetImmediate(function() {
+    return setImmediate(function() {
       callback(new TypeError('Could not frame, too few arguments.'));
     });
   }
@@ -37,7 +36,7 @@ export const jsonldDOTframe = function(input, frame, options, callback) {
   }
   options.omitDefault = options.omitDefault || false;
 
-  jsonldDOTsetImmediate(function() {
+  setImmediate(function() {
     // if frame is a string, attempt to dereference remote document
     if(typeof frame === 'string') {
       var done = function(err, remoteDoc) {

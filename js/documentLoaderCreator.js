@@ -3,12 +3,14 @@ import {JsonLdError} from './JsonLdError.js';
 import {LINK_HEADER_REL} from './LINK_HEADER_REL.js';
 import {_isArray} from './_isArray.js';
 import nodeStatusCodes from 'node-status-codes';
+
 import request from 'superagent';
+//import superagentCache from 'superagent-cache';
+//import Cache from 'cache-service-cache-module';
+
 //import request from 'superagent/lib/client.js';
-import superagentCache from 'superagent-cache';
-//import superagentCache from 'superagent-cache/superagentCache.js';
-import Cache from 'cache-service-cache-module';
-//import Cache from 'cache-service-cache-module/cacheModule.js';
+import superagentCache from 'superagent-cache/superagentCache.js';
+import Cache from 'cache-service-cache-module/cacheModule.js';
 
 export default function() {
   var cache = new Cache();

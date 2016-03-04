@@ -1,10 +1,9 @@
 import {Processor} from './Processor';
 import {JsonLdError} from './JsonLdError';
-import {jsonldDOTsetImmediate} from './jsonldDOTsetImmediate';
 import {jsonldDOTexpand} from './jsonldDOTexpand';
 export const jsonldDOTcreateNodeMap = function(input, options, callback) {
   if(arguments.length < 1) {
-    return jsonldDOTsetImmediate(function() {
+    return setImmediate(function() {
       callback(new TypeError('Could not create node map, too few arguments.'));
     });
   }

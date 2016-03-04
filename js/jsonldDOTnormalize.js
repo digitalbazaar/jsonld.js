@@ -4,11 +4,10 @@ import {URGNA2012} from './URGNA2012';
 import {Processor} from './Processor';
 import {JsonLdError} from './JsonLdError';
 import {RDF} from './RDF';
-import {jsonldDOTsetImmediate} from './jsonldDOTsetImmediate';
 import {jsonldDOTtoRDF} from './jsonldDOTtoRDF';
 export const jsonldDOTnormalize = function(input, options, callback) {
   if(arguments.length < 1) {
-    return jsonldDOTsetImmediate(function() {
+    return setImmediate(function() {
       callback(new TypeError('Could not normalize, too few arguments.'));
     });
   }

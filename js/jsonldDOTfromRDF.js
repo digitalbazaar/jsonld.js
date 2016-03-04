@@ -3,10 +3,9 @@ import {Processor} from './Processor';
 import {JsonLdError} from './JsonLdError';
 import {RDF} from './RDF';
 import {_rdfParsers} from './_rdfParsers';
-import {jsonldDOTsetImmediate} from './jsonldDOTsetImmediate';
 export const jsonldDOTfromRDF = function(dataset, options, callback) {
   if(arguments.length < 1) {
-    return jsonldDOTsetImmediate(function() {
+    return setImmediate(function() {
       callback(new TypeError('Could not convert from RDF, too few arguments.'));
     });
   }
@@ -33,7 +32,7 @@ export const jsonldDOTfromRDF = function(dataset, options, callback) {
     }
   }
 
-  jsonldDOTsetImmediate(function() {
+  setImmediate(function() {
     // handle special format
     var rdfParser;
     if(options.format) {

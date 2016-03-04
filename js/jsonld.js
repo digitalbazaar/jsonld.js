@@ -29,8 +29,6 @@ import {jsonldDOTpromisify} from './jsonldDOTpromisify';
 export const promisify = jsonldDOTpromisify;
 import {jsonldDOTJsonLdProcessor} from './jsonldDOTJsonLdProcessor';
 export const JsonLdProcessor = jsonldDOTJsonLdProcessor;
-import {jsonldDOTsetImmediate} from './jsonldDOTsetImmediate';
-export const setImmediate = jsonldDOTsetImmediate;
 import {jsonldDOTparseLinkHeader} from './jsonldDOTparseLinkHeader';
 export const parseLinkHeader = jsonldDOTparseLinkHeader;
 import {jsonldDOTRequestQueue} from './jsonldDOTRequestQueue';
