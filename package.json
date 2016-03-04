@@ -67,9 +67,9 @@
   "scripts": {
     "build": "rollup -c ./rollup.config.node.js && rollup -c ./rollup.config.browser.js",
     "postinstall": "npm run build",
-    "test-local": "export JSDIR='dist/node' && make test-local",
-    "test-node": "export JSDIR='dist/node' && make test-node",
-    "test-browser": "export JSDIR='dist/browser' && make test-browser",
+    "test-local": "export NODE_ENV=test && export JSDIR='dist/node' && make test-local",
+    "test-node": "export NODE_ENV=test && export JSDIR='dist/node' && make test-node",
+    "test-browser": "export NODE_ENV=test && export JSDIR='dist/browser' && make test-browser",
     "test": "npm run test-node && npm run test-browser && npm run test-local",
     "coverage": "make test-coverage",
     "jscs": "jscs js/jsonld.js tests/*.js",
