@@ -1,6 +1,6 @@
 import {URGNA2012} from './URGNA2012';
 import {URDNA2015} from './URDNA2015';
-import {RDF} from './RDF';
+import {RDF} from './literalVarDecs';
 export const NormalizeHash = function(algorithm) {
   if(!(this instanceof NormalizeHash)) {
     return new NormalizeHash(algorithm);

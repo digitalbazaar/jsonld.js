@@ -1,7 +1,5 @@
 import {_objectToRDF} from './_objectToRDF';
-import {RDF_NIL} from './RDF_NIL';
-import {RDF_REST} from './RDF_REST';
-import {RDF_FIRST} from './RDF_FIRST';
+import {RDF_FIRST,RDF_REST,RDF_NIL} from './literalVarDecs';
 export const _listToRDF = function(list, issuer, subject, predicate, triples) {
   var first = {type: 'IRI', value: RDF_FIRST};
   var rest = {type: 'IRI', value: RDF_REST};

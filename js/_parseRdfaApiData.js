@@ -1,9 +1,4 @@
-import {RDF_LANGSTRING} from './RDF_LANGSTRING';
-import {RDF_OBJECT} from './RDF_OBJECT';
-import {RDF_XML_LITERAL} from './RDF_XML_LITERAL';
-import {RDF_PLAIN_LITERAL} from './RDF_PLAIN_LITERAL';
-import {RDF} from './RDF';
-import {XSD_STRING} from './XSD_STRING';
+import {XSD_STRING,RDF,RDF_PLAIN_LITERAL,RDF_XML_LITERAL,RDF_OBJECT,RDF_LANGSTRING} from './literalVarDecs';
 export const _parseRdfaApiData = function(data) {
   var dataset = {};
   dataset['@default'] = [];

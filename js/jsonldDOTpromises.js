@@ -1,4 +1,3 @@
-import {RDF} from './RDF';
 import {jsonldDOTpromisify} from './jsonldDOTpromisify';
 import {jsonldDOTmerge} from './jsonldDOTmerge';
 import {jsonldDOTcreateNodeMap} from './jsonldDOTcreateNodeMap';
@@ -10,6 +9,7 @@ import {jsonldDOTframe} from './jsonldDOTframe';
 import {jsonldDOTflatten} from './jsonldDOTflatten';
 import {jsonldDOTexpand} from './jsonldDOTexpand';
 import {jsonldDOTcompact} from './jsonldDOTcompact';
+import {RDF} from './literalVarDecs';
 export const jsonldDOTpromises = function(options) {
   options = options || {};
   var slice = Array.prototype.slice;

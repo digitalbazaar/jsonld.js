@@ -3,8 +3,7 @@ import {_isList} from './_isList';
 import {_isKeyword} from './_isKeyword';
 import {_objectToRDF} from './_objectToRDF';
 import {_listToRDF} from './_listToRDF';
-import {RDF_TYPE} from './RDF_TYPE';
-import {RDF} from './RDF';
+import {RDF,RDF_TYPE} from './literalVarDecs';
 export const _graphToRDF = function(graph, issuer, options) {
   var rval = [];
 

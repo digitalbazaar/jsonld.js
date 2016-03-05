@@ -4,12 +4,7 @@ import {_isBoolean} from './_isBoolean';
 import {_isDouble} from './_isDouble';
 import {_isNumber} from './_isNumber';
 import {_isObject} from './_isObject';
-import {RDF_LANGSTRING} from './RDF_LANGSTRING';
-import {RDF} from './RDF';
-import {XSD_STRING} from './XSD_STRING';
-import {XSD_INTEGER} from './XSD_INTEGER';
-import {XSD_DOUBLE} from './XSD_DOUBLE';
-import {XSD_BOOLEAN} from './XSD_BOOLEAN';
+import {XSD_BOOLEAN,XSD_DOUBLE,XSD_INTEGER,XSD_STRING,RDF,RDF_LANGSTRING} from './literalVarDecs';
 export const _objectToRDF = function(item) {
   var object = {};
 

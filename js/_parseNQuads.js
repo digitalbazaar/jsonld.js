@@ -1,9 +1,7 @@
 import {_isUndefined} from './_isUndefined';
 import {_compareRDFTriples} from './_compareRDFTriples';
 import {JsonLdError} from './JsonLdError';
-import {RDF_LANGSTRING} from './RDF_LANGSTRING';
-import {RDF} from './RDF';
-import {XSD_STRING} from './XSD_STRING';
+import {XSD_STRING,RDF,RDF_LANGSTRING} from './literalVarDecs';
 export const _parseNQuads = function(input) {
   // define partial regexes
   var iri = '(?:<([^:]+:[^>]*)>)';

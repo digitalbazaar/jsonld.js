@@ -4,7 +4,7 @@ import {_isString} from './_isString';
 import {_isArray} from './_isArray';
 import {_isObject} from './_isObject';
 import {JsonLdError} from './JsonLdError';
-import {MAX_CONTEXT_URLS} from './MAX_CONTEXT_URLS';
+import {MAX_CONTEXT_URLS} from './literalVarDecs';
 export const _retrieveContextUrls = function(input, options, callback) {
   // if any error occurs during URL resolution, quit
   var error = null;

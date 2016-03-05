@@ -13,7 +13,7 @@ test-suite-node:
 		exit 1; \
 	fi
 	@if [ -d $(JSONLD_TEST_SUITE) ]; then \
-		NODE_ENV=test ./node_modules/.bin/mocha -A -R $(REPORTER) $(TESTS); \
+		NODE_ENV=test JSDIR=./dist/node ./node_modules/.bin/mocha -A -R $(REPORTER) $(TESTS); \
 	else \
 		echo "Error: tests not found at $(JSONLD_TEST_SUITE)"; \
 		exit 1; \
@@ -25,7 +25,7 @@ test-suite-browser:
 		exit 1; \
 	fi
 	@if [ -d $(JSONLD_TEST_SUITE) ]; then \
-		NODE_ENV=test ./node_modules/.bin/phantomjs $(TESTS); \
+		NODE_ENV=test JSDIR=./dist/browser ./node_modules/.bin/phantomjs $(TESTS); \
 	else \
 		echo "Error: tests not found at $(JSONLD_TEST_SUITE)"; \
 		exit 1; \

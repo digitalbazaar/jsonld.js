@@ -1,8 +1,8 @@
 import {_isString} from './_isString';
 import {Processor} from './Processor';
 import {JsonLdError} from './JsonLdError';
-import {RDF} from './RDF';
 import {_rdfParsers} from './_rdfParsers';
+import {RDF} from './literalVarDecs';
 export const jsonldDOTfromRDF = function(dataset, options, callback) {
   if(arguments.length < 1) {
     return setImmediate(function() {

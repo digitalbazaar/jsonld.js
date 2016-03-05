@@ -1,8 +1,5 @@
 import {_isNumeric} from './_isNumeric';
-import {XSD_STRING} from './XSD_STRING';
-import {XSD_INTEGER} from './XSD_INTEGER';
-import {XSD_DOUBLE} from './XSD_DOUBLE';
-import {XSD_BOOLEAN} from './XSD_BOOLEAN';
+import {XSD_BOOLEAN,XSD_DOUBLE,XSD_INTEGER,XSD_STRING} from './literalVarDecs';
 export const _RDFToObject = function(o, useNativeTypes) {
   // convert IRI/blank node object to JSON-LD
   if(o.type === 'IRI' || o.type === 'blank node') {

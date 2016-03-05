@@ -7,7 +7,7 @@ import {_parseNQuads} from './_parseNQuads';
 import {_clone} from './_clone';
 import {_isArray} from './_isArray';
 import {JsonLdError} from './JsonLdError';
-import {RDF} from './RDF';
+import {RDF} from './literalVarDecs';
 export const URDNA2015 = (function() {
 
 var POSITIONS = {'subject': 's', 'object': 'o', 'name': 'g'};

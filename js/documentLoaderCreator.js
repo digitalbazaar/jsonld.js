@@ -1,6 +1,6 @@
 import {jsonldDOTparseLinkHeader} from './jsonldDOTparseLinkHeader.js';
 import {JsonLdError} from './JsonLdError.js';
-import {LINK_HEADER_REL} from './LINK_HEADER_REL.js';
+import {LINK_HEADER_REL} from './literalVarDecs';
 import {_isArray} from './_isArray.js';
 import nodeStatusCodes from 'node-status-codes';
 

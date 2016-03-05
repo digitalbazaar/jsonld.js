@@ -1,8 +1,8 @@
 import {_toNQuads} from './_toNQuads';
 import {Processor} from './Processor';
 import {JsonLdError} from './JsonLdError';
-import {RDF} from './RDF';
 import {jsonldDOTexpand} from './jsonldDOTexpand';
+import {RDF} from './literalVarDecs';
 export const jsonldDOTtoRDF = function(input, options, callback) {
   if(arguments.length < 1) {
     return setImmediate(function() {

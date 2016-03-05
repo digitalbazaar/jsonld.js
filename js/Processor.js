@@ -23,16 +23,11 @@ import {_graphToRDF} from './_graphToRDF';
 import {_expandValue} from './_expandValue';
 import {_expandLanguageMap} from './_expandLanguageMap';
 import {JsonLdError} from './JsonLdError';
-import {RDF_TYPE} from './RDF_TYPE';
-import {RDF_NIL} from './RDF_NIL';
-import {RDF_REST} from './RDF_REST';
-import {RDF_FIRST} from './RDF_FIRST';
-import {RDF_LIST} from './RDF_LIST';
-import {RDF} from './RDF';
 import {jsonldDOTurl} from './jsonldDOTurl';
 import {jsonldDOTgetContextValue} from './jsonldDOTgetContextValue';
 import {jsonldDOTaddValue} from './jsonldDOTaddValue';
 import {jsonldDOTcache} from './jsonldDOTcache';
+import {RDF,RDF_LIST,RDF_FIRST,RDF_REST,RDF_NIL,RDF_TYPE} from './literalVarDecs';
 export const Processor = function() {};
 
 Processor.prototype.compact = function(

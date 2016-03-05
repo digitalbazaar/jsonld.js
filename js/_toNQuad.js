@@ -1,5 +1,4 @@
-import {RDF_LANGSTRING} from './RDF_LANGSTRING';
-import {XSD_STRING} from './XSD_STRING';
+import {XSD_STRING,RDF_LANGSTRING} from './literalVarDecs';
 export const _toNQuad = function(triple, graphName) {
   var s = triple.subject;
   var p = triple.predicate;

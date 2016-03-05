@@ -3,8 +3,8 @@ import {_clone} from './_clone';
 import {URGNA2012} from './URGNA2012';
 import {Processor} from './Processor';
 import {JsonLdError} from './JsonLdError';
-import {RDF} from './RDF';
 import {jsonldDOTtoRDF} from './jsonldDOTtoRDF';
+import {RDF} from './literalVarDecs';
 export const jsonldDOTnormalize = function(input, options, callback) {
   if(arguments.length < 1) {
     return setImmediate(function() {
