@@ -27,7 +27,7 @@ config.footer = [
 config.plugins = [
   includePaths({
     include: {
-      './NormalizeHashDOTinit.js': './lib/NormalizeHashDOTinit.browser.js',
+      './NormalizeHashDOT_init.js': './lib/NormalizeHashDOT_init.browser.js',
     },
     paths: ['dist/esnext'],
     external: [],
