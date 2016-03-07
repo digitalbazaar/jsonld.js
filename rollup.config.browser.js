@@ -29,7 +29,7 @@ config.plugins = [
     include: {
       './NormalizeHashDOT_init.js': './lib/NormalizeHashDOT_init.browser.js',
     },
-    paths: ['dist/esnext'],
+    paths: ['lib'],
     external: [],
     extensions: ['.js', '.json', '.html']
   }),
