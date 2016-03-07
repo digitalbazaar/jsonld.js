@@ -6,16 +6,27 @@ import uglify from 'rollup-plugin-uglify';
 
 var argv = require('minimist')(process.argv.slice(2));
 var modules = (argv.modules || '').split(',');
-var modulesListString = modules.join(',');
+
+// jsonld.expand only size: 88106
+//var moduleImportString = 'import {' + modules.join(',') + '} from \'./jsonld.js\';';
+
+//* jsonld.expand only size: 68938
+var moduleImportString = modules.map(function(item) {
+  return 'import {jsonldDOT' + item + ' as ' + item + '} from \'./jsonldDOT' + item + '.js\'';
+})
+.join(';\n');
+//*/
+
 var modulesObjectString = JSON.stringify(modules.reduce(function(accumulator, item) {
   accumulator[item] = item;
   return accumulator;
 }, {})).replace(/\"/g, '');
 
 var fs = require('fs');
-var entryString = fs.readFileSync('./lib/custom.js', {encoding: 'utf8'})
-  .replace(/(import\ {).*(}\ from '\.\/jsonld.js)/, '$1' + modulesListString + '$2')
-  .replace(/(jsonldModule\ =\ ){.*}/, '$1' + modulesObjectString);
+var entryString = moduleImportString + ';' + fs.readFileSync('./lib/custom.js', {encoding: 'utf8'})
+  .replace(/^.*import\ {.*}\ from.*$/gm, '')
+  .replace(/(jsonldModule\ =\ ){.*}/gm, '$1' + modulesObjectString);
+
 fs.writeFileSync('./lib/custom.js', entryString, {encoding: 'utf8'});
 
 
@@ -29,6 +40,10 @@ config.entry = 'lib/custom.js';
 config.format = 'umd';
 config.dest = 'dist/custom/jsonld.js';
 
+config.outro = '';
+config.footer = '';
+
+/*
 config.outro = [
   config.outro || '',
   fs.readFileSync(path.join('./lib/outro.browser.js'))
@@ -39,6 +54,7 @@ config.footer = [
   'window.jsonldjs = window.jsonld;',
   'window.jsonld.version = \'' + pkg.version + '\';'
 ].join('\n');
+//*/
 
 config.plugins = [
   includePaths({
