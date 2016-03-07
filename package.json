@@ -79,7 +79,7 @@
     "jshint": "jshint lib/jsonld.js tests/*.js"
   },
   "browser": {
-    "./NormalizeHashDOTinit.js": "lib/NormalizeHashDOTinit.browser.js",
+    "./NormalizeHashDOT_init.js": "lib/NormalizeHashDOT_init.browser.js",
     "cache-service-cache-module": false,
     "dist/node/jsonld.js": "dist/browser/jsonld.js",
     "es6-promise": false,
