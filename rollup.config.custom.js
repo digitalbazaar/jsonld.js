@@ -27,7 +27,7 @@ import config from './rollup.config';
 
 config.entry = 'lib/custom.js';
 config.format = 'umd';
-config.dest = 'dist/browser/jsonld.custom.js';
+config.dest = 'dist/custom/jsonld.custom.js';
 
 config.outro = [
   config.outro || '',
