@@ -1,3 +1,5 @@
+import babel from 'rollup-plugin-babel';
+
 import config from './rollup.config';
 
 var fs = require('fs-extra');
@@ -11,5 +13,11 @@ config.outro = [
   config.outro || '',
   'factory.version = \'' + pkg.version + '\';'
 ].join('\n');
+
+config.plugins = [
+  babel({
+    exclude: 'node_modules/**'
+  }),
+];
 
 export default config;

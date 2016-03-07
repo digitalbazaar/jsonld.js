@@ -1,6 +1,8 @@
 import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
+import includePaths from 'rollup-plugin-includepaths';
 import nodeResolve from 'rollup-plugin-node-resolve';
+import uglify from 'rollup-plugin-uglify';
 
 var fs = require('fs-extra');
 var path = require('path');
@@ -13,7 +15,7 @@ config.dest = 'dist/browser/jsonld.js';
 
 config.outro = [
   config.outro || '',
-  fs.readFileSync(path.join('./js/outro.browser.js'))
+  fs.readFileSync(path.join('./lib/outro.browser.js'))
 ].join('\n');
 
 config.footer = [
@@ -23,14 +25,26 @@ config.footer = [
 ].join('\n');
 
 config.plugins = [
+  includePaths({
+    include: {
+      './NormalizeHashDOTinit.js': './lib/NormalizeHashDOTinit.browser.js',
+    },
+    paths: ['dist/esnext'],
+    external: [],
+    extensions: ['.js', '.json', '.html']
+  }),
   nodeResolve({
     jsnext: true,
     main: true,
     browser: true
   }),
   commonjs({
-    include: ['node_modules/**']
+    include: [
+      'dist/browser/**',
+      'node_modules/**'
+    ]
   }),
+  uglify(),
   babel({
     exclude: 'node_modules/**'
   }),

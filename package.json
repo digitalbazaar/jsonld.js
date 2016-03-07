@@ -24,7 +24,7 @@
   },
   "license": "BSD-3-Clause",
   "main": "dist/node/jsonld.js",
-  "jsnext:main": "js/main.js",
+  "jsnext:main": "lib/main.js",
   "dependencies": {
     "cache-service-cache-module": "^1.2.3",
     "es6-promise": "~2.0.1",
@@ -36,7 +36,9 @@
     "rollup": "^0.25.4",
     "rollup-plugin-babel": "^2.4.0",
     "rollup-plugin-commonjs": "^2.2.1",
+    "rollup-plugin-includepaths": "^0.1.1",
     "rollup-plugin-node-resolve": "^1.4.0",
+    "rollup-plugin-uglify": "^0.2.0",
     "setimmediate": "^1.0.4",
     "superagent": "^1.7.2",
     "superagent-cache": "^1.4.0",
@@ -73,20 +75,17 @@
     "test-browser": "export NODE_ENV=test && export JSDIR='dist/browser' && make test-browser",
     "test": "npm run test-node && npm run test-browser && npm run test-local",
     "coverage": "make test-coverage",
-    "jscs": "jscs js/jsonld.js tests/*.js",
-    "jshint": "jshint js/jsonld.js tests/*.js"
+    "jscs": "jscs lib/jsonld.js tests/*.js",
+    "jshint": "jshint lib/jsonld.js tests/*.js"
   },
   "browser": {
+    "./NormalizeHashDOTinit.js": "lib/NormalizeHashDOTinit.browser.js",
+    "cache-service-cache-module": false,
     "dist/node/jsonld.js": "dist/browser/jsonld.js",
-    "crypto": "./browser/ignore.js",
-    "http": "./browser/ignore.js",
-    "jsonld-request": "./browser/ignore.js",
-    "pkginfo": "./browser/ignore.js",
-    "request": "./browser/ignore.js",
-    "url": "./browser/ignore.js",
-    "util": "./browser/ignore.js",
-    "xmldom": "./browser/ignore.js",
-    "emitter": "component-emitter",
-    "reduce": "reduce-component"
+    "es6-promise": false,
+    "superagent-cache": false,
+    "url": false,
+    "util": false,
+    "xmldom": false
   }
 }
