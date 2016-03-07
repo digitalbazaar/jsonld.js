@@ -4,14 +4,30 @@ import includePaths from 'rollup-plugin-includepaths';
 import nodeResolve from 'rollup-plugin-node-resolve';
 import uglify from 'rollup-plugin-uglify';
 
+var argv = require('minimist')(process.argv.slice(2));
+var modules = (argv.modules || '').split(',');
+var modulesListString = modules.join(',');
+var modulesObjectString = JSON.stringify(modules.reduce(function(accumulator, item) {
+  accumulator[item] = item;
+  return accumulator;
+}, {})).replace(/\"/g, '');
+
+var fs = require('fs');
+var entryString = fs.readFileSync('./lib/custom.js', {encoding: 'utf8'})
+  .replace(/(import\ {).*(}\ from '\.\/jsonld.js)/, '$1' + modulesListString + '$2')
+  .replace(/(jsonldModule\ =\ ){.*}/, '$1' + modulesObjectString);
+fs.writeFileSync('./lib/custom.js', entryString, {encoding: 'utf8'});
+
+
 var fs = require('fs-extra');
 var path = require('path');
 var pkg = require('./package.json');
 
 import config from './rollup.config';
 
+config.entry = 'lib/custom.js';
 config.format = 'umd';
-config.dest = 'dist/browser/jsonld.js';
+config.dest = 'dist/browser/jsonld.custom.js';
 
 config.outro = [
   config.outro || '',
