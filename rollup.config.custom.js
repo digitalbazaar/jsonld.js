@@ -31,7 +31,6 @@ var entryString = moduleImportString + fs.readFileSync('./lib/custom.js', {encod
 
 fs.writeFileSync('./lib/custom.js', entryString, {encoding: 'utf8'});
 
-
 var fs = require('fs-extra');
 var path = require('path');
 var pkg = require('./package.json');
