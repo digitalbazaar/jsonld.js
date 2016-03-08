@@ -44,8 +44,8 @@
     "xmldom": "0.1.19"
   },
   "devDependencies": {
-    "chai": "^3.4.1",
-    "commander": "^2.8.0",
+    "chai": "^3.5.0",
+    "commander": "^2.9.0",
     "cors": "^2.7.1",
     "express": "^4.13.3",
     "istanbul": "^0.3.19",
@@ -80,8 +80,8 @@
   },
   "browser": {
     "./NormalizeHashDOT_init.js": "lib/NormalizeHashDOT_init.browser.js",
-    "cache-service-cache-module": false,
     "dist/node/jsonld.js": "dist/browser/jsonld.js",
+    "cache-service-cache-module": false,
     "es6-promise": false,
     "superagent-cache": false,
     "url": false,
