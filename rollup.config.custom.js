@@ -12,9 +12,10 @@ var modules = (argv.modules || '').split(',');
 
 //* jsonld.expand only size: 68938
 var moduleImportString = modules.map(function(item) {
-  return 'import {jsonldDOT' + item + ' as ' + item + '} from \'./jsonldDOT' + item + '.js\'';
+  return 'import {' + item + '} from \'./' + item + '.js\';';
 })
-.join(';\n');
+.join('\n');
+//.join(';\n');
 //*/
 
 var modulesObjectString = JSON.stringify(modules.reduce(function(accumulator, item) {
@@ -23,8 +24,9 @@ var modulesObjectString = JSON.stringify(modules.reduce(function(accumulator, it
 }, {})).replace(/\"/g, '');
 
 var fs = require('fs');
-var entryString = moduleImportString + ';' + fs.readFileSync('./lib/custom.js', {encoding: 'utf8'})
-  .replace(/^.*import\ {.*}\ from.*$/gm, '')
+var entryString = moduleImportString + fs.readFileSync('./lib/custom.js', {encoding: 'utf8'})
+  // TODO kludgy side-effects!
+  .replace(/^.*import\ {.*}\ from.*$(?:\n^$)*/gm, '')
   .replace(/(jsonldModule\ =\ ){.*}/gm, '$1' + modulesObjectString);
 
 fs.writeFileSync('./lib/custom.js', entryString, {encoding: 'utf8'});
@@ -60,6 +62,8 @@ config.plugins = [
   includePaths({
     include: {
       './NormalizeHashDOT_init.js': './lib/NormalizeHashDOT_init.browser.js',
+      'superagent-cache': './lib/placeholder.js',
+      'cache-service-cache-module': './lib/placeholder.js',
     },
     paths: ['lib'],
     external: [],

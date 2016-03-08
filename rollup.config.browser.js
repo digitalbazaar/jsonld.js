@@ -18,19 +18,6 @@ config.outro = [
   fs.readFileSync(path.join('./lib/outro.browser.js'))
 ].join('\n');
 
-/*
-config.external = [
-  'superagent-cache',
-  'cache-service-cache-module',
-  'xmldom'
-];
-
-config.globals = {
-  'superagent-cache': 'superagentCache',
-  'cache-service-cache-module': 'Cache'
-};
-//*/
-
 config.footer = [
   config.footer || '',
   'window.jsonldjs = window.jsonld;',
@@ -45,40 +32,17 @@ config.plugins = [
       'cache-service-cache-module': './lib/placeholder.js',
     },
     paths: ['lib'],
-/*
-    external: [
-      'superagent-cache',
-      'cache-service-cache-module',
-      'xmldom'
-    ],
-//*/
     extensions: ['.js', '.json', '.html']
   }),
   nodeResolve({
     jsnext: true,
     main: true,
     browser: true,
-/*
-    skip: [
-      './node_modules/cache-service-cache-module/**',
-      './node_modules/superagent-cache/**',
-      'superagent-cache',
-      'cache-service-cache-module',
-      'xmldom'
-    ]
-//*/
   }),
   commonjs({
     include: [
       'node_modules/**'
     ],
-/*
-    exclude: [
-      './node_modules/cache-service-cache-module/**',
-      './node_modules/superagent-cache/**',
-      './node_modules/xmldom/**',
-    ]
-//*/
   }),
   uglify(),
   babel({
