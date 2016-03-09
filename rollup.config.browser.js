@@ -1,3 +1,4 @@
+console.log('building browser version...');
 import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
 import includePaths from 'rollup-plugin-includepaths';
@@ -42,12 +43,18 @@ config.plugins = [
   }),
   commonjs({
     include: [
-      'node_modules/**'
+      'node_modules/**',
+      // for the case where this is installed as a sub-dependency
+      //'../node_modules/**',
     ],
   }),
   uglify(),
   babel({
-    exclude: 'node_modules/**'
+    exclude: [
+      'node_modules/**',
+      // for the case where this is installed as a sub-dependency
+      //'../node_modules/**',
+    ]
   }),
 ];
 

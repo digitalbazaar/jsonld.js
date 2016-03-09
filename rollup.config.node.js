@@ -1,4 +1,7 @@
+console.log('building node version...');
 import babel from 'rollup-plugin-babel';
+import commonjs from 'rollup-plugin-commonjs';
+import nodeResolve from 'rollup-plugin-node-resolve';
 
 import config from './rollup.config';
 
@@ -15,6 +18,16 @@ config.outro = [
 ].join('\n');
 
 config.plugins = [
+  nodeResolve({
+    jsnext: true,
+    main: true,
+    browser: false,
+  }),
+  commonjs({
+    include: [
+      'node_modules/**',
+    ],
+  }),
   babel({
     exclude: 'node_modules/**'
   }),
