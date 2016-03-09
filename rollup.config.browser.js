@@ -33,7 +33,7 @@ config.plugins = [
       'superagent-cache': './lib/placeholder.js',
       'cache-service-cache-module': './lib/placeholder.js',
     },
-    paths: ['lib'],
+    paths: ['lib', 'node_modules', '../node_modules'],
     extensions: ['.js', '.json', '.html']
   }),
   commonjs({
@@ -41,10 +41,10 @@ config.plugins = [
       'node_modules/**',
     ],
   }),
-  /*
+  //*
   nodeResolve({
     //jsnext: true,
-    //main: true,
+    main: true,
     browser: true,
   }),
   //*/
