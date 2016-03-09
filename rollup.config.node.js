@@ -30,7 +30,9 @@ config.plugins = [
   includePaths({
     include: {
       'Promise': './node_modules/es6-promise/dist/es6-promise.js'
-    }
+    },
+    paths: [],
+    extensions: ['.js', '.json', '.html']
   }),
   commonjs({
     include: [
