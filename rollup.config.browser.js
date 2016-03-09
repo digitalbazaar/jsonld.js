@@ -44,7 +44,7 @@ config.plugins = [
       'node_modules/**'
     ],
   }),
-  //uglify(),
+  uglify(),
   babel({
     exclude: 'node_modules/**'
   }),

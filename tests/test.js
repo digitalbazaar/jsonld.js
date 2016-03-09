@@ -61,7 +61,8 @@ if(_nodejs) {
   var system = require('system');
   require('./setImmediate');
   var _jsdir = getEnv().JSDIR || 'js';
-  require('../' + _jsdir + '/jsonld');
+  var _jspath = '../' + _jsdir + '/jsonld.js';
+  phantom.injectJs(_jspath);
   jsonld = jsonldjs;
   window.Promise = require('es6-promise').Promise;
   var assert = require('chai').assert;
