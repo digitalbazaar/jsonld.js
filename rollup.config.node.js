@@ -1,4 +1,4 @@
-console.log('building node version...');
+console.log('building node version807...');
 import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
 import nodeResolve from 'rollup-plugin-node-resolve';
@@ -22,7 +22,7 @@ config.plugins = [
     include: [
       'node_modules/**',
       // for the case where this is installed as a sub-dependency
-      '../node_modules/**',
+      //'../node_modules/**',
     ],
   }),
   babel({
