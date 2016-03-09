@@ -1,4 +1,4 @@
-console.log('building node version921...');
+console.log('building node version923...');
 import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
 import nodeResolve from 'rollup-plugin-node-resolve';

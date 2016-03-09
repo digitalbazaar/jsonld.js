@@ -39,6 +39,7 @@ config.plugins = [
   commonjs({
     include: [
       'node_modules/**',
+      '/Users/andersriutta/Sites/jsonld-rx/node_modules/**',
     ],
   }),
   //*
