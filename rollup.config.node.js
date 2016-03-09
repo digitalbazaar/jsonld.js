@@ -26,10 +26,16 @@ config.plugins = [
   commonjs({
     include: [
       'node_modules/**',
+      // for the case where this is installed as a sub-dependency
+      '../node_modules/**',
     ],
   }),
   babel({
-    exclude: 'node_modules/**'
+    exclude: [
+      'node_modules/**',
+      // for the case where this is installed as a sub-dependency
+      //'../node_modules/**',
+    ]
   }),
 ];
 
