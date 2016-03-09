@@ -36,17 +36,17 @@ config.plugins = [
     paths: ['lib'],
     extensions: ['.js', '.json', '.html']
   }),
-  nodeResolve({
-    jsnext: true,
-    main: true,
-    browser: true,
-  }),
   commonjs({
     include: [
       'node_modules/**',
       // for the case where this is installed as a sub-dependency
       //'../node_modules/**',
     ],
+  }),
+  nodeResolve({
+    jsnext: true,
+    main: true,
+    browser: true,
   }),
   uglify(),
   babel({

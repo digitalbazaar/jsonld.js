@@ -18,11 +18,6 @@ config.outro = [
 ].join('\n');
 
 config.plugins = [
-  nodeResolve({
-    jsnext: true,
-    main: true,
-    browser: false,
-  }),
   commonjs({
     include: [
       'node_modules/**',
