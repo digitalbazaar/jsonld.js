@@ -41,11 +41,13 @@ config.plugins = [
       'node_modules/**',
     ],
   }),
+  /*
   nodeResolve({
     //jsnext: true,
     //main: true,
     browser: true,
   }),
+  //*/
   uglify(),
   babel({
     exclude: [
