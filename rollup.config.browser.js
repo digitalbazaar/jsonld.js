@@ -39,21 +39,17 @@ config.plugins = [
   commonjs({
     include: [
       'node_modules/**',
-      // for the case where this is installed as a sub-dependency
-      //'../node_modules/**',
     ],
   }),
   nodeResolve({
-    jsnext: true,
-    main: true,
+    //jsnext: true,
+    //main: true,
     browser: true,
   }),
   uglify(),
   babel({
     exclude: [
       'node_modules/**',
-      // for the case where this is installed as a sub-dependency
-      //'../node_modules/**',
     ]
   }),
 ];
