@@ -1,4 +1,5 @@
-console.log('building node version...');
+console.log('building version for  Node.js...');
+
 import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
 import nodeResolve from 'rollup-plugin-node-resolve';
