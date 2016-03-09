@@ -28,6 +28,7 @@ config.plugins = [
   includePaths({
     include: {
       './NormalizeHashDOT_init.js': './lib/NormalizeHashDOT_init.browser.js',
+      './node-polyfiller.js': './lib/placeholder.js',
       'superagent-cache': './lib/placeholder.js',
       'cache-service-cache-module': './lib/placeholder.js',
     },
