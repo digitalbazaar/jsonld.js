@@ -1,4 +1,4 @@
-console.log('building browser version...');
+console.log('building browser version926...');
 import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
 import includePaths from 'rollup-plugin-includepaths';
@@ -39,7 +39,7 @@ config.plugins = [
   commonjs({
     include: [
       'node_modules/**',
-      '../node_modules/**',
+      '../**',
       //'/Users/andersriutta/Sites/jsonld-rx/node_modules/**',
     ],
   }),
