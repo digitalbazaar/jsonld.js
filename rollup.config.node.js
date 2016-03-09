@@ -2,6 +2,7 @@ console.log('building version for Node.js...');
 
 import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
+import includePaths from 'rollup-plugin-includepaths';
 import nodeResolve from 'rollup-plugin-node-resolve';
 
 import config from './rollup.config';
@@ -15,7 +16,7 @@ config.dest = 'dist/node/jsonld.js';
 
 config.intro = (config.intro ? [config.intro] : [])
 .concat([
-  'global.Promise = global.Promise || require(\'es6-promise\').Promise;'
+  'require(\'es6-promise\').polyfill();'
 ])
 .join('\n');
 
@@ -26,6 +27,11 @@ config.outro = (config.outro ? [config.outro] : [])
 .join('\n');
 
 config.plugins = [
+  includePaths({
+    include: {
+      'Promise': './node_modules/es6-promise/dist/es6-promise.js'
+    }
+  }),
   commonjs({
     include: [
       'node_modules/**',
