@@ -1,4 +1,4 @@
-console.log('building browser version926...');
+console.log('building browser version929...');
 import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
 import includePaths from 'rollup-plugin-includepaths';
@@ -36,20 +36,23 @@ config.plugins = [
     paths: ['lib', 'node_modules', '../node_modules'],
     extensions: ['.js', '.json', '.html']
   }),
-  commonjs({
-    include: [
-      'node_modules/**',
-      '../**',
-      //'/Users/andersriutta/Sites/jsonld-rx/node_modules/**',
-    ],
-  }),
   //*
   nodeResolve({
-    //jsnext: true,
+    jsnext: true,
     main: true,
     browser: true,
   }),
   //*/
+  commonjs({
+    include: [
+      'node_modules/**',
+      // kludge needed to make this work when jsonld.js
+      // is a sub-module.
+      // TODO file bug report with rollup-plugin-commonjs.
+      //      what happens with older versions of npm?
+      '../**',
+    ],
+  }),
   uglify(),
   babel({
     exclude: [
