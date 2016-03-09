@@ -15,22 +15,23 @@ import config from './rollup.config';
 config.format = 'umd';
 config.dest = 'dist/browser/jsonld.js';
 
-config.outro = [
-  config.outro || '',
+config.outro = (config.outro ? [config.outro] : [])
+.concat([
   fs.readFileSync(path.join('./lib/outro.browser.js'))
-].join('\n');
+])
+.join('\n');
 
-config.footer = [
-  config.footer || '',
+config.footer = (config.footer ? [config.footer] : [])
+.concat([
   'window.jsonldjs = window.jsonld;',
   'window.jsonld.version = \'' + pkg.version + '\';'
-].join('\n');
+])
+.join('\n');
 
 config.plugins = [
   includePaths({
     include: {
       './NormalizeHashDOT_init.js': './lib/NormalizeHashDOT_init.browser.js',
-      './node-polyfiller.js': './lib/placeholder.js',
       'superagent-cache': './lib/placeholder.js',
       'cache-service-cache-module': './lib/placeholder.js',
     },

@@ -26,8 +26,10 @@
   "main": "dist/node/jsonld.js",
   "jsnext:main": "lib/main.js",
   "dependencies": {
+    "babel": "^6.5.2",
     "babel-preset-es2015-rollup": "^1.1.1",
     "cache-service-cache-module": "^1.2.3",
+    "es6-module-loader": "^0.17.11",
     "es6-promise": "~2.0.1",
     "fs-extra": "^0.26.5",
     "lodash": "^4.6.1",
@@ -41,6 +43,9 @@
     "setimmediate": "^1.0.4",
     "superagent": "^1.7.2",
     "superagent-cache": "^1.4.0",
+    "systemjs": "^0.19.24",
+    "traceur": "0.0.104",
+    "typescript": "^1.8.7",
     "xmldom": "0.1.19"
   },
   "devDependencies": {
@@ -80,7 +85,6 @@
   },
   "browser": {
     "./dist/node/jsonld.js": "dist/browser/jsonld.js",
-    "./node-polyfiller.js": false,
     "./NormalizeHashDOT_init.js": "lib/NormalizeHashDOT_init.browser.js",
     "cache-service-cache-module": false,
     "es6-promise": false,
