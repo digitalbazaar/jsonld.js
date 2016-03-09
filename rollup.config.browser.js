@@ -1,4 +1,4 @@
-console.log('building browser version929...');
+console.log('building browser version930...');
 import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
 import includePaths from 'rollup-plugin-includepaths';
@@ -50,7 +50,7 @@ config.plugins = [
       // is a sub-module.
       // TODO file bug report with rollup-plugin-commonjs.
       //      what happens with older versions of npm?
-      '../**',
+      //'../**',
     ],
   }),
   uglify(),
