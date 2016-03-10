@@ -34,7 +34,6 @@ config.plugins = [
       './NormalizeHashDOT_init.js': './lib/NormalizeHashDOT_init.browser.js',
       'cache-service-cache-module': './lib/placeholder.js',
       'es6-promise': './lib/placeholder.js',
-      'Promise': './lib/placeholder.js',
       'superagent-cache': './lib/placeholder.js',
     },
     paths: ['lib', 'node_modules', '../node_modules'],
