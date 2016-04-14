@@ -25,8 +25,8 @@
   "license": "BSD-3-Clause",
   "main": "js/jsonld.js",
   "dependencies": {
-    "es6-promise": "~2.0.1",
-    "pkginfo": "~0.3.0",
+    "es6-promise": "^3.0.0",
+    "pkginfo": "~0.4.0",
     "request": "^2.61.0",
     "xmldom": "0.1.19"
   },
@@ -35,8 +35,8 @@
     "commander": "^2.8.0",
     "cors": "^2.7.1",
     "express": "^4.13.3",
-    "istanbul": "^0.3.19",
-    "jscs": "^2.8.0",
+    "istanbul": "^0.4.3",
+    "jscs": "^3.0.0",
     "jshint": "^2.9.1",
     "mocha": "^2.3.4",
     "mocha-phantomjs": "~3.5.6",

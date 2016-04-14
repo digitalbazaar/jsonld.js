@@ -8,7 +8,7 @@
   "license": "BSD",
   "main": ["js/jsonld.js"],
   "dependencies": {
-    "es6-promise": "~2.0.0"
+    "es6-promise": "^3.0.0"
   },
   "ignore": [
     "node_modules",
