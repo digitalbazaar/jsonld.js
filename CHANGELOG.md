@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.4.7] - 2016-04-14
+
+### Fixed
+- Testing document loader.
+
 ## [0.4.6] - 2016-03-02
 
 ### Added
@@ -66,7 +71,8 @@
 [jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
 [jsonld-request]: https://github.com/digitalbazaar/jsonld-request
 
-[Unreleased]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.6...HEAD
+[Unreleased]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.7...HEAD
+[0.4.7]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.6...0.4.7
 [0.4.6]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.5...0.4.6
 [0.4.5]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.4...0.4.5
 [0.4.4]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.3...0.4.4
