@@ -627,7 +627,7 @@ function createDocumentLoader(test) {
     }
 
     // load remotely
-    return loader(url, callback);
+    return jsonld.loadDocument(url, callback);
   };
 
   return _nodejs ? localLoader : function(url) {
