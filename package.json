@@ -25,7 +25,7 @@
   "license": "BSD-3-Clause",
   "main": "js/jsonld.js",
   "dependencies": {
-    "es6-promise": "^3.0.0",
+    "es6-promise": "^2.0.0",
     "pkginfo": "~0.4.0",
     "request": "^2.61.0",
     "xmldom": "0.1.19"

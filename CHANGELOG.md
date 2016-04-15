@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- Revert es6-promise dependency to 2.x to avoid auto-polyfill behavior.
+
 ## [0.4.7] - 2016-04-14
 
 ### Fixed
