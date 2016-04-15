@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.4.8] - 2016-04-14
+
 ### Fixed
 - Revert es6-promise dependency to 2.x to avoid auto-polyfill behavior.
 
@@ -74,7 +76,8 @@
 [jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
 [jsonld-request]: https://github.com/digitalbazaar/jsonld-request
 
-[Unreleased]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.7...HEAD
+[Unreleased]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.8...HEAD
+[0.4.8]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.7...0.4.8
 [0.4.7]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.6...0.4.7
 [0.4.6]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.5...0.4.6
 [0.4.5]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.4...0.4.5
