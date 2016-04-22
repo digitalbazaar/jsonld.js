@@ -73,6 +73,20 @@ define(['jsonld'], function(jsonld) { ... });
 <script src="//cdnjs.cloudflare.com/ajax/libs/jsonld/0.3.15/jsonld.js"></script>
 ```
 
+### JSPM
+
+```
+jspm install npm:jsonld
+```
+
+``` js
+import * as jsonld from 'jsonld';
+// or
+import {promises} from 'jsonld';
+// or
+import {JsondLdProcessor} from 'jsonld';
+```
+
 ## Quick Examples
 
 ```js
