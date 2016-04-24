@@ -5446,13 +5446,18 @@ function _compactIri(activeCtx, iri, value, relativeTo, reverse) {
   }
   relativeTo = relativeTo || {};
 
-  // if term is a keyword, default vocab to true
+  var inverseCtx = activeCtx.getInverse();
+
+  // if term is a keyword, it can only be compacted to a simple alias
   if(_isKeyword(iri)) {
-    relativeTo.vocab = true;
+    if(iri in inverseCtx) {
+      return inverseCtx[iri]['@none']['@type']['@none'];
+    }
+    return iri;
   }
 
   // use inverse context to pick a term if iri is relative to vocab
-  if(relativeTo.vocab && iri in activeCtx.getInverse()) {
+  if(relativeTo.vocab && iri in inverseCtx) {
     var defaultLanguage = activeCtx['@language'] || '@none';
 
     // prefer @index if available in value
