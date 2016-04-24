@@ -5578,8 +5578,7 @@ function _compactIri(activeCtx, iri, value, relativeTo, reverse) {
     //   the mapping matches the IRI)
     var curie = term + ':' + iri.substr(definition['@id'].length);
     var isUsableCurie = (!(curie in activeCtx.mappings) ||
-      (value === null && activeCtx.mappings[curie] &&
-      activeCtx.mappings[curie]['@id'] === iri));
+      (value === null && activeCtx.mappings[curie]['@id'] === iri));
 
     // select curie if it is shorter or the same length but lexicographically
     // less than the current choice
