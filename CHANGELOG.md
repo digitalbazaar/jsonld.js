@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.4.9] - 2016-04-23
+
+### Changed
+- Add optimizations for _compactIri.
+
 ## [0.4.8] - 2016-04-14
 
 ### Fixed
@@ -76,7 +81,8 @@
 [jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
 [jsonld-request]: https://github.com/digitalbazaar/jsonld-request
 
-[Unreleased]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.8...HEAD
+[Unreleased]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.9...HEAD
+[0.4.9]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.8...0.4.9
 [0.4.8]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.7...0.4.8
 [0.4.7]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.6...0.4.7
 [0.4.6]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.5...0.4.6
