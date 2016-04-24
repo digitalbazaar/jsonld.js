@@ -128,12 +128,12 @@ jsonld.compact = function(input, ctx, options, callback) {
   }
 
   var expand = function(input, options, callback) {
-    jsonld.nextTick(function() {
-      if(options.skipExpansion) {
-        return callback(null, input);
-      }
-      jsonld.expand(input, options, callback);
-    });
+    if(options.skipExpansion) {
+      return jsonld.nextTick(function() {
+        callback(null, input);
+      });
+    }
+    jsonld.expand(input, options, callback);
   };
 
   // expand input then do compaction
