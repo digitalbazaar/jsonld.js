@@ -5561,12 +5561,12 @@ function _compactIri(activeCtx, iri, value, relativeTo, reverse) {
   // no term or @vocab match, check for possible CURIEs
   var choice = null;
   for(var term in activeCtx.mappings) {
+    var definition = activeCtx.mappings[term];
     // skip terms with colons, they can't be prefixes
-    if(term.indexOf(':') !== -1) {
+    if(definition && definition._termHasColon) {
       continue;
     }
     // skip entries with @ids that are not partial matches
-    var definition = activeCtx.mappings[term];
     if(!definition ||
       definition['@id'] === iri || iri.indexOf(definition['@id']) !== 0) {
       continue;
@@ -5808,10 +5808,14 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
     }
   }
 
+  // always compute whether term has a colon as an optimization for
+  // _compactIri
+  var colon = term.indexOf(':');
+  mapping._termHasColon = (colon !== -1);
+
   if(!('@id' in mapping)) {
     // see if the term has a prefix
-    var colon = term.indexOf(':');
-    if(colon !== -1) {
+    if(mapping._termHasColon) {
       var prefix = term.substr(0, colon);
       if(prefix in localCtx) {
         // define parent prefix
