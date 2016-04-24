@@ -5562,13 +5562,13 @@ function _compactIri(activeCtx, iri, value, relativeTo, reverse) {
   var choice = null;
   for(var term in activeCtx.mappings) {
     var definition = activeCtx.mappings[term];
-    // skip terms with colons, they can't be prefixes
-    if(definition && definition._termHasColon) {
+    // skip null definitions and terms with colons, they can't be prefixes
+    if(!definition || definition._termHasColon) {
       continue;
     }
     // skip entries with @ids that are not partial matches
-    if(!definition ||
-      definition['@id'] === iri || iri.indexOf(definition['@id']) !== 0) {
+    if(!(iri.length > definition['@id'].length &&
+      iri.indexOf(definition['@id']) === 0)) {
       continue;
     }
 
