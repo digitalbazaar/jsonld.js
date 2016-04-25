@@ -5565,31 +5565,37 @@ function _compactIri(activeCtx, iri, value, relativeTo, reverse) {
 
   // no term or @vocab match, check for possible CURIEs
   var choice = null;
-  for(var term in activeCtx.mappings) {
-    var definition = activeCtx.mappings[term];
-    // skip null definitions and terms with colons, they can't be prefixes
-    if(!definition || definition._termHasColon) {
-      continue;
+  var idx = 0;
+  var partialMatches = [];
+  var iriMap = activeCtx.fastCurieMap;
+  // check for partial matches of against `iri`, which means look until
+  // iri.length - 1, not full length
+  var maxPartialLength = iri.length - 1;
+  for(; idx < maxPartialLength && iri[idx] in iriMap; ++idx) {
+    iriMap = iriMap[iri[idx]];
+    if('' in iriMap) {
+      partialMatches.push(iriMap[''][0]);
     }
-    // skip entries with @ids that are not partial matches
-    if(!(iri.length > definition['@id'].length &&
-      iri.indexOf(definition['@id']) === 0)) {
-      continue;
-    }
+  }
+  // check partial matches in reverse order to prefer longest ones first
+  for(var i = partialMatches.length - 1; i >= 0; --i) {
+    var entry = partialMatches[i];
+    var terms = entry.terms;
+    for(var ti = 0; ti < terms.length; ++ti) {
+      // a CURIE is usable if:
+      // 1. it has no mapping, OR
+      // 2. value is null, which means we're not compacting an @value, AND
+      //   the mapping matches the IRI
+      var curie = terms[ti] + ':' + iri.substr(entry.iri.length);
+      var isUsableCurie = (!(curie in activeCtx.mappings) ||
+        (value === null && activeCtx.mappings[curie]['@id'] === iri));
 
-    // a CURIE is usable if:
-    // 1. it has no mapping, OR
-    // 2. value is null, which means we're not compacting an @value, AND
-    //   the mapping matches the IRI)
-    var curie = term + ':' + iri.substr(definition['@id'].length);
-    var isUsableCurie = (!(curie in activeCtx.mappings) ||
-      (value === null && activeCtx.mappings[curie]['@id'] === iri));
-
-    // select curie if it is shorter or the same length but lexicographically
-    // less than the current choice
-    if(isUsableCurie && (choice === null ||
-      _compareShortestLeast(curie, choice) < 0)) {
-      choice = curie;
+      // select curie if it is shorter or the same length but lexicographically
+      // less than the current choice
+      if(isUsableCurie && (choice === null ||
+        _compareShortestLeast(curie, choice) < 0)) {
+        choice = curie;
+      }
     }
   }
 
@@ -6212,6 +6218,10 @@ function _getInitialContext(options) {
     }
     var inverse = activeCtx.inverse = {};
 
+    // variables for building fast CURIE map
+    var fastCurieMap = activeCtx.fastCurieMap = {};
+    var irisToTerms = {};
+
     // handle default language
     var defaultLanguage = activeCtx['@language'] || '@none';
 
@@ -6236,10 +6246,25 @@ function _getInitialContext(options) {
       for(var ii = 0; ii < ids.length; ++ii) {
         var iri = ids[ii];
         var entry = inverse[iri];
+        var isKeyword = _isKeyword(iri);
 
-        // initialize entry
         if(!entry) {
+          // initialize entry
           inverse[iri] = entry = {};
+
+          if(!isKeyword && !mapping._termHasColon) {
+            // init IRI to term map and fast CURIE prefixes
+            irisToTerms[iri] = [term];
+            var fastCurieEntry = {iri: iri, terms: irisToTerms[iri]};
+            if(iri[0] in fastCurieMap) {
+              fastCurieMap[iri[0]].push(fastCurieEntry);
+            } else {
+              fastCurieMap[iri[0]] = [fastCurieEntry];
+            }
+          }
+        } else if(!isKeyword && !mapping._termHasColon) {
+          // add IRI to term match
+          irisToTerms[iri].push(term);
         }
 
         // add new entry
@@ -6274,7 +6299,48 @@ function _getInitialContext(options) {
       }
     }
 
+    // build fast CURIE map
+    for(var key in fastCurieMap) {
+      _buildIriMap(fastCurieMap, key, 1);
+    }
+
     return inverse;
+  }
+
+  /**
+   * Runs a recursive algorithm to build a lookup map for quickly finding
+   * potential CURIEs.
+   *
+   * @param iriMap the map to build.
+   * @param key the current key in the map to work on.
+   * @param idx the index into the IRI to compare.
+   */
+  function _buildIriMap(iriMap, key, idx) {
+    var entries = iriMap[key];
+    var next = iriMap[key] = {};
+
+    var iri;
+    var letter;
+    for(var i = 0; i < entries.length; ++i) {
+      iri = entries[i].iri;
+      if(idx >= iri.length) {
+        letter = '';
+      } else {
+        letter = iri[idx];
+      }
+      if(letter in next) {
+        next[letter].push(entries[i]);
+      } else {
+        next[letter] = [entries[i]];
+      }
+    }
+
+    for(var key in next) {
+      if(key === '') {
+        continue;
+      }
+      _buildIriMap(next, key, idx + 1);
+    }
   }
 
   /**
