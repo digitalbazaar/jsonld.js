@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.4.11] - 2016-04-24
+
+### Changed
+- Add optimization for finding best CURIE matches.
+
 ## [0.4.10] - 2016-04-24
 
 ### Changed
@@ -86,7 +91,8 @@
 [jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
 [jsonld-request]: https://github.com/digitalbazaar/jsonld-request
 
-[Unreleased]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.10...HEAD
+[Unreleased]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.11...HEAD
+[0.4.11]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.10...0.4.11
 [0.4.10]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.9...0.4.10
 [0.4.9]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.8...0.4.9
 [0.4.8]: https://github.com/digitalbazaar/jsonld.js/compare/0.4.7...0.4.8
