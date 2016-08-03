@@ -756,9 +756,9 @@ jsonld.objectify = function(input, ctx, options, callback) {
  *          [base] the base IRI to use.
  *          [expandContext] a context to expand with.
  *          [inputFormat] the format if input is not JSON-LD:
- *            'appilcation/n-quads'
+ *            'appilcation/n-quads' for N-Quads
  *          [format] the format if output is a string:
- *            'appilcation/n-quads'
+ *            'appilcation/n-quads' for N-Quads
  *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
  * @param callback(err, normalized) called once the operation completes.
  */
