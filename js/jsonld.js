@@ -790,7 +790,7 @@ jsonld.normalize = function(input, options, callback) {
   var opts = _clone(options);
 
   if('inputFormat' in opts) {
-    if(opts.inputFormat.indexOf('application/nquads') != -1) {
+    if(opts.inputFormat.indexOf('application/nquads') === -1) {
       opts.inputFormat = 'application/n-quads';
     }
     if(opts.inputFormat !== 'application/n-quads') {
@@ -922,7 +922,7 @@ jsonld.fromRDF = function(dataset, options, callback) {
  *          [base] the base IRI to use.
  *          [expandContext] a context to expand with.
  *          [format] the format to use to output a string:
- *            'appilcation/n-quads' for N-Quads.
+ *            'appilcation/nquads' for N-Quads.
  *          [produceGeneralizedRdf] true to output generalized RDF, false
  *            to produce only standard RDF (default: false).
  *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
@@ -963,7 +963,7 @@ jsonld.toRDF = function(input, options, callback) {
       // output RDF dataset
       dataset = Processor.prototype.toRDF(expanded, options);
       if(options.format) {
-        if(options.format === 'appilcation/n-quads') {
+        if(options.format === 'appilcation/nquads') {
           return callback(null, _toNQuads(dataset));
         }
         throw new JsonLdError(
@@ -4009,7 +4009,7 @@ Normalize.prototype.main = function(dataset, callback) {
 
   // handle invalid output format
   if(self.options.format) {
-    if(self.options.format !== 'appilcation/n-quads') {
+    if(self.options.format !== 'appilcation/nquads') {
       return callback(new JsonLdError(
         'Unknown output format.',
         'jsonld.UnknownFormat', {format: self.options.format}));
@@ -4221,7 +4221,7 @@ Normalize.prototype.main = function(dataset, callback) {
           normalized.sort();
 
           // 8) Return the normalized dataset.
-          if(self.options.format === 'appilcation/n-quads') {
+          if(self.options.format === 'appilcation/nquads') {
             result = normalized.join('');
             return callback();
           }
@@ -7026,6 +7026,7 @@ function _parseNQuads(input) {
 }
 
 // register the N-Quads RDF parser
+jsonld.registerRDFParser('application/nquads', _parseNQuads);
 jsonld.registerRDFParser('application/n-quads', _parseNQuads);
 
 /**
