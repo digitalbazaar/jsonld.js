@@ -171,7 +171,7 @@ jsonld.toRDF(doc, {format: 'application/n-quads'}, function(err, nquads) {
 });
 
 // deserialize N-Quads (RDF) to JSON-LD
-jsonld.fromRDF(nquads, {format: 'application/n-quads'}, function(err, doc) {
+jsonld.fromRDF(nquads, {format: 'application/n-quads', useStandardNQuadsType: true}, function(err, doc) {
   // doc is JSON-LD
 });
 
