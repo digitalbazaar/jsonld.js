@@ -756,9 +756,9 @@ jsonld.objectify = function(input, ctx, options, callback) {
  *          [base] the base IRI to use.
  *          [expandContext] a context to expand with.
  *          [inputFormat] the format if input is not JSON-LD:
- *            'application/nquads' for N-Quads.
+ *            'application/nquads' or 'application/n-quads' for N-Quads.
  *          [format] the format if output is a string:
- *            'application/nquads' for N-Quads.
+ *            'application/nquads' or 'application/n-quads' for N-Quads.
  *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
  * @param callback(err, normalized) called once the operation completes.
  */
@@ -788,7 +788,7 @@ jsonld.normalize = function(input, options, callback) {
   }
 
   if('inputFormat' in options) {
-    if(options.inputFormat !== 'application/nquads') {
+    if((options.inputFormat !== 'application/nquads') || (options.inputFormat !== 'application/n-quads'))  {
       return callback(new JsonLdError(
         'Unknown normalization input format.',
         'jsonld.NormalizeError'));
@@ -821,6 +821,8 @@ jsonld.normalize = function(input, options, callback) {
  * @param [options] the options to use:
  *          [format] the format if dataset param must first be parsed:
  *            'application/nquads' for N-Quads (default).
+ *          [useStandardNQuadsType] the format of N-Quads
+ *            (default: false)
  *          [rdfParser] a custom RDF-parser to use to parse the dataset.
  *          [useRdfType] true to use rdf:type, false to use @type
  *            (default: false).
@@ -850,10 +852,18 @@ jsonld.fromRDF = function(dataset, options, callback) {
     options.useNativeTypes = false;
   }
 
+  if (!('useStandardNQuadsType' in options)){
+    options.useStandardNQuadsType = false;
+  }
+
   if(!('format' in options) && _isString(dataset)) {
     // set default format to nquads
     if(!('format' in options)) {
-      options.format = 'application/nquads';
+      if (!useStandardNQuadsType){
+        options.format = 'application/nquads';
+      } else {
+        options.format = 'application/n-quads';
+      }
     }
   }
 
@@ -959,7 +969,7 @@ jsonld.toRDF = function(input, options, callback) {
       // output RDF dataset
       dataset = Processor.prototype.toRDF(expanded, options);
       if(options.format) {
-        if(options.format === 'application/nquads') {
+        if((options.format === 'application/nquads') || (options.format === 'application/n-quads')) {
           return callback(null, _toNQuads(dataset));
         }
         throw new JsonLdError(
@@ -4217,7 +4227,7 @@ Normalize.prototype.main = function(dataset, callback) {
           normalized.sort();
 
           // 8) Return the normalized dataset.
-          if(self.options.format === 'application/nquads') {
+          if((self.options.format === 'application/nquads') || (self.options.format === 'application/n-quads')) {
             result = normalized.join('');
             return callback();
           }
@@ -7023,6 +7033,7 @@ function _parseNQuads(input) {
 
 // register the N-Quads RDF parser
 jsonld.registerRDFParser('application/nquads', _parseNQuads);
+jsonld.registerRDFParser('application/n-quads', _parseNQuads);
 
 /**
  * Converts an RDF dataset to N-Quads.

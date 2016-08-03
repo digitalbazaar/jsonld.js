@@ -165,6 +165,16 @@ jsonld.fromRDF(nquads, {format: 'application/nquads'}, function(err, doc) {
   // doc is JSON-LD
 });
 
+// serialize a document to N-Quads (RDF)
+jsonld.toRDF(doc, {format: 'application/n-quads'}, function(err, nquads) {
+  // nquads is a string of nquads
+});
+
+// deserialize N-Quads (RDF) to JSON-LD
+jsonld.fromRDF(nquads, {format: 'application/n-quads'}, function(err, doc) {
+  // doc is JSON-LD
+});
+
 // register a custom async-callback-based RDF parser
 jsonld.registerRDFParser = function(contentType, function(input, callback) {
   // parse input to a jsonld.js RDF dataset object...
