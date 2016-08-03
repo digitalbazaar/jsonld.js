@@ -756,9 +756,9 @@ jsonld.objectify = function(input, ctx, options, callback) {
  *          [base] the base IRI to use.
  *          [expandContext] a context to expand with.
  *          [inputFormat] the format if input is not JSON-LD:
- *            'appilcation/n-quads' for N-Quads
+ *            'appilcation/n-quads' for N-Quads.
  *          [format] the format if output is a string:
- *            'appilcation/n-quads' for N-Quads
+ *            'appilcation/n-quads' for N-Quads.
  *          [documentLoader(url, callback(err, remoteDoc))] the document loader.
  * @param callback(err, normalized) called once the operation completes.
  */
@@ -787,8 +787,13 @@ jsonld.normalize = function(input, options, callback) {
     options.documentLoader = jsonld.loadDocument;
   }
 
-  if('inputFormat' in options) {
-    if(options.inputFormat !== 'application/n-quads') {
+  var opts = _clone(options);
+
+  if('inputFormat' in opts) {
+    if(opts.inputFormat.indexOf('application/nquads') != -1) {
+      opts.inputFormat = 'application/n-quads';
+    }
+    if(opts.inputFormat !== 'application/n-quads') {
       return callback(new JsonLdError(
         'Unknown normalization input format.',
         'jsonld.NormalizeError'));
@@ -798,7 +803,6 @@ jsonld.normalize = function(input, options, callback) {
     new Processor().normalize(parsedInput, options, callback);
   } else {
     // convert to RDF dataset then do normalization
-    var opts = _clone(options);
     delete opts.format;
     opts.produceGeneralizedRdf = false;
     jsonld.toRDF(input, opts, function(err, dataset) {
