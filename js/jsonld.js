@@ -859,7 +859,7 @@ jsonld.fromRDF = function(dataset, options, callback) {
   if(!('format' in options) && _isString(dataset)) {
     // set default format to nquads
     if(!('format' in options)) {
-      if (!useStandardNQuadsType){
+      if (!options.useStandardNQuadsType){
         options.format = 'application/nquads';
       } else {
         options.format = 'application/n-quads';
