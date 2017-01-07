@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Changed
+- Move `js/jsonld.js` to `lib/jsonld.js`.
+
 ### Added
 - Add .editorconfig support.
 

@@ -58,7 +58,7 @@ bower install jsonld
 ```js
 require.config({
   paths: {
-    jsonld: 'bower_components/jsonld/js/jsonld'
+    jsonld: 'bower_components/jsonld/lib/jsonld'
   }
 });
 define(['jsonld'], function(jsonld) { ... });

@@ -3,7 +3,7 @@
  *
  * @author goofballLogic
  */
-var jsonld = require('../js/jsonld');
+var jsonld = require('..');
 var assert = require('assert');
 
 describe('For the node.js document loader', function() {
