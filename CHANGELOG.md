@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- Add .editorconfig support.
+
 ### Changed
 - Update url parser to remove default ports from URLs.
 - Skip spec version 1.1 tests.
