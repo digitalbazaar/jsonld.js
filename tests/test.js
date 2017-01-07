@@ -14,7 +14,7 @@ var _nodejs = (typeof process !== 'undefined' &&
   process.versions && process.versions.node);
 
 if(_nodejs) {
-  var _jsdir = getEnv().JSDIR || 'js';
+  var _jsdir = getEnv().JSDIR || 'lib';
   var fs = require('fs');
   var path = require('path');
   var jsonld = require('../' + _jsdir + '/jsonld')();
@@ -60,11 +60,11 @@ if(_nodejs) {
   var fs = require('fs');
   var system = require('system');
   require('./setImmediate');
-  var _jsdir = getEnv().JSDIR || 'js';
+  var _jsdir = getEnv().JSDIR || 'lib';
   require('../' + _jsdir + '/jsonld');
   jsonld = jsonldjs;
   window.Promise = require('es6-promise').Promise;
-  var assert = require('chai').assert;
+  var assert = require('assert');
   require('mocha/mocha');
   require('mocha-phantomjs/lib/mocha-phantomjs/core_extensions');
   var program = {};
