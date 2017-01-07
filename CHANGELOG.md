@@ -24,7 +24,7 @@
 ## 0.4.9 - 2016-04-23
 
 ### Changed
-- Add optimizations for _compactIri.
+- Add optimizations for \_compactIri.
 
 ## 0.4.8 - 2016-04-14
 
