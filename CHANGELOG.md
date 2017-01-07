@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- Add .editorconfig support.
+
 ## 0.4.11 - 2016-04-24
 
 ### Changed
