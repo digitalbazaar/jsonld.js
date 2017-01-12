@@ -95,6 +95,9 @@ var ROOT_MANIFEST_DIR = resolvePath(
 
 var TEST_TYPES = {
   'jld:CompactTest': {
+    skip: {
+      processingMode: ['json-ld-1.1']
+    },
     fn: 'compact',
     params: [
       readTestUrl('input'),
@@ -104,6 +107,9 @@ var TEST_TYPES = {
     compare: compareExpectedJson
   },
   'jld:ExpandTest': {
+    skip: {
+      processingMode: ['json-ld-1.1']
+    },
     fn: 'expand',
     params: [
       readTestUrl('input'),
@@ -112,6 +118,9 @@ var TEST_TYPES = {
     compare: compareExpectedJson
   },
   'jld:FlattenTest': {
+    skip: {
+      processingMode: ['json-ld-1.1']
+    },
     fn: 'flatten',
     params: [
       readTestUrl('input'),
@@ -121,6 +130,9 @@ var TEST_TYPES = {
     compare: compareExpectedJson
   },
   'jld:FrameTest': {
+    skip: {
+      type: true
+    },
     fn: 'frame',
     params: [
       readTestUrl('input'),
@@ -146,6 +158,9 @@ var TEST_TYPES = {
     compare: compareExpectedNQuads
   },
   'jld:ToRDFTest': {
+    skip: {
+      regex: [/RFC3986/]
+    },
     fn: 'toRDF',
     params: [
       readTestUrl('input'),
