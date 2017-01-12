@@ -296,16 +296,6 @@ function addManifest(manifest) {
 }
 
 function addTest(manifest, test) {
-  // skip unknown and explicitly skipped test types
-  var testTypes = Object.keys(TEST_TYPES);
-  if(!isJsonLdType(test, testTypes) || isJsonLdType(test, SKIP_TESTS)) {
-    var type = [].concat(
-      getJsonLdValues(test, '@type'),
-      getJsonLdValues(test, 'type')
-    );
-    console.log('Skipping test "' + test.name + '" of type: ' + type);
-  }
-
   // expand @id and input base
   var test_id = test['@id'] || test['id'];
   //var number = test_id.substr(2);
@@ -317,8 +307,50 @@ function addTest(manifest, test) {
   // get appropriate API and run test
   var api = _nodejs ? jsonld : jsonld.promises;
   it(description, function(done) {
+    var self = this;
     this.timeout(5000);
     var testInfo = TEST_TYPES[getJsonLdTestType(test)];
+
+    // skip unknown and explicitly skipped test types
+    var testTypes = Object.keys(TEST_TYPES);
+    if(!isJsonLdType(test, testTypes) || isJsonLdType(test, SKIP_TESTS)) {
+      var type = [].concat(
+        getJsonLdValues(test, '@type'),
+        getJsonLdValues(test, 'type')
+      );
+      //console.log('Skipping test "' + test.name + '" of type: ' + type);
+      self.skip();
+    }
+
+    if(testInfo.skip && testInfo.skip.type) {
+      //console.log('Skipping test "' + test.name + '" of type: ' + type);
+      self.skip();
+    }
+
+    if(testInfo.skip && testInfo.skip.regex) {
+      testInfo.skip.regex.forEach(function(re) {
+        if(re.test(description)) {
+          //console.log('Skipping test "' + test.name + '" of description: ' + description);
+          self.skip();
+        }
+      });
+    }
+
+    var options = getJsonLdValues(test, 'option');
+    options.forEach(function(opt) {
+      var processingModes = getJsonLdValues(opt, 'processingMode');
+      processingModes.forEach(function(pm) {
+        var skipModes = [];
+        if(testInfo.skip && testInfo.skip.processingMode) {
+          skipModes = testInfo.skip.processingMode;
+        }
+        if(skipModes.indexOf(pm) !== -1) {
+          //console.log('Skipping test "' + test.name + '" of processing mode: ' + pm);
+          self.skip();
+        }
+      });
+    });
+
     var fn = testInfo.fn;
     var params = testInfo.params;
     params = params.map(function(param) {return param(test);});
