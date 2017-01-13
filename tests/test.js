@@ -64,7 +64,7 @@ if(_nodejs) {
   require('../' + _jsdir + '/jsonld');
   jsonld = jsonldjs;
   window.Promise = require('es6-promise').Promise;
-  var assert = require('assert');
+  var assert = require('chai').assert;
   require('mocha/mocha');
   require('mocha-phantomjs/lib/mocha-phantomjs/core_extensions');
   var program = {};

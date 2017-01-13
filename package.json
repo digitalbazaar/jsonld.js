@@ -31,6 +31,7 @@
     "xmldom": "0.1.19"
   },
   "devDependencies": {
+    "chai": "^3.5.0",
     "commander": "^2.8.0",
     "cors": "^2.7.1",
     "express": "^4.13.3",
