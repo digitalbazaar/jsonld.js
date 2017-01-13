@@ -31,7 +31,6 @@
     "xmldom": "0.1.19"
   },
   "devDependencies": {
-    "chai": "^3.4.1",
     "commander": "^2.8.0",
     "cors": "^2.7.1",
     "express": "^4.13.3",
@@ -59,6 +58,7 @@
     "test-browser": "make test-browser",
     "test": "make test",
     "coverage": "make test-coverage",
+    "coverage-report": "make test-coverage-report",
     "jscs": "jscs js/jsonld.js tests/*.js",
     "jshint": "jshint js/jsonld.js tests/*.js"
   },

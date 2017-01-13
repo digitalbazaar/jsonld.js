@@ -1,4 +1,5 @@
 TESTS = tests/test.js
+LOCAL_TESTS = test/*.js
 REPORTER = spec
 
 all:
@@ -13,7 +14,7 @@ test-suite-node:
 		exit 1; \
 	fi
 	@if [ -d $(JSONLD_TEST_SUITE) ]; then \
-		NODE_ENV=test ./node_modules/.bin/mocha -A -R $(REPORTER) $(TESTS); \
+		NODE_ENV=test ./node_modules/.bin/mocha -t 30000 -A -R $(REPORTER) $(TESTS); \
 	else \
 		echo "Error: tests not found at $(JSONLD_TEST_SUITE)"; \
 		exit 1; \
@@ -51,10 +52,17 @@ test-normalization-browser:
 
 test-coverage:
 	./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha -- \
-		-u exports -R $(REPORTER) $(TESTS)
+		-t 30000 -u exports -R $(REPORTER) $(TESTS)
+
+test-coverage-lcov:
+	./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha \
+		--report lcovonly -- -t 30000 -u exports -R $(REPORTER) $(TESTS)
+
+test-coverage-report:
+	./node_modules/.bin/istanbul report
 
 test-local:
-	./node_modules/.bin/mocha
+	./node_modules/.bin/mocha -t 30000 -R $(REPORTER) $(LOCAL_TESTS)
 
 clean:
 	rm -rf coverage
