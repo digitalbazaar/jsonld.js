@@ -16,9 +16,15 @@ describe('For the node.js document loader', function() {
 
   describe('When built with no options specified', function() {
     var options = {};
-    it('loading should work', function(callback) {
+    it('loading should work', function(done) {
       jsonld.useDocumentLoader(documentLoaderType);
-      jsonld.expand('http://schema.org/', callback);
+      jsonld.expand('http://schema.org/', function(err) {
+        if(err) {
+          return done(err)
+        }
+        assert.true;
+        done();
+      });
     });
   });
 
