@@ -1,7 +1,7 @@
 # jsonld ChangeLog
 
 ## [Unreleased]
- - Expansion performance test in test-suite
+ - Expansion performance test in test-suite.
 
 ## [0.4.11] - 2016-04-24
 
