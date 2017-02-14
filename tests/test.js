@@ -85,7 +85,8 @@ if(_nodejs) {
 
   mocha.setup({
     reporter: 'spec',
-    ui: 'bdd'
+    ui: 'bdd',
+    useColors: true
   });
 }
 
