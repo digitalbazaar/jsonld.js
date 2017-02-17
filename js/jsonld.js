@@ -1687,8 +1687,7 @@ jsonld.documentLoaders.jquery = function($, options) {
       },
       // ensure Accept header is very specific for JSON-LD/JSON
       headers: {
-        'Accept': 'application/ld+json, application/json',
-        'Upgrade-Insecure-Requests': '1'
+        'Accept': 'application/ld+json, application/json'
       },
       dataType: 'json',
       crossDomain: true,
@@ -1965,7 +1964,6 @@ jsonld.documentLoaders.xhr = function(options) {
         {contextUrl: null, documentUrl: url, document: null});
     };
     req.open('GET', url, true);
-    req.setRequestHeader('Upgrade-Insecure-Requests', '1');
     req.setRequestHeader('Accept', 'application/ld+json, application/json');
     req.send();
   }
