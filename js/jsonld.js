@@ -1276,6 +1276,11 @@ jsonld.promises = function(options) {
       throw new TypeError('Could not compact, too few arguments.');
     }
     var compact = function(input, ctx, options, callback) {
+      if(typeof options === 'function') {
+        callback = options;
+        options = {};
+      }
+      options = options || {};
       // ensure only one value is returned in callback
       jsonld.compact(input, ctx, options, function(err, compacted) {
         callback(err, compacted);
