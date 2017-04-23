@@ -6783,7 +6783,7 @@ function _retrieveContextUrls(input, options, callback) {
     // find all URLs in the given input
     if(!_findContextUrls(input, urls, false, base)) {
       // no new URLs in input
-      finished();
+      return finished();
     }
 
     // queue all unretrieved URLs
