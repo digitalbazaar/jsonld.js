@@ -1265,6 +1265,12 @@ jsonld.promises = function(options) {
     api = {};
   }
 
+  // The Web IDL test harness will check the number of parameters defined in
+  // the functions below. The number of parameters must exactly match the
+  // required (non-optional) parameters of the JsonLdProcessor interface as
+  // defined here:
+  // https://www.w3.org/TR/json-ld-api/#the-jsonldprocessor-interface
+
   api.expand = function(input) {
     if(arguments.length < 1) {
       throw new TypeError('Could not expand, too few arguments.');
