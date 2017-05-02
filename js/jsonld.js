@@ -1646,6 +1646,41 @@ jsonld.cache = {
 };
 
 /**
+ * Accept header.
+ */
+var _defaults = {
+  headers: {
+    accept: 'application/ld+json, application/json'
+  }
+};
+
+/**
+ * Build an headers object from custom headers and assert `accept` header isn't overridden.
+ *
+ * @param {Object} optionsHeaders an object (map) of headers
+ *          with key as header name and value as header value.
+ * @return {Object} an object (map) of headers with a valid `accept` header.
+ */
+function buildHeaders(optionsHeaders) {
+  optionsHeaders = optionsHeaders || {};
+
+  var hasAccept = Object.keys(optionsHeaders).map(function(h) {
+    return h.toLowerCase();
+  }).indexOf('accept') !== -1;
+
+  if(hasAccept) {
+    throw new RangeError(
+      'Accept header may not be specified as an option; only "' +
+      _defaults.headers.accept + '" is supported.');
+  }
+
+  var headers = {'Accept': _defaults.headers.accept};
+  for(var k in optionsHeaders) { headers[k] = optionsHeaders[k]; }
+
+  return headers;
+}
+
+/**
  * Document loaders.
  */
 jsonld.documentLoaders = {};
@@ -1656,6 +1691,8 @@ jsonld.documentLoaders = {};
  * @param $ the jquery instance to use.
  * @param options the options to use:
  *          secure: require all URLs to use HTTPS.
+ *          headers: an object (map) of headers which will be passed as request
+ *            headers for the requested document. Accept is not allowed.
  *          usePromise: true to use a promises API, false for a
  *            callback-continuation-style API; defaults to true if Promise
  *            is globally defined, false if not.
@@ -1665,6 +1702,7 @@ jsonld.documentLoaders = {};
 jsonld.documentLoaders.jquery = function($, options) {
   options = options || {};
   var queue = new jsonld.RequestQueue();
+  var headers = buildHeaders(options.headers);
 
   // use option or, by default, use Promise when its defined
   var usePromise = ('usePromise' in options ?
@@ -1694,12 +1732,9 @@ jsonld.documentLoaders.jquery = function($, options) {
     $.ajax({
       url: url,
       accepts: {
-        json: 'application/ld+json, application/json'
+        json: _defaults.headers.accept
       },
-      // ensure Accept header is very specific for JSON-LD/JSON
-      headers: {
-        'Accept': 'application/ld+json, application/json'
-      },
+      headers: headers,
       dataType: 'json',
       crossDomain: true,
       success: function(data, textStatus, jqXHR) {
@@ -1747,7 +1782,7 @@ jsonld.documentLoaders.jquery = function($, options) {
  *            default.
  *          request: the object which will make the request, default is
  *            provided by `https://www.npmjs.com/package/request`.
- *          headers: an array of headers which will be passed as request
+ *          headers: an object (map) of headers which will be passed as request
  *            headers for the requested document. Accept is not allowed.
  *          usePromise: true to use a promises API, false for a
  *            callback-continuation-style API; false by default.
@@ -1756,10 +1791,10 @@ jsonld.documentLoaders.jquery = function($, options) {
  */
 jsonld.documentLoaders.node = function(options) {
   options = options || {};
+  var headers = buildHeaders(options.headers);
   var strictSSL = ('strictSSL' in options) ? options.strictSSL : true;
   var maxRedirects = ('maxRedirects' in options) ? options.maxRedirects : -1;
   var request = ('request' in options) ? options.request : require('request');
-  var acceptHeader = 'application/ld+json, application/json';
   var http = require('http');
   // TODO: disable cache until HTTP caching implemented
   //var cache = new jsonld.DocumentCache();
@@ -1770,12 +1805,7 @@ jsonld.documentLoaders.node = function(options) {
       return jsonld.promisify(loadDocument, url, []);
     });
   }
-  var headers = options.headers || {};
-  if('Accept' in headers || 'accept' in headers) {
-    throw new RangeError(
-      'Accept header may not be specified as an option; only "' +
-      acceptHeader + '" is supported.');
-  }
+
   return queue.wrapLoader(function(url, callback) {
     loadDocument(url, [], callback);
   });
@@ -1800,8 +1830,7 @@ jsonld.documentLoaders.node = function(options) {
     if(doc !== null) {
       return callback(null, doc);
     }
-    var headers = {'Accept': acceptHeader};
-    for(var k in options.headers) { headers[k] = options.headers[k]; }
+
     request({
       url: url,
       headers: headers,
@@ -1892,6 +1921,8 @@ jsonld.documentLoaders.node = function(options) {
  *
  * @param options the options to use:
  *          secure: require all URLs to use HTTPS.
+ *          headers: an object (map) of headers which will be passed as request
+ *            headers for the requested document. Accept is not allowed.
  *          usePromise: true to use a promises API, false for a
  *            callback-continuation-style API; defaults to true if Promise
  *            is globally defined, false if not.
@@ -1903,6 +1934,7 @@ jsonld.documentLoaders.xhr = function(options) {
   options = options || {};
   var rlink = /(^|(\r\n))link:/i;
   var queue = new jsonld.RequestQueue();
+  var headers = buildHeaders(options.headers);
 
   // use option or, by default, use Promise when its defined
   var usePromise = ('usePromise' in options ?
@@ -1975,7 +2007,11 @@ jsonld.documentLoaders.xhr = function(options) {
         {contextUrl: null, documentUrl: url, document: null});
     };
     req.open('GET', url, true);
-    req.setRequestHeader('Accept', 'application/ld+json, application/json');
+
+    for(var k in headers) {
+      req.setRequestHeader(k, headers[k]);
+    }
+
     req.send();
   }
 };
