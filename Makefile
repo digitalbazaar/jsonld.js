@@ -1,6 +1,7 @@
 TESTS = tests/test.js
 LOCAL_TESTS = test/*.js
 REPORTER = spec
+JSONLD_TEST_SUITE=node_modules/json-ld-test-suite
 
 all:
 
