@@ -96,7 +96,8 @@ var ROOT_MANIFEST_DIR = resolvePath(
 var TEST_TYPES = {
   'jld:CompactTest': {
     skip: {
-      processingMode: ['json-ld-1.1']
+      processingMode: ['json-ld-1.1'],
+      regex: [/tp005/]
     },
     fn: 'compact',
     params: [
@@ -108,7 +109,8 @@ var TEST_TYPES = {
   },
   'jld:ExpandTest': {
     skip: {
-      processingMode: ['json-ld-1.1']
+      processingMode: ['json-ld-1.1'],
+      regex: [/tp002/]
     },
     fn: 'expand',
     params: [

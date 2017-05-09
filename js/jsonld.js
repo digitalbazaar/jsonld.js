@@ -5778,6 +5778,15 @@ function _createTermDefinition(activeCtx, localCtx, term, defined) {
       {code: 'keyword redefinition', context: localCtx, term: term});
   }
 
+  if(term === '@version') {
+    if(value !== 1.1) {
+      throw new JsonLdError(
+        'Invalid JSON-LD syntax; version must be 1.1 if specified',
+        'jsonld.SyntaxError',
+        {code: 'invalid @version value', context: localCtx});
+    }
+  }
+
   if(term === '') {
     throw new JsonLdError(
       'Invalid JSON-LD syntax; a term cannot be an empty string.',
