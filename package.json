@@ -27,7 +27,7 @@
   "dependencies": {
     "es6-promise": "^2.0.0",
     "pkginfo": "~0.4.0",
-    "request": "^2.61.0",
+    "request": "^2.81.0",
     "xmldom": "0.1.19"
   },
   "devDependencies": {
@@ -38,7 +38,7 @@
     "istanbul": "^0.4.3",
     "jscs": "^3.0.0",
     "jshint": "^2.9.1",
-    "mocha": "^2.3.4",
+    "mocha": "^3.3.0",
     "mocha-phantomjs": "~3.5.6",
     "phantomjs": "~1.9.18"
   },
