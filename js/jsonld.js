@@ -1664,9 +1664,9 @@ var _defaults = {
 function buildHeaders(optionsHeaders) {
   optionsHeaders = optionsHeaders || {};
 
-  var hasAccept = Object.keys(optionsHeaders).map(function(h) {
-    return h.toLowerCase();
-  }).indexOf('accept') !== -1;
+  var hasAccept = Object.keys(optionsHeaders).some(function(h) {
+    return h.toLowerCase() === 'accept';
+  });
 
   if(hasAccept) {
     throw new RangeError(
