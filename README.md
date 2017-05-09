@@ -84,7 +84,7 @@ import * as jsonld from 'jsonld';
 // or
 import {promises} from 'jsonld';
 // or
-import {JsondLdProcessor} from 'jsonld';
+import {JsonLdProcessor} from 'jsonld';
 ```
 
 ## Quick Examples
