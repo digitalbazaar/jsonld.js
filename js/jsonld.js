@@ -1650,35 +1650,55 @@ jsonld.cache = {
  */
 var _defaults = {
   headers: {
-    accept: 'application/ld+json, application/json'
+    accept: ['application/ld+json', 'application/json']
   }
 };
 
 /**
- * Build an headers object from custom headers and assert `accept` header isn't overridden.
+ * Build an headers object from custom headers and assert `accept` header is valid.
  *
  * @param {Object} optionsHeaders an object (map) of headers
  *          with key as header name and value as header value.
  * @return {Object} an object (map) of headers with a valid `accept` header.
  */
-function buildHeaders(optionsHeaders) {
+jsonld.buildHeaders = function(optionsHeaders) {
   optionsHeaders = optionsHeaders || {};
 
-  var hasAccept = Object.keys(optionsHeaders).some(function(h) {
+  var headers = {};
+  var acceptHeaderKeys = Object.keys(optionsHeaders).filter(function(h) {
     return h.toLowerCase() === 'accept';
   });
 
-  if(hasAccept) {
-    throw new RangeError(
-      'Accept header may not be specified as an option; only "' +
-      _defaults.headers.accept + '" is supported.');
+  if(acceptHeaderKeys.length === 1) { // only one `accept` header key may be ok
+    // check if `accept` header is valid
+    var acceptHeaderValues = optionsHeaders[acceptHeaderKeys[0]]
+      .split(',')
+      .map(function(value) {
+        return value.trim().toLowerCase();
+      });
+
+    var acceptHeaderIsValid = _defaults.headers.accept.every(function(requiredAcceptHeaderValue) {
+      return acceptHeaderValues.indexOf(requiredAcceptHeaderValue) !== -1;
+    });
+
+    if(!acceptHeaderIsValid) {
+      throw new RangeError('Accept header must contains "' +
+        _defaults.headers.accept.join(', ') + '".');
+    }
+
+    headers['Accept'] = acceptHeaderValues.join(', ');
+  } else if(acceptHeaderKeys.length >= 2) { // there are too many accept headers
+    throw new RangeError('Accept header may be specified only once.');
+  } else { // no accept headers take the default values
+    headers['Accept'] = _defaults.headers.accept.join(', ');
   }
 
-  var headers = {'Accept': _defaults.headers.accept};
-  for(var k in optionsHeaders) { headers[k] = optionsHeaders[k]; }
+  for(var k in optionsHeaders) {
+    if(k.toLowerCase() !== 'accept') { headers[k] = optionsHeaders[k]; }
+  }
 
   return headers;
-}
+};
 
 /**
  * Document loaders.
@@ -1702,7 +1722,7 @@ jsonld.documentLoaders = {};
 jsonld.documentLoaders.jquery = function($, options) {
   options = options || {};
   var queue = new jsonld.RequestQueue();
-  var headers = buildHeaders(options.headers);
+  var headers = jsonld.buildHeaders(options.headers);
 
   // use option or, by default, use Promise when its defined
   var usePromise = ('usePromise' in options ?
@@ -1732,7 +1752,7 @@ jsonld.documentLoaders.jquery = function($, options) {
     $.ajax({
       url: url,
       accepts: {
-        json: _defaults.headers.accept
+        json: _defaults.headers.accept.join(', ')
       },
       headers: headers,
       dataType: 'json',
@@ -1791,7 +1811,7 @@ jsonld.documentLoaders.jquery = function($, options) {
  */
 jsonld.documentLoaders.node = function(options) {
   options = options || {};
-  var headers = buildHeaders(options.headers);
+  var headers = jsonld.buildHeaders(options.headers);
   var strictSSL = ('strictSSL' in options) ? options.strictSSL : true;
   var maxRedirects = ('maxRedirects' in options) ? options.maxRedirects : -1;
   var request = ('request' in options) ? options.request : require('request');
@@ -1934,7 +1954,7 @@ jsonld.documentLoaders.xhr = function(options) {
   options = options || {};
   var rlink = /(^|(\r\n))link:/i;
   var queue = new jsonld.RequestQueue();
-  var headers = buildHeaders(options.headers);
+  var headers = jsonld.buildHeaders(options.headers);
 
   // use option or, by default, use Promise when its defined
   var usePromise = ('usePromise' in options ?
