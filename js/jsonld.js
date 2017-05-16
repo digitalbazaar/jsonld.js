@@ -5498,7 +5498,11 @@ function _compactIri(activeCtx, iri, value, relativeTo, reverse) {
   // if term is a keyword, it can only be compacted to a simple alias
   if(_isKeyword(iri)) {
     if(iri in inverseCtx) {
-      return inverseCtx[iri]['@none']['@type']['@none'];
+      var type = inverseCtx[iri]['@none']['@type'];
+      if('@id' in type) {
+        return type['@id'];
+      }
+      return type['@none'];
     }
     return iri;
   }

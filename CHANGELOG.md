@@ -6,6 +6,9 @@
 - Update url parser to remove default ports from URLs.
 - Skip spec version 1.1 tests.
 
+### Fixed
+- Fix compact-0073 test case.
+
 ## 0.4.12 - 2017-04-24
 
 ### Fixed
