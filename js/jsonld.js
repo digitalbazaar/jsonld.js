@@ -1551,8 +1551,14 @@ jsonld.RequestQueue.prototype.add = function(url, callback) {
       // resolve/reject promise once URL has been loaded
       load.then(function(remoteDoc) {
         resolve(remoteDoc);
+        if(typeof callback === 'function') {
+          callback(null, remoteDoc);
+        }
       }).catch(function(err) {
         reject(err);
+        if(typeof callback === 'function') {
+          callback(err);
+        }
       });
     });
   }
@@ -1802,11 +1808,12 @@ jsonld.documentLoaders.node = function(options) {
   //var cache = new jsonld.DocumentCache();
 
   var queue = new jsonld.RequestQueue();
-  if(options.usePromise) {
-    return queue.wrapLoader(function(url) {
-      return jsonld.promisify(loadDocument, url, []);
-    });
-  }
+  // FIXME: REMOVE
+  // if(options.usePromise) {
+  //   return queue.wrapLoader(function(url) {
+  //     return jsonld.promisify(loadDocument, url, []);
+  //   });
+  // }
 
   return queue.wrapLoader(function(url, callback) {
     loadDocument(url, [], callback);
@@ -1925,9 +1932,6 @@ jsonld.documentLoaders.node = function(options) {
  *          secure: require all URLs to use HTTPS.
  *          headers: an object (map) of headers which will be passed as request
  *            headers for the requested document. Accept is not allowed.
- *          usePromise: true to use a promises API, false for a
- *            callback-continuation-style API; defaults to true if Promise
- *            is globally defined, false if not.
  *          [xhr]: the XMLHttpRequest API to use.
  *
  * @return the XMLHttpRequest document loader.
@@ -1938,14 +1942,6 @@ jsonld.documentLoaders.xhr = function(options) {
   var queue = new jsonld.RequestQueue();
   var headers = buildHeaders(options.headers);
 
-  // use option or, by default, use Promise when its defined
-  var usePromise = ('usePromise' in options ?
-    options.usePromise : (typeof Promise !== 'undefined'));
-  if(usePromise) {
-    return queue.wrapLoader(function(url) {
-      return jsonld.promisify(loader, url);
-    });
-  }
   return queue.wrapLoader(loader);
 
   function loader(url, callback) {
@@ -1998,7 +1994,6 @@ jsonld.documentLoaders.xhr = function(options) {
           doc.contextUrl = linkHeader.target;
         }
       }
-
       callback(null, doc);
     };
     req.onerror = function() {
