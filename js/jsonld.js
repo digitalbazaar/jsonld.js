@@ -1522,45 +1522,13 @@ jsonld.RequestQueue = function() {
 };
 jsonld.RequestQueue.prototype.wrapLoader = function(loader) {
   this._loader = loader;
-  this._usePromise = (loader.length === 1);
   return this.add.bind(this);
 };
 jsonld.RequestQueue.prototype.add = function(url, callback) {
   var self = this;
 
-  // callback must be given if not using promises
-  if(!callback && !self._usePromise) {
+  if(!callback) {
     throw new Error('callback must be specified.');
-  }
-
-  // Promise-based API
-  if(self._usePromise) {
-    return new jsonld.Promise(function(resolve, reject) {
-      var load = self._requests[url];
-      if(!load) {
-        // load URL then remove from queue
-        load = self._requests[url] = self._loader(url)
-          .then(function(remoteDoc) {
-            delete self._requests[url];
-            return remoteDoc;
-          }).catch(function(err) {
-            delete self._requests[url];
-            throw err;
-          });
-      }
-      // resolve/reject promise once URL has been loaded
-      load.then(function(remoteDoc) {
-        resolve(remoteDoc);
-        if(typeof callback === 'function') {
-          callback(null, remoteDoc);
-        }
-      }).catch(function(err) {
-        reject(err);
-        if(typeof callback === 'function') {
-          callback(err);
-        }
-      });
-    });
   }
 
   // callback-based API
@@ -1694,92 +1662,6 @@ function buildHeaders(optionsHeaders) {
 jsonld.documentLoaders = {};
 
 /**
- * Creates a built-in jquery document loader.
- *
- * @param $ the jquery instance to use.
- * @param options the options to use:
- *          secure: require all URLs to use HTTPS.
- *          headers: an object (map) of headers which will be passed as request
- *            headers for the requested document. Accept is not allowed.
- *          usePromise: true to use a promises API, false for a
- *            callback-continuation-style API; defaults to true if Promise
- *            is globally defined, false if not.
- *
- * @return the jquery document loader.
- */
-jsonld.documentLoaders.jquery = function($, options) {
-  options = options || {};
-  var queue = new jsonld.RequestQueue();
-  var headers = buildHeaders(options.headers);
-
-  // use option or, by default, use Promise when its defined
-  var usePromise = ('usePromise' in options ?
-    options.usePromise : (typeof Promise !== 'undefined'));
-  if(usePromise) {
-    return queue.wrapLoader(function(url) {
-      return jsonld.promisify(loader, url);
-    });
-  }
-  return queue.wrapLoader(loader);
-
-  function loader(url, callback) {
-    if(url.indexOf('http:') !== 0 && url.indexOf('https:') !== 0) {
-      return callback(new JsonLdError(
-        'URL could not be dereferenced; only "http" and "https" URLs are ' +
-        'supported.',
-        'jsonld.InvalidUrl', {code: 'loading document failed', url: url}),
-        {contextUrl: null, documentUrl: url, document: null});
-    }
-    if(options.secure && url.indexOf('https') !== 0) {
-      return callback(new JsonLdError(
-        'URL could not be dereferenced; secure mode is enabled and ' +
-        'the URL\'s scheme is not "https".',
-        'jsonld.InvalidUrl', {code: 'loading document failed', url: url}),
-        {contextUrl: null, documentUrl: url, document: null});
-    }
-    $.ajax({
-      url: url,
-      accepts: {
-        json: _defaults.headers.accept
-      },
-      headers: headers,
-      dataType: 'json',
-      crossDomain: true,
-      success: function(data, textStatus, jqXHR) {
-        var doc = {contextUrl: null, documentUrl: url, document: data};
-
-        // handle Link Header
-        var contentType = jqXHR.getResponseHeader('Content-Type');
-        var linkHeader = jqXHR.getResponseHeader('Link');
-        if(linkHeader && contentType !== 'application/ld+json') {
-          // only 1 related link header permitted
-          linkHeader = jsonld.parseLinkHeader(linkHeader)[LINK_HEADER_REL];
-          if(_isArray(linkHeader)) {
-            return callback(new JsonLdError(
-              'URL could not be dereferenced, it has more than one ' +
-              'associated HTTP Link Header.',
-              'jsonld.InvalidUrl',
-              {code: 'multiple context link headers', url: url}), doc);
-          }
-          if(linkHeader) {
-            doc.contextUrl = linkHeader.target;
-          }
-        }
-
-        callback(null, doc);
-      },
-      error: function(jqXHR, textStatus, err) {
-        callback(new JsonLdError(
-          'URL could not be dereferenced, an error occurred.',
-          'jsonld.LoadDocumentError',
-          {code: 'loading document failed', url: url, cause: err}),
-          {contextUrl: null, documentUrl: url, document: null});
-      }
-    });
-  }
-};
-
-/**
  * Creates a built-in node document loader.
  *
  * @param options the options to use:
@@ -1792,8 +1674,6 @@ jsonld.documentLoaders.jquery = function($, options) {
  *            provided by `https://www.npmjs.com/package/request`.
  *          headers: an object (map) of headers which will be passed as request
  *            headers for the requested document. Accept is not allowed.
- *          usePromise: true to use a promises API, false for a
- *            callback-continuation-style API; false by default.
  *
  * @return the node document loader.
  */
@@ -1808,12 +1688,6 @@ jsonld.documentLoaders.node = function(options) {
   //var cache = new jsonld.DocumentCache();
 
   var queue = new jsonld.RequestQueue();
-  // FIXME: REMOVE
-  // if(options.usePromise) {
-  //   return queue.wrapLoader(function(url) {
-  //     return jsonld.promisify(loadDocument, url, []);
-  //   });
-  // }
 
   return queue.wrapLoader(function(url, callback) {
     loadDocument(url, [], callback);
@@ -1994,6 +1868,7 @@ jsonld.documentLoaders.xhr = function(options) {
           doc.contextUrl = linkHeader.target;
         }
       }
+
       callback(null, doc);
     };
     req.onerror = function() {

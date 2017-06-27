@@ -655,16 +655,18 @@ function getEnv() {
  * @return the document loader.
  */
 function createDocumentLoader(test) {
-  var base = 'http://json-ld.org/test-suite';
+  var baseRegex = /^(http|https):\/\/json-ld.org\/test-suite\//;
+  var base;
   var loader = jsonld.documentLoader;
   var localLoader = function(url, callback) {
     // always load remote-doc tests remotely in node
     if(_nodejs && test.manifest.name === 'Remote document') {
       return loader(url, callback);
     }
-
-    var idx = url.indexOf(base);
-    if(idx === 0 || url.indexOf(':') === -1) {
+    var m = url.match(baseRegex);
+    // no match must be empty string because `base.length` is used later
+    base = m ? m[0] : '';
+    if(base || url.indexOf(':') === -1) {
       // attempt to load official test-suite files or relative URLs locally
       var rval;
       try {
