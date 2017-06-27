@@ -8111,6 +8111,7 @@ jsonld.url.parse = function(str, parser) {
   while(i--) {
     parsed[o.keys[i]] = (m[i] === undefined) ? null : m[i];
   }
+
   // remove default ports in found in URLs
   if((parsed.scheme === 'https' && parsed.port === '443') ||
     (parsed.scheme === 'http' && parsed.port === '80')) {
@@ -8118,6 +8119,7 @@ jsonld.url.parse = function(str, parser) {
     parsed.authority = parsed.authority.replace(':' + parsed.port, '');
     parsed.port = null;
   }
+
   parsed.normalizedPath = _removeDotSegments(parsed.path, !!parsed.authority);
   return parsed;
 };
