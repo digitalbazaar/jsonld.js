@@ -1,5 +1,11 @@
 # jsonld ChangeLog
 
+## Unreleased
+
+### Changed
+- Update url parser to remove default ports from URLs.
+- Skip some tests that are failing due to v1.1 changes.
+
 ## 0.4.12 - 2017-04-24
 
 ### Fixed
