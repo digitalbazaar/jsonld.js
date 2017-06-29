@@ -228,11 +228,8 @@ var CONTEXTS = {
 // grab the built-in node.js doc loader
 var nodeDocumentLoader = jsonld.documentLoaders.node();
 // or grab the XHR one: jsonld.documentLoaders.xhr()
-// or grab the jquery one: jsonld.documentLoaders.jquery()
 
 // change the default document loader using the callback API
-// (you can also do this using the promise-based API, return a promise instead
-// of using a callback)
 var customLoader = function(url, callback) {
   if(url in CONTEXTS) {
     return callback(
@@ -244,11 +241,6 @@ var customLoader = function(url, callback) {
   }
   // call the underlining documentLoader using the callback API.
   nodeDocumentLoader(url, callback);
-  /* Note: By default, the node.js document loader uses a callback, but
-  browser-based document loaders (xhr or jquery) return promises if they
-  are supported (or polyfilled) in the browser. This behavior can be
-  controlled with the 'usePromise' option when constructing the document
-  loader. For example: jsonld.documentLoaders.xhr({usePromise: false}); */
 };
 jsonld.documentLoader = customLoader;
 

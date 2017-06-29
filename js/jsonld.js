@@ -1890,10 +1890,7 @@ jsonld.documentLoaders.xhr = function(options) {
 
 /**
  * Assigns the default document loader for external document URLs to a built-in
- * default. Supported types currently include: 'jquery' and 'node'.
- *
- * To use the jquery document loader, the first parameter must be a reference
- * to the main jquery object.
+ * default. Supported types currently include: 'node' and 'xhr'.
  *
  * @param type the type to set.
  * @param [params] the parameters required to use the document loader.
