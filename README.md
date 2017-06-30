@@ -70,8 +70,9 @@ define(['jsonld'], function(jsonld) { ... });
 <!-- For legacy browsers include a Promise polyfill like
   es6-promise before including jsonld.js -->
 <script src="//cdn.jsdelivr.net/g/es6-promise@1.0.0"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/jsonld/0.4.12/jsonld.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jsonld/0.4.12/jsonld.min.js"></script>
 ```
+See https://cdnjs.com/libraries/jsonld for the the latest available cdnjs version.
 
 ### JSPM
 
