@@ -4,7 +4,7 @@
 
 ### Changed
 - Update url parser to remove default ports from URLs.
-- Skip some tests that are failing due to v1.1 changes.
+- Skip spec version 1.1 tests.
 
 ## 0.4.12 - 2017-04-24
 
