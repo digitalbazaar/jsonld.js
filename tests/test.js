@@ -96,8 +96,8 @@ var ROOT_MANIFEST_DIR = resolvePath(
 var TEST_TYPES = {
   'jld:CompactTest': {
     skip: {
-      regex: [/#tp005/, /#tp006/, /#t0073/],
-      processingMode: ['json-ld-1.1']
+      regex: [/#t0073/, /#t0074/],
+      specVersion: ['1.1']
     },
     fn: 'compact',
     params: [
@@ -109,8 +109,7 @@ var TEST_TYPES = {
   },
   'jld:ExpandTest': {
     skip: {
-      regex: [/^#tp002/, /^#tp003/],
-      processingMode: ['json-ld-1.1']
+      specVersion: ['1.1']
     },
     fn: 'expand',
     params: [
@@ -121,7 +120,7 @@ var TEST_TYPES = {
   },
   'jld:FlattenTest': {
     skip: {
-      processingMode: ['json-ld-1.1']
+      specVersion: ['1.1']
     },
     fn: 'flatten',
     params: [
@@ -133,7 +132,7 @@ var TEST_TYPES = {
   },
   'jld:FrameTest': {
     skip: {
-      type: true
+      specVersion: ['1.1']
     },
     fn: 'frame',
     params: [
@@ -354,6 +353,7 @@ function addTest(manifest, test) {
     }
 
     var options = getJsonLdValues(test, 'option');
+
     options.forEach(function(opt) {
       var processingModes = getJsonLdValues(opt, 'processingMode');
       processingModes.forEach(function(pm) {
@@ -363,6 +363,20 @@ function addTest(manifest, test) {
         }
         if(skipModes.indexOf(pm) !== -1) {
           //console.log('Skipping test "' + test.name + '" of processing mode: ' + pm);
+          self.skip();
+        }
+      });
+    });
+
+    options.forEach(function(opt) {
+      var specVersions = getJsonLdValues(opt, 'specVersion');
+      specVersions.forEach(function(sv) {
+        var skipVersions = [];
+        if(testInfo.skip && testInfo.skip.specVersion) {
+          skipVersions = testInfo.skip.specVersion;
+        }
+        if(skipVersions.indexOf(sv) !== -1) {
+          //console.log('Skipping test "' + test.name + '" for spec version: ' + sv);
           self.skip();
         }
       });
