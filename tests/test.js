@@ -97,7 +97,7 @@ var TEST_TYPES = {
   'jld:CompactTest': {
     skip: {
       regex: [/#t0073/, /#t0074/],
-      specVersion: ['1.1']
+      specVersion: ['json-ld-1.1']
     },
     fn: 'compact',
     params: [
@@ -109,7 +109,7 @@ var TEST_TYPES = {
   },
   'jld:ExpandTest': {
     skip: {
-      specVersion: ['1.1']
+      specVersion: ['json-ld-1.1']
     },
     fn: 'expand',
     params: [
@@ -120,7 +120,7 @@ var TEST_TYPES = {
   },
   'jld:FlattenTest': {
     skip: {
-      specVersion: ['1.1']
+      specVersion: ['json-ld-1.1']
     },
     fn: 'flatten',
     params: [
@@ -132,7 +132,7 @@ var TEST_TYPES = {
   },
   'jld:FrameTest': {
     skip: {
-      specVersion: ['1.1']
+      specVersion: ['json-ld-1.1']
     },
     fn: 'frame',
     params: [
