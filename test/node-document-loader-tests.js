@@ -78,7 +78,7 @@ describe('For the node.js document loader', function() {
     });
   });
 
-  describe('When built using headers that already contain an Accept header', function() {
+  describe('When built using headers that already contain an invalid Accept header', function() {
     var options = {request: requestMock};
     options.headers = {
       'x-test-header-3': 'Third value',
@@ -86,7 +86,7 @@ describe('For the node.js document loader', function() {
     };
 
     it('constructing the document loader should fail', function() {
-      var expectedMessage = 'Accept header may not be specified as an option; only "application/ld+json, application/json" is supported.';
+      var expectedMessage = 'Accept header must contains "application/ld+json, application/json".';
       assert.throws(
         jsonld.useDocumentLoader.bind(jsonld, documentLoaderType, options),
         function(err) {
