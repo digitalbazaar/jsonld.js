@@ -159,9 +159,7 @@ var TEST_TYPES = {
     compare: compareExpectedNQuads
   },
   'jld:ToRDFTest': {
-    skip: {
-      regex: [/RFC3986/]
-    },
+    skip: {},
     fn: 'toRDF',
     params: [
       readTestUrl('input'),
