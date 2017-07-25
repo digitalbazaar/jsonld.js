@@ -6130,7 +6130,7 @@ function _prependBase(base, iri) {
 
   if(rel.path !== '') {
   // remove slashes and dots in path
-    transform.path = _removeDotSegments(transform.path, !!transform.authority);
+    transform.path = _removeDotSegments(transform.path);
   }
 
   // construct URL
@@ -8120,7 +8120,7 @@ jsonld.url.parse = function(str, parser) {
     parsed.port = null;
   }
 
-  parsed.normalizedPath = _removeDotSegments(parsed.path, !!parsed.authority);
+  parsed.normalizedPath = _removeDotSegments(parsed.path);
   return parsed;
 };
 
@@ -8128,9 +8128,8 @@ jsonld.url.parse = function(str, parser) {
  * Removes dot segments from a URL path.
  *
  * @param path the path to remove dot segments from.
- * @param hasAuthority true if the URL has an authority, false if not.
  */
-function _removeDotSegments(path, hasAuthority) {
+function _removeDotSegments(path) {
   // RFC 3986 5.2.4 (reworked)
 
   // empty path shortcut
