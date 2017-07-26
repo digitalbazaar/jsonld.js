@@ -85,7 +85,8 @@ if(_nodejs) {
 
   mocha.setup({
     reporter: 'spec',
-    ui: 'bdd'
+    ui: 'bdd',
+    useColors: true
   });
 }
 
@@ -632,11 +633,20 @@ function joinPath() {
     null, Array.prototype.slice.call(arguments));
 }
 
+function fsSeparator() {
+  // if the fs.separator isn't in the workingDirectory path, then we're likely
+  // in bash on Windows (mingw)
+  if (fs.workingDirectory.lastIndexOf(fs.separator) === -1) {
+    return '/';
+  }
+  return fs.separator;
+}
+
 function dirname(filename) {
   if(_nodejs) {
     return path.dirname(filename);
   }
-  var idx = filename.lastIndexOf(fs.separator);
+  var idx = filename.lastIndexOf(fsSeparator());
   if(idx === -1) {
     return filename;
   }
@@ -647,7 +657,7 @@ function basename(filename) {
   if(_nodejs) {
     return path.basename(filename);
   }
-  var idx = filename.lastIndexOf(fs.separator);
+  var idx = filename.lastIndexOf(fsSeparator());
   if(idx === -1) {
     return filename;
   }

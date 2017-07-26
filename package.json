@@ -34,6 +34,7 @@
     "chai": "^3.5.0",
     "commander": "^2.8.0",
     "cors": "^2.7.1",
+    "cross-env": "^3.1.4",
     "express": "^4.13.3",
     "istanbul": "^0.4.3",
     "jscs": "^3.0.0",
@@ -54,12 +55,31 @@
     "jsonld"
   ],
   "scripts": {
-    "test-local": "make test-local",
-    "test-node": "make test-node",
-    "test-browser": "make test-browser",
-    "test": "make test",
-    "coverage": "make test-coverage",
-    "coverage-report": "make test-coverage-report",
+    "test-suite-node": "mocha -t 30000 -A -R spec tests/test.js",
+    "test-suite-browser": "phantomjs tests/test.js",
+
+    "test-node": "cross-env JSONLD_TEST_SUITE=../json-ld.org/test-suite && npm run test-suite-node",
+    "test-browser": "cross-env JSONLD_TEST_SUITE=../json-ld.org/test-suite && npm run test-suite-browser ",
+
+    "test-local-node": "cross-env JSONLD_TEST_SUITE=./tests/new-embed-api && npm run test-suite-node",
+    "test-local-browser": "cross-env JSONLD_TEST_SUITE=./tests/new-embed-api && npm run test-suite-browser",
+
+    "test-normalization-node": "cross-env JSONLD_TEST_SUITE=../normalization/tests && npm run test-suite-node",
+    "test-normalization-browser": "cross-env JSONLD_TEST_SUITE=../normalization/tests && npm run test-suite-browser",
+
+    "test-coverage": "istanbul cover _mocha -- -t 30000 -u exports -R spec tests/test.js",
+    "test-coverage-lcov": "istanbul cover _mocha --report lcovonly -- -t 30000 -u exports -R spec tests/test.js",
+    "test-coverage-report": "istanbul report",
+
+    "test-local": "mocha -t 30000 -R spec tests/test.js",
+
+    "clean": "rm -rf coverage",
+
+    "test": "npm run test-local && npm run test-node && npm run test-browser && npm run test-local-node && npm run test-local-browser && npm run test-normalization-node && npm run test-normalization-browser",
+
+    "coverage": "npm run test-coverage",
+    "coverage-report": "npm run test-coverage-report",
+
     "jscs": "jscs js/jsonld.js tests/*.js",
     "jshint": "jshint js/jsonld.js tests/*.js"
   },
