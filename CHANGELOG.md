@@ -1,9 +1,9 @@
 # jsonld ChangeLog
 
-## Unreleased
-
 ### Changed
 - Move `js/jsonld.js` to `lib/jsonld.js`.
+- **BREAKING**: Fixes to allow RFC3986 tests to pass. Some URI edge cases and
+  certain base URIs with dot segments may cause different URI outputs.
 
 ### Added
 - Add .editorconfig support.
