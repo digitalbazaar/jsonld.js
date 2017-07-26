@@ -6118,13 +6118,11 @@ function _prependBase(base, iri) {
         var path = base.path;
 
         // append relative path to the end of the last directory from base
-        if(rel.path !== '') {
-          path = path.substr(0, path.lastIndexOf('/') + 1);
-          if(path.length > 0 && path.substr(-1) !== '/') {
-            path += '/';
-          }
-          path += rel.path;
+        path = path.substr(0, path.lastIndexOf('/') + 1);
+        if(path.length > 0 && path.substr(-1) !== '/') {
+          path += '/';
         }
+        path += rel.path;
 
         transform.path = path;
       }
@@ -6132,8 +6130,10 @@ function _prependBase(base, iri) {
     }
   }
 
+  if(rel.path !== '') {
   // remove slashes and dots in path
-  transform.path = _removeDotSegments(transform.path, !!transform.authority);
+    transform.path = _removeDotSegments(transform.path);
+  }
 
   // construct URL
   var rval = transform.protocol;
@@ -8122,7 +8122,7 @@ jsonld.url.parse = function(str, parser) {
     parsed.port = null;
   }
 
-  parsed.normalizedPath = _removeDotSegments(parsed.path, !!parsed.authority);
+  parsed.normalizedPath = _removeDotSegments(parsed.path);
   return parsed;
 };
 
@@ -8130,38 +8130,51 @@ jsonld.url.parse = function(str, parser) {
  * Removes dot segments from a URL path.
  *
  * @param path the path to remove dot segments from.
- * @param hasAuthority true if the URL has an authority, false if not.
  */
-function _removeDotSegments(path, hasAuthority) {
-  var rval = '';
+function _removeDotSegments(path) {
+  // RFC 3986 5.2.4 (reworked)
 
-  if(path.indexOf('/') === 0) {
-    rval = '/';
+  // empty path shortcut
+  if(path.length === 0) {
+    return '';
   }
 
-  // RFC 3986 5.2.4 (reworked)
   var input = path.split('/');
   var output = [];
+
   while(input.length > 0) {
-    if(input[0] === '.' || (input[0] === '' && input.length > 1)) {
-      input.shift();
-      continue;
-    }
-    if(input[0] === '..') {
-      input.shift();
-      if(hasAuthority ||
-        (output.length > 0 && output[output.length - 1] !== '..')) {
-        output.pop();
-      } else {
-        // leading relative URL '..'
-        output.push('..');
+    var next = input.shift();
+    var done = input.length === 0;
+
+    if(next === '.') {
+      if(done) {
+        // ensure output has trailing /
+        output.push('');
       }
       continue;
     }
-    output.push(input.shift());
+
+    if(next === '..') {
+      output.pop();
+      if(done) {
+        // ensure output has trailing /
+        output.push('');
+      }
+      continue;
+    }
+
+    output.push(next);
   }
 
-  return rval + output.join('/');
+  // ensure output has leading /
+  if(output.length > 0 && output[0] !== '') {
+    output.unshift('');
+  }
+  if(output.length === 1 && output[0] === '') {
+    return '/';
+  }
+
+  return output.join('/');
 }
 
 if(_nodejs) {
