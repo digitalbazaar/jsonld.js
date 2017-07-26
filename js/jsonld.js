@@ -6960,7 +6960,7 @@ if(!Object.keys) {
 function _parseNQuads(input) {
   // define partial regexes
   var iri = '(?:<([^:]+:[^>]*)>)';
-  var bnode = '(_:(?:[A-Za-z0-9]+))';
+  var bnode = '(_:(?:[A-Za-z0-9_]+))';
   var plain = '"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"';
   var datatype = '(?:\\^\\^' + iri + ')';
   var language = '(?:@([a-z]+(?:-[a-z0-9]+)*))';
