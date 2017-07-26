@@ -157,12 +157,12 @@ jsonld.normalize(doc, {
 });
 
 // serialize a document to N-Quads (RDF)
-jsonld.toRDF(doc, {format: 'application/nquads'}, function(err, nquads) {
+jsonld.toRDF(doc, {format: 'application/n-quads'}, function(err, nquads) {
   // nquads is a string of nquads
 });
 
 // deserialize N-Quads (RDF) to JSON-LD
-jsonld.fromRDF(nquads, {format: 'application/nquads'}, function(err, doc) {
+jsonld.fromRDF(nquads, {format: 'application/n-quads'}, function(err, doc) {
   // doc is JSON-LD
 });
 
