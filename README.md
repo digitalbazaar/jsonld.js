@@ -292,44 +292,48 @@ the following:
     https://github.com/json-ld/json-ld.org
     https://github.com/json-ld/normalization
 
-If the above directories are siblings of the jsonld.js directory you can run
-all tests with a simple command:
+They should be sibling directories of the jsonld.js directory or in a
+`test-suites` dir. To clone shall copies into the `test-suites` dir you can use
+the following:
 
-    make test
+    npm run fetch-test-suites
 
-If you installed the test suites elsewhere:
+Node.js tests can be run with a simple command:
 
-    make test-suite JSONLD_TEST_SUITE={PATH_TO_TEST_SUITE}
+    npm test
 
-See the `Makefile` for various individual test targets as well as split node
-and browser targets. For instance, the json-ld.org test suite can be run
-piecewise with:
+If you installed the test suites elsewhere, or wish to run other tests, use
+the `JSONLD_TESTS` environment var:
 
-    make test-node
-    make test-browser
+    JSONLD_TESTS="/tmp/org/test-suites /tmp/norm/tests" npm test
+
+Browser testing can be done with Karma:
+
+    npm test-karma
+    npm test-karma -- --browsers Firefox,Chrome
 
 Code coverage of node tests can be generated in `coverage/`:
 
-    make test-coverage
+    npm run coverage
 
 The Mocha output reporter can be changed to min, dot, list, nyan, etc:
 
-    make test REPORTER=dot
+    REPORTER=dot npm test
 
 Remote context tests are also available:
 
     # run the context server in the background or another terminal
     node tests/remote-context-server.js
 
-    make test-suite JSONLD_TEST_SUITE=./tests
+    JSONLD_TESTS=./tests npm test
 
 To generate earl reports:
 
     # generate the earl report for node.js
-    ./node_modules/.bin/mocha -R spec tests/test.js --earl earl-node.jsonld
+    EARL=earl-node.jsonld npm test
 
     # generate the earl report for the browser
-    ./node_modules/.bin/phantomjs tests/test.js --earl earl-browser.jsonld
+    EARL=earl-firefox.jsonld npm test-karma -- --browser Firefox
 
 [Digital Bazaar]: http://digitalbazaar.com/
 [JSON-LD]: http://json-ld.org/

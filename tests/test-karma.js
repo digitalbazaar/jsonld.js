@@ -30,14 +30,23 @@ const entries = [];
 if(process.env.JSONLD_TESTS) {
   entries.push(...process.env.JSONLD_TESTS.split(' '));
 } else {
-  const testRootDir = process.env.TEST_ROOT_DIR;
+  const _top = process.env.TEST_ROOT_DIR;
   // TODO: support just adding certain entries in EARL mode
-  entries.push(
-    join(testRootDir, '../json-ld.org/test-suite'),
-    join(testRootDir, '../normalization/tests'),
-    join(testRootDir, 'tests/new-embed-api'),
-    webidl,
-  );
+  // json-ld.org main test suite
+  // FIXME: add path detection
+  entries.push(join(_top, 'test-suites/json-ld.org/test-suite'));
+  entries.push(join(_top, '../json-ld.org/test-suite'));
+
+  // json-ld.org normalization test suite
+  // FIXME: add path detection
+  entries.push(join(_top, 'test-suites/normalization/tests'));
+  entries.push(join(_top, '../normalization/tests'));
+
+  // other tests
+  entries.push(join(_top, 'tests/new-embed-api'));
+
+  // WebIDL tests
+  entries.push(webidl)
 }
 
 const options = {

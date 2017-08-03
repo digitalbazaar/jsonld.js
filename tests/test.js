@@ -26,12 +26,29 @@ const entries = [];
 if(process.env.JSONLD_TESTS) {
   entries.push(...process.env.JSONLD_TESTS.split(' '));
 } else {
-  entries.push(
-    path.resolve(__dirname, '../../json-ld.org/test-suite'),
-    path.resolve(__dirname, '../../normalization/tests'),
-    path.resolve(__dirname, './new-embed-api'),
-    path.resolve(__dirname, '../test/node-document-loader-tests.js')
-  );
+  const _top = path.resolve(__dirname, '..');
+
+  // json-ld.org main test suite
+  const orgPath = path.resolve(_top, 'test-suites/json-ld.org/test-suite');
+  if(fs.existsSync(orgPath)) {
+    entries.push(orgPath);
+  } else {
+    // default to sibling dir
+    entries.push(path.resolve(_top, '../json-ld.org/test-suite'));
+  }
+
+  // json-ld.org normalization test suite
+  const normPath = path.resolve(_top, 'test-suites/normalization/tests');
+  if(fs.existsSync(normPath)) {
+    entries.push(normPath);
+  } else {
+    // default up to sibling dir
+    entries.push(path.resolve(_top, '../normalization/tests'));
+  }
+
+  // other tests
+  entries.push(path.resolve(_top, 'tests/new-embed-api'));
+  entries.push(path.resolve(_top, 'test/node-document-loader-tests.js'));
 }
 
 const options = {

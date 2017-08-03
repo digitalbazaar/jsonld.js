@@ -2,9 +2,11 @@
 
 ### Added
 - Add .editorconfig support.
+- `fetch-test-suites` and related `fetch-*-test-suite` NPM scripts.
 
 ### Removed
 - Bower support. Use NPM, a NPM proxy site, or build your own bundle.
+- Makefile. Use NPM script targets.
 
 ### Changed
 - Update url parser to remove default ports from URLs.

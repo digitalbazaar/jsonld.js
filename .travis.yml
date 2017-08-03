@@ -4,16 +4,22 @@ node_js:
   - "0.12"
   - "4"
   - "6"
+  - "8"
   - "node"
 sudo: false
-# download test suite and run tests... submodule? meta testing project with
-# all of the reference implementations?
-script: 
-  - git clone https://github.com/json-ld/json-ld.org.git _json-ld.org
-  - make test-suite JSONLD_TEST_SUITE=./_json-ld.org/test-suite
-  - git clone https://github.com/json-ld/normalization.git _normalization
-  - make test-suite JSONLD_TEST_SUITE=./_normalization/tests
-  - make test-local-node test-local-browser
+install:
+  - npm install
+  - npm run fetch-test-suites
+script:
+  - if [ "x$BUNDLER" = "x" ]; then npm run test; fi
+#  - if [ "x$BUNDLER" != "x" ]; then npm run test-karma; fi
+# only run karma tests for one node version
+matrix:
+  include:
+  - node_js: "6"
+    env: BUNDLER=webpack
+#  - node_js: "6"
+#    env: BUNDLER=browserify
 notifications:
   email:
     on_success: change
