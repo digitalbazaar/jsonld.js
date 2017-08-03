@@ -37,7 +37,8 @@ to JSON with added semantics. Finally, the format is intended to be fast
 to parse, fast to generate, stream-based and document-based processing
 compatible, and require a very small memory footprint in order to operate.
 
-## Installation
+Installation
+------------
 
 ### node.js + npm
 
@@ -81,7 +82,8 @@ import {promises} from 'jsonld';
 import {JsonLdProcessor} from 'jsonld';
 ```
 
-## Quick Examples
+Examples
+--------
 
 ```js
 var doc = {
@@ -249,7 +251,6 @@ jsonld.documentLoader = customLoader;
 jsonld.compact(doc, context, {documentLoader: customLoader},
   function(err, compacted) { ... });
 ```
-
 
 Related Modules
 ---------------
