@@ -1,16 +1,27 @@
 # jsonld ChangeLog
 
-### Changed
-- Move `js/jsonld.js` to `lib/jsonld.js`.
-- **BREAKING**: Fixes to allow RFC3986 tests to pass. Some URI edge cases and
-  certain base URIs with dot segments may cause different URI outputs.
-
 ### Added
 - Add .editorconfig support.
+
+### Removed
+- Bower support. Use NPM, a NPM proxy site, or build your own bundle.
 
 ### Changed
 - Update url parser to remove default ports from URLs.
 - Skip spec version 1.1 tests.
+- **BREAKING**: Move `js/jsonld.js` to `lib/jsonld.js`.
+- **BREAKING**: Switch to CommonJS.
+- **BREAKING**: Fixes to allow RFC3986 tests to pass. Some URI edge cases and
+  certain base URIs with dot segments may cause different URI outputs.
+- Switch to Karma for browser testing.
+- Switch to webpack to build browser bundles.
+- Use async APIs for test generation.
+  - Done to allow testing in Node.js and browsers.
+  - Required major testing changes to make everything async.
+  - Workarounds added to get async generated mocha tests working.
+- Improved support for loading various types of tests.
+  - Can load local files, test manifests, or plain js files (in Node.js).
+- Use ES2015 in tests and babel/webpack to support older platforms.
 
 ## 0.4.12 - 2017-04-24
 
