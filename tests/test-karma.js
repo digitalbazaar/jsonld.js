@@ -71,7 +71,7 @@ const options = {
       var fs = serverRequire('fs-extra');
       return fs.readFile(filename, 'utf8').then(data => {
         return data;
-      }).catch(e => console.error(e));
+      });
     });
   },
   writeFile: (filename, data) => {
