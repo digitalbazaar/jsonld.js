@@ -79,3 +79,7 @@ common(options).then(() => {
 }).catch(err => {
   console.error(err);
 });
+
+process.on('unhandledRejection', (reason, p) => {
+  console.error('Unhandled Rejection at:', p, 'reason:', reason);
+});
