@@ -29,7 +29,8 @@ if(process.env.JSONLD_TESTS) {
   entries.push(
     path.resolve(__dirname, '../../json-ld.org/test-suite'),
     path.resolve(__dirname, '../../normalization/tests'),
-    path.resolve(__dirname, './new-embed-api')
+    path.resolve(__dirname, './new-embed-api'),
+    path.resolve(__dirname, '../test/node-document-loader-tests.js')
   );
 }
 
