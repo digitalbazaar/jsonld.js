@@ -60,13 +60,6 @@ module.exports = function(config) {
 
     webpack: {
       devtool: 'inline-source-map',
-      resolve: {
-        alias: {
-          //'commander': path.resolve('../browser/ignore.js'),
-          //'system': path.resolve('../browser/ignore.js'),
-          //'fs': path.resolve('../browser/ignore.js')
-        }
-      },
       plugins: [
         new webpack.DefinePlugin({
           'process.env.JSONLD_TESTS': JSON.stringify(process.env.JSONLD_TESTS),
