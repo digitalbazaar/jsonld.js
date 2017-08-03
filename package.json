@@ -83,7 +83,6 @@
   "scripts": {
     "prepublish": "npm run build",
     "build": "webpack",
-    "test-build": "webpack --config webpack-tests.config.js",
     "test": "make test",
     "test-local": "make test-local",
     "test-node": "make test-node",
