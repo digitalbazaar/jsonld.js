@@ -1,6 +1,5 @@
 *.sw[nop]
 *~
-.bower.json
 .cdtproject
 .classpath
 .cproject

@@ -37,7 +37,7 @@ to JSON with added semantics. Finally, the format is intended to be fast
 to parse, fast to generate, stream-based and document-based processing
 compatible, and require a very small memory footprint in order to operate.
 
-## Requiring jsonld.js:
+## Installation
 
 ### node.js + npm
 
@@ -49,20 +49,13 @@ npm install jsonld
 var jsonld = require('jsonld');
 ```
 
-### Browser (AMD) + bower
+### Browser (AMD) + npm
 
 ```
-bower install jsonld
+npm install jsonld
 ```
 
-```js
-require.config({
-  paths: {
-    jsonld: 'bower_components/jsonld/lib/jsonld'
-  }
-});
-define(['jsonld'], function(jsonld) { ... });
-```
+Use your favorite technology to load `node_modules/dist/jsonld.min.js`.
 
 ### Browser + script tag
 
@@ -70,7 +63,7 @@ define(['jsonld'], function(jsonld) { ... });
 <!-- For legacy browsers include a Promise polyfill like
   es6-promise before including jsonld.js -->
 <script src="//cdn.jsdelivr.net/g/es6-promise@1.0.0"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/jsonld/0.4.12/jsonld.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jsonld/0.5.0/jsonld.min.js"></script>
 ```
 See https://cdnjs.com/libraries/jsonld for the the latest available cdnjs version.
 
