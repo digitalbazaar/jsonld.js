@@ -83,15 +83,13 @@
   "scripts": {
     "prepublish": "npm run build",
     "build": "webpack",
-    "test": "make test",
-    "test-local": "make test-local",
-    "test-node": "make test-node",
-    "test-browser": "make test-browser",
+    "test": "NODE_ENV=test mocha --delay -t 30000 -A -R ${REPORTER:-spec} tests/test.js",
     "test-karma": "karma start",
-    "coverage": "make test-coverage",
-    "coverage-report": "make test-coverage-report",
-    "jscs": "jscs lib/jsonld.js tests/*.js",
-    "jshint": "jshint lib/jsonld.js tests/*.js"
+    "coverage": "istanbul cover ./node_modules/.bin/_mocha -- --delay -t 30000 -u exports -R ${REPORTER:-spec} tests/test.js",
+    "coverage-lcov": "istanbul cover ./node_modules/.bin/_mocha --report lcovonly -- --delay -t 30000 -u exports -R ${REPORTER:-spec} tests/test.js",
+    "coverage-report": "istanbul report",
+    "jscs": "jscs lib/*.js tests/*.js test/*.js",
+    "jshint": "jshint lib/*.js tests/*.js test/*.js"
   },
   "browser": {
     "crypto": "./browser/ignore.js",
