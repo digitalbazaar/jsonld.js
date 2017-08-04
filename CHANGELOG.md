@@ -11,6 +11,7 @@
 ### Changed
 - Update url parser to remove default ports from URLs.
 - Skip spec version 1.1 tests.
+- **BREAKING**: Drop support for Node.js earlier than 4.x.
 - **BREAKING**: Move `js/jsonld.js` to `lib/jsonld.js`.
 - **BREAKING**: Switch to CommonJS.
 - **BREAKING**: Fixes to allow RFC3986 tests to pass. Some URI edge cases and
