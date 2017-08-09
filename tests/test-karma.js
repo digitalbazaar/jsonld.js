@@ -54,7 +54,8 @@ const options = {
   assert: assert,
   jsonld: jsonld,
   exit: code => {
-    if(phantom.exit) {
+    // FIXME: karma phantomjs does not expose this API
+    if(window.phantom && window.phantom.exit) {
       return phantom.exit();
     }
     console.error('exit not implemented');
@@ -64,7 +65,7 @@ const options = {
     id: 'browser',
     filename: process.env.EARL
   },
-  bailOnError: false, // FIXME
+  bailOnError: process.env.BAIL === 'true',
   entries: entries,
   readFile: filename => {
     return server.run(filename, function(filename) {
@@ -87,11 +88,16 @@ const options = {
 common(options).then(() => {
   run();
 }).then(() => {
-  if(phantom.exit) {
-    phantom.exit();
+  // FIXME: karma phantomjs does not expose this API
+  if(window.phantom && window.phantom.exit) {
+    phantom.exit(0);
   }
 }).catch(err => {
   console.error(err);
+  // FIXME: karma phantomjs does not expose this API
+  if(window.phantom && window.phantom.exit) {
+    phantom.exit(0);
+  }
 });
 
 /* FIXME: old phantomjs support

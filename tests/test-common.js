@@ -152,7 +152,7 @@ return addManifest(manifest, _tests)
       describe('Writing EARL report to: ' + options.earl.filename, function() {
         it('should print the earl report', function() {
           return options.writeFile(
-            options.earl.filename, options.earl.reportreportJson());
+            options.earl.filename, options.earl.report.reportJson());
         });
       });
     }
@@ -657,7 +657,8 @@ function basename(filename) {
  * @return the document loader.
  */
 function createDocumentLoader(test) {
-  var base = 'http://json-ld.org/test-suite';
+  const _httpTestSuiteBase = 'http://json-ld.org/test-suite';
+  const _httpsTestSuiteBase = 'https://json-ld.org/test-suite';
   var loader = jsonld.documentLoader;
   var localLoader = function(url, callback) {
     // always load remote-doc tests remotely in node
@@ -668,8 +669,12 @@ function createDocumentLoader(test) {
     // FIXME: this check only works for main test suite and will not work if:
     // - running other tests and main test suite not installed
     // - use other absolute URIs but want to load local files
-    var idx = url.indexOf(base);
-    if(idx === 0 || url.indexOf(':') === -1) {
+    var isTestSuite =
+      url.startsWith(_httpTestSuiteBase) ||
+      url.startsWith(_httpsTestSuiteBase);
+    // TODO: improve this check
+    var isRelative = url.indexOf(':') === -1;
+    if(isTestSuite || isRelative) {
       // attempt to load official test-suite files or relative URLs locally
       loadLocally(url).then(doc => {
         callback(null, doc);

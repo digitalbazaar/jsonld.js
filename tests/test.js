@@ -62,7 +62,7 @@ const options = {
     id: 'node.js',
     filename: process.env.EARL
   },
-  bailOnError: !!process.env.BAIL,
+  bailOnError: process.env.BAIL === 'true',
   entries: entries,
   readFile: filename => {
     return fs.readFile(filename, 'utf8');
