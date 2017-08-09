@@ -44,6 +44,7 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
+      'node_modules/babel-polyfill/dist/polyfill.js',
       'tests/test-karma.js'
     ],
 
@@ -128,6 +129,12 @@ module.exports = function(config) {
         base: 'IE',
         'x-ua-compatible': 'IE=EmulateIE8'
       }
+    },
+
+    phantomjsLauncher: {
+      // Have phantomjs exit if a ResourceError is encountered (useful if karma
+      // exits without killing phantom)
+      exitOnResourceError: true
     },
 
     // Continuous Integration mode

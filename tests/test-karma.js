@@ -31,7 +31,8 @@ if(process.env.JSONLD_TESTS) {
   entries.push(...process.env.JSONLD_TESTS.split(' '));
 } else {
   const _top = process.env.TEST_ROOT_DIR;
-  // TODO: support just adding certain entries in EARL mode
+  // TODO: support just adding certain entries in EARL mode?
+
   // json-ld.org main test suite
   // FIXME: add path detection
   entries.push(join(_top, 'test-suites/json-ld.org/test-suite'));
