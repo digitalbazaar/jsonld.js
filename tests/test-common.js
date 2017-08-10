@@ -223,7 +223,14 @@ function addManifest(manifest, parent) {
           return;
         } else if(typeof entry === 'function') {
           // process as a function that returns a promise
-          return entry(options);
+          p = p.then(() => {
+            return entry(options);
+          }).then(childSuite => {
+            if(suite) {
+              suite.suites.push(childSuite);
+            }
+          });
+          return;
         }
         p = p.then(() => {
           return readManifestEntry(manifest, entry);
