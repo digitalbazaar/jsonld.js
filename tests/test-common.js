@@ -268,7 +268,8 @@ function addTest(manifest, test, tests) {
   var description = test_id + ' ' + (test.purpose || test.name);
 
   var _test = {
-    title: description
+    title: description,
+    f: null
   };
   tests.push(_test);
 
