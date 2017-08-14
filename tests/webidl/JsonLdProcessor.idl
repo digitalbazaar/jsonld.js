@@ -1,67 +1,79 @@
 [Constructor]
 interface JsonLdProcessor {
-    Promise compact (any input, JsonLdContext context, optional JsonLdOptions options);
-    Promise expand (any input, optional JsonLdOptions options);
-    Promise flatten (any input, optional JsonLdContext? context, optional JsonLdOptions options);
+    static Promise<JsonLdDictionary> compact(JsonLdInput input, JsonLdContext context, optional JsonLdOptions? options);
+    static Promise<sequence<JsonLdDictionary>> expand(JsonLdInput input, optional JsonLdOptions? options);
+    static Promise<JsonLdDictionary> flatten(JsonLdInput input, optional JsonLdContext? context, optional JsonLdOptions? options);
 };
 
-typedef (object or DOMString or (object or DOMString[])) JsonLdContext;
+dictionary JsonLdDictionary {
+};
+
+typedef (JsonLdDictionary or sequence<JsonLdDictionary> or USVString) JsonLdInput;
+
+typedef (JsonLdDictionary or USVString or sequence<(JsonLdDictionary or USVString)>) JsonLdContext;
 
 dictionary JsonLdOptions {
-    DOMString              base;
-    boolean                compactArrays = true;
-    LoadDocumentCallback   documentLoader = null;
-    (object? or DOMString) expandContext = null;
-    DOMString              processingMode = "json-ld-1.0";
+    USVString? base;
+    boolean compactArrays = true;
+    LoadDocumentCallback? documentLoader = null;
+    (JsonLdDictionary? or USVString) expandContext = null;
+    boolean produceGeneralizedRdf = true;
+    USVString? processingMode = null;
+    boolean compactToRelative = true;
 };
 
-callback LoadDocumentCallback = Promise (DOMString url);
+callback LoadDocumentCallback = Promise (USVString url);
 
 dictionary RemoteDocument {
-    DOMString contextUrl = null;
-    DOMString documentUrl;
+    USVString contextUrl = null;
+    USVString documentUrl;
     any document;
 };
 
 dictionary JsonLdError {
     JsonLdErrorCode code;
-    DOMString?      message = null;
+    USVString? message = null;
 };
 
 enum JsonLdErrorCode {
-    "loading document failed",
-    "list of lists",
-    "invalid @index value",
-    "conflicting indexes",
-    "invalid @id value",
-    "invalid local context",
-    "multiple context link headers",
-    "loading remote context failed",
-    "invalid remote context",
-    "recursive context inclusion",
-    "invalid base IRI",
-    "invalid vocab mapping",
-    "invalid default language",
-    "keyword redefinition",
-    "invalid term definition",
-    "invalid reverse property",
-    "invalid IRI mapping",
-    "cyclic IRI mapping",
-    "invalid keyword alias",
-    "invalid type mapping",
-    "invalid language mapping",
     "colliding keywords",
+    "compaction to list of lists",
+    "conflicting indexes",
+    "cyclic IRI mapping",
+    "invalid @id value",
+    "invalid @index value",
+    "invalid @nest value",
+    "invalid @prefix value",
+    "invalid @reverse value",
+    "invalid @version value",
+    "invalid base IRI",
     "invalid container mapping",
-    "invalid type value",
-    "invalid value object",
-    "invalid value object value",
+    "invalid default language",
+    "invalid IRI mapping",
+    "invalid keyword alias",
+    "invalid language map value",
+    "invalid language mapping",
     "invalid language-tagged string",
     "invalid language-tagged value",
-    "invalid typed value",
-    "invalid set or list object",
-    "invalid language map value",
-    "compaction to list of lists",
+    "invalid local context",
+    "invalid remote context",
+    "invalid reverse property",
     "invalid reverse property map",
-    "invalid @reverse value",
-    "invalid reverse property value"
+    "invalid reverse property value",
+    "invalid scoped context",
+    "invalid set or list object",
+    "invalid term definition",
+    "invalid type mapping",
+    "invalid type value",
+    "invalid typed value",
+    "invalid value object",
+    "invalid value object value",
+    "invalid vocab mapping",
+    "keyword redefinition",
+    "list of lists",
+    "loading document failed",
+    "loading remote context failed",
+    "multiple context link headers",
+    "processing mode conflict",
+    "recursive context inclusion"
 };
