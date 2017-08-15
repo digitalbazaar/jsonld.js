@@ -10,7 +10,7 @@ install:
   - npm run fetch-test-suites
 script:
   - if [ "x$BUNDLER" = "x" ]; then npm run test; fi
-#  - if [ "x$BUNDLER" != "x" ]; then npm run test-karma; fi
+  - if [ "x$BUNDLER" != "x" ]; then npm run test-karma; fi
 # only run karma tests for one node version
 matrix:
   include:
