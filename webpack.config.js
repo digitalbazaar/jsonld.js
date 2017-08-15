@@ -45,6 +45,20 @@ outputs.forEach((info) => {
     entry: {
       jsonld: info.entry
     },
+    module: {
+      rules: [
+        {
+          test: /\.js$/,
+          exclude: /(node_modules)/,
+          use: {
+            loader: 'babel-loader',
+            options: {
+              presets: ['env']
+            }
+          }
+        }
+      ]
+    },
     plugins: [
       //new webpack.DefinePlugin({
       //})
