@@ -287,8 +287,8 @@ the following:
     https://github.com/json-ld/normalization
 
 They should be sibling directories of the jsonld.js directory or in a
-`test-suites` dir. To clone shall copies into the `test-suites` dir you can use
-the following:
+`test-suites` dir. To clone shallow copies into the `test-suites` dir you can
+use the following:
 
     npm run fetch-test-suites
 
