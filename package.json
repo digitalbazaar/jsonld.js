@@ -85,7 +85,7 @@
     "build": "webpack",
     "fetch-test-suites": "npm run fetch-json-ld-org-test-suite && npm run fetch-normalization-test-suite",
     "fetch-json-ld-org-test-suite": "if [ ! -e test-suites/json-ld.org ]; then mkdir -p test-suites && git clone --depth 1 https://github.com/json-ld/json-ld.org.git test-suites/json-ld.org; fi",
-    "fetch-normalization-test-suite": "if [ ! -e test-suites/normalziation ]; then mkdir -p test-suites && git clone --depth 1 https://github.com/json-ld/normalization.git test-suites/normalization; fi",
+    "fetch-normalization-test-suite": "if [ ! -e test-suites/normalization ]; then mkdir -p test-suites && git clone --depth 1 https://github.com/json-ld/normalization.git test-suites/normalization; fi",
     "test": "NODE_ENV=test mocha --delay -t 30000 -A -R ${REPORTER:-spec} tests/test.js",
     "test-karma": "karma start",
     "coverage": "istanbul cover ./node_modules/.bin/_mocha -- --delay -t 30000 -u exports -R ${REPORTER:-spec} tests/test.js",
