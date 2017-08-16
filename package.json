@@ -30,6 +30,7 @@
   "dependencies": {
     "es6-promise": "^2.0.0",
     "pkginfo": "~0.4.0",
+    "rdf-canonize": "^0.1.1",
     "request": "^2.81.0",
     "xmldom": "0.1.19"
   },

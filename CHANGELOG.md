@@ -25,6 +25,7 @@
 - Improved support for loading various types of tests.
   - Can load local files, test manifests, or plain js files (in Node.js).
 - Use ES2015 in tests and babel/webpack to support older platforms.
+- Use rdf-canonize library, remove local implementation.
 
 ## 0.4.12 - 2017-04-24
 
