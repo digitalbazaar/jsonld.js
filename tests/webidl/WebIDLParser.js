@@ -592,7 +592,7 @@
         return ret;
       } else if (consume(ID, "stringifier")) {
         ret.stringifier = true; -
-          all_ws();
+        all_ws();
         if (consume(OTHER, ";")) return ret;
         ret.idlType = return_type();
         operation_rest(ret, store);

@@ -2251,7 +2251,7 @@ IdlInterface.prototype.test_interface_of = function(desc, obj, exception, expect
                 }
                 else
                 {
-                    assert_own_property(obj.constructor, member.name, "constructor does not have property:");
+                    assert_own_property(obj.constructor, member.name, "interface object must have static operation as own property");
                     fn = obj.constructor[member.name];
                 }
 
