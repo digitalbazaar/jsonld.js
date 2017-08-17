@@ -26,6 +26,7 @@
   - Can load local files, test manifests, or plain js files (in Node.js).
 - Use ES2015 in tests and babel/webpack to support older platforms.
 - Use rdf-canonize library, remove local implementation.
+- **BREAKING**: Ending Node.js 4.x support so more ES2015 features can be used.
 
 ## 0.4.12 - 2017-04-24
 
