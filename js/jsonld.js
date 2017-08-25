@@ -5531,7 +5531,7 @@ function _compactIri(activeCtx, iri, value, relativeTo, reverse) {
       }
       var list = value['@list'];
       var commonLanguage = (list.length === 0) ? defaultLanguage : null;
-      var commonType = null;
+      var commonType = (list.length === 0) ? '@id' : null;
       for(var i = 0; i < list.length; ++i) {
         var item = list[i];
         var itemLanguage = '@none';
