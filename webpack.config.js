@@ -17,7 +17,13 @@ module.exports = [];
 const outputs = [
   // core jsonld library
   {
-    entry: ['./lib/index.js'],
+    entry: [
+      // 'babel-polyfill' very large, list features explicitly
+      'regenerator-runtime/runtime',
+      'core-js/fn/object/assign',
+      // main lib
+      './lib/index.js'
+    ],
     filenameBase: 'jsonld'
   },
   /*

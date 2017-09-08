@@ -18,6 +18,14 @@
 // FIXME: hack to ensure delay is set first
 mocha.setup({delay: true, ui: 'bdd'});
 
+// test suite compatibility
+require('core-js/fn/string/ends-with');
+require('core-js/fn/string/starts-with');
+
+// jsonld compatibility
+require('core-js/fn/object/assign');
+require('regenerator-runtime/runtime');
+
 const assert = require('chai').assert;
 const common = require('./test-common');
 const jsonld = require('..');

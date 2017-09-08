@@ -11,13 +11,15 @@
 ### Changed
 - Update url parser to remove default ports from URLs.
 - Skip spec version 1.1 tests.
-- **BREAKING**: Drop support for Node.js earlier than 4.x.
+- **BREAKING**: Only support Node.js 6.x and later with ES2015 features.
+- Build and use custom Node.js 6.x output so async/await/etc can be used.
 - **BREAKING**: Move `js/jsonld.js` to `lib/jsonld.js`.
 - **BREAKING**: Switch to CommonJS.
 - **BREAKING**: Fixes to allow RFC3986 tests to pass. Some URI edge cases and
   certain base URIs with dot segments may cause different URI outputs.
 - Switch to Karma for browser testing.
 - Switch to webpack to build browser bundles.
+- Add explicit feature compatibility libs to browser bundles.
 - Use async APIs for test generation.
   - Done to allow testing in Node.js and browsers.
   - Required major testing changes to make everything async.
@@ -26,7 +28,6 @@
   - Can load local files, test manifests, or plain js files (in Node.js).
 - Use ES2015 in tests and babel/webpack to support older platforms.
 - Use rdf-canonize library, remove local implementation.
-- **BREAKING**: Ending Node.js 4.x support so more ES2015 features can be used.
 
 ## 0.4.12 - 2017-04-24
 
