@@ -23,6 +23,7 @@ require('core-js/fn/string/ends-with');
 require('core-js/fn/string/starts-with');
 
 // jsonld compatibility
+require('core-js/fn/array/includes');
 require('core-js/fn/object/assign');
 require('regenerator-runtime/runtime');
 
