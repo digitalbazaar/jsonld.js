@@ -3,6 +3,7 @@
 ### Added
 - Add .editorconfig support.
 - `fetch-test-suites` and related `fetch-*-test-suite` NPM scripts.
+- Support for `@graph` `@container`.
 
 ### Removed
 - Bower support. Use NPM, a NPM proxy site, or build your own bundle.
