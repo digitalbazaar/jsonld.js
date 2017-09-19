@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 0.5.0 - 2017-09-18
+
 ### Added
 - Add .editorconfig support.
 - `fetch-test-suites` and related `fetch-*-test-suite` NPM scripts.
