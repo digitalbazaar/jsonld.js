@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Fixed
+- Distribute browser files.
+
 ## 0.5.1 - 2017-09-19
 
 ### Fixed

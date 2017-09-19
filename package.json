@@ -23,10 +23,11 @@
   "license": "BSD-3-Clause",
   "main": "lib/index.js",
   "files": [
-    "lib/*.js",
+    "browser/*.js",
     "dist/*.js",
     "dist/*.js.map",
-    "dist/node6/**/*.js"
+    "dist/node6/**/*.js",
+    "lib/*.js"
   ],
   "dependencies": {
     "es6-promise": "^2.0.0",
