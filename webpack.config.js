@@ -56,7 +56,13 @@ outputs.forEach((info) => {
       rules: [
         {
           test: /\.js$/,
-          exclude: /(node_modules)/,
+          include: [{
+            // exclude node_modules by default
+            exclude: /(node_modules)/
+          }, {
+            // include rdf-canonize
+            include: /(node_modules\/rdf-canonize)/
+          }],
           use: {
             loader: 'babel-loader',
             options: {
