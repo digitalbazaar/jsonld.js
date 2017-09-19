@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Fixed
+- Distribute unminified bundle.
+
 ## 0.5.0 - 2017-09-18
 
 ### Added

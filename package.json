@@ -24,8 +24,8 @@
   "main": "lib/index.js",
   "files": [
     "lib/*.js",
-    "dist/*.min.js",
-    "dist/*.min.js.map",
+    "dist/*.js",
+    "dist/*.js.map",
     "dist/node6/**/*.js"
   ],
   "dependencies": {
