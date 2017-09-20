@@ -274,126 +274,131 @@ function addTest(manifest, test, tests) {
   test.manifest = manifest;
   var description = test_id + ' ' + (test.purpose || test.name);
 
-  var _test = {
-    title: description,
-    f: null
-  };
-  tests.push(_test);
+  tests.push({
+    title: description + ' (promise)',
+    f: makeFn({useCallbacks: false})
+  });
+  tests.push({
+    title: description + ' (callback)',
+    f: makeFn({useCallbacks: true})
+  });
 
-  _test.f = function(done) {
-    var self = this;
-    self.timeout(5000);
-    var testInfo = TEST_TYPES[getJsonLdTestType(test)];
+  function makeFn({useCallbacks}) {
+    return function(done) {
+      var self = this;
+      self.timeout(5000);
+      var testInfo = TEST_TYPES[getJsonLdTestType(test)];
 
-    // skip unknown and explicitly skipped test types
-    var testTypes = Object.keys(TEST_TYPES);
-    if(!isJsonLdType(test, testTypes) || isJsonLdType(test, SKIP_TESTS)) {
-      var type = [].concat(
-        getJsonLdValues(test, '@type'),
-        getJsonLdValues(test, 'type')
-      );
-      //console.log('Skipping test "' + test.name + '" of type: ' + type);
-      self.skip();
-    }
+      // skip unknown and explicitly skipped test types
+      var testTypes = Object.keys(TEST_TYPES);
+      if(!isJsonLdType(test, testTypes) || isJsonLdType(test, SKIP_TESTS)) {
+        var type = [].concat(
+          getJsonLdValues(test, '@type'),
+          getJsonLdValues(test, 'type')
+        );
+        //console.log('Skipping test "' + test.name + '" of type: ' + type);
+        self.skip();
+      }
 
-    if(testInfo.skip && testInfo.skip.type) {
-      //console.log('Skipping test "' + test.name + '" of type: ' + type);
-      self.skip();
-    }
+      if(testInfo.skip && testInfo.skip.type) {
+        //console.log('Skipping test "' + test.name + '" of type: ' + type);
+        self.skip();
+      }
 
-    if(testInfo.skip && testInfo.skip.regex) {
-      testInfo.skip.regex.forEach(function(re) {
-        if(re.test(description)) {
-          //console.log('Skipping test "' + test.name + '" of description: ' + description);
-          self.skip();
-        }
-      });
-    }
-
-    var testOptions = getJsonLdValues(test, 'option');
-
-    testOptions.forEach(function(opt) {
-      var processingModes = getJsonLdValues(opt, 'processingMode');
-      processingModes.forEach(function(pm) {
-        var skipModes = [];
-        if(testInfo.skip && testInfo.skip.processingMode) {
-          skipModes = testInfo.skip.processingMode;
-        }
-        if(skipModes.indexOf(pm) !== -1) {
-          //console.log('Skipping test "' + test.name + '" of processing mode: ' + pm);
-          self.skip();
-        }
-      });
-    });
-
-    testOptions.forEach(function(opt) {
-      var specVersions = getJsonLdValues(opt, 'specVersion');
-      specVersions.forEach(function(sv) {
-        var skipVersions = [];
-        if(testInfo.skip && testInfo.skip.specVersion) {
-          skipVersions = testInfo.skip.specVersion;
-        }
-        if(skipVersions.indexOf(sv) !== -1) {
-          //console.log('Skipping test "' + test.name + '" for spec version: ' + sv);
-          self.skip();
-        }
-      });
-    });
-
-    var fn = testInfo.fn;
-    var params = testInfo.params;
-    params = params.map(function(param) {return param(test);});
-    var callback = function(err, result) {
-      Promise.resolve().then(() => {
-        if(isNegativeTest(test)) {
-          return compareExpectedError(test, err);
-        } else {
-          // default is to assume positive and skip isPositiveTest(test) check
-          if(err) {
-            throw err;
+      if(testInfo.skip && testInfo.skip.regex) {
+        testInfo.skip.regex.forEach(function(re) {
+          if(re.test(description)) {
+            //console.log('Skipping test "' + test.name + '" of description: ' + description);
+            self.skip();
           }
-          return testInfo.compare(test, result);
+        });
+      }
+
+      var testOptions = getJsonLdValues(test, 'option');
+
+      testOptions.forEach(function(opt) {
+        var processingModes = getJsonLdValues(opt, 'processingMode');
+        processingModes.forEach(function(pm) {
+          var skipModes = [];
+          if(testInfo.skip && testInfo.skip.processingMode) {
+            skipModes = testInfo.skip.processingMode;
+          }
+          if(skipModes.indexOf(pm) !== -1) {
+            //console.log('Skipping test "' + test.name + '" of processing mode: ' + pm);
+            self.skip();
+          }
+        });
+      });
+
+      testOptions.forEach(function(opt) {
+        var specVersions = getJsonLdValues(opt, 'specVersion');
+        specVersions.forEach(function(sv) {
+          var skipVersions = [];
+          if(testInfo.skip && testInfo.skip.specVersion) {
+            skipVersions = testInfo.skip.specVersion;
+          }
+          if(skipVersions.indexOf(sv) !== -1) {
+            //console.log('Skipping test "' + test.name + '" for spec version: ' + sv);
+            self.skip();
+          }
+        });
+      });
+
+      var fn = testInfo.fn;
+      var params = testInfo.params;
+      params = params.map(function(param) {return param(test);});
+      var callback = function(err, result) {
+        Promise.resolve().then(() => {
+          if(isNegativeTest(test)) {
+            return compareExpectedError(test, err);
+          } else {
+            // default is to assume positive and skip isPositiveTest(test) check
+            if(err) {
+              throw err;
+            }
+            return testInfo.compare(test, result);
+          }
+        }).then(() => {
+          if(options.earl.report) {
+            options.earl.report.addAssertion(test, true);
+          }
+          done();
+        }).catch(err => {
+          if(options.bail) {
+            if(err.name !== 'AssertionError') {
+              console.error('\nError: ', JSON.stringify(err, null, 2));
+            }
+            options.exit();
+          }
+          if(options.earl.report) {
+            options.earl.report.addAssertion(test, false);
+          }
+          console.error('Error: ', JSON.stringify(err, null, 2));
+          done(err);
+        });
+      };
+
+      // add nodejs style callback
+      if(useCallbacks) {
+        params.push(callback);
+      }
+
+      // resolve test data run
+      Promise.all(params).then(values => {
+        // get appropriate API and run test
+        var api = useCallbacks ? jsonld : jsonld.promises;
+        var promise = api[fn].apply(api, values);
+
+        // promise style
+        if(!useCallbacks) {
+          promise.then(callback.bind(null, null), callback);
         }
-      }).then(() => {
-        if(options.earl.report) {
-          options.earl.report.addAssertion(test, true);
-        }
-        done();
       }).catch(err => {
-        if(options.bail) {
-          if(err.name !== 'AssertionError') {
-            console.error('\nError: ', JSON.stringify(err, null, 2));
-          }
-          options.exit();
-        }
-        if(options.earl.report) {
-          options.earl.report.addAssertion(test, false);
-        }
-        console.error('Error: ', JSON.stringify(err, null, 2));
-        done(err);
+        console.error(err);
+        throw err;
       });
     };
-
-    // add nodejs style callback
-    if(options.nodejs) {
-      params.push(callback);
-    }
-
-    // resolve test data run
-    Promise.all(params).then(values => {
-      // get appropriate API and run test
-      var api = options.nodejs ? jsonld : jsonld.promises;
-      var promise = api[fn].apply(api, values);
-
-      // promise style
-      if(!options.nodejs) {
-        promise.then(callback.bind(null, null), callback);
-      }
-    }).catch(err => {
-      console.error(err);
-      throw err;
-    });
-  };
+  }
 }
 
 function isPositiveTest(test) {

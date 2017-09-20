@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Changed
+- Run all test-suite tests with promises and callbacks.
+
 ### Fixed
 - Use Node.js "global" or webpack polyfill.
 
