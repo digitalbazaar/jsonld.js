@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 0.5.8 - 2017-09-20
+
 ### Changed
 - Run all test-suite tests with promises and callbacks.
 
