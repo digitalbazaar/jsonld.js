@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 0.5.6 - 2017-09-20
+
 ### Fixed
 - Fix `toRDF()`.
 
