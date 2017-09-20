@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 0.5.3 - 2017-09-20
+
 ### Changed
 - Significant code reorganization and splitting into multiple files.
 
