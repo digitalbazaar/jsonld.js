@@ -89,7 +89,7 @@
     "prepublish": "npm run build",
     "build": "npm run build-webpack && npm run build-node6",
     "build-webpack": "webpack",
-    "build-node6": "babel --no-babelrc --out-dir dist/node6 --presets=node6-es6 lib/jsonld.js",
+    "build-node6": "babel --no-babelrc --out-dir dist/node6 --presets=node6-es6 lib/*.js lib/*/*.js",
     "fetch-test-suites": "npm run fetch-json-ld-org-test-suite && npm run fetch-normalization-test-suite",
     "fetch-json-ld-org-test-suite": "if [ ! -e test-suites/json-ld.org ]; then git clone --depth 1 https://github.com/json-ld/json-ld.org.git test-suites/json-ld.org; fi",
     "fetch-normalization-test-suite": "if [ ! -e test-suites/normalization ]; then git clone --depth 1 https://github.com/json-ld/normalization.git test-suites/normalization; fi",

@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Fixed
+- Generate all js files for Node.js 6.
+
 ## 0.5.3 - 2017-09-20
 
 ### Changed
