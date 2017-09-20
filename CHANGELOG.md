@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Fixed
+- Use Node.js "global" or webpack polyfill.
+
 ## 0.5.7 - 2017-09-20
 
 ### Fixed
