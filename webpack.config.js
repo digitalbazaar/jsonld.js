@@ -79,8 +79,8 @@ outputs.forEach((info) => {
     // disable various node shims as jsonld handles this manually
     node: {
       Buffer: false,
-      process: false,
       crypto: false,
+      process: false,
       setImmediate: false
     }
   };
