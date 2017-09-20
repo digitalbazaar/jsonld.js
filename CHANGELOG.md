@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Fixed
+- Distribute all js files.
+
 ## 0.5.4 - 2017-09-20
 
 ### Fixed
