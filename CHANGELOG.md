@@ -1,5 +1,17 @@
 # jsonld ChangeLog
 
+### Changed
+- Significant code reorganization and splitting into multiple files.
+
+### Removed
+- **BREAKING**: Explicit IE8 support. Webpack, babel, and/or polyfills may be
+  of help if support is still needed.
+- **BREAKING**: jQuery document loader. Use the XHR loader.
+- `Object.keys` polyfill. Other tools can provide this.
+
+### Fixed
+- Handling of "global".
+
 ## 0.5.2 - 2017-09-19
 
 ### Fixed
