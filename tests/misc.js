@@ -16,7 +16,7 @@ describe('other toRDF tests', () => {
     });
   });
 
-  it.only('should handle nquads format', done => {
+  it('should handle nquads format', done => {
     const doc = {
       '@id': 'https://example.com/',
       'https://example.com/test': 'test'
@@ -58,7 +58,7 @@ describe('other toRDF tests', () => {
     });
   });
 
-  it('should handle no options', done => {
+  it.skip('should handle no options', done => {
     const doc = {
       '@id': 'https://exmaple.com/',
       'https://example.com/test': 'test'
