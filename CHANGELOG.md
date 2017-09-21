@@ -1,5 +1,17 @@
 # jsonld ChangeLog
 
+### Fixed
+- Callbackify bugs.
+- Document loaders.
+- Request queue.
+- Handling of exceptios in callbacks.
+
+### Added
+- Various toRDF tests.
+
+### Changed
+- Move tests from test/ to tests/.
+
 ## 0.5.8 - 2017-09-20
 
 ### Changed
