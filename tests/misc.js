@@ -5,6 +5,67 @@ const jsonld = require('..');
 const assert = require('assert');
 
 describe('other toRDF tests', () => {
+  const emptyRdf = {'@default': []};
+
+  it('should process with options and callback', done => {
+    jsonld.toRDF({}, {}, (err, output) => {
+      assert.ifError(err);
+      assert.deepEqual(output, emptyRdf);
+      done();
+    });
+  });
+
+  it.skip('should process with no options and callback', done => {
+    jsonld.toRDF({}, (err, output) => {
+      assert.ifError(err);
+      assert.deepEqual(output, emptyRdf);
+      done();
+    });
+  });
+
+  it('should process with options and promise', done => {
+    const p = jsonld.toRDF({}, {});
+    assert(p instanceof Promise);
+    // catch and fail first, then check output
+    p.catch(e => {
+      assert.fail();
+    }).then(output => {
+      assert.deepEqual(output, emptyRdf);
+      done();
+    });
+  });
+
+  it('should process with no options and promise', done => {
+    const p = jsonld.toRDF({});
+    assert(p instanceof Promise);
+    // catch and fail first, then check output
+    p.catch(e => {
+      assert.fail();
+    }).then(output => {
+      assert.deepEqual(output, emptyRdf);
+      done();
+    });
+  });
+
+  it.skip('should fail with no args and callback', done => {
+    jsonld.toRDF((err, output) => {
+      assert(err);
+      done();
+    });
+  });
+
+  it.skip('should fail with no args and promise', done => {
+    const p = jsonld.toRDF();
+    assert(p instanceof Promise);
+    // fail first if error not thrown, then check error
+    p.then(output => {
+      assert.fail();
+    }).catch(e => {
+      assert(e);
+      done();
+    })
+  });
+
   it('should fail for bad format', done => {
     const doc = {
       '@id': 'https://exmaple.com/',
