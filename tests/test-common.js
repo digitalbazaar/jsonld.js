@@ -391,7 +391,7 @@ function addTest(manifest, test, tests) {
 
         // promise style
         if(!useCallbacks) {
-          promise.then(callback.bind(null, null), callback);
+          return promise.then(callback.bind(null, null), callback);
         }
       }).catch(err => {
         console.error(err);
@@ -672,11 +672,10 @@ function basename(filename) {
 function createDocumentLoader(test) {
   const _httpTestSuiteBase = 'http://json-ld.org/test-suite';
   const _httpsTestSuiteBase = 'https://json-ld.org/test-suite';
-  var loader = jsonld.documentLoader;
   var localLoader = function(url, callback) {
     // always load remote-doc tests remotely in node
     if(options.nodejs && test.manifest.name === 'Remote document') {
-      return loader(url, callback);
+      return jsonld.loadDocument(url, callback);
     }
 
     // FIXME: this check only works for main test suite and will not work if:
