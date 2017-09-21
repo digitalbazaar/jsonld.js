@@ -45,7 +45,7 @@ describe('other toRDF tests', () => {
     });
   });
 
-  it.skip('should fail with no args and callback', done => {
+  it('should fail with no args and callback', done => {
     jsonld.toRDF((err, output) => {
       assert(err);
       done();
