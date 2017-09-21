@@ -688,9 +688,7 @@ function createDocumentLoader(test) {
     var isRelative = url.indexOf(':') === -1;
     if(isTestSuite || isRelative) {
       // attempt to load official test-suite files or relative URLs locally
-      loadLocally(url).then(doc => {
-        callback(null, doc);
-      }).catch(callback);
+      loadLocally(url).then(callback.bind(null, null), callback);
       // don't return the promise
       return;
     }
