@@ -691,9 +691,7 @@ function createDocumentLoader(test) {
       // attempt to load official test-suite files or relative URLs locally
       loadLocally(url).then(doc => {
         callback(null, doc);
-      }).catch(err => {
-        callback(err);
-      });
+      }).catch(callback);
       // don't return the promise
       return;
     }
