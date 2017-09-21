@@ -15,7 +15,7 @@ describe('other toRDF tests', () => {
     });
   });
 
-  it.skip('should process with no options and callback', done => {
+  it('should process with no options and callback', done => {
     jsonld.toRDF({}, (err, output) => {
       assert.ifError(err);
       assert.deepEqual(output, emptyRdf);
