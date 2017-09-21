@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 0.5.9 - 2017-09-21
+
 ### Fixed
 - Callbackify bugs.
 - Document loaders.
