@@ -1,5 +1,14 @@
 # jsonld ChangeLog
 
+### Added
+- Add `expansionMap` and `compactionMap` options. These
+  functions may be provided that will be called when an
+  unmapped value or property will be dropped during expansion
+  or compaction, respectively. The function map return either
+  `undefined` to cause the default behavior, some other
+  value to use instead of the default expanded/compacted value,
+  or it may throw an error to stop expansion/compaction.
+
 ## 0.5.9 - 2017-09-21
 
 ### Fixed
