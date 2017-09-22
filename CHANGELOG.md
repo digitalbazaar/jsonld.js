@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 0.5.10 - 2017-09-21
+
 ### Added
 - Add `expansionMap` and `compactionMap` options. These
   functions may be provided that will be called when an
