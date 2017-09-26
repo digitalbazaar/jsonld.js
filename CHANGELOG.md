@@ -11,6 +11,11 @@
   value to use instead of the default expanded/compacted value,
   or it may throw an error to stop expansion/compaction.
 
+### Removed
+- **BREAKING** Remove `objectify` and `prependBase` APIs. Now
+  `objectify` can be achieved via the `@link` option in framing and
+  `prependBase` can be found via `url.prependBase`.
+
 ## 0.5.9 - 2017-09-21
 
 ### Fixed
