@@ -19,6 +19,7 @@
   `issuer` instead.
 - **BREAKING** Last active context used is no longer returned as an optional
   parameter to the `compact` callback.
+- **BREAKING** Do not expose deprecated `DocumentCache`.
 
 ### Changed
 - **BREAKING** Change default canonicalization algorithm to `URDNA2015`.
