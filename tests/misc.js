@@ -4,6 +4,8 @@
 const jsonld = require('..');
 const assert = require('assert');
 
+// TODO: need tests for jsonld.link and jsonld.merge
+
 describe('other toRDF tests', () => {
   const emptyRdf = {'@default': []};
 
