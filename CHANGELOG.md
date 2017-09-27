@@ -18,6 +18,9 @@
 - **BREAKING** Remove deprecated `namer` option from all public APIs, use
   `issuer` instead.
 
+### Changed
+- **BREAKING** Change default canonicalization algorithm to `URDNA2015`.
+
 ## 0.5.9 - 2017-09-21
 
 ### Fixed
