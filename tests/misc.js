@@ -4,7 +4,39 @@
 const jsonld = require('..');
 const assert = require('assert');
 
-// TODO: need tests for jsonld.link and jsonld.merge
+// TODO: need more tests for jsonld.link and jsonld.merge
+
+describe('link tests', () => {
+  const doc = {
+    '@id': 'ex:1',
+    'a:foo': {
+      '@id': 'ex:1'
+    }
+  };
+
+  it('should create a circular link', done => {
+    jsonld.link(doc, {}, (err, output) => {
+      assert.ifError(err);
+      output = output['@graph'][0];
+      assert.equal(output, output['a:foo']);
+      done();
+    });
+  });
+});
+
+describe('merge tests', () => {
+  const docA = {'@id': 'ex:1', 'a:foo': [{'@value': 1}]};
+  const docB = {'@id': 'ex:1', 'b:foo': [{'@value': 2}]};
+  const merged = [Object.assign({}, docA, docB)];
+
+  it('should merge nodes from two different documents', done => {
+    jsonld.merge([docA, docB], (err, output) => {
+      assert.ifError(err);
+      assert.deepEqual(output, merged);
+      done();
+    });
+  });
+});
 
 describe('other toRDF tests', () => {
   const emptyRdf = {'@default': []};
