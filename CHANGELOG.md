@@ -17,6 +17,8 @@
   `prependBase` can be found via `url.prependBase`.
 - **BREAKING** Remove deprecated `namer` option from all public APIs, use
   `issuer` instead.
+- **BREAKING** Last active context used is no longer returned as an optional
+  parameter to the `compact` callback.
 
 ### Changed
 - **BREAKING** Change default canonicalization algorithm to `URDNA2015`.
