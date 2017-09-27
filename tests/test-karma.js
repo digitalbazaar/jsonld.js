@@ -25,6 +25,7 @@ require('core-js/fn/string/starts-with');
 // jsonld compatibility
 require('core-js/fn/array/includes');
 require('core-js/fn/object/assign');
+require('core-js/fn/promise');
 require('regenerator-runtime/runtime');
 
 const assert = require('chai').assert;

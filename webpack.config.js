@@ -22,6 +22,7 @@ const outputs = [
       'regenerator-runtime/runtime',
       'core-js/fn/array/includes',
       'core-js/fn/object/assign',
+      'core-js/fn/promise',
       // main lib
       './lib/index.js'
     ],
