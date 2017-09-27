@@ -12,9 +12,11 @@
   or it may throw an error to stop expansion/compaction.
 
 ### Removed
-- **BREAKING** Remove `objectify` and `prependBase` APIs. Now
+- **BREAKING** Remove deprecated `objectify` and `prependBase` APIs. Now
   `objectify` can be achieved via the `@link` option in framing and
   `prependBase` can be found via `url.prependBase`.
+- **BREAKING** Remove deprecated `namer` option from all public APIs, use
+  `issuer` instead.
 
 ## 0.5.9 - 2017-09-21
 
