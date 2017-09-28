@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 0.5.11 - 2017-09-28
+
 ### Removed
 - **BREAKING** Remove deprecated extensions API, including `jsonld.request`.
 
