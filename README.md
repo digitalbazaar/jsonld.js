@@ -47,7 +47,7 @@ npm install jsonld
 ```
 
 ```js
-var jsonld = require('jsonld');
+const jsonld = require('jsonld');
 ```
 
 ### Browser (AMD) + npm
@@ -61,9 +61,6 @@ Use your favorite technology to load `node_modules/dist/jsonld.min.js`.
 ### Browser + script tag
 
 ```html
-<!-- For legacy browsers include a Promise polyfill like
-  es6-promise before including jsonld.js -->
-<script src="//cdn.jsdelivr.net/g/es6-promise@1.0.0"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jsonld/0.5.0/jsonld.min.js"></script>
 ```
 See https://cdnjs.com/libraries/jsonld for the the latest available cdnjs version.
@@ -131,81 +128,73 @@ jsonld.expand('http://example.org/doc', ...);
 
 // flatten a document
 // see: http://json-ld.org/spec/latest/json-ld/#flattened-document-form
-jsonld.flatten(doc, function(err, flattened) {
+jsonld.flatten(doc, (err, flattened) => {
   // all deep-level trees flattened to the top-level
 });
 
 // frame a document
 // see: http://json-ld.org/spec/latest/json-ld-framing/#introduction
-jsonld.frame(doc, frame, function(err, framed) {
+jsonld.frame(doc, frame, (err, framed) => {
   // document transformed into a particular tree structure per the given frame
 });
 
-// normalize a document using the RDF Dataset Normalization Algorithm
+// canonize (normalize) a document using the RDF Dataset Normalization Algorithm
 // (URDNA2015), see: http://json-ld.github.io/normalization/spec/
-jsonld.normalize(doc, {
+jsonld.canonize(doc, {
   algorithm: 'URDNA2015',
   format: 'application/nquads'
-}, function(err, normalized) {
-  // normalized is a string that is a canonical representation of the document
+}, (err, canonized) => {
+  // canonized is a string that is a canonical representation of the document
   // that can be used for hashing, comparison, etc.
 });
 
 // serialize a document to N-Quads (RDF)
-jsonld.toRDF(doc, {format: 'application/nquads'}, function(err, nquads) {
+jsonld.toRDF(doc, {format: 'application/nquads'}, (err, nquads) => {
   // nquads is a string of nquads
 });
 
 // deserialize N-Quads (RDF) to JSON-LD
-jsonld.fromRDF(nquads, {format: 'application/nquads'}, function(err, doc) {
+jsonld.fromRDF(nquads, {format: 'application/nquads'}, (err, doc) => {
   // doc is JSON-LD
 });
 
 // register a custom async-callback-based RDF parser
-jsonld.registerRDFParser = function(contentType, function(input, callback) {
+jsonld.registerRDFParser(contentType, (input, callback) => {
   // parse input to a jsonld.js RDF dataset object...
   callback(err, dataset);
 });
 
 // register a custom synchronous RDF parser
-jsonld.registerRDFParser = function(contentType, function(input) {
+jsonld.registerRDFParser(contentType, input => {
   // parse input to a jsonld.js RDF dataset object... and return it
   return dataset;
 });
 
-// use the promises API
-var promises = jsonld.promises;
+// use the promises API:
 
 // compaction
-var promise = promises.compact(doc, context);
-promise.then(function(compacted) {...}, function(err) {...});
+const compacted = await jsonld.compact(doc, context);
 
 // expansion
-var promise = promises.expand(doc);
-promise.then(function(expanded) {...}, function(err) {...});
+const expanded = await jsonld.expand(doc);
 
 // flattening
-var promise = promises.flatten(doc);
-promise.then(function(flattened) {...}, function(err) {...});
+const flattened = await jsonld.flatten(doc);
 
 // framing
-var promise = promises.frame(doc, frame);
-promise.then(function(framed) {...}, function(err) {...});
+const framed = await jsonld.frame(doc, frame);
 
-// normalization
-var promise = promises.normalize(doc, {format: 'application/nquads'});
-promise.then(function(normalized) {...}, function(err) {...});
+// canonicalization (normalization)
+const canonized = await jsonld.canonize(doc, {format: 'application/nquads'});
 
 // serialize to RDF
-var promise = promises.toRDF(doc, {format: 'application/nquads'});
-promise.then(function(nquads) {...}, function(err) {...});
+const rdf = await jsonld.toRDF(doc, {format: 'application/nquads'});
 
 // deserialize from RDF
-var promise = promises.fromRDF(nquads, {format: 'application/nquads'});
-promise.then(function(doc) {...}, function(err) {...});
+const doc = await jsonld.fromRDF(nquads, {format: 'application/nquads'});
 
 // register a custom promise-based RDF parser
-jsonld.registerRDFParser = function(contentType, function(input) {
+jsonld.registerRDFParser(contentType, async input => {
   // parse input into a jsonld.js RDF dataset object...
   return new Promise(...);
 });
@@ -214,21 +203,20 @@ jsonld.registerRDFParser = function(contentType, function(input) {
 // example, one that uses pre-loaded contexts:
 
 // define a mapping of context URL => context doc
-var CONTEXTS = {
+const CONTEXTS = {
   "http://example.com": {
     "@context": ...
   }, ...
 };
 
 // grab the built-in node.js doc loader
-var nodeDocumentLoader = jsonld.documentLoaders.node();
+const nodeDocumentLoader = jsonld.documentLoaders.node();
 // or grab the XHR one: jsonld.documentLoaders.xhr()
-// or grab the jquery one: jsonld.documentLoaders.jquery()
 
 // change the default document loader using the callback API
 // (you can also do this using the promise-based API, return a promise instead
 // of using a callback)
-var customLoader = function(url, callback) {
+const customLoader = (url, callback) => {
   if(url in CONTEXTS) {
     return callback(
       null, {
@@ -248,8 +236,8 @@ var customLoader = function(url, callback) {
 jsonld.documentLoader = customLoader;
 
 // alternatively, pass the custom loader for just a specific call:
-jsonld.compact(doc, context, {documentLoader: customLoader},
-  function(err, compacted) { ... });
+const compacted = await jsonld.compact(
+doc, context, {documentLoader: customLoader});
 ```
 
 Related Modules
