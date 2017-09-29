@@ -33,7 +33,7 @@
   "dependencies": {
     "pkginfo": "^0.4.1",
     "rdf-canonize": "^0.1.5",
-    "request": "^2.81.0",
+    "request": "^2.83.0",
     "semver": "^5.4.1",
     "xmldom": "0.1.19"
   },
@@ -47,7 +47,7 @@
     "commander": "^2.8.0",
     "core-js": "^2.5.1",
     "cors": "^2.7.1",
-    "express": "^4.15.4",
+    "express": "^4.16.0",
     "fs-extra": "^4.0.2",
     "istanbul": "^0.4.3",
     "join-path-js": "0.0.0",
