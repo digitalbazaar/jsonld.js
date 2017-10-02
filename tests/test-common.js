@@ -697,9 +697,7 @@ function createDocumentLoader(test) {
     return jsonld.loadDocument(url, callback);
   };
 
-  return options.nodejs ? localLoader : function(url) {
-    return jsonld.promisify(localLoader, url);
-  };
+  return localLoader;
 
   function loadLocally(url) {
     var doc = {contextUrl: null, documentUrl: url, document: null};

@@ -5,6 +5,9 @@
 ### Changed
 - **BREAKING** Remove top-layer errors.
 
+### Removed
+- **BREAKING** Remove `promisify` API.
+
 ## 0.5.11 - 2017-09-28
 
 ### Removed
