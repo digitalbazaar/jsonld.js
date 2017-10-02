@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Changed
+- **BREAKING** Remove top-layer errors.
+
 ## 0.5.11 - 2017-09-28
 
 ### Removed
