@@ -13,7 +13,6 @@
  *
  * Copyright (c) 2011-2017 Digital Bazaar, Inc. All rights reserved.
  */
-const path = require('path');
 const webpack = require('webpack');
 
 module.exports = function(config) {
@@ -82,7 +81,10 @@ module.exports = function(config) {
             use: {
               loader: 'babel-loader',
               options: {
-                presets: ['env']
+                presets: ['env'],
+                plugins: [
+                  ['transform-object-rest-spread', {useBuiltIns: true}]
+                ]
               }
             }
           }
