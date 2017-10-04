@@ -364,7 +364,7 @@ function addTest(manifest, test, tests) {
           }
           done();
         }).catch(err => {
-          if(options.bail) {
+          if(options.bailOnError) {
             if(err.name !== 'AssertionError') {
               console.error('\nError: ', JSON.stringify(err, null, 2));
             }
@@ -543,7 +543,7 @@ function compareExpectedJson(test, result) {
     _expect = expect;
     assert.deepEqual(result, expect);
   }).catch(err => {
-    if(options.bail) {
+    if(options.bailOnError) {
       console.log('\nTEST FAILED\n');
       console.log('EXPECTED: ' + JSON.stringify(_expect, null, 2));
       console.log('ACTUAL: ' + JSON.stringify(result, null, 2));
@@ -558,7 +558,7 @@ function compareExpectedNQuads(test, result) {
     _expect = expect;
     assert.equal(result, expect);
   }).catch(err => {
-    if(options.bail) {
+    if(options.bailOnError) {
       console.log('\nTEST FAILED\n');
       console.log('EXPECTED:\n' + _expect);
       console.log('ACTUAL:\n' + result);
@@ -576,7 +576,7 @@ function compareExpectedError(test, err) {
     assert.ok(err);
     assert.equal(result, expect);
   }).catch(err => {
-    if(options.bail) {
+    if(options.bailOnError) {
       console.log('\nTEST FAILED\n');
       console.log('EXPECTED: ' + expect);
       console.log('ACTUAL: ' + result);
