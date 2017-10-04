@@ -18,7 +18,7 @@ const outputs = [
   // core jsonld library
   {
     entry: [
-      // 'babel-polyfill' very large, list features explicitly
+      // 'babel-polyfill' is very large, list features explicitly
       'regenerator-runtime/runtime',
       'core-js/fn/array/includes',
       'core-js/fn/object/assign',
