@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 0.5.13 - 2017-10-05
+
 ### Fixed
 - Remote context retrieval bug.
 
