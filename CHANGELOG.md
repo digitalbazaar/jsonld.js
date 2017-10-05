@@ -1,12 +1,15 @@
 # jsonld ChangeLog
 
+### Fixed
+- Remote context retrieval bug.
+
+### Removed
+- **BREAKING** Remove `promisify` API.
+
 ## 0.5.12 - 2017-10-05
 
 ### Changed
 - **BREAKING** Remove top-layer errors.
-
-### Removed
-- **BREAKING** Remove `promisify` API.
 
 ## 0.5.11 - 2017-09-28
 
