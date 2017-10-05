@@ -131,3 +131,58 @@ describe('other toRDF tests', () => {
     });
   });
 });
+
+describe('loading multiple levels of contexts', () => {
+  const documentLoader = url => {
+    if(url === 'https://example.com/context1') {
+      return {
+        document: {
+          '@context': {
+            'ex': 'https://example.com/#'
+          }
+        },
+        contextUrl: null,
+        documentUrl: url
+      }
+    }
+    if(url === 'https://example.com/context2') {
+      return {
+        document: {
+          '@context': {
+            'ex': 'https://example.com/#'
+          }
+        },
+        contextUrl: null,
+        documentUrl: url
+      }
+    }
+  };
+  const doc = {
+    '@context': 'https://example.com/context1',
+    'ex:foo': {
+      '@context': 'https://example.com/context2',
+      'ex:bar': 'test'
+    }
+  };
+  const expected = [{
+    'https://example.com/#foo': [{
+      'https://example.com/#bar': [{
+        '@value': 'test'
+      }]
+    }]
+  }];
+
+  it('should handle loading multiple levels of contexts (promise)', () => {
+    return jsonld.expand(doc, {documentLoader}).then(output => {
+      assert.deepEqual(output, expected);
+    });
+  });
+
+  it('should handle loading multiple levels of contexts (callback)', done => {
+    jsonld.expand(doc, {documentLoader}, (err, output) => {
+      assert.ifError(err);
+      assert.deepEqual(output, expected);
+      done();
+    });
+  });
+});
