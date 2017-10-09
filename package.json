@@ -86,7 +86,7 @@
   ],
   "scripts": {
     "prepublish": "npm run build",
-    "postinstall": "npm run build",
+    "postinstall": "npm run build-node6",
     "build": "npm run build-webpack && npm run build-node6",
     "build-webpack": "webpack",
     "build-node6": "babel --no-babelrc --out-dir dist/node6 --presets=node6-es6 lib/*.js lib/*/*.js",
