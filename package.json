@@ -35,9 +35,7 @@
     "rdf-canonize": "^0.1.5",
     "request": "^2.83.0",
     "semver": "^5.4.1",
-    "xmldom": "0.1.19"
-  },
-  "devDependencies": {
+    "xmldom": "0.1.19",
     "babel-cli": "^6.26.0",
     "babel-loader": "^7.1.2",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
@@ -88,6 +86,7 @@
   ],
   "scripts": {
     "prepublish": "npm run build",
+    "postinstall": "npm run build",
     "build": "npm run build-webpack && npm run build-node6",
     "build-webpack": "webpack",
     "build-node6": "babel --no-babelrc --out-dir dist/node6 --presets=node6-es6 lib/*.js lib/*/*.js",
