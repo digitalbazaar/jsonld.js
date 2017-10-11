@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 0.5.14 - 2017-10-11
+
 ### Fixed
 - Allow empty lists to be compacted to any @list container term. Fixes
   compact-0074 test.
