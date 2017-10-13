@@ -26,6 +26,7 @@ require('core-js/fn/string/starts-with');
 require('core-js/fn/array/includes');
 require('core-js/fn/object/assign');
 require('core-js/fn/promise');
+require('core-js/fn/symbol');
 require('regenerator-runtime/runtime');
 
 const assert = require('chai').assert;
