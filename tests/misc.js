@@ -39,7 +39,7 @@ describe('merge tests', () => {
 });
 
 describe('other toRDF tests', () => {
-  const emptyRdf = {'@default': []};
+  const emptyRdf = [];
 
   it('should process with options and callback', done => {
     jsonld.toRDF({}, {}, (err, output) => {

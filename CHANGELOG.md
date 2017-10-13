@@ -1,5 +1,11 @@
 # jsonld ChangeLog
 
+### Changed
+- **BREAKING** Use RDF JS (rdf.js.org) interfaces for internal
+  representation of dataset and quads. This should only break
+  code that was using undocumented internal datastructures,
+  backwards-compat code exists to handle external RDF parsers.
+
 ## 0.5.14 - 2017-10-11
 
 ### Fixed
