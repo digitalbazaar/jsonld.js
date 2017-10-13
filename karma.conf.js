@@ -43,7 +43,10 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      'tests/test-karma.js'
+      {
+        pattern: 'tests/test-karma.js',
+        watched: false, served: true, included: true
+      }
     ],
 
     // list of files to exclude
