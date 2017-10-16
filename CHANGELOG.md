@@ -5,6 +5,7 @@
   representation of dataset and quads. This should only break
   code that was using undocumented internal datastructures,
   backwards-compat code exists to handle external RDF parsers.
+- Update `rdf-canonize` to dependency with native support.
 
 ## 0.5.14 - 2017-10-11
 
