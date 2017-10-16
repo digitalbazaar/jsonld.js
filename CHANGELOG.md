@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 0.5.15 - 2017-10-16
+
 ### Changed
 - **BREAKING** Use RDF JS (rdf.js.org) interfaces for internal
   representation of dataset and quads. This should only break
