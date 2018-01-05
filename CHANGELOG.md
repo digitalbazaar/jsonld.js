@@ -1,5 +1,10 @@
 # jsonld ChangeLog
 
+### Removed
+- **BREAKING**: Remove `jsonld.version` API and `pkginfo` dependency. This
+  feature added complexity and browser issues and the use case is likely
+  handled by semantic versioning and using a proper dependency.
+
 ## 0.5.15 - 2017-10-16
 
 ### Changed

@@ -31,7 +31,6 @@
     "lib/**/*.js"
   ],
   "dependencies": {
-    "pkginfo": "^0.4.1",
     "rdf-canonize": "^0.2.1",
     "request": "^2.83.0",
     "semver": "^5.4.1",
@@ -107,7 +106,6 @@
     "crypto": "./browser/ignore.js",
     "http": "./browser/ignore.js",
     "jsonld-request": "./browser/ignore.js",
-    "pkginfo": "./browser/ignore.js",
     "request": "./browser/ignore.js",
     "url": "./browser/ignore.js",
     "util": "./browser/ignore.js",
