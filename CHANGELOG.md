@@ -3,7 +3,7 @@
 ## 0.5.15 - 2017-10-16
 
 ### Changed
-- **BREAKING** Use RDF JS (rdf.js.org) interfaces for internal
+- **BREAKING**: Use RDF JS (rdf.js.org) interfaces for internal
   representation of dataset and quads. This should only break
   code that was using undocumented internal datastructures,
   backwards-compat code exists to handle external RDF parsers.
@@ -21,17 +21,17 @@
 - Remote context retrieval bug.
 
 ### Removed
-- **BREAKING** Remove `promisify` API.
+- **BREAKING**: Remove `promisify` API.
 
 ## 0.5.12 - 2017-10-05
 
 ### Changed
-- **BREAKING** Remove top-layer errors.
+- **BREAKING**: Remove top-layer errors.
 
 ## 0.5.11 - 2017-09-28
 
 ### Removed
-- **BREAKING** Remove deprecated extensions API, including `jsonld.request`.
+- **BREAKING**: Remove deprecated extensions API, including `jsonld.request`.
 
 ## 0.5.10 - 2017-09-21
 
@@ -45,17 +45,17 @@
   or it may throw an error to stop expansion/compaction.
 
 ### Removed
-- **BREAKING** Remove deprecated `objectify` and `prependBase` APIs. Now
+- **BREAKING**: Remove deprecated `objectify` and `prependBase` APIs. Now
   `objectify` can be achieved via the `@link` option in framing and
   `prependBase` can be found via `url.prependBase`.
-- **BREAKING** Remove deprecated `namer` option from all public APIs, use
+- **BREAKING**: Remove deprecated `namer` option from all public APIs, use
   `issuer` instead.
-- **BREAKING** Last active context used is no longer returned as an optional
+- **BREAKING**: Last active context used is no longer returned as an optional
   parameter to the `compact` callback.
-- **BREAKING** Do not expose deprecated `DocumentCache`.
+- **BREAKING**: Do not expose deprecated `DocumentCache`.
 
 ### Changed
-- **BREAKING** Change default canonicalization algorithm to `URDNA2015`.
+- **BREAKING**: Change default canonicalization algorithm to `URDNA2015`.
 
 ## 0.5.9 - 2017-09-21
 
