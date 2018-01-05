@@ -98,8 +98,8 @@
     "coverage": "istanbul cover ./node_modules/.bin/_mocha -- --delay -t 30000 -u exports -R ${REPORTER:-spec} tests/test.js",
     "coverage-lcov": "istanbul cover ./node_modules/.bin/_mocha --report lcovonly -- --delay -t 30000 -u exports -R ${REPORTER:-spec} tests/test.js",
     "coverage-report": "istanbul report",
-    "jscs": "jscs lib/*.js tests/*.js test/*.js",
-    "jshint": "jshint lib/*.js tests/*.js test/*.js"
+    "jscs": "jscs lib/*.js tests/*.js",
+    "jshint": "jshint lib/*.js tests/*.js"
   },
   "browser": {
     "lib/index.js": "./lib/jsonld.js",
