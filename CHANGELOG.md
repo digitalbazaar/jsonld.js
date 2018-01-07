@@ -5,6 +5,9 @@
   feature added complexity and browser issues and the use case is likely
   handled by semantic versioning and using a proper dependency.
 
+## 0.5.x
+- Do not use native types to create IRIs in value expansion.
+
 ## 0.5.15 - 2017-10-16
 
 ### Changed
