@@ -42,7 +42,7 @@ const TEST_TYPES = {
   },
   'jld:ExpandTest': {
     skip: {
-      specVersion: ['json-ld-1.1']
+      regex: [/#t[cmn]/, /#t008./]
     },
     fn: 'expand',
     params: [
