@@ -7,6 +7,11 @@
 
 ### Fixed
 - Do not use native types to create IRIs in value expansion.
+- Improved error detection for @container variations.
+
+### Changed
+- Set processingMode from options or first encountered context.
+- Use array representation of @container in processing.
 
 ## 0.5.15 - 2017-10-16
 
