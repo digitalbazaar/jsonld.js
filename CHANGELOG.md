@@ -8,6 +8,7 @@
 ### Fixed
 - Do not use native types to create IRIs in value expansion.
 - Improved error detection for @container variations.
+- Handle empty and relative `@base`.
 
 ### Changed
 - Set processingMode from options or first encountered context.
