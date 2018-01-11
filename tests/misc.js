@@ -186,3 +186,18 @@ describe('loading multiple levels of contexts', () => {
     });
   });
 });
+
+describe('url tests', () => {
+  it('should detect absolute IRIs', done => {
+    assert(jsonld.url.isAbsolute('a:'));
+    assert(jsonld.url.isAbsolute('a:b'));
+    assert(jsonld.url.isAbsolute('a:b:c'));
+
+    assert(!jsonld.url.isAbsolute(':'));
+    assert(!jsonld.url.isAbsolute('a'));
+    assert(!jsonld.url.isAbsolute('/:'));
+    assert(!jsonld.url.isAbsolute('/a:'));
+    assert(!jsonld.url.isAbsolute('/a:b'));
+    done();
+  });
+});
