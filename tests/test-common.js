@@ -29,7 +29,7 @@ const manifest = options.manifest || {
 const TEST_TYPES = {
   'jld:CompactTest': {
     skip: {
-      regex: [/#t0073/, /#t[anps]/, /#t008[0-8]/, /#tm00[0-6]/, /#tm012/]
+      regex: [/#t0073/, /#t[anps]/, /#t008[1-8]/, /#tm00[0-6]/, /#tm012/]
     },
     fn: 'compact',
     params: [
