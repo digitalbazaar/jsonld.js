@@ -41,7 +41,7 @@ const TEST_TYPES = {
   },
   'jld:ExpandTest': {
     skip: {
-      regex: [/#t[n]/, /#t008[8-7]/]
+      regex: [/#t[n]/]
     },
     fn: 'expand',
     params: [
