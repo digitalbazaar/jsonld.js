@@ -54,6 +54,10 @@
 ### Added
 - Expansion and Compaction using scoped contexts on property and `@type` terms.
 
+### Added
+- Index graph containers using `@id` and `@index`, with `@set` variations.
+- Index node objects using `@id` and `@type`, with `@set` variations.
+
 ## 0.5.15 - 2017-10-16
 
 ### Changed
