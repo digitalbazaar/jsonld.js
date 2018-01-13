@@ -51,6 +51,9 @@
   `@container`, `@id`, `@language`, `@reverse`, and `@type`. This also sets up
   for additional keywords in 1.1.
 
+### Added
+- Expansion and Compaction using scoped contexts on property and `@type` terms.
+
 ## 0.5.15 - 2017-10-16
 
 ### Changed
