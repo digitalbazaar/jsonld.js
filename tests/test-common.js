@@ -29,7 +29,7 @@ const manifest = options.manifest || {
 const TEST_TYPES = {
   'jld:CompactTest': {
     skip: {
-      specVersion: ['json-ld-1.1']
+      regex: [/#t0073/, /#t[acmnps]/, /#t008[0-8]/]
     },
     fn: 'compact',
     params: [
@@ -41,7 +41,7 @@ const TEST_TYPES = {
   },
   'jld:ExpandTest': {
     skip: {
-      regex: [/#t[cmn]/, /#t008[0-7]/]
+      regex: [/#tn/, /#t008[0-7]/, /#tm00[0-7]/, /#tm013/]
     },
     fn: 'expand',
     params: [
@@ -52,7 +52,7 @@ const TEST_TYPES = {
   },
   'jld:FlattenTest': {
     skip: {
-      specVersion: ['json-ld-1.1']
+      regex: [/#t0073/, /#t[cmn]/]
     },
     fn: 'flatten',
     params: [
