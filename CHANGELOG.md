@@ -12,6 +12,9 @@
 ### Changed
 - Set processingMode from options or first encountered context.
 - Use array representation of @container in processing.
+- **BREAKING**: Check for keys in term definition outside that expected:
+  `@container`, `@id`, `@language`, `@reverse`, and `@type`. This also sets up
+  for additional keywords in 1.1.
 
 ## 0.5.15 - 2017-10-16
 
