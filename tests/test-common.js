@@ -52,7 +52,7 @@ const TEST_TYPES = {
   },
   'jld:FlattenTest': {
     skip: {
-      regex: [/#t0073/, /#t[cmn]/]
+      regex: [/#t0073/, /#tn/]
     },
     fn: 'flatten',
     params: [
