@@ -29,7 +29,8 @@ const manifest = options.manifest || {
 const TEST_TYPES = {
   'jld:CompactTest': {
     skip: {
-      regex: [/#t0073/, /#t[anp]/]
+      specVersion: ['json-ld-1.0'],
+      regex: [/#t0073/, /#t[n]/]
     },
     fn: 'compact',
     params: [
