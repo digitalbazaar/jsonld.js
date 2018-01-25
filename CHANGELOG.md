@@ -1,5 +1,11 @@
 # jsonld ChangeLog
 
+## 0.5.17 - 2018-01-25
+
+### Changed
+- **BREAKING**: Release 0.5.x as latest branch. See the many many changes below
+  since 0.4.x including many potential breaking changes.
+
 ## 0.5.16 - 2018-01-25
 
 ### Removed
