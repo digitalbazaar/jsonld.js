@@ -9,6 +9,7 @@
 - Do not use native types to create IRIs in value expansion.
 - Improved error detection for @container variations.
 - Handle empty and relative `@base`.
+- Remove shortcut from compactIri when IRI is a keyword (fixes compact-0073).
 
 ### Changed
 - Set processingMode from options or first encountered context.
