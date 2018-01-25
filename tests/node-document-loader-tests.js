@@ -3,7 +3,7 @@
  *
  * @author goofballLogic
  */
-var jsonld = require('../js/jsonld');
+var jsonld = require('..');
 var assert = require('assert');
 
 describe('For the node.js document loader', function() {
@@ -85,7 +85,7 @@ describe('For the node.js document loader', function() {
       'Accept': 'video/mp4'
     };
 
-    it('constructing the document loader should fail', function() {
+    it('constructing the document loader should fail', function(done) {
       var expectedMessage = 'Accept header may not be specified as an option; only "application/ld+json, application/json" is supported.';
       assert.throws(
         jsonld.useDocumentLoader.bind(jsonld, documentLoaderType, options),
@@ -94,6 +94,7 @@ describe('For the node.js document loader', function() {
           assert.equal(err.message, expectedMessage);
           return true;
         });
+      done();
     });
   });
 

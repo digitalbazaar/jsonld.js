@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Fetch latest files from github.
+# https://github.com/w3c/web-platform-tests/tree/master/resources
+# https://github.com/w3c/web-platform-tests/tree/master/resources/webidl2/lib
+
+curl -o testharness.js-new https://raw.githubusercontent.com/w3c/web-platform-tests/master/resources/testharness.js
+curl -o idlharness.js-new https://raw.githubusercontent.com/w3c/web-platform-tests/master/resources/idlharness.js
+curl -o WebIDLParser.js-new https://raw.githubusercontent.com/w3c/web-platform-tests/master/resources/webidl2/lib/webidl2.js

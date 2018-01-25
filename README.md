@@ -37,7 +37,8 @@ to JSON with added semantics. Finally, the format is intended to be fast
 to parse, fast to generate, stream-based and document-based processing
 compatible, and require a very small memory footprint in order to operate.
 
-## Requiring jsonld.js:
+Installation
+------------
 
 ### node.js + npm
 
@@ -46,31 +47,21 @@ npm install jsonld
 ```
 
 ```js
-var jsonld = require('jsonld');
+const jsonld = require('jsonld');
 ```
 
-### Browser (AMD) + bower
+### Browser (AMD) + npm
 
 ```
-bower install jsonld
+npm install jsonld
 ```
 
-```js
-require.config({
-  paths: {
-    jsonld: 'bower_components/jsonld/js/jsonld'
-  }
-});
-define(['jsonld'], function(jsonld) { ... });
-```
+Use your favorite technology to load `node_modules/dist/jsonld.min.js`.
 
 ### Browser + script tag
 
 ```html
-<!-- For legacy browsers include a Promise polyfill like
-  es6-promise before including jsonld.js -->
-<script src="//cdn.jsdelivr.net/g/es6-promise@1.0.0"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/jsonld/0.4.12/jsonld.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jsonld/0.5.0/jsonld.min.js"></script>
 ```
 See https://cdnjs.com/libraries/jsonld for the the latest available cdnjs version.
 
@@ -88,7 +79,8 @@ import {promises} from 'jsonld';
 import {JsonLdProcessor} from 'jsonld';
 ```
 
-## Quick Examples
+Examples
+--------
 
 ```js
 var doc = {
@@ -136,81 +128,73 @@ jsonld.expand('http://example.org/doc', ...);
 
 // flatten a document
 // see: http://json-ld.org/spec/latest/json-ld/#flattened-document-form
-jsonld.flatten(doc, function(err, flattened) {
+jsonld.flatten(doc, (err, flattened) => {
   // all deep-level trees flattened to the top-level
 });
 
 // frame a document
 // see: http://json-ld.org/spec/latest/json-ld-framing/#introduction
-jsonld.frame(doc, frame, function(err, framed) {
+jsonld.frame(doc, frame, (err, framed) => {
   // document transformed into a particular tree structure per the given frame
 });
 
-// normalize a document using the RDF Dataset Normalization Algorithm
+// canonize (normalize) a document using the RDF Dataset Normalization Algorithm
 // (URDNA2015), see: http://json-ld.github.io/normalization/spec/
-jsonld.normalize(doc, {
+jsonld.canonize(doc, {
   algorithm: 'URDNA2015',
   format: 'application/nquads'
-}, function(err, normalized) {
-  // normalized is a string that is a canonical representation of the document
+}, (err, canonized) => {
+  // canonized is a string that is a canonical representation of the document
   // that can be used for hashing, comparison, etc.
 });
 
 // serialize a document to N-Quads (RDF)
-jsonld.toRDF(doc, {format: 'application/nquads'}, function(err, nquads) {
+jsonld.toRDF(doc, {format: 'application/nquads'}, (err, nquads) => {
   // nquads is a string of nquads
 });
 
 // deserialize N-Quads (RDF) to JSON-LD
-jsonld.fromRDF(nquads, {format: 'application/nquads'}, function(err, doc) {
+jsonld.fromRDF(nquads, {format: 'application/nquads'}, (err, doc) => {
   // doc is JSON-LD
 });
 
 // register a custom async-callback-based RDF parser
-jsonld.registerRDFParser = function(contentType, function(input, callback) {
+jsonld.registerRDFParser(contentType, (input, callback) => {
   // parse input to a jsonld.js RDF dataset object...
   callback(err, dataset);
 });
 
 // register a custom synchronous RDF parser
-jsonld.registerRDFParser = function(contentType, function(input) {
+jsonld.registerRDFParser(contentType, input => {
   // parse input to a jsonld.js RDF dataset object... and return it
   return dataset;
 });
 
-// use the promises API
-var promises = jsonld.promises;
+// use the promises API:
 
 // compaction
-var promise = promises.compact(doc, context);
-promise.then(function(compacted) {...}, function(err) {...});
+const compacted = await jsonld.compact(doc, context);
 
 // expansion
-var promise = promises.expand(doc);
-promise.then(function(expanded) {...}, function(err) {...});
+const expanded = await jsonld.expand(doc);
 
 // flattening
-var promise = promises.flatten(doc);
-promise.then(function(flattened) {...}, function(err) {...});
+const flattened = await jsonld.flatten(doc);
 
 // framing
-var promise = promises.frame(doc, frame);
-promise.then(function(framed) {...}, function(err) {...});
+const framed = await jsonld.frame(doc, frame);
 
-// normalization
-var promise = promises.normalize(doc, {format: 'application/nquads'});
-promise.then(function(normalized) {...}, function(err) {...});
+// canonicalization (normalization)
+const canonized = await jsonld.canonize(doc, {format: 'application/nquads'});
 
 // serialize to RDF
-var promise = promises.toRDF(doc, {format: 'application/nquads'});
-promise.then(function(nquads) {...}, function(err) {...});
+const rdf = await jsonld.toRDF(doc, {format: 'application/nquads'});
 
 // deserialize from RDF
-var promise = promises.fromRDF(nquads, {format: 'application/nquads'});
-promise.then(function(doc) {...}, function(err) {...});
+const doc = await jsonld.fromRDF(nquads, {format: 'application/nquads'});
 
 // register a custom promise-based RDF parser
-jsonld.registerRDFParser = function(contentType, function(input) {
+jsonld.registerRDFParser(contentType, async input => {
   // parse input into a jsonld.js RDF dataset object...
   return new Promise(...);
 });
@@ -219,21 +203,20 @@ jsonld.registerRDFParser = function(contentType, function(input) {
 // example, one that uses pre-loaded contexts:
 
 // define a mapping of context URL => context doc
-var CONTEXTS = {
+const CONTEXTS = {
   "http://example.com": {
     "@context": ...
   }, ...
 };
 
 // grab the built-in node.js doc loader
-var nodeDocumentLoader = jsonld.documentLoaders.node();
+const nodeDocumentLoader = jsonld.documentLoaders.node();
 // or grab the XHR one: jsonld.documentLoaders.xhr()
-// or grab the jquery one: jsonld.documentLoaders.jquery()
 
 // change the default document loader using the callback API
 // (you can also do this using the promise-based API, return a promise instead
 // of using a callback)
-var customLoader = function(url, callback) {
+const customLoader = (url, callback) => {
   if(url in CONTEXTS) {
     return callback(
       null, {
@@ -253,10 +236,9 @@ var customLoader = function(url, callback) {
 jsonld.documentLoader = customLoader;
 
 // alternatively, pass the custom loader for just a specific call:
-jsonld.compact(doc, context, {documentLoader: customLoader},
-  function(err, compacted) { ... });
+const compacted = await jsonld.compact(
+doc, context, {documentLoader: customLoader});
 ```
-
 
 Related Modules
 ---------------
@@ -292,44 +274,48 @@ the following:
     https://github.com/json-ld/json-ld.org
     https://github.com/json-ld/normalization
 
-If the above directories are siblings of the jsonld.js directory you can run
-all tests with a simple command:
+They should be sibling directories of the jsonld.js directory or in a
+`test-suites` dir. To clone shallow copies into the `test-suites` dir you can
+use the following:
 
-    make test
+    npm run fetch-test-suites
 
-If you installed the test suites elsewhere:
+Node.js tests can be run with a simple command:
 
-    make test-suite JSONLD_TEST_SUITE={PATH_TO_TEST_SUITE}
+    npm test
 
-See the `Makefile` for various individual test targets as well as split node
-and browser targets. For instance, the json-ld.org test suite can be run
-piecewise with:
+If you installed the test suites elsewhere, or wish to run other tests, use
+the `JSONLD_TESTS` environment var:
 
-    make test-node
-    make test-browser
+    JSONLD_TESTS="/tmp/org/test-suites /tmp/norm/tests" npm test
+
+Browser testing can be done with Karma:
+
+    npm test-karma
+    npm test-karma -- --browsers Firefox,Chrome
 
 Code coverage of node tests can be generated in `coverage/`:
 
-    make test-coverage
+    npm run coverage
 
 The Mocha output reporter can be changed to min, dot, list, nyan, etc:
 
-    make test REPORTER=dot
+    REPORTER=dot npm test
 
 Remote context tests are also available:
 
     # run the context server in the background or another terminal
     node tests/remote-context-server.js
 
-    make test-suite JSONLD_TEST_SUITE=./tests
+    JSONLD_TESTS=./tests npm test
 
 To generate earl reports:
 
     # generate the earl report for node.js
-    ./node_modules/.bin/mocha -R spec tests/test.js --earl earl-node.jsonld
+    EARL=earl-node.jsonld npm test
 
     # generate the earl report for the browser
-    ./node_modules/.bin/phantomjs tests/test.js --earl earl-browser.jsonld
+    EARL=earl-firefox.jsonld npm test-karma -- --browser Firefox
 
 [Digital Bazaar]: http://digitalbazaar.com/
 [JSON-LD]: http://json-ld.org/
