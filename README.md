@@ -58,12 +58,36 @@ npm install jsonld
 
 Use your favorite technology to load `node_modules/dist/jsonld.min.js`.
 
-### Browser + script tag
+### CDNJS CDN
+
+To use [CDNJS](https://cdnjs.com/) include this script tag:
 
 ```html
-<script src="//cdnjs.cloudflare.com/ajax/libs/jsonld/0.5.0/jsonld.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsonld/0.5.17/jsonld.min.js"></script>
 ```
-See https://cdnjs.com/libraries/jsonld for the latest available cdnjs version.
+
+Check https://cdnjs.com/libraries/jsonld for the latest available version.
+
+### jsDeliver CDN
+
+To use [jsDeliver](https://www.jsdelivr.com/) include this script tag:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/jsonld@0.5.17/dist/jsonld.min.js"></script>
+```
+
+See https://www.jsdelivr.com/package/npm/jsonld for the latest available version.
+
+### unpkg CDN
+
+To use [unpkg](https://unpkg.com/) include this script tag:
+
+```html
+
+<script src="https://unpkg.com/jsonld@0.5.17/dist/jsonld.min.js"></script>
+```
+
+See https://unpkg.com/jsonld/ for the latest available version.
 
 ### JSPM
 
