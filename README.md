@@ -63,7 +63,7 @@ Use your favorite technology to load `node_modules/dist/jsonld.min.js`.
 ```html
 <script src="//cdnjs.cloudflare.com/ajax/libs/jsonld/0.5.0/jsonld.min.js"></script>
 ```
-See https://cdnjs.com/libraries/jsonld for the the latest available cdnjs version.
+See https://cdnjs.com/libraries/jsonld for the latest available cdnjs version.
 
 ### JSPM
 
