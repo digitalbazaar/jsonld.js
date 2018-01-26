@@ -1,5 +1,9 @@
 # jsonld ChangeLog
 
+### Changed
+- Use the W3C standard MIME type for N-Quads of "application/n-quads". Accept
+  "application/nquads" for compatibility.
+
 ## 0.5.17 - 2018-01-25
 
 ### Changed

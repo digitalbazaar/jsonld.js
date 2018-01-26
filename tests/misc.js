@@ -117,7 +117,21 @@ describe('other toRDF tests', () => {
     });
   });
 
-  it('should handle nquads format', done => {
+  it('should handle N-Quads format', done => {
+    const doc = {
+      '@id': 'https://example.com/',
+      'https://example.com/test': 'test'
+    };
+    jsonld.toRDF(doc, {format: 'application/n-quads'}, (err, output) => {
+      assert.ifError(err);
+      assert.equal(
+        output,
+        '<https://example.com/> <https://example.com/test> "test" .\n');
+      done();
+    });
+  });
+
+  it('should handle deprecated N-Quads format', done => {
     const doc = {
       '@id': 'https://example.com/',
       'https://example.com/test': 'test'
@@ -127,6 +141,119 @@ describe('other toRDF tests', () => {
       assert.equal(
         output,
         '<https://example.com/> <https://example.com/test> "test" .\n');
+      done();
+    });
+  });
+});
+
+describe('other fromRDF tests', () => {
+  const emptyNQuads = '';
+  const emptyRdf = [];
+
+  it('should process with options and callback', done => {
+    jsonld.fromRDF('', {}, (err, output) => {
+      assert.ifError(err);
+      assert.deepEqual(output, emptyRdf);
+      done();
+    });
+  });
+
+  it('should process with no options and callback', done => {
+    jsonld.fromRDF(emptyNQuads, (err, output) => {
+      assert.ifError(err);
+      assert.deepEqual(output, emptyRdf);
+      done();
+    });
+  });
+
+  it('should process with options and promise', done => {
+    const p = jsonld.fromRDF(emptyNQuads, {});
+    assert(p instanceof Promise);
+    p.catch(e => {
+      assert.fail();
+    }).then(output => {
+      assert.deepEqual(output, emptyRdf);
+      done();
+    });
+  });
+
+  it('should process with no options and promise', done => {
+    const p = jsonld.fromRDF(emptyNQuads);
+    assert(p instanceof Promise);
+    p.catch(e => {
+      assert.fail();
+    }).then(output => {
+      assert.deepEqual(output, emptyRdf);
+      done();
+    });
+  });
+
+  it('should fail with no args and callback', done => {
+    jsonld.fromRDF((err, output) => {
+      assert(err);
+      done();
+    });
+  });
+
+  it('should fail with no args and promise', done => {
+    const p = jsonld.fromRDF();
+    assert(p instanceof Promise);
+    p.then(output => {
+      assert.fail();
+    }).catch(e => {
+      assert(e);
+      done();
+    })
+  });
+
+  it('should fail for bad format and callback', done => {
+    jsonld.fromRDF(emptyNQuads, {format: 'bogus'}, (err, output) => {
+      assert(err);
+      assert.equal(err.name, 'jsonld.UnknownFormat');
+      done();
+    });
+  });
+
+  it('should fail for bad format and promise', done => {
+    const p = jsonld.fromRDF(emptyNQuads, {format: 'bogus'});
+    assert(p instanceof Promise);
+    p.then(() => {
+      assert.fail();
+    }).catch(e => {
+      assert(e);
+      assert.equal(e.name, 'jsonld.UnknownFormat');
+      done();
+    });
+  });
+
+  it('should handle N-Quads format', done => {
+    const nq = '<https://example.com/> <https://example.com/test> "test" .\n';
+    jsonld.fromRDF(nq, {format: 'application/n-quads'}, (err, output) => {
+      assert.ifError(err);
+      assert.deepEqual(
+        output,
+        [{
+            '@id': 'https://example.com/',
+            'https://example.com/test': [{
+              '@value': 'test'
+            }]
+        }]);
+      done();
+    });
+  });
+
+  it('should handle deprecated N-Quads format', done => {
+    const nq = '<https://example.com/> <https://example.com/test> "test" .\n';
+    jsonld.fromRDF(nq, {format: 'application/nquads'}, (err, output) => {
+      assert.ifError(err);
+      assert.deepEqual(
+        output,
+        [{
+            '@id': 'https://example.com/',
+            'https://example.com/test': [{
+              '@value': 'test'
+            }]
+        }]);
       done();
     });
   });

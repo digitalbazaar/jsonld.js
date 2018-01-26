@@ -78,7 +78,7 @@ const TEST_TYPES = {
     fn: 'fromRDF',
     params: [
       readTestNQuads('input'),
-      createTestOptions({format: 'application/nquads'})
+      createTestOptions({format: 'application/n-quads'})
     ],
     compare: compareExpectedJson
   },
@@ -86,7 +86,7 @@ const TEST_TYPES = {
     fn: 'normalize',
     params: [
       readTestUrl('input'),
-      createTestOptions({format: 'application/nquads'})
+      createTestOptions({format: 'application/n-quads'})
     ],
     compare: compareExpectedNQuads
   },
@@ -95,7 +95,7 @@ const TEST_TYPES = {
     fn: 'toRDF',
     params: [
       readTestUrl('input'),
-      createTestOptions({format: 'application/nquads'})
+      createTestOptions({format: 'application/n-quads'})
     ],
     compare: compareExpectedNQuads
   },
@@ -105,8 +105,8 @@ const TEST_TYPES = {
       readTestNQuads('action'),
       createTestOptions({
         algorithm: 'URGNA2012',
-        inputFormat: 'application/nquads',
-        format: 'application/nquads'
+        inputFormat: 'application/n-quads',
+        format: 'application/n-quads'
       })
     ],
     compare: compareExpectedNQuads
@@ -117,8 +117,8 @@ const TEST_TYPES = {
       readTestNQuads('action'),
       createTestOptions({
         algorithm: 'URDNA2015',
-        inputFormat: 'application/nquads',
-        format: 'application/nquads'
+        inputFormat: 'application/n-quads',
+        format: 'application/n-quads'
       })
     ],
     compare: compareExpectedNQuads
