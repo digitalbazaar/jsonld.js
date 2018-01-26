@@ -166,19 +166,19 @@ jsonld.frame(doc, frame, (err, framed) => {
 // (URDNA2015), see: http://json-ld.github.io/normalization/spec/
 jsonld.canonize(doc, {
   algorithm: 'URDNA2015',
-  format: 'application/nquads'
+  format: 'application/n-quads'
 }, (err, canonized) => {
   // canonized is a string that is a canonical representation of the document
   // that can be used for hashing, comparison, etc.
 });
 
 // serialize a document to N-Quads (RDF)
-jsonld.toRDF(doc, {format: 'application/nquads'}, (err, nquads) => {
-  // nquads is a string of nquads
+jsonld.toRDF(doc, {format: 'application/n-quads'}, (err, nquads) => {
+  // nquads is a string of N-Quads
 });
 
 // deserialize N-Quads (RDF) to JSON-LD
-jsonld.fromRDF(nquads, {format: 'application/nquads'}, (err, doc) => {
+jsonld.fromRDF(nquads, {format: 'application/n-quads'}, (err, doc) => {
   // doc is JSON-LD
 });
 
@@ -209,13 +209,13 @@ const flattened = await jsonld.flatten(doc);
 const framed = await jsonld.frame(doc, frame);
 
 // canonicalization (normalization)
-const canonized = await jsonld.canonize(doc, {format: 'application/nquads'});
+const canonized = await jsonld.canonize(doc, {format: 'application/n-quads'});
 
 // serialize to RDF
-const rdf = await jsonld.toRDF(doc, {format: 'application/nquads'});
+const rdf = await jsonld.toRDF(doc, {format: 'application/n-quads'});
 
 // deserialize from RDF
-const doc = await jsonld.fromRDF(nquads, {format: 'application/nquads'});
+const doc = await jsonld.fromRDF(nquads, {format: 'application/n-quads'});
 
 // register a custom promise-based RDF parser
 jsonld.registerRDFParser(contentType, async input => {
