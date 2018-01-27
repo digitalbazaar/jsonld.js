@@ -49,8 +49,7 @@ const TEST_TYPES = {
     compare: compareExpectedJson
   },
   'jld:FlattenTest': {
-    skip: {
-    },
+    skip: {},
     fn: 'flatten',
     params: [
       readTestUrl('input'),
@@ -61,7 +60,7 @@ const TEST_TYPES = {
   },
   'jld:FrameTest': {
     skip: {
-      specVersion: ['json-ld-1.1']
+      //specVersion: ['json-ld-1.1']
     },
     fn: 'frame',
     params: [
