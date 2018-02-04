@@ -60,7 +60,7 @@ const TEST_TYPES = {
   },
   'jld:FrameTest': {
     skip: {
-      //specVersion: ['json-ld-1.1']
+      regex: [/tp/, /t0031/, /t004[6-9]/, /t005[01]/]
     },
     fn: 'frame',
     params: [
