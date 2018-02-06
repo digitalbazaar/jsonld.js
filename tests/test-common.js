@@ -60,7 +60,7 @@ const TEST_TYPES = {
   },
   'jld:FrameTest': {
     skip: {
-      regex: [/tp/, /t0031/, /t004[6-9]/, /t005[01]/]
+      regex: [/tp/, /t0031/, /t0051/]
     },
     fn: 'frame',
     params: [
