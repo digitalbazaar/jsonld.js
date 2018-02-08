@@ -60,7 +60,7 @@ const TEST_TYPES = {
   },
   'jld:FrameTest': {
     skip: {
-      regex: [/tp/, /t0051/]
+      regex: [/#t0005 Embed with nested indirect circular/]
     },
     fn: 'frame',
     params: [
