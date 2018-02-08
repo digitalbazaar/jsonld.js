@@ -1,5 +1,13 @@
 # jsonld ChangeLog
 
+### Added
+- Expansion and Compaction using scoped contexts on property and `@type` terms.
+- Expansion and Compaction of nested properties.
+- Index graph containers using `@id` and `@index`, with `@set` variations.
+- Index node objects using `@id` and `@type`, with `@set` variations.
+- Framing default and named graphs in addition to merged graph.
+- Value patterns when framing, allowing a subset of values to appear in the output.
+
 ## 0.5.21 - 2018-02-22
 
 ### Fixed
@@ -50,12 +58,6 @@
 - **BREAKING**: Check for keys in term definition outside that expected:
   `@container`, `@id`, `@language`, `@reverse`, and `@type`. This also sets up
   for additional keywords in 1.1.
-
-### Added
-- Expansion and Compaction using scoped contexts on property and `@type` terms.
-- Expansion and Compaction of nested properties.
-- Index graph containers using `@id` and `@index`, with `@set` variations.
-- Index node objects using `@id` and `@type`, with `@set` variations.
 
 ## 0.5.15 - 2017-10-16
 
