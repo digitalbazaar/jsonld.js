@@ -5,7 +5,8 @@
     "dc:subject": {"@type": "@id"},
     "ex:contains": {"@type": "@id"},
     "ex:bookmark": {"@type": "@id"},
-    "ex:topic": {"@type": "@id"}
+    "ex:topic": {"@type": "@id"},
+    "ex:relatesTo": {"@type": "@id"}
   },
   "@graph": [
     {
