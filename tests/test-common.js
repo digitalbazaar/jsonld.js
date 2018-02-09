@@ -29,6 +29,8 @@ const manifest = options.manifest || {
 const TEST_TYPES = {
   'jld:CompactTest': {
     skip: {
+      // skip tests where behavior changed for a 1.1 processor
+      // see JSON-LD 1.0 Errata
       specVersion: ['json-ld-1.0']
     },
     fn: 'compact',
