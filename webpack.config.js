@@ -23,6 +23,7 @@ const outputs = [
       'core-js/fn/array/includes',
       'core-js/fn/object/assign',
       'core-js/fn/promise',
+      'core-js/fn/string/starts-with',
       'core-js/fn/symbol',
       // main lib
       './lib/index.js'
