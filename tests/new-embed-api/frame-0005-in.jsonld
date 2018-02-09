@@ -3,15 +3,18 @@
     "dc": "http://purl.org/dc/elements/1.1/",
     "ex": "http://example.org/vocab#",
     "ex:contains": {"@type": "@id"},
-    "ex:topic": {"@type": "@id"}
+    "ex:topic": {"@type": "@id"},
+    "ex:hasLibrary": {"@type": "@id"}
   },
   "@graph": [
     {
       "@id": "http://example.org/town/#123",
       "@type": "ex:Town",
       "ex:name": "My town",
-      "ex:hasLibrary": "http://example.org/test/#library",
-      "ex:hasLibrary": "http://example.org/test/#library2"
+      "ex:hasLibrary": [
+        "http://example.org/test/#library",
+        "http://example.org/test/#library2"
+      ]
     },
     {
       "@id": "http://example.org/test/#library",
