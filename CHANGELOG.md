@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Fixed
+- Include String startsWith() compatibility code.
+
 ## 0.5.18 - 2018-01-26
 
 ### Changed
