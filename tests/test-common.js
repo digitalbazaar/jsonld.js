@@ -59,9 +59,7 @@ const TEST_TYPES = {
     compare: compareExpectedJson
   },
   'jld:FrameTest': {
-    skip: {
-      regex: [/#t0005 Embed with nested indirect circular/]
-    },
+    skip: {},
     fn: 'frame',
     params: [
       readTestUrl('input'),
