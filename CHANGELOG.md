@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 0.5.20 - 2018-02-10
+
 ### Fixed
 - Typo handling legacy N-Quads dataset format.
 
