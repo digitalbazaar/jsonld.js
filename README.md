@@ -322,6 +322,10 @@ Code coverage of node tests can be generated in `coverage/`:
 
     npm run coverage
 
+To display a full coverage report on the console from coverage data:
+
+    npm run coverage-report
+
 The Mocha output reporter can be changed to min, dot, list, nyan, etc:
 
     REPORTER=dot npm test
