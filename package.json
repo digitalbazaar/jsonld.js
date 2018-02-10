@@ -101,6 +101,12 @@
     "jscs": "jscs lib/*.js tests/*.js",
     "jshint": "jshint lib/*.js tests/*.js"
   },
+  "nyc": {
+    "exclude": [
+      "lib/documentLoaders/xhr.js",
+      "tests"
+    ]
+  },
   "browser": {
     "lib/index.js": "./lib/jsonld.js",
     "crypto": "./browser/ignore.js",
