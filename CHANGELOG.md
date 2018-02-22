@@ -1,5 +1,11 @@
 # jsonld ChangeLog
 
+## 0.5.21 - 2018-02-22
+
+### Fixed
+- ES2018 features are being used. Update version check to use generated Node.js
+  6 code when using Node.js earlier than 8.6.0.
+
 ## 0.5.20 - 2018-02-10
 
 ### Fixed
