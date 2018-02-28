@@ -1,12 +1,23 @@
 # jsonld ChangeLog
 
+### Notes
+- **1.0.0**!
+- [Semantic Versioning](https://semver.org/) is now past the "initial
+  development" 0.x.y stage (after 7+ years!).
+- [Conformance](README.md#conformance):
+  - JSON-LD 1.0 + JSON-LD 1.0 errata
+  - JSON-LD 1.1 drafts
+- Thanks to the JSON-LD and related communities and the many many people over
+  the years who contributed ideas, code, bug reports, and support!
+
 ### Added
 - Expansion and Compaction using scoped contexts on property and `@type` terms.
 - Expansion and Compaction of nested properties.
 - Index graph containers using `@id` and `@index`, with `@set` variations.
 - Index node objects using `@id` and `@type`, with `@set` variations.
 - Framing default and named graphs in addition to merged graph.
-- Value patterns when framing, allowing a subset of values to appear in the output.
+- Value patterns when framing, allowing a subset of values to appear in the
+  output.
 
 ## 0.5.21 - 2018-02-22
 
@@ -122,7 +133,7 @@
 - Callbackify bugs.
 - Document loaders.
 - Request queue.
-- Handling of exceptios in callbacks.
+- Handling of exceptions in callbacks.
 
 ### Added
 - Various toRDF tests.
