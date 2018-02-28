@@ -53,7 +53,7 @@ This library aims to pass the [test suite][] and conform with the following:
   2018-02-15 or [newer][JSON-LD latest]
 * [JSON-LD 1.1 Processing Algorithms and API][],
   Draft Community Group Report,
-  2018-02-15 or [newer][JSON-LD Processing and Algorithms API latest]
+  2018-02-15 or [newer][JSON-LD Processing Algorithms and API latest]
 
 Installation
 ------------
