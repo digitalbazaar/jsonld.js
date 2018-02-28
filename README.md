@@ -37,6 +37,24 @@ to JSON with added semantics. Finally, the format is intended to be fast
 to parse, fast to generate, stream-based and document-based processing
 compatible, and require a very small memory footprint in order to operate.
 
+Conformance
+-----------
+
+This library aims to pass the [test-suite][] and conform with the following:
+
+* [JSON-LD 1.0][],
+  W3C Recommendation,
+  2014-01-16, and any [errata][]
+* [JSON-LD 1.0 Processing Algorithms and API][],
+  W3C Recommendation,
+  2014-01-16, and any [errata][]
+* [JSON-LD 1.1][],
+  Draft Community Group Report,
+  2018-02-15 or [newer][JSON-LD latest]
+* [JSON-LD 1.1 Processing Algorithms and API][],
+  Draft Community Group Report,
+  2018-02-15 or [newer][JSON-LD Processing and Algorithms API latest]
+
 Installation
 ------------
 
@@ -347,9 +365,17 @@ To generate earl reports:
 
 [Digital Bazaar]: http://digitalbazaar.com/
 [JSON-LD]: http://json-ld.org/
+[JSON-LD 1.0]: http://www.w3.org/TR/2014/REC-json-ld-20140116/
+[JSON-LD 1.0 Processing Algorithms and API]: http://www.w3.org/TR/2014/REC-json-ld-api-20140116/
+[JSON-LD 1.1]: https://json-ld.org/spec/ED/json-ld/20180215/
+[JSON-LD 1.1 Processing Algorithms and API]: https://json-ld.org/spec/ED/json-ld-api/20180215/
+[JSON-LD latest]: https://json-ld.org/spec/latest/json-ld/
+[JSON-LD Processing Algorithm and API latest]: https://json-ld.org/spec/latest/json-ld-api/
 [Microdata]: http://www.w3.org/TR/microdata/
 [Microformats]: http://microformats.org/
 [RDFa]: http://www.w3.org/TR/rdfa-core/
 [RFC7159]: http://tools.ietf.org/html/rfc7159
+[errata]: http://www.w3.org/2014/json-ld-errata
 [jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
 [jsonld-request]: https://github.com/digitalbazaar/jsonld-request
+[test suite]: https://github.com/json-ld/json-ld.org/tree/master/test-suite
