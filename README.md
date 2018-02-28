@@ -40,7 +40,7 @@ compatible, and require a very small memory footprint in order to operate.
 Conformance
 -----------
 
-This library aims to pass the [test-suite][] and conform with the following:
+This library aims to pass the [test suite][] and conform with the following:
 
 * [JSON-LD 1.0][],
   W3C Recommendation,
@@ -370,7 +370,7 @@ To generate earl reports:
 [JSON-LD 1.1]: https://json-ld.org/spec/ED/json-ld/20180215/
 [JSON-LD 1.1 Processing Algorithms and API]: https://json-ld.org/spec/ED/json-ld-api/20180215/
 [JSON-LD latest]: https://json-ld.org/spec/latest/json-ld/
-[JSON-LD Processing Algorithm and API latest]: https://json-ld.org/spec/latest/json-ld-api/
+[JSON-LD Processing Algorithms and API latest]: https://json-ld.org/spec/latest/json-ld-api/
 [Microdata]: http://www.w3.org/TR/microdata/
 [Microformats]: http://microformats.org/
 [RDFa]: http://www.w3.org/TR/rdfa-core/
