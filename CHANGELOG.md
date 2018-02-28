@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 1.0.0 - 2018-02-28
+
 ### Notes
 - **1.0.0**!
 - [Semantic Versioning](https://semver.org/) is now past the "initial
