@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 1.0.1 - 2018-03-01
+
 ### Fixed
 - Don't always use arrays for `@graph`. Fixes 1.0 compatibility issue.
 
