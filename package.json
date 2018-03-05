@@ -108,13 +108,6 @@
     ]
   },
   "browser": {
-    "lib/index.js": "./lib/jsonld.js",
-    "crypto": "./browser/ignore.js",
-    "http": "./browser/ignore.js",
-    "jsonld-request": "./browser/ignore.js",
-    "request": "./browser/ignore.js",
-    "url": "./browser/ignore.js",
-    "util": "./browser/ignore.js",
-    "xmldom": "./browser/ignore.js"
+    "lib/index.js": "./dist/jsonld.js"
   }
 }
