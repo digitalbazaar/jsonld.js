@@ -48,6 +48,7 @@
     "core-js": "^2.5.3",
     "cors": "^2.7.1",
     "cross-env": "^5.1.3",
+    "eslint": "^4.15.0",
     "express": "^4.16.2",
     "fs-extra": "^5.0.0",
     "join-path-js": "0.0.0",
@@ -98,6 +99,7 @@
     "test-karma": "cross-env NODE_ENV=test karma start",
     "coverage": "nyc --reporter=lcov --reporter=text-summary npm test",
     "coverage-report": "nyc report",
+    "eslint": "eslint lib/*.js tests/*.js",
     "jscs": "jscs lib/*.js tests/*.js",
     "jshint": "jshint lib/*.js tests/*.js"
   },
