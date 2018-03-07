@@ -2,6 +2,7 @@
 
 ### Fixed
 - Handle compactArrays option in `@graph` compaction.
+- Many eslint fixes.
 
 ## 1.0.1 - 2018-03-01
 

@@ -171,10 +171,10 @@ function _testsToMocha(tests) {
       _testsToMocha(suite.suites);
     });
     suite.imports.forEach(f => {
-      options.import(f)
+      options.import(f);
     });
   });
-};
+}
 
 });
 
@@ -197,14 +197,14 @@ function addManifest(manifest, parent) {
     parent.push(suite);
 
     // get entries and sequence (alias for entries)
-    var entries = [].concat(
+    const entries = [].concat(
       getJsonLdValues(manifest, 'entries'),
       getJsonLdValues(manifest, 'sequence')
     );
 
-    var includes = getJsonLdValues(manifest, 'include');
+    const includes = getJsonLdValues(manifest, 'include');
     // add includes to sequence as jsonld files
-    for(var i = 0; i < includes.length; ++i) {
+    for(let i = 0; i < includes.length; ++i) {
       entries.push(includes[i] + '.jsonld');
     }
 
@@ -244,10 +244,10 @@ function addManifest(manifest, parent) {
       });
       return p;
     }).then(() => {
-      resolve()
+      resolve();
     }).catch(err => {
       console.error(err);
-      reject(err)
+      reject(err);
     });
   });
 }
@@ -262,12 +262,12 @@ function addManifest(manifest, parent) {
  */
 function addTest(manifest, test, tests) {
   // expand @id and input base
-  var test_id = test['@id'] || test['id'];
+  const test_id = test['@id'] || test['id'];
   //var number = test_id.substr(2);
   test['@id'] = manifest.baseIri + basename(manifest.filename) + test_id;
   test.base = manifest.baseIri + test.input;
   test.manifest = manifest;
-  var description = test_id + ' ' + (test.purpose || test.name);
+  const description = test_id + ' ' + (test.purpose || test.name);
 
   tests.push({
     title: description + ' (promise)',
@@ -280,14 +280,14 @@ function addTest(manifest, test, tests) {
 
   function makeFn({useCallbacks}) {
     return function(done) {
-      var self = this;
+      const self = this;
       self.timeout(5000);
-      var testInfo = TEST_TYPES[getJsonLdTestType(test)];
+      const testInfo = TEST_TYPES[getJsonLdTestType(test)];
 
       // skip unknown and explicitly skipped test types
-      var testTypes = Object.keys(TEST_TYPES);
+      const testTypes = Object.keys(TEST_TYPES);
       if(!isJsonLdType(test, testTypes) || isJsonLdType(test, SKIP_TESTS)) {
-        var type = [].concat(
+        const type = [].concat(
           getJsonLdValues(test, '@type'),
           getJsonLdValues(test, 'type')
         );
@@ -309,12 +309,12 @@ function addTest(manifest, test, tests) {
         });
       }
 
-      var testOptions = getJsonLdValues(test, 'option');
+      const testOptions = getJsonLdValues(test, 'option');
 
       testOptions.forEach(function(opt) {
-        var processingModes = getJsonLdValues(opt, 'processingMode');
+        const processingModes = getJsonLdValues(opt, 'processingMode');
         processingModes.forEach(function(pm) {
-          var skipModes = [];
+          let skipModes = [];
           if(testInfo.skip && testInfo.skip.processingMode) {
             skipModes = testInfo.skip.processingMode;
           }
@@ -326,9 +326,9 @@ function addTest(manifest, test, tests) {
       });
 
       testOptions.forEach(function(opt) {
-        var specVersions = getJsonLdValues(opt, 'specVersion');
+        const specVersions = getJsonLdValues(opt, 'specVersion');
         specVersions.forEach(function(sv) {
-          var skipVersions = [];
+          let skipVersions = [];
           if(testInfo.skip && testInfo.skip.specVersion) {
             skipVersions = testInfo.skip.specVersion;
           }
@@ -339,10 +339,10 @@ function addTest(manifest, test, tests) {
         });
       });
 
-      var fn = testInfo.fn;
-      var params = testInfo.params;
+      const fn = testInfo.fn;
+      let params = testInfo.params;
       params = params.map(function(param) {return param(test);});
-      var callback = function(err, result) {
+      const callback = function(err, result) {
         Promise.resolve().then(() => {
           if(isNegativeTest(test)) {
             return compareExpectedError(test, err);
@@ -381,8 +381,8 @@ function addTest(manifest, test, tests) {
       // resolve test data run
       Promise.all(params).then(values => {
         // get appropriate API and run test
-        var api = useCallbacks ? jsonld : jsonld.promises;
-        var promise = api[fn].apply(api, values);
+        const api = useCallbacks ? jsonld : jsonld.promises;
+        const promise = api[fn].apply(api, values);
 
         // promise style
         if(!useCallbacks) {
@@ -405,8 +405,8 @@ function isNegativeTest(test) {
 }
 
 function getJsonLdTestType(test) {
-  var types = Object.keys(TEST_TYPES);
-  for(var i = 0; i < types.length; ++i) {
+  const types = Object.keys(TEST_TYPES);
+  for(let i = 0; i < types.length; ++i) {
     if(isJsonLdType(test, types[i])) {
       return types[i];
     }
@@ -488,24 +488,24 @@ function readTestNQuads(property) {
 
 function createTestOptions(opts) {
   return function(test) {
-    var options = {
+    const options = {
       documentLoader: createDocumentLoader(test)
     };
-    var httpOptions = ['contentType', 'httpLink', 'httpStatus', 'redirectTo'];
-    var testOptions = test.option || {};
-    for(var key in testOptions) {
+    const httpOptions = ['contentType', 'httpLink', 'httpStatus', 'redirectTo'];
+    const testOptions = test.option || {};
+    for(const key in testOptions) {
       if(httpOptions.indexOf(key) === -1) {
         options[key] = testOptions[key];
       }
     }
     if(opts) {
       // extend options
-      for(var key in opts) {
+      for(const key in opts) {
         options[key] = opts[key];
       }
     }
     let p = Promise.resolve();
-    for(var key in options) {
+    for(const key in options) {
       if(key === 'expandContext') {
         p = p.then(() => {
           return joinPath(test.dirname, options[key]);
@@ -581,12 +581,12 @@ function compareExpectedError(test, err) {
 }
 
 function isJsonLdType(node, type) {
-  var nodeType = [].concat(
+  const nodeType = [].concat(
     getJsonLdValues(node, '@type'),
     getJsonLdValues(node, 'type')
   );
   type = Array.isArray(type) ? type : [type];
-  for(var i = 0; i < type.length; ++i) {
+  for(let i = 0; i < type.length; ++i) {
     if(nodeType.indexOf(type[i]) !== -1) {
       return true;
     }
@@ -595,7 +595,7 @@ function isJsonLdType(node, type) {
 }
 
 function getJsonLdValues(node, property) {
-  var rval = [];
+  let rval = [];
   if(property in node) {
     rval = node[property];
     if(!Array.isArray(rval)) {
@@ -639,7 +639,7 @@ function dirname(filename) {
   if(options.nodejs) {
     return options.nodejs.path.dirname(filename);
   }
-  var idx = filename.lastIndexOf('/');
+  const idx = filename.lastIndexOf('/');
   if(idx === -1) {
     return filename;
   }
@@ -650,7 +650,7 @@ function basename(filename) {
   if(options.nodejs) {
     return options.nodejs.path.basename(filename);
   }
-  var idx = filename.lastIndexOf('/');
+  const idx = filename.lastIndexOf('/');
   if(idx === -1) {
     return filename;
   }
@@ -667,7 +667,7 @@ function basename(filename) {
 function createDocumentLoader(test) {
   const _httpTestSuiteBase = 'http://json-ld.org/test-suite';
   const _httpsTestSuiteBase = 'https://json-ld.org/test-suite';
-  var localLoader = function(url, callback) {
+  const localLoader = function(url, callback) {
     // always load remote-doc tests remotely in node
     if(options.nodejs && test.manifest.name === 'Remote document') {
       return jsonld.loadDocument(url, callback);
@@ -676,11 +676,11 @@ function createDocumentLoader(test) {
     // FIXME: this check only works for main test suite and will not work if:
     // - running other tests and main test suite not installed
     // - use other absolute URIs but want to load local files
-    var isTestSuite =
+    const isTestSuite =
       url.startsWith(_httpTestSuiteBase) ||
       url.startsWith(_httpsTestSuiteBase);
     // TODO: improve this check
-    var isRelative = url.indexOf(':') === -1;
+    const isRelative = url.indexOf(':') === -1;
     if(isTestSuite || isRelative) {
       // attempt to load official test-suite files or relative URLs locally
       loadLocally(url).then(callback.bind(null, null), callback);
@@ -695,17 +695,17 @@ function createDocumentLoader(test) {
   return localLoader;
 
   function loadLocally(url) {
-    var doc = {contextUrl: null, documentUrl: url, document: null};
-    var options = test.option;
+    const doc = {contextUrl: null, documentUrl: url, document: null};
+    const options = test.option;
     if(options && url === test.base) {
       if('redirectTo' in options && parseInt(options.httpStatus, 10) >= 300) {
         doc.documentUrl = test.manifest.baseIri + options.redirectTo;
       } else if('httpLink' in options) {
-        var contentType = options.contentType || null;
+        let contentType = options.contentType || null;
         if(!contentType && url.indexOf('.jsonld', url.length - 7) !== -1) {
           contentType = 'application/ld+json';
         }
-        var linkHeader = options.httpLink;
+        let linkHeader = options.httpLink;
         if(Array.isArray(linkHeader)) {
           linkHeader = linkHeader.join(',');
         }
@@ -720,7 +720,7 @@ function createDocumentLoader(test) {
       }
     }
 
-    var p = Promise.resolve();
+    let p = Promise.resolve();
     if(doc.documentUrl.indexOf(':') === -1) {
       p = p.then(() => {
         return joinPath(test.manifest.dirname, doc.documentUrl);

@@ -58,7 +58,7 @@ if(process.env.JSONLD_TESTS) {
   entries.push(join(_top, 'tests/new-embed-api'));
 
   // WebIDL tests
-  entries.push(webidl)
+  entries.push(webidl);
 }
 
 const options = {
@@ -81,7 +81,7 @@ const options = {
   entries: entries,
   readFile: filename => {
     return server.run(filename, function(filename) {
-      var fs = serverRequire('fs-extra');
+      const fs = serverRequire('fs-extra');
       return fs.readFile(filename, 'utf8').then(data => {
         return data;
       });
@@ -89,11 +89,13 @@ const options = {
   },
   writeFile: (filename, data) => {
     return server.run(filename, data, function(filename, data) {
-      var fs = serverRequire('fs-extra');
+      const fs = serverRequire('fs-extra');
       return fs.outputFile(filename, data);
     });
   },
-  import: f => { console.error('import not implemented'); }
+  import: f => {
+    console.error('import not implemented');
+  }
 };
 
 // wait for setup of all tests then run mocha

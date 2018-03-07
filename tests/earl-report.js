@@ -13,7 +13,7 @@
  *          id: {String} report id
  */
 function EarlReport(options) {
-  var today = new Date();
+  let today = new Date();
   today = today.getFullYear() + '-' +
     (today.getMonth() < 9 ?
       '0' + (today.getMonth() + 1) : today.getMonth() + 1) + '-' +

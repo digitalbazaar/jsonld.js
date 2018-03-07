@@ -94,7 +94,7 @@ describe('other toRDF tests', () => {
     }).catch(e => {
       assert(e);
       done();
-    })
+    });
   });
 
   it('should fail for bad format and callback', done => {
@@ -203,7 +203,7 @@ describe('other fromRDF tests', () => {
     }).catch(e => {
       assert(e);
       done();
-    })
+    });
   });
 
   it('should fail for bad format and callback', done => {
@@ -233,10 +233,10 @@ describe('other fromRDF tests', () => {
       assert.deepEqual(
         output,
         [{
-            '@id': 'https://example.com/',
-            'https://example.com/test': [{
-              '@value': 'test'
-            }]
+          '@id': 'https://example.com/',
+          'https://example.com/test': [{
+            '@value': 'test'
+          }]
         }]);
       done();
     });
@@ -249,10 +249,10 @@ describe('other fromRDF tests', () => {
       assert.deepEqual(
         output,
         [{
-            '@id': 'https://example.com/',
-            'https://example.com/test': [{
-              '@value': 'test'
-            }]
+          '@id': 'https://example.com/',
+          'https://example.com/test': [{
+            '@value': 'test'
+          }]
         }]);
       done();
     });
@@ -270,7 +270,7 @@ describe('loading multiple levels of contexts', () => {
         },
         contextUrl: null,
         documentUrl: url
-      }
+      };
     }
     if(url === 'https://example.com/context2') {
       return {
@@ -281,7 +281,7 @@ describe('loading multiple levels of contexts', () => {
         },
         contextUrl: null,
         documentUrl: url
-      }
+      };
     }
   };
   const doc = {
