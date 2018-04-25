@@ -70,13 +70,13 @@
 
 ### Fixed
 - Do not use native types to create IRIs in value expansion.
-- Improved error detection for @container variations.
+- Improved error detection for `@container` variations.
 - Handle empty and relative `@base`.
 - Remove shortcut from compactIri when IRI is a keyword (fixes compact-0073).
 
 ### Changed
 - Set processingMode from options or first encountered context.
-- Use array representation of @container in processing.
+- Use array representation of `@container` in processing.
 - **BREAKING**: Check for keys in term definition outside that expected:
   `@container`, `@id`, `@language`, `@reverse`, and `@type`. This also sets up
   for additional keywords in 1.1.
@@ -93,7 +93,7 @@
 ## 0.5.14 - 2017-10-11
 
 ### Fixed
-- Allow empty lists to be compacted to any @list container term. Fixes
+- Allow empty lists to be compacted to any `@list` container term. Fixes
   compact-0074 test.
 
 ## 0.5.13 - 2017-10-05
