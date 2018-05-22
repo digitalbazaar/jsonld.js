@@ -3,6 +3,7 @@
 ### Fixed
 - Handle compactArrays option in `@graph` compaction.
 - Many eslint fixes.
+- Add missing await to createNodeMap() and merge().
 
 ## 1.0.1 - 2018-03-01
 
