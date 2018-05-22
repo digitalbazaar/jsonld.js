@@ -38,6 +38,22 @@ describe('merge tests', () => {
   });
 });
 
+describe('createNodeMap', () => {
+  const doc = {'@id': 'ex:1', 'a:property': [{'@id': 'ex:2'}]};
+  it('should create a flattened node hashmap', async () => {
+    const expected = {
+      "ex:1": {
+        "@id": "ex:1",
+        "a:property": [ {"@id": "ex:2"} ]
+      },
+      "ex:2": {"@id": "ex:2"}
+    };
+
+    const map = await jsonld.createNodeMap(doc);
+    assert.deepEqual(map, expected);
+  });
+});
+
 describe('other toRDF tests', () => {
   const emptyRdf = [];
 
