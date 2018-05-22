@@ -28,11 +28,21 @@ describe('merge tests', () => {
   const docA = {'@id': 'ex:1', 'a:foo': [{'@value': 1}]};
   const docB = {'@id': 'ex:1', 'b:foo': [{'@value': 2}]};
   const merged = [Object.assign({}, docA, docB)];
+  const context = {};
+  const ctxMerged = {'@graph': [{'@id': 'ex:1', 'a:foo': 1, 'b:foo': 2}]};
 
   it('should merge nodes from two different documents', done => {
     jsonld.merge([docA, docB], (err, output) => {
       assert.ifError(err);
       assert.deepEqual(output, merged);
+      done();
+    });
+  });
+
+  it('should merge nodes from two different documents with context', done => {
+    jsonld.merge([docA, docB], context, (err, output) => {
+      assert.ifError(err);
+      assert.deepEqual(output, ctxMerged);
       done();
     });
   });
