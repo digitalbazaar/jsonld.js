@@ -674,8 +674,12 @@ function basename(filename) {
  * @return the document loader.
  */
 function createDocumentLoader(test) {
-  const _httpTestSuiteBase = 'http://json-ld.org/test-suite';
-  const _httpsTestSuiteBase = 'https://json-ld.org/test-suite';
+  const localBases = [
+    'http://json-ld.org/test-suite',
+    'https://json-ld.org/test-suite',
+    'https://w3c.github.io/json-ld-api/tests',
+    'https://w3c.github.io/json-ld-framing/tests'
+  ];
   const localLoader = function(url, callback) {
     // always load remote-doc tests remotely in node
     if(options.nodejs && test.manifest.name === 'Remote document') {
@@ -685,9 +689,9 @@ function createDocumentLoader(test) {
     // FIXME: this check only works for main test suite and will not work if:
     // - running other tests and main test suite not installed
     // - use other absolute URIs but want to load local files
-    const isTestSuite =
-      url.startsWith(_httpTestSuiteBase) ||
-      url.startsWith(_httpsTestSuiteBase);
+    const isTestSuite = localBases.some(function(base) {
+      return url.startsWith(base);
+    });
     // TODO: improve this check
     const isRelative = url.indexOf(':') === -1;
     if(isTestSuite || isRelative) {

@@ -344,6 +344,8 @@ that changes to the processor maintain the correct output.
 The main test suites are included in external repositories. Check out each of
 the following:
 
+    https://github.com/w3c/json-ld-api
+    https://github.com/w3c/json-ld-framing
     https://github.com/json-ld/json-ld.org
     https://github.com/json-ld/normalization
 
