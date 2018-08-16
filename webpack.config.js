@@ -20,9 +20,12 @@ const outputs = [
     entry: [
       // 'babel-polyfill' is very large, list features explicitly
       'regenerator-runtime/runtime',
+      'core-js/fn/array/from',
       'core-js/fn/array/includes',
+      'core-js/fn/map',
       'core-js/fn/object/assign',
       'core-js/fn/promise',
+      'core-js/fn/set',
       'core-js/fn/string/starts-with',
       'core-js/fn/symbol',
       // main lib
