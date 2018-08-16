@@ -552,20 +552,7 @@ function createTestOptions(opts) {
         options[key] = opts[key];
       }
     }
-    let p = Promise.resolve();
-    for(const key in options) {
-      if(key === 'expandContext') {
-        p = p.then(() => {
-          return joinPath(test.dirname, options[key]);
-        }).then(filename => {
-          return readJson(filename);
-        }).then(json => {
-          options[key] = json;
-        });
-      }
-    }
-
-    return p.then(() => options);
+    return options;
   };
 }
 
