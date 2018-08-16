@@ -333,8 +333,8 @@ the `JSONLD_TESTS` environment var:
 
 Browser testing can be done with Karma:
 
-    npm test-karma
-    npm test-karma -- --browsers Firefox,Chrome
+    npm run test-karma
+    npm run test-karma -- --browsers Firefox,Chrome
 
 Code coverage of node tests can be generated in `coverage/`:
 
@@ -361,7 +361,7 @@ To generate earl reports:
     EARL=earl-node.jsonld npm test
 
     # generate the earl report for the browser
-    EARL=earl-firefox.jsonld npm test-karma -- --browser Firefox
+    EARL=earl-firefox.jsonld npm run test-karma -- --browser Firefox
 
 [Digital Bazaar]: http://digitalbazaar.com/
 [JSON-LD]: http://json-ld.org/
