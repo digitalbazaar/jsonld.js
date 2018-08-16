@@ -364,6 +364,10 @@ the `JSONLD_TESTS` environment var:
 
     JSONLD_TESTS="/tmp/org/test-suites /tmp/norm/tests" npm test
 
+This feature can be used to run the older json-ld.org test suite:
+
+    JSONLD_TESTS=/tmp/json-ld.org/test-suite npm test
+
 Browser testing can be done with Karma:
 
     npm run test-karma
