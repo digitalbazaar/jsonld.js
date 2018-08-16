@@ -1,5 +1,13 @@
 # jsonld ChangeLog
 
+### Changed
+- Improve performance of active context cache and find context urls:
+  - Use Map/Set.
+  - Cache initial contexts based on options.
+  - Reduce lookups.
+- Update webpack/karma core-js usage:
+  - Add Map, Set, and Array.from support.
+
 ## 1.0.2 - 2018-05-22
 
 ### Fixed
