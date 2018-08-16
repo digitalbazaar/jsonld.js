@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 1.0.3 - 2018-08-16
+
 ### Changed
 - Improve performance of active context cache and find context urls:
   - Use Map/Set.
