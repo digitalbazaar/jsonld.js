@@ -52,10 +52,25 @@ if(process.env.JSONLD_TESTS) {
   const _top = process.env.TEST_ROOT_DIR;
   // TODO: support just adding certain entries in EARL mode?
 
-  // json-ld.org main test suite
+  // json-ld-api main test suite
   // FIXME: add path detection
-  entries.push(join(_top, 'test-suites/json-ld.org/test-suite'));
-  entries.push(join(_top, '../json-ld.org/test-suite'));
+  entries.push(join(_top, 'test-suites/json-ld-api/tests'));
+  entries.push(join(_top, '../json-ld-api/tests'));
+
+  /*
+  // json-ld-framing main test suite
+  // FIXME: add path detection
+  entries.push(join(_top, 'test-suites/json-ld-framing/tests'));
+  entries.push(join(_top, '../json-ld-framing/tests'));
+  */
+
+  // TODO: use json-ld-framing once tests are moved
+  // json-ld.org framing test suite
+  // FIXME: add path detection
+  entries.push(join(
+    _top, 'test-suites/json-ld.org/test-suite/tests/frame-manifest.jsonld'));
+  entries.push(join(
+    _top, '../json-ld.org/test-suite/tests/frame-manifests.jsonld'));
 
   // json-ld.org normalization test suite
   // FIXME: add path detection

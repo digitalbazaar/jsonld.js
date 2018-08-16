@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Changed
+- Use JSON-LD WG tests.
+
 ## 1.2.1 - 2018-12-11
 
 ### Fixed
