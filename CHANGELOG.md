@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Fixed
+- Fix `_findContextUrls` refactoring bug from 1.0.3.
+
 ## 1.0.3 - 2018-08-16
 
 ### Changed
