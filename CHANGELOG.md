@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Fixed
+- Use rdf-canonize to compare n-quads test results.
+
 ### Changed
 - Use JSON-LD WG tests.
 
