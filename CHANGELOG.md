@@ -2,6 +2,7 @@
 
 ### Fixed
 - Use rdf-canonize to compare n-quads test results.
+- Multiple graph tests.
 
 ### Changed
 - Use JSON-LD WG tests.
