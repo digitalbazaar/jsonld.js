@@ -47,10 +47,7 @@ const TEST_TYPES = {
         // scoped context on type
         /^#tc012/,
         // rel iri
-        /^#t0095/,
-        // graphs
-        /^#t0092/,
-        /^#t0093/
+        /^#t0095/
       ]
     },
     fn: 'compact',
@@ -81,12 +78,6 @@ const TEST_TYPES = {
         /^#tp002/,
         // scoped context on type
         /^#tc011/,
-        // graph
-        /^#t0093/,
-        /^#t0094/,
-        /^#t0095/,
-        /^#t0103/,
-        /^#t0104/,
         // rel iri
         /^#t0092/,
         // remote
