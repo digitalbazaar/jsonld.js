@@ -164,14 +164,16 @@ const TEST_TYPES = {
         // list of lists
         /^#tli01/,
         /^#tli02/,
-        // well formed
+        // blank node properties
         /^#t0118/,
+        // well formed
         /^#twf01/,
         /^#twf02/,
         /^#twf03/,
         /^#twf04/,
         /^#twf05/,
-        /^#twf06/
+        /^#twf06/,
+        /^#twf07/
       ]
     },
     fn: 'toRDF',
