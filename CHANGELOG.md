@@ -3,6 +3,7 @@
 ### Fixed
 - Use rdf-canonize to compare n-quads test results.
 - Multiple graph tests.
+- Sort `@type` when looking for scoped contexts.
 
 ### Changed
 - Use JSON-LD WG tests.
