@@ -42,7 +42,6 @@ if(process.env.JSONLD_TESTS) {
     entries.push(path.resolve(_top, '../json-ld-api/tests'));
   }
 
-  /*
   // json-ld-framing main test suite
   const framingPath = path.resolve(_top, 'test-suites/json-ld-framing/tests');
   if(fs.existsSync(framingPath)) {
@@ -51,8 +50,8 @@ if(process.env.JSONLD_TESTS) {
     // default to sibling dir
     entries.push(path.resolve(_top, '../json-ld-framing/tests'));
   }
-  */
 
+  /*
   // TODO: use json-ld-framing once tests are moved
   // json-ld.org framing test suite
   const framingPath = path.resolve(
@@ -64,6 +63,7 @@ if(process.env.JSONLD_TESTS) {
     entries.push(path.resolve(
       _top, '../json-ld.org/test-suite/tests/frame-manifest.jsonld'));
   }
+  */
 
   // json-ld.org normalization test suite
   const normPath = path.resolve(_top, 'test-suites/normalization/tests');
