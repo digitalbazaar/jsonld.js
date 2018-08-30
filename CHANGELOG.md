@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Added
+- Initial support for benchmarking.
+
 ## 1.1.0 - 2018-09-05
 
 ### Added

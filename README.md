@@ -363,6 +363,14 @@ To generate earl reports:
     # generate the earl report for the browser
     EARL=earl-firefox.jsonld npm run test-karma -- --browser Firefox
 
+Benchmarks
+----------
+
+Benchmarks can be created from any manifest that the test system supports.
+Use a command line with a test suite and a benchmark flag:
+
+    JSONLD_TESTS=/tmp/benchmark-manifest.jsonld JSONLD_BENCHMARK=1 npm test
+
 [Digital Bazaar]: http://digitalbazaar.com/
 [JSON-LD]: http://json-ld.org/
 [JSON-LD 1.0]: http://www.w3.org/TR/2014/REC-json-ld-20140116/

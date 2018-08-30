@@ -9,6 +9,11 @@
  *   EARL=filename
  * Bail with tests fail:
  *   BAIL=true
+ * Benchmark mode:
+ *   Basic:
+ *   JSONLD_BENCHMARK=1
+ *   With options:
+ *   JSONLD_BENCHMARK=key1=value1,key2=value2,...
  *
  * @author Dave Longley
  * @author David I. Lehn
@@ -54,6 +59,17 @@ if(process.env.JSONLD_TESTS) {
   //entries.push(path.resolve(_top, 'tests/node-document-loader-tests.js'));
 }
 
+let benchmark = null;
+if(process.env.JSONLD_BENCHMARK) {
+  benchmark = {};
+  if(!(['1', 'true'].includes(process.env.JSONLD_BENCHMARK))) {
+    process.env.JSONLD_BENCHMARK.split(',').forEach(pair => {
+      const kv = pair.split('=');
+      benchmark[kv[0]] = kv[1];
+    });
+  }
+}
+
 const options = {
   nodejs: {
     path: path
@@ -67,6 +83,7 @@ const options = {
   },
   bailOnError: process.env.BAIL === 'true',
   entries: entries,
+  benchmark: benchmark,
   readFile: filename => {
     return fs.readFile(filename, 'utf8');
   },

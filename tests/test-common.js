@@ -7,6 +7,7 @@
  * Copyright (c) 2011-2017 Digital Bazaar, Inc. All rights reserved.
  */
 const EarlReport = require('./earl-report');
+const benchmark = require('benchmark');
 const join = require('join-path-js');
 
 module.exports = function(options) {
@@ -269,14 +270,22 @@ function addTest(manifest, test, tests) {
   test.manifest = manifest;
   const description = test_id + ' ' + (test.purpose || test.name);
 
-  tests.push({
-    title: description + ' (promise)',
-    f: makeFn({useCallbacks: false})
-  });
-  tests.push({
-    title: description + ' (callback)',
-    f: makeFn({useCallbacks: true})
-  });
+  if(options.benchmark) {
+    // only promises
+    tests.push({
+      title: description,
+      f: makeFn({useCallbacks: false})
+    });
+  } else {
+    tests.push({
+      title: description + ' (promise)',
+      f: makeFn({useCallbacks: false})
+    });
+    tests.push({
+      title: description + ' (callback)',
+      f: makeFn({useCallbacks: true})
+    });
+  }
 
   function makeFn({useCallbacks}) {
     return function(done) {
@@ -340,8 +349,7 @@ function addTest(manifest, test, tests) {
       });
 
       const fn = testInfo.fn;
-      let params = testInfo.params;
-      params = params.map(function(param) {return param(test);});
+      const params = testInfo.params.map(param => param(test));
       const callback = function(err, result) {
         Promise.resolve().then(() => {
           if(isNegativeTest(test)) {
@@ -352,6 +360,43 @@ function addTest(manifest, test, tests) {
               throw err;
             }
             return testInfo.compare(test, result);
+          }
+        }).then(() => {
+          if(options.benchmark) {
+            // pre-load params to avoid doc loader and parser timing
+            const benchParams = testInfo.params.map(param => param(test, {
+              load: true
+            }));
+            return Promise.all(benchParams);
+          }
+        }).then(values => {
+          if(options.benchmark) {
+            return new Promise((resolve, reject) => {
+              const suite = new benchmark.Suite();
+              suite.add({
+                name: test.name,
+                defer: true,
+                fn: deferred => {
+                  jsonld[fn].apply(null, values).then(() => {
+                    deferred.resolve();
+                  });
+                }
+              });
+              suite
+                .on('start', e => {
+                  self.timeout((e.target.maxTime + 2) * 1000);
+                })
+                .on('cycle', e => {
+                  console.log(String(e.target));
+                })
+                .on('error', err => {
+                  reject(new Error(err));
+                })
+                .on('complete', e => {
+                  resolve();
+                })
+                .run({async: true});
+            });
           }
         }).then(() => {
           if(options.earl.report) {
@@ -458,9 +503,14 @@ function readManifestEntry(manifest, entry) {
 }
 
 function readTestUrl(property) {
-  return function(test) {
+  return function(test, options) {
     if(!test[property]) {
       return null;
+    }
+    if(options && options.load) {
+      // always load
+      return joinPath(test.dirname, test[property])
+        .then(readJson);
     }
     return test.manifest.baseIri + test[property];
   };
