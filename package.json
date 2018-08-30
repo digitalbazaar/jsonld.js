@@ -42,6 +42,7 @@
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.6.1",
     "babel-preset-node6-es6": "^11.2.5",
+    "benchmark": "^2.1.4",
     "browserify": "^15.2.0",
     "chai": "^4.1.2",
     "commander": "^2.14.1",
