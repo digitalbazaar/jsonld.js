@@ -425,9 +425,7 @@ function addTest(manifest, test, tests) {
 
       // resolve test data run
       Promise.all(params).then(values => {
-        // get appropriate API and run test
-        const api = useCallbacks ? jsonld : jsonld.promises;
-        const promise = api[fn].apply(api, values);
+        const promise = jsonld[fn].apply(null, values);
 
         // promise style
         if(!useCallbacks) {
