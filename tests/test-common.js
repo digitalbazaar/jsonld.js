@@ -270,24 +270,12 @@ function addTest(manifest, test, tests) {
   test.manifest = manifest;
   const description = test_id + ' ' + (test.purpose || test.name);
 
-  if(options.benchmark) {
-    // only promises
-    tests.push({
-      title: description,
-      f: makeFn({useCallbacks: false})
-    });
-  } else {
-    tests.push({
-      title: description + ' (promise)',
-      f: makeFn({useCallbacks: false})
-    });
-    tests.push({
-      title: description + ' (callback)',
-      f: makeFn({useCallbacks: true})
-    });
-  }
+  tests.push({
+    title: description,
+    f: makeFn()
+  });
 
-  function makeFn({useCallbacks}) {
+  function makeFn() {
     return function(done) {
       const self = this;
       self.timeout(5000);
@@ -418,19 +406,10 @@ function addTest(manifest, test, tests) {
         });
       };
 
-      // add nodejs style callback
-      if(useCallbacks) {
-        params.push(callback);
-      }
-
       // resolve test data run
       Promise.all(params).then(values => {
         const promise = jsonld[fn].apply(null, values);
-
-        // promise style
-        if(!useCallbacks) {
-          return promise.then(callback.bind(null, null), callback);
-        }
+        return promise.then(callback.bind(null, null), callback);
       }).catch(err => {
         console.error(err);
         throw err;

@@ -4,6 +4,12 @@
 - Initial support for benchmarking.
 - Basic callback interface tests.
 
+### Removed
+- Callback version of every test.
+  - Callback interface tests added to catch callback API errors.
+  - Avoids duplication of running every test for promises and callbacks.
+  - Simplifies testing code and makes async/await conversion easier.
+
 ## 1.1.0 - 2018-09-05
 
 ### Added
