@@ -2,6 +2,7 @@
 
 ### Added
 - Initial support for benchmarking.
+- Basic callback interface tests.
 
 ## 1.1.0 - 2018-09-05
 
