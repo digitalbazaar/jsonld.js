@@ -276,7 +276,7 @@ function addTest(manifest, test, tests) {
   });
 
   function makeFn() {
-    return function(done) {
+    return async function() {
       const self = this;
       self.timeout(5000);
       const testInfo = TEST_TYPES[getJsonLdTestType(test)];
@@ -338,82 +338,79 @@ function addTest(manifest, test, tests) {
 
       const fn = testInfo.fn;
       const params = testInfo.params.map(param => param(test));
-      const callback = function(err, result) {
-        Promise.resolve().then(() => {
-          if(isNegativeTest(test)) {
-            return compareExpectedError(test, err);
-          } else {
-            // default is to assume positive and skip isPositiveTest(test) check
-            if(err) {
-              throw err;
-            }
-            return testInfo.compare(test, result);
-          }
-        }).then(() => {
-          if(options.benchmark) {
-            // pre-load params to avoid doc loader and parser timing
-            const benchParams = testInfo.params.map(param => param(test, {
-              load: true
-            }));
-            return Promise.all(benchParams);
-          }
-        }).then(values => {
-          if(options.benchmark) {
-            return new Promise((resolve, reject) => {
-              const suite = new benchmark.Suite();
-              suite.add({
-                name: test.name,
-                defer: true,
-                fn: deferred => {
-                  jsonld[fn].apply(null, values).then(() => {
-                    deferred.resolve();
-                  });
-                }
-              });
-              suite
-                .on('start', e => {
-                  self.timeout((e.target.maxTime + 2) * 1000);
-                })
-                .on('cycle', e => {
-                  console.log(String(e.target));
-                })
-                .on('error', err => {
-                  reject(new Error(err));
-                })
-                .on('complete', e => {
-                  resolve();
-                })
-                .run({async: true});
-            });
-          }
-        }).then(() => {
-          if(options.earl.report) {
-            options.earl.report.addAssertion(test, true);
-          }
-          done();
-        }).catch(err => {
-          if(options.bailOnError) {
-            if(err.name !== 'AssertionError') {
-              console.error('\nError: ', JSON.stringify(err, null, 2));
-            }
-            options.exit();
-          }
-          if(options.earl.report) {
-            options.earl.report.addAssertion(test, false);
-          }
-          console.error('Error: ', JSON.stringify(err, null, 2));
-          done(err);
-        });
-      };
+      // resolve test data
+      const values = await Promise.all(params);
+      let err;
+      let result;
+      // run and capture errors and results
+      try {
+        result = await jsonld[fn].apply(null, values);
+      } catch(e) {
+        err = e;
+      }
 
-      // resolve test data run
-      Promise.all(params).then(values => {
-        const promise = jsonld[fn].apply(null, values);
-        return promise.then(callback.bind(null, null), callback);
-      }).catch(err => {
-        console.error(err);
+      try {
+        if(isNegativeTest(test)) {
+          await compareExpectedError(test, err);
+        } else {
+          // default is to assume positive and skip isPositiveTest(test) check
+          if(err) {
+            throw err;
+          }
+          await testInfo.compare(test, result);
+        }
+
+        if(options.benchmark) {
+          // pre-load params to avoid doc loader and parser timing
+          const benchParams = testInfo.params.map(param => param(test, {
+            load: true
+          }));
+          const benchValues = await Promise.all(benchParams);
+
+          await new Promise((resolve, reject) => {
+            const suite = new benchmark.Suite();
+            suite.add({
+              name: test.name,
+              defer: true,
+              fn: deferred => {
+                jsonld[fn].apply(null, values).then(() => {
+                  deferred.resolve();
+                });
+              }
+            });
+            suite
+              .on('start', e => {
+                self.timeout((e.target.maxTime + 2) * 1000);
+              })
+              .on('cycle', e => {
+                console.log(String(e.target));
+              })
+              .on('error', err => {
+                reject(new Error(err));
+              })
+              .on('complete', e => {
+                resolve();
+              })
+              .run({async: true});
+          });
+        }
+
+        if(options.earl.report) {
+          options.earl.report.addAssertion(test, true);
+        }
+      } catch(err) {
+        if(options.bailOnError) {
+          if(err.name !== 'AssertionError') {
+            console.error('\nError: ', JSON.stringify(err, null, 2));
+          }
+          options.exit();
+        }
+        if(options.earl.report) {
+          options.earl.report.addAssertion(test, false);
+        }
+        console.error('Error: ', JSON.stringify(err, null, 2));
         throw err;
-      });
+      };
     };
   }
 }
@@ -480,36 +477,36 @@ function readManifestEntry(manifest, entry) {
 }
 
 function readTestUrl(property) {
-  return function(test, options) {
+  return async function(test, options) {
     if(!test[property]) {
       return null;
     }
     if(options && options.load) {
       // always load
-      return joinPath(test.dirname, test[property])
-        .then(readJson);
+      const filename = await joinPath(test.dirname, test[property]);
+      return readJson(filename);
     }
     return test.manifest.baseIri + test[property];
   };
 }
 
 function readTestJson(property) {
-  return function(test) {
+  return async function(test) {
     if(!test[property]) {
       return null;
     }
-    return joinPath(test.dirname, test[property])
-      .then(readJson);
+    const filename = await joinPath(test.dirname, test[property]);
+    return readJson(filename);
   };
 }
 
 function readTestNQuads(property) {
-  return function(test) {
+  return async function(test) {
     if(!test[property]) {
       return null;
     }
-    return joinPath(test.dirname, test[property])
-      .then(readFile);
+    const filename = await joinPath(test.dirname, test[property]);
+    return readFile(filename);
   };
 }
 
@@ -546,52 +543,52 @@ function _getExpectProperty(test) {
   }
 }
 
-function compareExpectedJson(test, result) {
-  let _expect;
-  return readTestJson(_getExpectProperty(test))(test).then(expect => {
-    _expect = expect;
+async function compareExpectedJson(test, result) {
+  let expect;
+  try {
+    expect = await readTestJson(_getExpectProperty(test))(test);
     assert.deepEqual(result, expect);
-  }).catch(err => {
+  } catch(err) {
     if(options.bailOnError) {
       console.log('\nTEST FAILED\n');
-      console.log('EXPECTED: ' + JSON.stringify(_expect, null, 2));
+      console.log('EXPECTED: ' + JSON.stringify(expect, null, 2));
       console.log('ACTUAL: ' + JSON.stringify(result, null, 2));
     }
     throw err;
-  });
+  }
 }
 
-function compareExpectedNQuads(test, result) {
-  let _expect;
-  return readTestNQuads(_getExpectProperty(test))(test).then(expect => {
-    _expect = expect;
+async function compareExpectedNQuads(test, result) {
+  let expect;
+  try {
+    expect = await readTestNQuads(_getExpectProperty(test))(test);
     assert.equal(result, expect);
-  }).catch(err => {
+  } catch(err) {
     if(options.bailOnError) {
       console.log('\nTEST FAILED\n');
-      console.log('EXPECTED:\n' + _expect);
+      console.log('EXPECTED:\n' + expect);
       console.log('ACTUAL:\n' + result);
     }
     throw err;
-  });
+  }
 }
 
-function compareExpectedError(test, err) {
+async function compareExpectedError(test, err) {
   let expect;
   let result;
-  return Promise.resolve().then(() => {
+  try {
     expect = test[_getExpectProperty(test)];
     result = getJsonLdErrorCode(err);
     assert.ok(err);
     assert.equal(result, expect);
-  }).catch(err => {
+  } catch(err) {
     if(options.bailOnError) {
       console.log('\nTEST FAILED\n');
       console.log('EXPECTED: ' + expect);
       console.log('ACTUAL: ' + result);
     }
     throw err;
-  });
+  }
 }
 
 function isJsonLdType(node, type) {
@@ -634,19 +631,17 @@ function getJsonLdErrorCode(err) {
   return err.name;
 }
 
-function readJson(filename) {
-  return readFile(filename).then((data) => {
-    return JSON.parse(data);
-  });
+async function readJson(filename) {
+  const data = await readFile(filename);
+  return JSON.parse(data);
 }
 
-function readFile(filename) {
+async function readFile(filename) {
   return options.readFile(filename);
 }
 
-function joinPath() {
-  return Promise.resolve(
-    join.apply(null, Array.prototype.slice.call(arguments)));
+async function joinPath() {
+  return join.apply(null, Array.prototype.slice.call(arguments));
 }
 
 function dirname(filename) {
