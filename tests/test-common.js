@@ -373,7 +373,7 @@ function addTest(manifest, test, tests) {
               name: test.name,
               defer: true,
               fn: deferred => {
-                jsonld[fn].apply(null, values).then(() => {
+                jsonld[fn].apply(null, benchValues).then(() => {
                   deferred.resolve();
                 });
               }
