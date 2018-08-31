@@ -547,7 +547,7 @@ async function compareExpectedJson(test, result) {
   let expect;
   try {
     expect = await readTestJson(_getExpectProperty(test))(test);
-    assert.deepEqual(result, expect);
+    assert.deepStrictEqual(result, expect);
   } catch(err) {
     if(options.bailOnError) {
       console.log('\nTEST FAILED\n');
@@ -562,7 +562,7 @@ async function compareExpectedNQuads(test, result) {
   let expect;
   try {
     expect = await readTestNQuads(_getExpectProperty(test))(test);
-    assert.equal(result, expect);
+    assert.strictEqual(result, expect);
   } catch(err) {
     if(options.bailOnError) {
       console.log('\nTEST FAILED\n');
@@ -580,7 +580,7 @@ async function compareExpectedError(test, err) {
     expect = test[_getExpectProperty(test)];
     result = getJsonLdErrorCode(err);
     assert.ok(err);
-    assert.equal(result, expect);
+    assert.strictEqual(result, expect);
   } catch(err) {
     if(options.bailOnError) {
       console.log('\nTEST FAILED\n');
