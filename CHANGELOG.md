@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 1.1.0 - 2018-09-05
+
 ### Added
 - Add `skipExpansion` flag to `toRdf` and `canonize`.
 
