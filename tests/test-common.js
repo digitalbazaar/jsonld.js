@@ -437,15 +437,20 @@ function addTest(manifest, test, tests) {
       }
 
       try {
-        if(isNegativeTest(test)) {
+        if(isJsonLdType(test, 'jld:NegativeEvaluationTest')) {
           await compareExpectedError(test, err);
-        } else if(isPositiveTest(test)) {
+        } else if(isJsonLdType(test, 'jld:PositiveEvaluationTest')) {
           if(err) {
             throw err;
           }
           await testInfo.compare(test, result);
+        } else if(isJsonLdType(test, 'jld:PositiveSyntaxTest') ||
+          isJsonLdType(test, 'rdfn:Urgna2012EvalTest') ||
+          isJsonLdType(test, 'rdfn:Urdna2015EvalTest')) {
+          // no checks
+        } else {
+          throw Error('Unknown test type: ' + test.type);
         }
-        // fallthrough without checks for PositiveSyntaxTest and others
 
         if(options.benchmark) {
           // pre-load params to avoid doc loader and parser timing
@@ -500,14 +505,6 @@ function addTest(manifest, test, tests) {
       };
     };
   }
-}
-
-function isPositiveTest(test) {
-  return isJsonLdType(test, 'jld:PositiveEvaluationTest');
-}
-
-function isNegativeTest(test) {
-  return isJsonLdType(test, 'jld:NegativeEvaluationTest');
 }
 
 function getJsonLdTestType(test) {
