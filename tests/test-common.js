@@ -45,7 +45,10 @@ const TEST_TYPES = {
         // terms
         /^#tp001/,
         // rel iri
-        /^#t0095/
+        /^#t0095/,
+        // type set
+        /^#t0104/,
+        /^#t0105/,
       ]
     },
     fn: 'compact',
@@ -83,6 +86,8 @@ const TEST_TYPES = {
         /^#t0010/,
         /^#t0011/,
         /^#t0012/,
+        // iris
+        /^#t0109/,
       ]
     },
     fn: 'expand',
@@ -99,7 +104,7 @@ const TEST_TYPES = {
         // list of lists
         /^#tli01/,
         /^#tli02/,
-        /^#tli03/
+        /^#tli03/,
       ]
     },
     fn: 'flatten',
@@ -135,7 +140,7 @@ const TEST_TYPES = {
         /^#t0058/,
         // misc
         /^#tp010/,
-        /^#tp050/
+        /^#tp050/,
       ]
     },
     fn: 'frame',
@@ -153,7 +158,7 @@ const TEST_TYPES = {
         // list of lists
         /^#tli01/,
         /^#tli02/,
-        /^#tli03/
+        /^#tli03/,
       ]
     },
     fn: 'fromRDF',
