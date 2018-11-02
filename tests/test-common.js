@@ -439,13 +439,13 @@ function addTest(manifest, test, tests) {
       try {
         if(isNegativeTest(test)) {
           await compareExpectedError(test, err);
-        } else {
-          // default is to assume positive and skip isPositiveTest(test) check
+        } else if(isPositiveTest(test)) {
           if(err) {
             throw err;
           }
           await testInfo.compare(test, result);
         }
+        // fallthrough without checks for PositiveSyntaxTest and others
 
         if(options.benchmark) {
           // pre-load params to avoid doc loader and parser timing
