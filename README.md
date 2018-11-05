@@ -124,20 +124,23 @@ import {JsonLdProcessor} from 'jsonld';
 Examples
 --------
 
+Example data and context used throughout examples below:
 ```js
-var doc = {
+const doc = {
   "http://schema.org/name": "Manu Sporny",
   "http://schema.org/url": {"@id": "http://manu.sporny.org/"},
   "http://schema.org/image": {"@id": "http://manu.sporny.org/images/manu.png"}
 };
-var context = {
+const context = {
   "name": "http://schema.org/name",
   "homepage": {"@id": "http://schema.org/url", "@type": "@id"},
   "image": {"@id": "http://schema.org/image", "@type": "@id"}
 };
+```
 
+### [compact](http://json-ld.org/spec/latest/json-ld/#compacted-document-form)
+```js
 // compact a document according to a particular context
-// see: http://json-ld.org/spec/latest/json-ld/#compacted-document-form
 jsonld.compact(doc, context, function(err, compacted) {
   console.log(JSON.stringify(compacted, null, 2));
   /* Output:
@@ -153,8 +156,13 @@ jsonld.compact(doc, context, function(err, compacted) {
 // compact using URLs
 jsonld.compact('http://example.org/doc', 'http://example.org/context', ...);
 
+// or using promises
+const compacted = await jsonld.compact(doc, context);
+```
+
+### [expand](http://json-ld.org/spec/latest/json-ld/#expanded-document-form)
+```js
 // expand a document, removing its context
-// see: http://json-ld.org/spec/latest/json-ld/#expanded-document-form
 jsonld.expand(compacted, function(err, expanded) {
   /* Output:
   {
@@ -168,20 +176,36 @@ jsonld.expand(compacted, function(err, expanded) {
 // expand using URLs
 jsonld.expand('http://example.org/doc', ...);
 
+// or using promises
+const expanded = await jsonld.expand(doc);
+```
+
+### [flatten](http://json-ld.org/spec/latest/json-ld/#flattened-document-form)
+```js
 // flatten a document
-// see: http://json-ld.org/spec/latest/json-ld/#flattened-document-form
 jsonld.flatten(doc, (err, flattened) => {
   // all deep-level trees flattened to the top-level
 });
 
+// or using promises
+const flattened = await jsonld.flatten(doc);
+```
+
+### [frame](http://json-ld.org/spec/latest/json-ld-framing/#introduction)
+```js
 // frame a document
-// see: http://json-ld.org/spec/latest/json-ld-framing/#introduction
 jsonld.frame(doc, frame, (err, framed) => {
   // document transformed into a particular tree structure per the given frame
 });
 
+// or using promises
+const framed = await jsonld.frame(doc, frame);
+```
+
+### [canonize](http://json-ld.github.io/normalization/spec/) (normalize)
+```js
 // canonize (normalize) a document using the RDF Dataset Normalization Algorithm
-// (URDNA2015), see: http://json-ld.github.io/normalization/spec/
+// (URDNA2015), see:
 jsonld.canonize(doc, {
   algorithm: 'URDNA2015',
   format: 'application/n-quads'
@@ -190,16 +214,34 @@ jsonld.canonize(doc, {
   // that can be used for hashing, comparison, etc.
 });
 
+// or using promises
+const canonized = await jsonld.canonize(doc, {format: 'application/n-quads'});
+```
+
+### toRDF (N-Quads)
+```js
 // serialize a document to N-Quads (RDF)
 jsonld.toRDF(doc, {format: 'application/n-quads'}, (err, nquads) => {
   // nquads is a string of N-Quads
 });
 
+// or using promises
+const rdf = await jsonld.toRDF(doc, {format: 'application/n-quads'});
+```
+
+### fromRDF (N-Quads)
+```js
 // deserialize N-Quads (RDF) to JSON-LD
 jsonld.fromRDF(nquads, {format: 'application/n-quads'}, (err, doc) => {
   // doc is JSON-LD
 });
 
+// or using promises
+const doc = await jsonld.fromRDF(nquads, {format: 'application/n-quads'});
+```
+
+### Custom RDF Praser
+```js
 // register a custom async-callback-based RDF parser
 jsonld.registerRDFParser(contentType, (input, callback) => {
   // parse input to a jsonld.js RDF dataset object...
@@ -212,35 +254,15 @@ jsonld.registerRDFParser(contentType, input => {
   return dataset;
 });
 
-// use the promises API:
-
-// compaction
-const compacted = await jsonld.compact(doc, context);
-
-// expansion
-const expanded = await jsonld.expand(doc);
-
-// flattening
-const flattened = await jsonld.flatten(doc);
-
-// framing
-const framed = await jsonld.frame(doc, frame);
-
-// canonicalization (normalization)
-const canonized = await jsonld.canonize(doc, {format: 'application/n-quads'});
-
-// serialize to RDF
-const rdf = await jsonld.toRDF(doc, {format: 'application/n-quads'});
-
-// deserialize from RDF
-const doc = await jsonld.fromRDF(nquads, {format: 'application/n-quads'});
-
 // register a custom promise-based RDF parser
 jsonld.registerRDFParser(contentType, async input => {
   // parse input into a jsonld.js RDF dataset object...
   return new Promise(...);
 });
+```
 
+### Custom Document Loader
+```js
 // how to override the default document loader with a custom one -- for
 // example, one that uses pre-loaded contexts:
 
