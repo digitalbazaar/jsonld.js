@@ -3,6 +3,8 @@ jsonld.js
 
 [![Build status](https://img.shields.io/travis/digitalbazaar/jsonld.js.svg)](https://travis-ci.org/digitalbazaar/jsonld.js)
 [![Dependency Status](https://img.shields.io/david/digitalbazaar/jsonld.js.svg)](https://david-dm.org/digitalbazaar/jsonld.js)
+[![Code Quality: Javascript](https://img.shields.io/lgtm/grade/javascript/g/digitalbazaar/jsonld.js.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/digitalbazaar/jsonld.js/context:javascript)
+[![Total Alerts](https://img.shields.io/lgtm/alerts/g/digitalbazaar/jsonld.js.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/digitalbazaar/jsonld.js/alerts)
 
 Introduction
 ------------
