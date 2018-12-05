@@ -139,6 +139,7 @@ const context = {
 ```
 
 ### [compact](http://json-ld.org/spec/latest/json-ld/#compacted-document-form)
+
 ```js
 // compact a document according to a particular context
 jsonld.compact(doc, context, function(err, compacted) {
@@ -161,6 +162,7 @@ const compacted = await jsonld.compact(doc, context);
 ```
 
 ### [expand](http://json-ld.org/spec/latest/json-ld/#expanded-document-form)
+
 ```js
 // expand a document, removing its context
 jsonld.expand(compacted, function(err, expanded) {
@@ -181,6 +183,7 @@ const expanded = await jsonld.expand(doc);
 ```
 
 ### [flatten](http://json-ld.org/spec/latest/json-ld/#flattened-document-form)
+
 ```js
 // flatten a document
 jsonld.flatten(doc, (err, flattened) => {
@@ -192,6 +195,7 @@ const flattened = await jsonld.flatten(doc);
 ```
 
 ### [frame](http://json-ld.org/spec/latest/json-ld-framing/#introduction)
+
 ```js
 // frame a document
 jsonld.frame(doc, frame, (err, framed) => {
@@ -202,7 +206,8 @@ jsonld.frame(doc, frame, (err, framed) => {
 const framed = await jsonld.frame(doc, frame);
 ```
 
-### [canonize](http://json-ld.github.io/normalization/spec/) (normalize)
+### <a name="canonize"></a>[canonize](http://json-ld.github.io/normalization/spec/) (normalize)
+
 ```js
 // canonize (normalize) a document using the RDF Dataset Normalization Algorithm
 // (URDNA2015), see:
@@ -218,7 +223,8 @@ jsonld.canonize(doc, {
 const canonized = await jsonld.canonize(doc, {format: 'application/n-quads'});
 ```
 
-### toRDF (N-Quads)
+### <a name="tordf"></a>toRDF (N-Quads)
+
 ```js
 // serialize a document to N-Quads (RDF)
 jsonld.toRDF(doc, {format: 'application/n-quads'}, (err, nquads) => {
@@ -229,7 +235,8 @@ jsonld.toRDF(doc, {format: 'application/n-quads'}, (err, nquads) => {
 const rdf = await jsonld.toRDF(doc, {format: 'application/n-quads'});
 ```
 
-### fromRDF (N-Quads)
+### <a name="fromrdf"></a>fromRDF (N-Quads)
+
 ```js
 // deserialize N-Quads (RDF) to JSON-LD
 jsonld.fromRDF(nquads, {format: 'application/n-quads'}, (err, doc) => {
@@ -241,6 +248,7 @@ const doc = await jsonld.fromRDF(nquads, {format: 'application/n-quads'});
 ```
 
 ### Custom RDF Parser
+
 ```js
 // register a custom async-callback-based RDF parser
 jsonld.registerRDFParser(contentType, (input, callback) => {
@@ -262,6 +270,7 @@ jsonld.registerRDFParser(contentType, async input => {
 ```
 
 ### Custom Document Loader
+
 ```js
 // how to override the default document loader with a custom one -- for
 // example, one that uses pre-loaded contexts:
