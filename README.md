@@ -240,7 +240,7 @@ jsonld.fromRDF(nquads, {format: 'application/n-quads'}, (err, doc) => {
 const doc = await jsonld.fromRDF(nquads, {format: 'application/n-quads'});
 ```
 
-### Custom RDF Praser
+### Custom RDF Parser
 ```js
 // register a custom async-callback-based RDF parser
 jsonld.registerRDFParser(contentType, (input, callback) => {
