@@ -121,13 +121,14 @@ outputs.forEach((info) => {
     devtool: 'cheap-module-source-map',
     plugins: [
       new webpack.optimize.UglifyJsPlugin({
+        //beautify: true,
         compress: {
           warnings: true
         },
         output: {
           comments: false
-        }
-        //beautify: true
+        },
+        sourceMap: true
       })
     ]
   });

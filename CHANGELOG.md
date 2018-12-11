@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Fixed
+- Fix source map generation.
+
 ## 1.2.0 - 2018-12-11
 
 ### Notes
