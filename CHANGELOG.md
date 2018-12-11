@@ -1,5 +1,22 @@
 # jsonld ChangeLog
 
+### Notes
+- The updated [rdf-canonize][] extracted out native support into
+  [rdf-canonize-native][] and now has an *optional* dependency on this new
+  module. If you have build tools available it will still build and use native
+  support otherwise it will fallback to less performant JS code.
+- If you wish to *require* the native `rdf-canonize` bindings, add a dependency
+  in your code to `rdf-canonize-native` to insure it is installed.
+- Some systems such as [Travis CI](https://travis-ci.org) currently only have
+  ancient compilers installed by default. Users of `rdf-canonize`, and hence
+  `jsonld.js`, previously required special setup so the `rdf-canonize` native
+  bindings would be installable. If CI testing is not performance critical you
+  can now simplify your CI config, let those bindings fail to install, and use
+  the JS fallback code.
+
+### Changed
+- Update `rdf-canonize` dependency to 0.3.
+
 ### Added
 - Initial support for benchmarking.
 - Basic callback interface tests.
@@ -362,3 +379,5 @@
 
 [jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
 [jsonld-request]: https://github.com/digitalbazaar/jsonld-request
+[rdf-canonize]: https://github.com/digitalbazaar/rdf-canonize
+[rdf-canonize-native]: https://github.com/digitalbazaar/rdf-canonize-native
