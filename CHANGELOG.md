@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 1.2.0 - 2018-12-11
+
 ### Notes
 - The updated [rdf-canonize][] extracted out native support into
   [rdf-canonize-native][] and now has an *optional* dependency on this new
