@@ -129,8 +129,8 @@ module.exports = function(config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    //browsers: ['PhantomJS', 'Chrome', 'Firefox', 'Safari'],
-    browsers: ['PhantomJS'],
+    //browsers: ['ChromeHeadless', 'Chrome', 'Firefox', 'Safari'],
+    browsers: ['ChromeHeadless'],
 
     customLaunchers: {
       IE9: {
@@ -141,12 +141,6 @@ module.exports = function(config) {
         base: 'IE',
         'x-ua-compatible': 'IE=EmulateIE8'
       }
-    },
-
-    phantomjsLauncher: {
-      // Have phantomjs exit if a ResourceError is encountered (useful if karma
-      // exits without killing phantom)
-      exitOnResourceError: true
     },
 
     // Continuous Integration mode

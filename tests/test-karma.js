@@ -100,10 +100,6 @@ const options = {
   assert: assert,
   jsonld: jsonld,
   exit: code => {
-    // FIXME: karma phantomjs does not expose this API
-    if(window.phantom && window.phantom.exit) {
-      return phantom.exit();
-    }
     console.error('exit not implemented');
     throw new Error('exit not implemented');
   },
@@ -136,15 +132,6 @@ const options = {
 // wait for setup of all tests then run mocha
 common(options).then(() => {
   run();
-}).then(() => {
-  // FIXME: karma phantomjs does not expose this API
-  if(window.phantom && window.phantom.exit) {
-    phantom.exit(0);
-  }
 }).catch(err => {
   console.error(err);
-  // FIXME: karma phantomjs does not expose this API
-  if(window.phantom && window.phantom.exit) {
-    phantom.exit(0);
-  }
 });

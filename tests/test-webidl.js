@@ -48,6 +48,7 @@ return new Promise((resolve, reject) => {
         test.status = 0;
       }
       */
+      /*
       // HACK: PhantomJS issues
       if(msg.indexOf(
         'JsonLdProcessor.length should be configurable expected true') !== -1) {
@@ -57,6 +58,7 @@ return new Promise((resolve, reject) => {
         'JsonLdProcessor.name should be configurable expected true') !== -1) {
         this.skip();
       }
+      */
       //earl.addAssertion({'@id': ?}, test.status === 0);
       assert.equal(test.status, 0, test.message);
       done();

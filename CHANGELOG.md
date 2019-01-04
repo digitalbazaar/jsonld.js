@@ -1,5 +1,11 @@
 # jsonld ChangeLog
 
+### Changed
+- PhantomJS is deprecated, now using headless Chrome with Karma.
+  - *Note*: Using headless Chrome vs PhantomJS may cause newer JS features to
+    slip into releases without proper support for older runtimes and browsers.
+    Please report such issues and they will be addressed.
+
 ## 1.3.0 - 2019-01-04
 
 ### Fixed
