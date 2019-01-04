@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 1.3.0 - 2019-01-04
+
 ### Fixed
 - Use rdf-canonize to compare n-quads test results.
 - Maintain multiple graphs.
