@@ -2,11 +2,12 @@
 
 ### Fixed
 - Use rdf-canonize to compare n-quads test results.
-- Multiple graph tests.
+- Maintain multiple graphs.
 - Sort `@type` when looking for scoped contexts.
 
 ### Changed
 - Use JSON-LD WG tests.
+- Categorize and skip failing tests.
 
 ## 1.2.1 - 2018-12-11
 
