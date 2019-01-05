@@ -61,6 +61,7 @@ module.exports = function(config) {
     },
 
     webpack: {
+      mode: 'production',
       devtool: 'inline-source-map',
       plugins: [
         new webpack.DefinePlugin({
@@ -86,9 +87,14 @@ module.exports = function(config) {
             use: {
               loader: 'babel-loader',
               options: {
-                presets: ['env'],
+                presets: ['@babel/preset-env'],
                 plugins: [
-                  ['transform-object-rest-spread', {useBuiltIns: true}]
+                  [
+                    '@babel/plugin-proposal-object-rest-spread',
+                    {useBuiltIns: true}
+                  ],
+                  '@babel/plugin-transform-modules-commonjs',
+                  '@babel/plugin-transform-runtime'
                 ]
               }
             }
