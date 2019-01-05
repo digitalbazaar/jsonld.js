@@ -77,6 +77,7 @@ outputs.forEach((info) => {
                   '@babel/plugin-proposal-object-rest-spread',
                   {useBuiltIns: true}
                 ],
+                '@babel/plugin-transform-modules-commonjs',
                 '@babel/plugin-transform-runtime'
               ]
             }
