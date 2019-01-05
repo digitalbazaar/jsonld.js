@@ -2,10 +2,15 @@
 
 ### Changed
 - PhantomJS is deprecated, now using headless Chrome with Karma.
-  - *Note*: Using headless Chrome vs PhantomJS may cause newer JS features to
+  - **NOTE**: Using headless Chrome vs PhantomJS may cause newer JS features to
     slip into releases without proper support for older runtimes and browsers.
     Please report such issues and they will be addressed.
 - Update webpack and babel.
+- Use CommonJS style in main file.
+  - **NOTE**: This change *might* cause problems if code somehow was still
+    using the long deprecated `jsonldjs` global. Any dependants on this feature
+    should update to use bundler tools such as webpack or use `jsonld` in the
+    distributed bundle.
 
 ## 1.3.0 - 2019-01-04
 
