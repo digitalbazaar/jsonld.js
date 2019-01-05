@@ -35,7 +35,6 @@ require('core-js/fn/object/assign');
 require('core-js/fn/promise');
 require('core-js/fn/set');
 require('core-js/fn/symbol');
-require('regenerator-runtime/runtime');
 
 const assert = require('chai').assert;
 const common = require('./test-common');
