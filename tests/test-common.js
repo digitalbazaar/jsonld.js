@@ -493,14 +493,14 @@ function addTest(manifest, test, tests) {
       try {
         if(isJsonLdType(test, 'jld:NegativeEvaluationTest')) {
           await compareExpectedError(test, err);
-        } else if(isJsonLdType(test, 'jld:PositiveEvaluationTest')) {
+        } else if(isJsonLdType(test, 'jld:PositiveEvaluationTest') ||
+          isJsonLdType(test, 'rdfn:Urgna2012EvalTest') ||
+          isJsonLdType(test, 'rdfn:Urdna2015EvalTest')) {
           if(err) {
             throw err;
           }
           await testInfo.compare(test, result);
-        } else if(isJsonLdType(test, 'jld:PositiveSyntaxTest') ||
-          isJsonLdType(test, 'rdfn:Urgna2012EvalTest') ||
-          isJsonLdType(test, 'rdfn:Urdna2015EvalTest')) {
+        } else if(isJsonLdType(test, 'jld:PositiveSyntaxTest')) {
           // no checks
         } else {
           throw Error('Unknown test type: ' + test.type);

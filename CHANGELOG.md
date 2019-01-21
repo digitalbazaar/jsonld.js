@@ -1,5 +1,9 @@
 # jsonld ChangeLog
 
+### Fixed
+- `rdfn:Urgna2012EvalTest` and `rdfn:Urdna2015EvalTest` tests should compare
+  with expected output.
+
 ## 1.4.0 - 2019-01-05
 
 ### Changed
