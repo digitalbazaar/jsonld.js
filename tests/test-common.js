@@ -49,6 +49,8 @@ const TEST_TYPES = {
         // type set
         /^#t0104/,
         /^#t0105/,
+        // rel vocab
+        /^#t0107/,
         // html
         /^#th001/,
         /^#th002/,
@@ -93,6 +95,10 @@ const TEST_TYPES = {
         /^#t0012/,
         // iris
         /^#t0109/,
+        // rel vocab
+        /^#t0110/,
+        /^#t0111/,
+        /^#t0112/,
         // html
         /^#th001/,
         /^#th002/,
