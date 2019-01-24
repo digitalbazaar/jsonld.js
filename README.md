@@ -40,7 +40,7 @@ compatible, and require a very small memory footprint in order to operate.
 Conformance
 -----------
 
-This library aims to pass the [test suite][] and conform with the following:
+This library aims to conform with the following:
 
 * [JSON-LD 1.0][],
   W3C Recommendation,
@@ -48,12 +48,28 @@ This library aims to pass the [test suite][] and conform with the following:
 * [JSON-LD 1.0 Processing Algorithms and API][],
   W3C Recommendation,
   2014-01-16, and any [errata][]
-* [JSON-LD 1.1][],
+* [JSON-LD 1.1][JSON-LD CG 1.1],
   Draft Community Group Report,
-  2018-02-15 or [newer][JSON-LD latest]
-* [JSON-LD 1.1 Processing Algorithms and API][],
+  2018-02-15 or [newer][JSON-LD CG latest]
+* [JSON-LD 1.1 Processing Algorithms and API][JSON-LD CG 1.1 API],
   Draft Community Group Report,
-  2018-02-15 or [newer][JSON-LD Processing Algorithms and API latest]
+  2018-02-15 or [newer][JSON-LD CG API latest]
+* Community Group [test suite][]
+
+The [JSON-LD Working Group][JSON-LD WG] is now developing JSON-LD 1.1. Library
+updates to conform with newer specifications will happens as features stabilize
+and development time and resources permit.
+
+* [JSON-LD 1.1][JSON-LD WG 1.1],
+  W3C Working Draft,
+  2018-12-14 or [newer][JSON-LD WG latest]
+* [JSON-LD 1.1 Processing Algorithms and API][JSON-LD WG 1.1 API],
+  W3C Working Draft,
+  2018-12-14 or [newer][JSON-LD WG API latest]
+* Working Group [test suite][WG test suite]
+
+The [test runner][] is often updated to note or skip newer tests that are not
+yet supported.
 
 Installation
 ------------
@@ -422,20 +438,27 @@ Use a command line with a test suite and a benchmark flag:
 
     JSONLD_TESTS=/tmp/benchmark-manifest.jsonld JSONLD_BENCHMARK=1 npm test
 
-[Digital Bazaar]: http://digitalbazaar.com/
-[JSON-LD]: http://json-ld.org/
+[Digital Bazaar]: https://digitalbazaar.com/
+[JSON-LD 1.0 API]: http://www.w3.org/TR/2014/REC-json-ld-api-20140116/
 [JSON-LD 1.0]: http://www.w3.org/TR/2014/REC-json-ld-20140116/
-[JSON-LD 1.0 Processing Algorithms and API]: http://www.w3.org/TR/2014/REC-json-ld-api-20140116/
-[JSON-LD 1.1]: https://json-ld.org/spec/ED/json-ld/20180215/
-[JSON-LD 1.1 Processing Algorithms and API]: https://json-ld.org/spec/ED/json-ld-api/20180215/
-[JSON-LD latest]: https://json-ld.org/spec/latest/json-ld/
-[JSON-LD Processing Algorithms and API latest]: https://json-ld.org/spec/latest/json-ld-api/
+[JSON-LD CG 1.1 API]: https://json-ld.org/spec/ED/json-ld-api/20180215/
+[JSON-LD CG 1.1]: https://json-ld.org/spec/ED/json-ld/20180215/
+[JSON-LD CG API latest]: https://json-ld.org/spec/latest/json-ld-api/
+[JSON-LD CG latest]: https://json-ld.org/spec/latest/json-ld/
+[JSON-LD WG 1.1 API]: https://www.w3.org/TR/json-ld11-api/
+[JSON-LD WG 1.1]: https://www.w3.org/TR/json-ld11/
+[JSON-LD WG API latest]: https://w3c.github.io/json-ld-api/
+[JSON-LD WG latest]: https://w3c.github.io/json-ld-syntax/
+[JSON-LD WG]: https://www.w3.org/2018/json-ld-wg/
+[JSON-LD]: https://json-ld.org/
 [Microdata]: http://www.w3.org/TR/microdata/
 [Microformats]: http://microformats.org/
 [RDFa]: http://www.w3.org/TR/rdfa-core/
 [RFC7159]: http://tools.ietf.org/html/rfc7159
+[WG test suite]: https://github.com/w3c/json-ld-api/tree/master/tests
 [errata]: http://www.w3.org/2014/json-ld-errata
 [jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
 [jsonld-request]: https://github.com/digitalbazaar/jsonld-request
 [rdf-canonize-native]: https://github.com/digitalbazaar/rdf-canonize-native
+[test runner]: https://github.com/digitalbazaar/jsonld.js/blob/master/tests/test-common.js
 [test suite]: https://github.com/json-ld/json-ld.org/tree/master/test-suite
