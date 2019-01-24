@@ -57,7 +57,7 @@ This library aims to conform with the following:
 * Community Group [test suite][]
 
 The [JSON-LD Working Group][JSON-LD WG] is now developing JSON-LD 1.1. Library
-updates to conform with newer specifications will happens as features stabilize
+updates to conform with newer specifications will happen as features stabilize
 and development time and resources permit.
 
 * [JSON-LD 1.1][JSON-LD WG 1.1],
