@@ -1,5 +1,25 @@
 # jsonld ChangeLog
 
+### Changed
+- [rdf-canonize][] updated:
+  - **BREAKING**: A fix was applied that makes the canoncial output format
+    properly match the N-Triples canoncial format. This fixes the format to no
+    longer escape tabs in literals. This may cause canonical output from
+    `jsonld.normalize()`/`jsonld.canonize()` to differ from previous versions
+    depending on your literal data.  If a backwards compatibility mode is
+    needed please use 1.4.x and file an issue.
+  - **BREAKING**: [rdf-canonize-native][] was removed as an indirect optional
+    dependency and the JavaScript implemenation is now the default. The former
+    `usePureJavaScript` flag was removed and a new `useNative` flag was added
+    to force use of the native bindings. Higher level applications must
+    explicitly install `rdf-canonize-native` to use this mode. Note that in
+    many cases the JavaScript implemenation will be *faster*. Apps should be
+    benchmarked before using the specialized native mode.
+  - **NOTE**: The Travis-CI C++11 compiler update fixes are no longer needed
+    when using jsonld.js! [rdf-canonize-native][] was updated to not use C++11
+    features and is also no longer a direct or indirect dependency of
+    jsonld.js.
+
 ### Fixed
 - `rdfn:Urgna2012EvalTest` and `rdfn:Urdna2015EvalTest` tests should compare
   with expected output.

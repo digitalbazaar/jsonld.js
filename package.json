@@ -30,7 +30,7 @@
     "lib/**/*.js"
   ],
   "dependencies": {
-    "rdf-canonize": "^0.3.0",
+    "rdf-canonize": "^1.0.1",
     "request": "^2.88.0",
     "semver": "^5.6.0",
     "xmldom": "0.1.19"
