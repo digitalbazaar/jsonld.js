@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 1.5.0 - 2019-01-24
+
 ### Changed
 - [rdf-canonize][] updated:
   - **BREAKING**: A fix was applied that makes the canoncial output format
