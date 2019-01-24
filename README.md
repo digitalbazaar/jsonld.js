@@ -437,4 +437,5 @@ Use a command line with a test suite and a benchmark flag:
 [errata]: http://www.w3.org/2014/json-ld-errata
 [jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
 [jsonld-request]: https://github.com/digitalbazaar/jsonld-request
+[rdf-canonize-native]: https://github.com/digitalbazaar/rdf-canonize-native
 [test suite]: https://github.com/json-ld/json-ld.org/tree/master/test-suite
