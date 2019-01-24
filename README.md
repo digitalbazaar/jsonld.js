@@ -121,6 +121,20 @@ import {promises} from 'jsonld';
 import {JsonLdProcessor} from 'jsonld';
 ```
 
+### node.js native canonize bindings
+
+For specialized use cases there is an optional [rdf-canonize-native][] package
+available which provides a native implementation for `canonize()`. It is used
+by installing the package and setting the `useNative` option of `canonize()` to
+`true`. Before using this mode it is **highly recommended** to run benchmarks
+since the JavaScript implementation is often faster and it adds toolchain
+complexities.
+
+```
+npm install jsonld
+npm install rdf-canonize-native
+```
+
 Examples
 --------
 
