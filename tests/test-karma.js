@@ -96,8 +96,8 @@ if(process.env.JSONLD_BENCHMARK) {
 
 const options = {
   nodejs: false,
-  assert: assert,
-  jsonld: jsonld,
+  assert,
+  jsonld,
   exit: code => {
     console.error('exit not implemented');
     throw new Error('exit not implemented');
@@ -107,8 +107,8 @@ const options = {
     filename: process.env.EARL
   },
   bailOnError: process.env.BAIL === 'true',
-  entries: entries,
-  benchmark: benchmark,
+  entries,
+  benchmark,
   readFile: filename => {
     return server.run(filename, function(filename) {
       const fs = serverRequire('fs-extra');

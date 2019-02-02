@@ -285,7 +285,7 @@ if(options.earl && options.earl.filename) {
   options.earl.report = new EarlReport({id: options.earl.id});
 }
 
-return new Promise((resolve, reject) => {
+return new Promise(resolve => {
 
 // async generated tests
 // _tests => [{suite}, ...]
@@ -368,7 +368,7 @@ function addManifest(manifest, parent) {
     // resolve all entry promises and process
     Promise.all(entries).then(entries => {
       let p = Promise.resolve();
-      entries.forEach((entry) => {
+      entries.forEach(entry => {
         if(typeof entry === 'string' && entry.endsWith('js')) {
           // process later as a plain JavaScript file
           suite.imports.push(entry);
@@ -571,7 +571,7 @@ function addTest(manifest, test, tests) {
         }
         console.error('Error: ', JSON.stringify(err, null, 2));
         throw err;
-      };
+      }
     };
   }
 }
@@ -715,11 +715,11 @@ async function compareExpectedNQuads(test, result) {
   let expect;
   try {
     expect = await readTestNQuads(_getExpectProperty(test))(test);
-    let opts = {algorithm: 'URDNA2015'};
-    let expectDataset = rdfCanonize.NQuads.parse(expect);
-    let expectCmp = await rdfCanonize.canonize(expectDataset, opts);
-    let resultDataset = rdfCanonize.NQuads.parse(result);
-    let resultCmp = await rdfCanonize.canonize(resultDataset, opts);
+    const opts = {algorithm: 'URDNA2015'};
+    const expectDataset = rdfCanonize.NQuads.parse(expect);
+    const expectCmp = await rdfCanonize.canonize(expectDataset, opts);
+    const resultDataset = rdfCanonize.NQuads.parse(result);
+    const resultCmp = await rdfCanonize.canonize(resultDataset, opts);
     assert.strictEqual(resultCmp, expectCmp);
   } catch(err) {
     if(options.bailOnError) {
@@ -913,7 +913,7 @@ function createDocumentLoader(test) {
       doc.document = json;
       return doc;
     }).catch(err => {
-      throw {name: 'loading document failed', url: url};
+      throw {name: 'loading document failed', url};
     });
   }
 }
