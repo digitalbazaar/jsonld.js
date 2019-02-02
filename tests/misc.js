@@ -52,11 +52,11 @@ describe('createNodeMap', () => {
   const doc = {'@id': 'ex:1', 'a:property': [{'@id': 'ex:2'}]};
   it('should create a flattened node hashmap', () => {
     const expected = {
-      "ex:1": {
-        "@id": "ex:1",
-        "a:property": [ {"@id": "ex:2"} ]
+      'ex:1': {
+        '@id': 'ex:1',
+        'a:property': [ {'@id': 'ex:2'} ]
       },
-      "ex:2": {"@id": "ex:2"}
+      'ex:2': {'@id': 'ex:2'}
     };
 
     return jsonld.createNodeMap(doc).then(map => {

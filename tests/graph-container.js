@@ -19,10 +19,10 @@ describe('@graph container', () => {
     jsonld.expand(doc, (err, expanded) => {
       assert.ifError(err);
       assert.deepEqual(expanded, [{
-        "foo:input": [{
-          "@graph": [{
-            "foo:value": [{
-              "@value": "x"
+        'foo:input': [{
+          '@graph': [{
+            'foo:value': [{
+              '@value': 'x'
             }]
           }]
         }]
@@ -45,10 +45,10 @@ describe('@graph container', () => {
     jsonld.expand(doc, (err, expanded) => {
       assert.ifError(err);
       assert.deepEqual(expanded, [{
-        "foo:input": [{
-          "@graph": [{
-            "foo:value": [{
-              "@value": "x"
+        'foo:input': [{
+          '@graph': [{
+            'foo:value': [{
+              '@value': 'x'
             }]
           }]
         }]
@@ -74,16 +74,16 @@ describe('@graph container', () => {
       jsonld.compact(expanded, doc['@context'], (err, compacted) => {
         assert.ifError(err);
         assert.deepEqual(compacted, {
-          "@context": {
-            "@version": 1.1,
-            "input": {
-              "@id": "foo:input",
-              "@container": "@graph"
+          '@context': {
+            '@version': 1.1,
+            'input': {
+              '@id': 'foo:input',
+              '@container': '@graph'
             },
-            "value": "foo:value"
+            'value': 'foo:value'
           },
-          "input": {
-            "value": "x"
+          'input': {
+            'value': 'x'
           }
         });
         done();
@@ -115,20 +115,20 @@ describe('@graph container', () => {
       jsonld.compact(expanded, newContext, (err, compacted) => {
         assert.ifError(err);
         assert.deepEqual(compacted, {
-          "@context": {
-            "@version": 1.1,
-            "input": {
-              "@id": "foo:input",
-              "@container": [
-                "@graph",
-                "@set"
+          '@context': {
+            '@version': 1.1,
+            'input': {
+              '@id': 'foo:input',
+              '@container': [
+                '@graph',
+                '@set'
               ]
             },
-            "value": "foo:value"
+            'value': 'foo:value'
           },
-          "input": [
+          'input': [
             {
-              "value": "x"
+              'value': 'x'
             }
           ]
         });

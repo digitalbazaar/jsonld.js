@@ -110,18 +110,18 @@ if(process.env.JSONLD_BENCHMARK) {
 
 const options = {
   nodejs: {
-    path: path
+    path
   },
-  assert: assert,
-  jsonld: jsonld,
+  assert,
+  jsonld,
   exit: code => process.exit(code),
   earl: {
     id: 'node.js',
     filename: process.env.EARL
   },
   bailOnError: process.env.BAIL === 'true',
-  entries: entries,
-  benchmark: benchmark,
+  entries,
+  benchmark,
   readFile: filename => {
     return fs.readFile(filename, 'utf8');
   },
