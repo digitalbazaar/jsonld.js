@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Fixed
+- Update canonize docs.
+
 ## 1.5.0 - 2019-01-24
 
 ### Changed
