@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 1.5.1 - 2019-02-01
+
 ### Fixed
 - Update canonize docs.
 
