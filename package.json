@@ -53,11 +53,10 @@
     "cors": "^2.7.1",
     "cross-env": "^5.2.0",
     "eslint": "^5.12.1",
+    "eslint-config-digitalbazaar": "^1.1.0",
     "express": "^4.16.4",
     "fs-extra": "^7.0.0",
     "join-path-js": "0.0.0",
-    "jscs": "^3.0.0",
-    "jshint": "^2.9.6",
     "karma": "^3.1.1",
     "karma-babel-preprocessor": "^8.0.0",
     "karma-browserify": "^6.0.0",
@@ -105,9 +104,7 @@
     "test-karma": "cross-env NODE_ENV=test karma start",
     "coverage": "nyc --reporter=lcov --reporter=text-summary npm test",
     "coverage-report": "nyc report",
-    "eslint": "eslint lib/*.js tests/*.js",
-    "jscs": "jscs lib/*.js tests/*.js",
-    "jshint": "jshint lib/*.js tests/*.js"
+    "lint": "eslint *.js lib/**.js tests/**.js"
   },
   "nyc": {
     "exclude": [

@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Changed
+- Switch to eslint.
+
 ## 1.5.1 - 2019-02-01
 
 ### Fixed
