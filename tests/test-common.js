@@ -120,6 +120,15 @@ const TEST_TYPES = {
         /^#th020/,
         /^#th021/,
         /^#th022/,
+        // sealed
+        /^#tse01/,
+        /^#tse02/,
+        /^#tse03/,
+        /^#tse04/,
+        /^#tse05/,
+        /^#tse06/,
+        /^#tse08/,
+        /^#tse09/,
       ]
     },
     fn: 'expand',
