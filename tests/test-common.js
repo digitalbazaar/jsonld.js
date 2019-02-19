@@ -6,6 +6,7 @@
  *
  * Copyright (c) 2011-2017 Digital Bazaar, Inc. All rights reserved.
  */
+/* eslint-disable indent */
 const EarlReport = require('./earl-report');
 const benchmark = require('benchmark');
 const join = require('join-path-js');
@@ -440,10 +441,10 @@ function addTest(manifest, test, tests) {
       // skip unknown and explicitly skipped test types
       const testTypes = Object.keys(TEST_TYPES);
       if(!isJsonLdType(test, testTypes) || isJsonLdType(test, SKIP_TESTS)) {
-        const type = [].concat(
-          getJsonLdValues(test, '@type'),
-          getJsonLdValues(test, 'type')
-        );
+        //const type = [].concat(
+        //  getJsonLdValues(test, '@type'),
+        //  getJsonLdValues(test, 'type')
+        //);
         //console.log('Skipping test "' + test.name + '" of type: ' + type);
         self.skip();
       }

@@ -6,7 +6,6 @@
  * Copyright 2010-2017 Digital Bazaar, Inc.
  */
 const path = require('path');
-const webpack = require('webpack');
 const webpackMerge = require('webpack-merge');
 
 // build multiple outputs
@@ -50,7 +49,7 @@ const outputs = [
   //}
 ];
 
-outputs.forEach((info) => {
+outputs.forEach(info => {
   // common to bundle and minified
   const common = {
     // each output uses the "jsonld" name but with different contents
