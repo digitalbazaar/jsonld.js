@@ -12,6 +12,7 @@ require('./webidl/testharness.js');
 require('./webidl/WebIDLParser.js');
 require('./webidl/idlharness.js');
 
+/* eslint-disable indent */
 module.exports = options => {
 
 'use strict';
