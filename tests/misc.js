@@ -1,6 +1,8 @@
 /**
  * Misc tests.
  */
+// disable so tests can be copy & pasted
+/* eslint-disable quotes, quote-props */
 const jsonld = require('..');
 const assert = require('assert');
 
@@ -8,9 +10,9 @@ const assert = require('assert');
 
 describe('link tests', () => {
   const doc = {
-    '@id': 'ex:1',
-    'a:foo': {
-      '@id': 'ex:1'
+    "@id": "ex:1",
+    "a:foo": {
+      "@id": "ex:1"
     }
   };
 
@@ -25,11 +27,11 @@ describe('link tests', () => {
 });
 
 describe('merge tests', () => {
-  const docA = {'@id': 'ex:1', 'a:foo': [{'@value': 1}]};
-  const docB = {'@id': 'ex:1', 'b:foo': [{'@value': 2}]};
+  const docA = {"@id": "ex:1", "a:foo": [{"@value": 1}]};
+  const docB = {"@id": "ex:1", "b:foo": [{"@value": 2}]};
   const merged = [Object.assign({}, docA, docB)];
   const context = {};
-  const ctxMerged = {'@graph': [{'@id': 'ex:1', 'a:foo': 1, 'b:foo': 2}]};
+  const ctxMerged = {"@graph": [{"@id": "ex:1", "a:foo": 1, "b:foo": 2}]};
 
   it('should merge nodes from two different documents', done => {
     jsonld.merge([docA, docB], (err, output) => {
@@ -49,14 +51,14 @@ describe('merge tests', () => {
 });
 
 describe('createNodeMap', () => {
-  const doc = {'@id': 'ex:1', 'a:property': [{'@id': 'ex:2'}]};
+  const doc = {"@id": "ex:1", "a:property": [{"@id": "ex:2"}]};
   it('should create a flattened node hashmap', () => {
     const expected = {
-      'ex:1': {
-        '@id': 'ex:1',
-        'a:property': [ {'@id': 'ex:2'} ]
+      "ex:1": {
+        "@id": "ex:1",
+        "a:property": [ {"@id": "ex:2"} ]
       },
-      'ex:2': {'@id': 'ex:2'}
+      "ex:2": {"@id": "ex:2"}
     };
 
     return jsonld.createNodeMap(doc).then(map => {
@@ -146,8 +148,8 @@ describe('other toRDF tests', () => {
 
   it('should handle N-Quads format', done => {
     const doc = {
-      '@id': 'https://example.com/',
-      'https://example.com/test': 'test'
+      "@id": "https://example.com/",
+      "https://example.com/test": "test"
     };
     jsonld.toRDF(doc, {format: 'application/n-quads'}, (err, output) => {
       assert.ifError(err);
@@ -160,8 +162,8 @@ describe('other toRDF tests', () => {
 
   it('should handle deprecated N-Quads format', done => {
     const doc = {
-      '@id': 'https://example.com/',
-      'https://example.com/test': 'test'
+      "@id": "https://example.com/",
+      "https://example.com/test": "test"
     };
     jsonld.toRDF(doc, {format: 'application/nquads'}, (err, output) => {
       assert.ifError(err);
@@ -260,9 +262,9 @@ describe('other fromRDF tests', () => {
       assert.deepEqual(
         output,
         [{
-          '@id': 'https://example.com/',
-          'https://example.com/test': [{
-            '@value': 'test'
+          "@id": "https://example.com/",
+          "https://example.com/test": [{
+            "@value": "test"
           }]
         }]);
       done();
@@ -276,9 +278,9 @@ describe('other fromRDF tests', () => {
       assert.deepEqual(
         output,
         [{
-          '@id': 'https://example.com/',
-          'https://example.com/test': [{
-            '@value': 'test'
+          "@id": "https://example.com/",
+          "https://example.com/test": [{
+            "@value": "test"
           }]
         }]);
       done();
@@ -291,8 +293,8 @@ describe('loading multiple levels of contexts', () => {
     if(url === 'https://example.com/context1') {
       return {
         document: {
-          '@context': {
-            'ex': 'https://example.com/#'
+          "@context": {
+            "ex": "https://example.com/#"
           }
         },
         contextUrl: null,
@@ -302,8 +304,8 @@ describe('loading multiple levels of contexts', () => {
     if(url === 'https://example.com/context2') {
       return {
         document: {
-          '@context': {
-            'ex': 'https://example.com/#'
+          "@context": {
+            "ex": "https://example.com/#"
           }
         },
         contextUrl: null,
@@ -312,16 +314,16 @@ describe('loading multiple levels of contexts', () => {
     }
   };
   const doc = {
-    '@context': 'https://example.com/context1',
-    'ex:foo': {
-      '@context': 'https://example.com/context2',
-      'ex:bar': 'test'
+    "@context": "https://example.com/context1",
+    "ex:foo": {
+      "@context": "https://example.com/context2",
+      "ex:bar": "test"
     }
   };
   const expected = [{
-    'https://example.com/#foo': [{
-      'https://example.com/#bar': [{
-        '@value': 'test'
+    "https://example.com/#foo": [{
+      "https://example.com/#bar": [{
+        "@value": "test"
       }]
     }]
   }];
