@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 1.5.2 - 2019-02-20
+
 ### Changed
 - Switch to eslint.
 - Optimize ensuring value is an array.
