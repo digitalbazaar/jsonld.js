@@ -2,6 +2,7 @@
 
 ### Changed
 - Switch to eslint.
+- Optimize ensuring value is an array.
 
 ## 1.5.1 - 2019-02-01
 
