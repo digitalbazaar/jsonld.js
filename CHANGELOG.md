@@ -1,10 +1,10 @@
 # jsonld ChangeLog
 
+## 1.5.3 - 2019-02-21
+
 ### Fixed
 - Improve handling of canonize test cases.
-
-### Changed
-- Update rdf-canonize dependency.
+- Update rdf-canonize dependency to address N-Quads parsing bug.
 
 ## 1.5.2 - 2019-02-20
 
@@ -25,7 +25,7 @@
     properly match the N-Triples canoncial format. This fixes the format to no
     longer escape tabs in literals. This may cause canonical output from
     `jsonld.normalize()`/`jsonld.canonize()` to differ from previous versions
-    depending on your literal data.  If a backwards compatibility mode is
+    depending on your literal data. If a backwards compatibility mode is
     needed please use 1.4.x and file an issue.
   - **BREAKING**: [rdf-canonize-native][] was removed as an indirect optional
     dependency and the JavaScript implemenation is now the default. The former
