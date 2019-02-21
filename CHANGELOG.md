@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Fixed
+- Improve handling of canonize test cases.
+
 ## 1.5.2 - 2019-02-20
 
 ### Changed

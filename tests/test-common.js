@@ -251,7 +251,7 @@ const TEST_TYPES = {
       readTestUrl('input'),
       createTestOptions({format: 'application/n-quads'})
     ],
-    compare: compareExpectedNQuads
+    compare: compareCanonizedExpectedNQuads
   },
   'rdfn:Urgna2012EvalTest': {
     fn: 'normalize',
@@ -713,6 +713,21 @@ async function compareExpectedJson(test, result) {
 }
 
 async function compareExpectedNQuads(test, result) {
+  let expect;
+  try {
+    expect = await readTestNQuads(_getExpectProperty(test))(test);
+    assert.strictEqual(result, expect);
+  } catch(ex) {
+    if(options.bailOnError) {
+      console.log('\nTEST FAILED\n');
+      console.log('EXPECTED:\n' + expect);
+      console.log('ACTUAL:\n' + result);
+    }
+    throw ex;
+  }
+}
+
+async function compareCanonizedExpectedNQuads(test, result) {
   let expect;
   try {
     expect = await readTestNQuads(_getExpectProperty(test))(test);
