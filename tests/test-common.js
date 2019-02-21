@@ -57,6 +57,10 @@ const TEST_TYPES = {
         /^#th002/,
         /^#th003/,
         /^#th004/,
+        // @type: @none
+        /^#ttn01/,
+        /^#ttn02/,
+        /^#ttn03/,
       ]
     },
     fn: 'compact',
@@ -130,6 +134,8 @@ const TEST_TYPES = {
         /^#tse06/,
         /^#tse08/,
         /^#tse09/,
+        // @type: @none
+        /^#ttn02/,
       ]
     },
     fn: 'expand',
