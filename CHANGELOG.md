@@ -3,6 +3,9 @@
 ### Fixed
 - Improve handling of canonize test cases.
 
+### Changed
+- Update rdf-canonize dependency.
+
 ## 1.5.2 - 2019-02-20
 
 ### Changed
