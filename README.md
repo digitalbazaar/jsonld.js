@@ -45,7 +45,7 @@ This library aims to conform with the following:
 * [JSON-LD 1.0][],
   W3C Recommendation,
   2014-01-16, and any [errata][]
-* [JSON-LD 1.0 Processing Algorithms and API][],
+* [JSON-LD 1.0 Processing Algorithms and API][JSON-LD 1.0 API],
   W3C Recommendation,
   2014-01-16, and any [errata][]
 * [JSON-LD 1.1][JSON-LD CG 1.1],
