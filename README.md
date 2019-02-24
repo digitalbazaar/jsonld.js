@@ -48,12 +48,18 @@ This library aims to conform with the following:
 * [JSON-LD 1.0 Processing Algorithms and API][JSON-LD 1.0 API],
   W3C Recommendation,
   2014-01-16, and any [errata][]
+* [JSON-LD 1.0 Framing][JSON-LD 1.0 Framing],
+  Unofficial Draft,
+  2012-08-30
 * [JSON-LD 1.1][JSON-LD CG 1.1],
   Draft Community Group Report,
-  2018-02-15 or [newer][JSON-LD CG latest]
+  2018-06-07 or [newer][JSON-LD CG latest]
 * [JSON-LD 1.1 Processing Algorithms and API][JSON-LD CG 1.1 API],
   Draft Community Group Report,
-  2018-02-15 or [newer][JSON-LD CG API latest]
+  2018-06-07 or [newer][JSON-LD CG API latest]
+* [JSON-LD 1.1 Framing][JSON-LD CG 1.1 Framing],
+  Draft Community Group Report,
+  2018-06-07 or [newer][JSON-LD CG Framing latest]
 * Community Group [test suite][]
 
 The [JSON-LD Working Group][JSON-LD WG] is now developing JSON-LD 1.1. Library
@@ -66,6 +72,9 @@ and development time and resources permit.
 * [JSON-LD 1.1 Processing Algorithms and API][JSON-LD WG 1.1 API],
   W3C Working Draft,
   2018-12-14 or [newer][JSON-LD WG API latest]
+* [JSON-LD 1.1 Framing][JSON-LD WG 1.1 Framing],
+  W3C Working Draft,
+  2018-12-14 or [newer][JSON-LD WG Framing latest]
 * Working Group [test suite][WG test suite]
 
 The [test runner][] is often updated to note or skip newer tests that are not
@@ -439,16 +448,27 @@ Use a command line with a test suite and a benchmark flag:
     JSONLD_TESTS=/tmp/benchmark-manifest.jsonld JSONLD_BENCHMARK=1 npm test
 
 [Digital Bazaar]: https://digitalbazaar.com/
+
 [JSON-LD 1.0 API]: http://www.w3.org/TR/2014/REC-json-ld-api-20140116/
+[JSON-LD 1.0 Framing]: https://json-ld.org/spec/ED/json-ld-framing/20120830/
 [JSON-LD 1.0]: http://www.w3.org/TR/2014/REC-json-ld-20140116/
-[JSON-LD CG 1.1 API]: https://json-ld.org/spec/ED/json-ld-api/20180215/
-[JSON-LD CG 1.1]: https://json-ld.org/spec/ED/json-ld/20180215/
+
+[JSON-LD CG 1.1 API]: https://json-ld.org/spec/FCGS/json-ld-api/20180607/
+[JSON-LD CG 1.1 Framing]: https://json-ld.org/spec/FCGS/json-ld-framing/20180607/
+[JSON-LD CG 1.1]: https://json-ld.org/spec/FCGS/json-ld/20180607/
+
 [JSON-LD CG API latest]: https://json-ld.org/spec/latest/json-ld-api/
+[JSON-LD CG Framing latest]: https://json-ld.org/spec/latest/json-ld-framing/
 [JSON-LD CG latest]: https://json-ld.org/spec/latest/json-ld/
+
 [JSON-LD WG 1.1 API]: https://www.w3.org/TR/json-ld11-api/
+[JSON-LD WG 1.1 Framing]: https://www.w3.org/TR/json-ld11-framing/
 [JSON-LD WG 1.1]: https://www.w3.org/TR/json-ld11/
+
 [JSON-LD WG API latest]: https://w3c.github.io/json-ld-api/
+[JSON-LD WG Framing latest]: https://w3c.github.io/json-ld-framing/
 [JSON-LD WG latest]: https://w3c.github.io/json-ld-syntax/
+
 [JSON-LD WG]: https://www.w3.org/2018/json-ld-wg/
 [JSON-LD]: https://json-ld.org/
 [Microdata]: http://www.w3.org/TR/microdata/
