@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 1.5.4 - 2019-02-28
+
 ### Fixed
 - Handle `<subject> <rdf:first> <rdf:nil>` triple.
 
