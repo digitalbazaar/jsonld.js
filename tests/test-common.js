@@ -118,15 +118,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#th020$/,
         /expand-manifest.jsonld#th021$/,
         /expand-manifest.jsonld#th022$/,
-        // sealed
-        /expand-manifest.jsonld#tse01$/,
-        /expand-manifest.jsonld#tse02$/,
-        /expand-manifest.jsonld#tse03$/,
-        /expand-manifest.jsonld#tse04$/,
-        /expand-manifest.jsonld#tse05$/,
-        /expand-manifest.jsonld#tse06$/,
-        /expand-manifest.jsonld#tse08$/,
-        /expand-manifest.jsonld#tse09$/,
         // @type: @none
         /expand-manifest.jsonld#ttn02$/,
         // remote
