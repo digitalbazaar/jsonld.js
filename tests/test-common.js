@@ -36,31 +36,31 @@ const TEST_TYPES = {
       // see JSON-LD 1.0 Errata
       specVersion: ['json-ld-1.0'],
       // FIXME
-      regex: [
+      idRegex: [
         // list of lists
-        /^#tli01/,
-        /^#tli02/,
-        /^#tli03/,
-        /^#tli04/,
-        /^#tli05/,
+        /compact-manifest.jsonld#tli01$/,
+        /compact-manifest.jsonld#tli02$/,
+        /compact-manifest.jsonld#tli03$/,
+        /compact-manifest.jsonld#tli04$/,
+        /compact-manifest.jsonld#tli05$/,
         // terms
-        /^#tp001/,
+        /compact-manifest.jsonld#tp001$/,
         // rel iri
-        /^#t0095/,
+        /compact-manifest.jsonld#t0095$/,
         // type set
-        /^#t0104/,
-        /^#t0105/,
+        /compact-manifest.jsonld#t0104$/,
+        /compact-manifest.jsonld#t0105$/,
         // rel vocab
-        /^#t0107/,
+        /compact-manifest.jsonld#t0107$/,
         // html
-        /^#th001/,
-        /^#th002/,
-        /^#th003/,
-        /^#th004/,
+        /compact-manifest.jsonld#th001$/,
+        /compact-manifest.jsonld#th002$/,
+        /compact-manifest.jsonld#th003$/,
+        /compact-manifest.jsonld#th004$/,
         // @type: @none
-        /^#ttn01/,
-        /^#ttn02/,
-        /^#ttn03/,
+        /compact-manifest.jsonld#ttn01$/,
+        /compact-manifest.jsonld#ttn02$/,
+        /compact-manifest.jsonld#ttn03$/,
       ]
     },
     fn: 'compact',
@@ -74,68 +74,68 @@ const TEST_TYPES = {
   'jld:ExpandTest': {
     skip: {
       // FIXME
-      regex: [
+      idRegex: [
         // list of lists
-        /^#tli01/,
-        /^#tli02/,
-        /^#tli03/,
-        /^#tli04/,
-        /^#tli05/,
-        /^#tli06/,
-        /^#tli07/,
-        /^#tli08/,
-        /^#tli09/,
-        /^#tli10/,
+        /expand-manifest.jsonld#tli01$/,
+        /expand-manifest.jsonld#tli02$/,
+        /expand-manifest.jsonld#tli03$/,
+        /expand-manifest.jsonld#tli04$/,
+        /expand-manifest.jsonld#tli05$/,
+        /expand-manifest.jsonld#tli06$/,
+        /expand-manifest.jsonld#tli07$/,
+        /expand-manifest.jsonld#tli08$/,
+        /expand-manifest.jsonld#tli09$/,
+        /expand-manifest.jsonld#tli10$/,
         // mode
-        /^#tp001/,
-        /^#tp002/,
+        /expand-manifest.jsonld#tp001$/,
+        /expand-manifest.jsonld#tp002$/,
         // rel iri
-        /^#t0092/,
-        // remote
-        /^#t0005/,
-        /^#t0006/,
-        /^#t0007/,
-        /^#t0010/,
-        /^#t0011/,
-        /^#t0012/,
+        /expand-manifest.jsonld#t0092$/,
         // iris
-        /^#t0109/,
+        /expand-manifest.jsonld#t0109$/,
         // rel vocab
-        /^#t0110/,
-        /^#t0111/,
-        /^#t0112/,
+        /expand-manifest.jsonld#t0110$/,
+        /expand-manifest.jsonld#t0111$/,
+        /expand-manifest.jsonld#t0112$/,
         // html
-        /^#th001/,
-        /^#th002/,
-        /^#th003/,
-        /^#th004/,
-        /^#th005/,
-        /^#th006/,
-        /^#th007/,
-        /^#th010/,
-        /^#th011/,
-        /^#th012/,
-        /^#th013/,
-        /^#th014/,
-        /^#th015/,
-        /^#th016/,
-        /^#th017/,
-        /^#th018/,
-        /^#th019/,
-        /^#th020/,
-        /^#th021/,
-        /^#th022/,
+        /expand-manifest.jsonld#th001$/,
+        /expand-manifest.jsonld#th002$/,
+        /expand-manifest.jsonld#th003$/,
+        /expand-manifest.jsonld#th004$/,
+        /expand-manifest.jsonld#th005$/,
+        /expand-manifest.jsonld#th006$/,
+        /expand-manifest.jsonld#th007$/,
+        /expand-manifest.jsonld#th010$/,
+        /expand-manifest.jsonld#th011$/,
+        /expand-manifest.jsonld#th012$/,
+        /expand-manifest.jsonld#th013$/,
+        /expand-manifest.jsonld#th014$/,
+        /expand-manifest.jsonld#th015$/,
+        /expand-manifest.jsonld#th016$/,
+        /expand-manifest.jsonld#th017$/,
+        /expand-manifest.jsonld#th018$/,
+        /expand-manifest.jsonld#th019$/,
+        /expand-manifest.jsonld#th020$/,
+        /expand-manifest.jsonld#th021$/,
+        /expand-manifest.jsonld#th022$/,
         // sealed
-        /^#tse01/,
-        /^#tse02/,
-        /^#tse03/,
-        /^#tse04/,
-        /^#tse05/,
-        /^#tse06/,
-        /^#tse08/,
-        /^#tse09/,
+        /expand-manifest.jsonld#tse01$/,
+        /expand-manifest.jsonld#tse02$/,
+        /expand-manifest.jsonld#tse03$/,
+        /expand-manifest.jsonld#tse04$/,
+        /expand-manifest.jsonld#tse05$/,
+        /expand-manifest.jsonld#tse06$/,
+        /expand-manifest.jsonld#tse08$/,
+        /expand-manifest.jsonld#tse09$/,
         // @type: @none
-        /^#ttn02/,
+        /expand-manifest.jsonld#ttn02$/,
+        // remote
+        /remote-doc-manifest.jsonld#t0005$/,
+        /remote-doc-manifest.jsonld#t0006$/,
+        /remote-doc-manifest.jsonld#t0007$/,
+        /remote-doc-manifest.jsonld#t0010$/,
+        /remote-doc-manifest.jsonld#t0011$/,
+        /remote-doc-manifest.jsonld#t0012$/,
       ]
     },
     fn: 'expand',
@@ -148,16 +148,16 @@ const TEST_TYPES = {
   'jld:FlattenTest': {
     skip: {
       // FIXME
-      regex: [
+      idRegex: [
         // list of lists
-        /^#tli01/,
-        /^#tli02/,
-        /^#tli03/,
+        /flatten-manifest.jsonld#tli01$/,
+        /flatten-manifest.jsonld#tli02$/,
+        /flatten-manifest.jsonld#tli03$/,
         // html
-        /^#th001/,
-        /^#th002/,
-        /^#th003/,
-        /^#th004/,
+        /flatten-manifest.jsonld#th001$/,
+        /flatten-manifest.jsonld#th002$/,
+        /flatten-manifest.jsonld#th003$/,
+        /flatten-manifest.jsonld#th004$/,
       ]
     },
     fn: 'flatten',
@@ -171,29 +171,29 @@ const TEST_TYPES = {
   'jld:FrameTest': {
     skip: {
       // FIXME
-      regex: [
+      idRegex: [
         // ex
-        /^#tg001/,
+        /frame-manifest.jsonld#tg001$/,
         // graphs
-        /^#t0010/,
-        /^#t0020/,
-        /^#t0046/,
-        /^#t0049/,
-        /^#t0051/,
-        /^#tg010/,
-        /^#tp046/,
-        /^#tp049/,
+        /frame-manifest.jsonld#t0010$/,
+        /frame-manifest.jsonld#t0020$/,
+        /frame-manifest.jsonld#t0046$/,
+        /frame-manifest.jsonld#t0049$/,
+        /frame-manifest.jsonld#t0051$/,
+        /frame-manifest.jsonld#tg010$/,
+        /frame-manifest.jsonld#tp046$/,
+        /frame-manifest.jsonld#tp049$/,
         // blank nodes
-        /^#t0052/,
-        /^#t0053/,
+        /frame-manifest.jsonld#t0052$/,
+        /frame-manifest.jsonld#t0053$/,
         // embed
-        /^#t0054/,
+        /frame-manifest.jsonld#t0054$/,
         // lists
-        /^#t0055/,
-        /^#t0058/,
+        /frame-manifest.jsonld#t0055$/,
+        /frame-manifest.jsonld#t0058$/,
         // misc
-        /^#tp010/,
-        /^#tp050/,
+        /frame-manifest.jsonld#tp010$/,
+        /frame-manifest.jsonld#tp050$/,
       ]
     },
     fn: 'frame',
@@ -207,11 +207,11 @@ const TEST_TYPES = {
   'jld:FromRDFTest': {
     skip: {
       // FIXME
-      regex: [
+      idRegex: [
         // list of lists
-        /^#tli01/,
-        /^#tli02/,
-        /^#tli03/,
+        /fromRdf-manifest.jsonld#tli01$/,
+        /fromRdf-manifest.jsonld#tli02$/,
+        /fromRdf-manifest.jsonld#tli03$/,
       ]
     },
     fn: 'fromRDF',
@@ -232,24 +232,24 @@ const TEST_TYPES = {
   'jld:ToRDFTest': {
     skip: {
       // FIXME
-      regex: [
+      idRegex: [
         // list of lists
-        /^#tli01/,
-        /^#tli02/,
+        /toRdf-manifest.jsonld#tli01$/,
+        /toRdf-manifest.jsonld#tli02$/,
         // blank node properties
-        /^#t0118/,
+        /toRdf-manifest.jsonld#t0118$/,
         // well formed
-        /^#twf01/,
-        /^#twf02/,
-        /^#twf03/,
-        /^#twf04/,
-        /^#twf05/,
-        /^#twf06/,
-        /^#twf07/,
+        /toRdf-manifest.jsonld#twf01$/,
+        /toRdf-manifest.jsonld#twf02$/,
+        /toRdf-manifest.jsonld#twf03$/,
+        /toRdf-manifest.jsonld#twf04$/,
+        /toRdf-manifest.jsonld#twf05$/,
+        /toRdf-manifest.jsonld#twf06$/,
+        /toRdf-manifest.jsonld#twf07$/,
         // html
-        /^#th001/,
-        /^#th002/,
-        /^#th003/,
+        /toRdf-manifest.jsonld#th001$/,
+        /toRdf-manifest.jsonld#th002$/,
+        /toRdf-manifest.jsonld#th003$/,
       ]
     },
     fn: 'toRDF',
@@ -460,8 +460,17 @@ function addTest(manifest, test, tests) {
         self.skip();
       }
 
-      if(testInfo.skip && testInfo.skip.regex) {
-        testInfo.skip.regex.forEach(function(re) {
+      if(testInfo.skip && testInfo.skip.idRegex) {
+        testInfo.skip.idRegex.forEach(function(re) {
+          if(re.test(test['@id'])) {
+            //console.log('Skipping test "' + test.name + '" of description: ' + description);
+            self.skip();
+          }
+        });
+      }
+
+      if(testInfo.skip && testInfo.skip.descriptionRegex) {
+        testInfo.skip.descriptionRegex.forEach(function(re) {
           if(re.test(description)) {
             //console.log('Skipping test "' + test.name + '" of description: ' + description);
             self.skip();
