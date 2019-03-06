@@ -463,7 +463,8 @@ function addTest(manifest, test, tests) {
       if(testInfo.skip && testInfo.skip.idRegex) {
         testInfo.skip.idRegex.forEach(function(re) {
           if(re.test(test['@id'])) {
-            //console.log('Skipping test "' + test.name + '" of description: ' + description);
+            //console.log('Skipping test due to id:',
+            //  {id: test['@id']});
             self.skip();
           }
         });
@@ -472,7 +473,8 @@ function addTest(manifest, test, tests) {
       if(testInfo.skip && testInfo.skip.descriptionRegex) {
         testInfo.skip.descriptionRegex.forEach(function(re) {
           if(re.test(description)) {
-            //console.log('Skipping test "' + test.name + '" of description: ' + description);
+            //console.log('Skipping test due to description:',
+            //  {id: test['@id'], name: test.name, description});
             self.skip();
           }
         });
@@ -488,7 +490,8 @@ function addTest(manifest, test, tests) {
             skipModes = testInfo.skip.processingMode;
           }
           if(skipModes.indexOf(pm) !== -1) {
-            //console.log('Skipping test "' + test.name + '" of processing mode: ' + pm);
+            //console.log('Skipping test due to processingMode:',
+            //  {id: test['@id'], name: test.name, processingMode: pm});
             self.skip();
           }
         });
@@ -502,7 +505,8 @@ function addTest(manifest, test, tests) {
             skipVersions = testInfo.skip.specVersion;
           }
           if(skipVersions.indexOf(sv) !== -1) {
-            //console.log('Skipping test "' + test.name + '" for spec version: ' + sv);
+            //console.log('Skipping test due to specVersion:',
+            //  {id: test['@id'], name: test.name, specVersion: sv});
             self.skip();
           }
         });
