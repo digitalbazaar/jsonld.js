@@ -66,12 +66,13 @@ module.exports = function(config) {
       devtool: 'inline-source-map',
       plugins: [
         new webpack.DefinePlugin({
-          'process.env.JSONLD_TESTS': JSON.stringify(process.env.JSONLD_TESTS),
+          'process.env.BAIL': JSON.stringify(process.env.BAIL),
+          'process.env.EARL': JSON.stringify(process.env.EARL),
           'process.env.JSONLD_BENCHMARK':
             JSON.stringify(process.env.JSONLD_BENCHMARK),
+          'process.env.JSONLD_TESTS': JSON.stringify(process.env.JSONLD_TESTS),
           'process.env.TEST_ROOT_DIR': JSON.stringify(__dirname),
-          'process.env.EARL': JSON.stringify(process.env.EARL),
-          'process.env.BAIL': JSON.stringify(process.env.BAIL)
+          'process.env.VERBOSE_SKIP': JSON.stringify(process.env.VERBOSE_SKIP)
         })
       ],
       module: {
