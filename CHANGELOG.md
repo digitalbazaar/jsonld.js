@@ -1,7 +1,14 @@
 # jsonld ChangeLog
 
 ### Fixed
-- Use explicit id or description test skipping regexes.
+- Testing: Use explicit id and description skipping regexes.
+
+### Changed
+- Testing: Improve skip logging.
+
+### Added
+- Testing: `skip` and `only` flags in manifests.
+- Testing: `VERBOSE_SKIP=true` env var to debug skipping.
 
 ## 1.5.4 - 2019-02-28
 

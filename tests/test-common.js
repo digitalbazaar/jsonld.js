@@ -326,8 +326,8 @@ function _testsToMocha(tests) {
     }
     describe(suite.title, () => {
       suite.tests.forEach(test => {
-        if(test.skip) {
-          it.skip(test.title);
+        if(test.only) {
+          it.only(test.title, test.f);
           return;
         }
         it(test.title, test.f);
@@ -433,10 +433,16 @@ function addTest(manifest, test, tests) {
   test.manifest = manifest;
   const description = test_id + ' ' + (test.purpose || test.name);
 
-  tests.push({
+  const _test = {
     title: description,
     f: makeFn()
-  });
+  };
+  // only based on test manifest
+  // skip handled via skip()
+  if('only' in test) {
+    _test.only = test.only;
+  }
+  tests.push(_test);
 
   function makeFn() {
     return async function() {
@@ -444,37 +450,72 @@ function addTest(manifest, test, tests) {
       self.timeout(5000);
       const testInfo = TEST_TYPES[getJsonLdTestType(test)];
 
-      // skip unknown and explicitly skipped test types
+      // skip based on test manifest
+      if('skip' in test && test.skip) {
+        if(options.verboseSkip) {
+          console.log('Skipping test due to manifest:',
+            {id: test['@id'], name: test.name});
+        }
+        self.skip();
+      }
+
+      // skip based on unknown test type
       const testTypes = Object.keys(TEST_TYPES);
-      if(!isJsonLdType(test, testTypes) || isJsonLdType(test, SKIP_TESTS)) {
-        //const type = [].concat(
-        //  getJsonLdValues(test, '@type'),
-        //  getJsonLdValues(test, 'type')
-        //);
-        //console.log('Skipping test "' + test.name + '" of type: ' + type);
+      if(!isJsonLdType(test, testTypes)) {
+        if(options.verboseSkip) {
+          const type = [].concat(
+            getJsonLdValues(test, '@type'),
+            getJsonLdValues(test, 'type')
+          );
+          console.log('Skipping test due to unknown type:',
+            {id: test['@id'], name: test.name, type});
+        }
         self.skip();
       }
 
+      // skip based on test type
+      if(isJsonLdType(test, SKIP_TESTS)) {
+        if(options.verboseSkip) {
+          const type = [].concat(
+            getJsonLdValues(test, '@type'),
+            getJsonLdValues(test, 'type')
+          );
+          console.log('Skipping test due to test type:',
+            {id: test['@id'], name: test.name, type});
+        }
+        self.skip();
+      }
+
+      // skip based on type info
       if(testInfo.skip && testInfo.skip.type) {
-        //console.log('Skipping test "' + test.name + '" of type: ' + type);
+        if(options.verboseSkip) {
+          console.log('Skipping test due to type info:',
+            {id: test['@id'], name: test.name});
+        }
         self.skip();
       }
 
+      // skip based on id regex
       if(testInfo.skip && testInfo.skip.idRegex) {
         testInfo.skip.idRegex.forEach(function(re) {
           if(re.test(test['@id'])) {
-            //console.log('Skipping test due to id:',
-            //  {id: test['@id']});
+            if(options.verboseSkip) {
+              console.log('Skipping test due to id:',
+                {id: test['@id']});
+            }
             self.skip();
           }
         });
       }
 
+      // skip based on description regex
       if(testInfo.skip && testInfo.skip.descriptionRegex) {
         testInfo.skip.descriptionRegex.forEach(function(re) {
           if(re.test(description)) {
-            //console.log('Skipping test due to description:',
-            //  {id: test['@id'], name: test.name, description});
+            if(options.verboseSkip) {
+              console.log('Skipping test due to description:',
+                {id: test['@id'], name: test.name, description});
+            }
             self.skip();
           }
         });
@@ -490,8 +531,10 @@ function addTest(manifest, test, tests) {
             skipModes = testInfo.skip.processingMode;
           }
           if(skipModes.indexOf(pm) !== -1) {
-            //console.log('Skipping test due to processingMode:',
-            //  {id: test['@id'], name: test.name, processingMode: pm});
+            if(options.verboseSkip) {
+              console.log('Skipping test due to processingMode:',
+                {id: test['@id'], name: test.name, processingMode: pm});
+            }
             self.skip();
           }
         });
@@ -505,8 +548,10 @@ function addTest(manifest, test, tests) {
             skipVersions = testInfo.skip.specVersion;
           }
           if(skipVersions.indexOf(sv) !== -1) {
-            //console.log('Skipping test due to specVersion:',
-            //  {id: test['@id'], name: test.name, specVersion: sv});
+            if(options.verboseSkip) {
+              console.log('Skipping test due to specVersion:',
+                {id: test['@id'], name: test.name, specVersion: sv});
+            }
             self.skip();
           }
         });

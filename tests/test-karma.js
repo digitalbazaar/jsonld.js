@@ -9,6 +9,8 @@
  *   EARL=filename
  * Bail with tests fail:
  *   BAIL=true
+ * Verbose skip reasons:
+ *   VERBOSE_SKIP=true
  * Benchmark mode:
  *   Basic:
  *   JSONLD_BENCHMARK=1
@@ -106,6 +108,7 @@ const options = {
     id: 'browser',
     filename: process.env.EARL
   },
+  verboseSkip: process.env.VERBOSE_SKIP === 'true',
   bailOnError: process.env.BAIL === 'true',
   entries,
   benchmark,
