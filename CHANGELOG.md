@@ -9,6 +9,7 @@
 ### Added
 - Testing: `skip` and `only` flags in manifests.
 - Testing: `VERBOSE_SKIP=true` env var to debug skipping.
+- Support `@protected` and `protectedMode`.
 
 ## 1.5.4 - 2019-02-28
 
