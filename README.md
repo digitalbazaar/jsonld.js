@@ -314,6 +314,11 @@ jsonld.registerRDFParser(contentType, async input => {
 // how to override the default document loader with a custom one -- for
 // example, one that uses pre-loaded contexts:
 
+const JSONLD = require('jsonld')
+
+// create an instance of JSONLD, not to modify the import
+const jsonld = JSONLD()
+
 // define a mapping of context URL => context doc
 const CONTEXTS = {
   "http://example.com": {
@@ -346,11 +351,15 @@ const customLoader = (url, callback) => {
   loader. For example: jsonld.documentLoaders.xhr({usePromise: false}); */
 };
 jsonld.documentLoader = customLoader;
+// this could also be done over the imported JSONLD, 
+// JSONLD.documentLoader = customLoader; but this practice is best avoided
 
 // alternatively, pass the custom loader for just a specific call:
 const compacted = await jsonld.compact(
 doc, context, {documentLoader: customLoader});
 ```
+
+The `documentLoader` can be modified as shown in the above example, 
 
 Related Modules
 ---------------
