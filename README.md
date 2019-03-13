@@ -359,8 +359,6 @@ const compacted = await jsonld.compact(
 doc, context, {documentLoader: customLoader});
 ```
 
-The `documentLoader` can be modified as shown in the above example, 
-
 Related Modules
 ---------------
 
