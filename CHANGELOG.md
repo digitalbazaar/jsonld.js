@@ -37,7 +37,7 @@
 
 ### Changed
 - [rdf-canonize][] updated:
-  - **BREAKING**: A fix was applied that makes the canoncial output format
+  - **BREAKING**: A fix was applied that makes the canonical output format
     properly match the N-Triples canoncial format. This fixes the format to no
     longer escape tabs in literals. This may cause canonical output from
     `jsonld.normalize()`/`jsonld.canonize()` to differ from previous versions
@@ -228,7 +228,7 @@
 ### Changed
 - **BREAKING**: Use RDF JS (rdf.js.org) interfaces for internal
   representation of dataset and quads. This should only break
-  code that was using undocumented internal datastructures,
+  code that was using undocumented internal data structures,
   backwards-compat code exists to handle external RDF parsers.
 - Update `rdf-canonize` to dependency with native support.
 
@@ -457,7 +457,7 @@
 - "request" extension moved to [jsonld-request][]. This was done to simplify
   the core JSON-LD processing library. In particular, the extension pulled in
   RDFa processing code and related dependencies. The old method of using this
-  exension of `jsonld.use('request')` is deprecated in favor of using the new
+  extension of `jsonld.use('request')` is deprecated in favor of using the new
   module directly.
 - The `jsonld` tool moved to [jsonld-cli][]. This was also done to simplify the
   core JSON-LD processing library and because it uses the [jsonld-request][]
