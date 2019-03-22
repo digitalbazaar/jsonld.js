@@ -364,3 +364,148 @@ describe('url tests', () => {
     done();
   });
 });
+
+describe('js keywords', () => {
+  it('expand js valueOf/toString keywords (top ctx)', async () => {
+    const d =
+{
+  "@context": {
+    "valueOf": "http://example.org/valueOf",
+    "toString": "http://example.org/toString"
+  },
+  "valueOf": "first",
+  "toString": "second"
+}
+;
+    const ex =
+[
+  {
+    "http://example.org/toString": [
+      {
+        "@value": "second"
+      }
+    ],
+    "http://example.org/valueOf": [
+      {
+        "@value": "first"
+      }
+    ]
+  }
+]
+;
+    const e = await jsonld.expand(d);
+    assert.deepStrictEqual(e, ex);
+  });
+
+  it('expand js valueOf/toString keywords (sub ctx)', async () => {
+    const d =
+{
+  "@context": {
+    "@version": 1.1,
+    "ex:thing": {
+      "@context": {
+        "valueOf": "http://example.org/valueOf",
+        "toString": "http://example.org/toString"
+      }
+    }
+  },
+  "ex:thing": {
+    "valueOf": "first",
+    "toString": "second"
+  }
+}
+;
+    const ex =
+[
+  {
+    "ex:thing": [
+      {
+        "http://example.org/toString": [
+          {
+            "@value": "second"
+          }
+        ],
+        "http://example.org/valueOf": [
+          {
+            "@value": "first"
+          }
+        ]
+      }
+    ]
+  }
+]
+;
+    const e = await jsonld.expand(d);
+    assert.deepStrictEqual(e, ex);
+  });
+
+  it('compact js valueOf/toString keywords', async () => {
+    const d =
+{
+  "@context": {
+    "valueOf": "http://example.org/valueOf",
+    "toString": "http://example.org/toString"
+  },
+  "valueOf": "first",
+  "toString": "second"
+}
+;
+    const ctx =
+{
+  "@context": {
+    "valueOf": "http://example.org/valueOf",
+    "toString": "http://example.org/toString"
+  }
+}
+;
+    const ex =
+{
+  "@context": {
+    "valueOf": "http://example.org/valueOf",
+    "toString": "http://example.org/toString"
+  },
+  "valueOf": "first",
+  "toString": "second"
+}
+;
+    const e = await jsonld.compact(d, ctx);
+    assert.deepStrictEqual(e, ex);
+  });
+
+  it('frame js valueOf/toString keywords', async () => {
+    const d =
+{
+  "@context": {
+    "@vocab": "http://example.org/"
+  },
+  "toString": {
+    "valueOf": "thing"
+  }
+}
+;
+    const frame =
+{
+  "@context": {
+    "@vocab": "http://example.org/"
+  },
+  "toString": {}
+}
+;
+    const ex =
+{
+  "@context": {
+    "@vocab": "http://example.org/"
+  },
+  "@graph": [
+    {
+      "toString": {
+        "valueOf": "thing"
+      }
+    }
+  ]
+}
+;
+    const e = await jsonld.frame(d, frame);
+    assert.deepStrictEqual(e, ex);
+  });
+});
