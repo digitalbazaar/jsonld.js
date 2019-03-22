@@ -1,7 +1,21 @@
 # jsonld ChangeLog
 
+## 1.6.0 - 2019-03-xx
+
 ### Fixed
 - Testing: Use explicit id and description skipping regexes.
+- Usage of JavaScript Object property names in data.
+  - **NOTE**: A class of bugs was causing term names such as `toString`,
+    `valueOf`, and others to be dropped or produce bogus output. The fix could
+    cause output triples to differ from previous versions if those special
+    names were used.
+  - Specifically, the problem was using `x in obj` instead of
+    `obj.hasOwnProperty(x)` or a `Map`.
+  - Fixed usage in contexts for expand and compact.
+  - Attempted fixes in other parts of the code with similar `x in obj` usage.
+    Finding actual realistic failing test cases proved difficult.
+  - Help would be appreciated making test cases or finding other locations with
+    a similar issue.
 
 ### Changed
 - Testing: Improve skip logging.
