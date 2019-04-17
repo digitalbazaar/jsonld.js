@@ -96,7 +96,7 @@ if(process.env.JSONLD_TESTS) {
   entries.push(path.resolve(_top, 'tests/graph-container.js'));
   entries.push(path.resolve(_top, 'tests/new-embed-api'));
   // TODO: avoid network traffic and re-enable
-  //entries.push(path.resolve(_top, 'tests/node-document-loader-tests.js'));
+  entries.push(path.resolve(_top, 'tests/node-document-loader-tests.js'));
 }
 
 let benchmark = null;
@@ -144,3 +144,16 @@ common(options).then(() => {
 process.on('unhandledRejection', (reason, p) => {
   console.error('Unhandled Rejection at:', p, 'reason:', reason);
 });
+
+// remove test data
+//
+const http = require('http');
+// store a reference to the original request function
+const originalRequest = http.request;
+// // override the function
+http.request = function wrapMethodRequest(req) {
+  console.warn('REAL HTTP CALL MADE TO', req.host);
+  // do something with the req here
+  // call the original 'request' function
+  return originalRequest.apply(this, arguments);
+};
