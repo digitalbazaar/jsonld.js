@@ -14,8 +14,6 @@
   - Fixed usage in contexts for expand and compact.
   - Attempted fixes in other parts of the code with similar `x in obj` usage.
     Finding actual realistic failing test cases proved difficult.
-  - Help would be appreciated making test cases or finding other locations with
-    a similar issue.
 
 ### Changed
 - Testing: Improve skip logging.
