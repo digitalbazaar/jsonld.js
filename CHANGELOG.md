@@ -1,6 +1,6 @@
 # jsonld ChangeLog
 
-## 1.6.0 - 2019-03-xx
+## 1.6.0 - 2019-04-17
 
 ### Fixed
 - Testing: Use explicit id and description skipping regexes.
