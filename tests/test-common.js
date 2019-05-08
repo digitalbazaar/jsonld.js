@@ -135,6 +135,12 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#th020$/,
         /expand-manifest.jsonld#th021$/,
         /expand-manifest.jsonld#th022$/,
+        // HTML extraction
+        /expand-manifest.jsonld#thc01$/,
+        /expand-manifest.jsonld#thc02$/,
+        /expand-manifest.jsonld#thc03$/,
+        /expand-manifest.jsonld#thc04$/,
+        /expand-manifest.jsonld#thc05$/,
         // @type: @none
         /expand-manifest.jsonld#ttn02$/,
         // property index maps
@@ -161,6 +167,9 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#tjs09$/,
         /expand-manifest.jsonld#tjs10$/,
         /expand-manifest.jsonld#tjs11$/,
+        // misc
+        /expand-manifest.jsonld#te043$/,
+        /expand-manifest.jsonld#te044$/,
         // remote
         /remote-doc-manifest.jsonld#t0005$/,
         /remote-doc-manifest.jsonld#t0006$/,
@@ -168,6 +177,7 @@ const TEST_TYPES = {
         /remote-doc-manifest.jsonld#t0010$/,
         /remote-doc-manifest.jsonld#t0011$/,
         /remote-doc-manifest.jsonld#t0012$/,
+        /remote-doc-manifest.jsonld#t0013$/,
       ]
     },
     fn: 'expand',
