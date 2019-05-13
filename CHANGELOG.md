@@ -1,5 +1,10 @@
 # jsonld ChangeLog
 
+## 1.6.1 - 2019-xx-xx
+
+### Fixed
+- Ensure `@type`-scoped terms are limited to their `@type`-scoped object.
+
 ## 1.6.0 - 2019-04-17
 
 ### Fixed
