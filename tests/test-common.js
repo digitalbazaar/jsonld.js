@@ -236,8 +236,13 @@ const TEST_TYPES = {
         // misc
         /frame-manifest.jsonld#tp010$/,
         /frame-manifest.jsonld#tp050$/,
+        /frame-manifest.jsonld#teo01$/,
         // @embed:@first
         /frame-manifest.jsonld#t0060$/,
+        // requireAll
+        /frame-manifest.jsonld#tra01$/,
+        /frame-manifest.jsonld#tra02$/,
+        /frame-manifest.jsonld#tra03$/,
       ]
     },
     fn: 'frame',
