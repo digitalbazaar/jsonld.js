@@ -1,5 +1,16 @@
 # jsonld ChangeLog
 
+## 1.6.2 - 2019-05-xx
+
+### Fixed
+- Allow overriding of protected terms when redefining to the same
+  definition, modulo the `protected` flag itself.
+- Fix type-scoped context application:
+  - Ensure values and subject references are expanded and compacted
+    using type-scoped contexts, if available.
+  - Ensure `@type` values are evaluated against the previous context,
+    not the type-scoped context.
+
 ## 1.6.1 - 2019-05-13
 
 ### Fixed
