@@ -1,6 +1,6 @@
 # jsonld ChangeLog
 
-## 1.6.2 - 2019-05-xx
+## 1.6.2 - 2019-05-21
 
 ### Fixed
 - Allow overriding of protected terms when redefining to the same
