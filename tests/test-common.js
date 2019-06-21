@@ -78,6 +78,8 @@ const TEST_TYPES = {
         /compact-manifest.jsonld#tjs07$/,
         /compact-manifest.jsonld#tjs08$/,
         /compact-manifest.jsonld#tjs09$/,
+        // IRI confusion
+        /compact-manifest.jsonld#te002$/,
       ]
     },
     fn: 'compact',
@@ -170,6 +172,10 @@ const TEST_TYPES = {
         // misc
         /expand-manifest.jsonld#te043$/,
         /expand-manifest.jsonld#te044$/,
+        // IRI prefixes
+        /expand-manifest.jsonld#tpr29$/,
+        // protected null IRI mapping
+        /expand-manifest.jsonld#tpr28$/,
         // remote
         /remote-doc-manifest.jsonld#t0005$/,
         /remote-doc-manifest.jsonld#t0006$/,
@@ -323,6 +329,10 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#tjs13$/,
         // number fixes
         /toRdf-manifest.jsonld#trt01$/,
+        // IRI resolution
+        /toRdf-manifest.jsonld#t0130$/,
+        /toRdf-manifest.jsonld#t0131$/,
+        /toRdf-manifest.jsonld#t0132$/,
       ]
     },
     fn: 'toRDF',
