@@ -890,7 +890,7 @@ async function compareExpectedError(test, err) {
   try {
     expect = test[_getExpectProperty(test)];
     result = getJsonLdErrorCode(err);
-    assert.ok(err);
+    assert.ok(err, 'no error present');
     assert.strictEqual(result, expect);
   } catch(err) {
     if(options.bailOnError) {
