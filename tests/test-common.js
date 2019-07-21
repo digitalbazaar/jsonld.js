@@ -80,6 +80,9 @@ const TEST_TYPES = {
         /compact-manifest.jsonld#tjs09$/,
         // IRI confusion
         /compact-manifest.jsonld#te002$/,
+        // @propogate
+        /compact-manifest.jsonld#tc026$/,
+        /compact-manifest.jsonld#tc027$/,
       ]
     },
     fn: 'compact',
@@ -184,6 +187,23 @@ const TEST_TYPES = {
         /remote-doc-manifest.jsonld#t0011$/,
         /remote-doc-manifest.jsonld#t0012$/,
         /remote-doc-manifest.jsonld#t0013$/,
+        // @propogate
+        /expand-manifest.jsonld#tc026$/,
+        /expand-manifest.jsonld#tc027$/,
+        /expand-manifest.jsonld#tc028$/,
+        /expand-manifest.jsonld#tc029$/,
+        // @import
+        /expand-manifest.jsonld#tso01$/,
+        /expand-manifest.jsonld#tso02$/,
+        /expand-manifest.jsonld#tso03$/,
+        /expand-manifest.jsonld#tso05$/,
+        /expand-manifest.jsonld#tso06$/,
+        // protected
+        /expand-manifest.jsonld#tso07$/,
+        // context merging
+        /expand-manifest.jsonld#tso08$/,
+        /expand-manifest.jsonld#tso10$/,
+        /expand-manifest.jsonld#tso11$/,
       ]
     },
     fn: 'expand',
@@ -313,6 +333,23 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#th001$/,
         /toRdf-manifest.jsonld#th002$/,
         /toRdf-manifest.jsonld#th003$/,
+        /toRdf-manifest.jsonld#th004$/,
+        /toRdf-manifest.jsonld#th005$/,
+        /toRdf-manifest.jsonld#th006$/,
+        /toRdf-manifest.jsonld#th007$/,
+        /toRdf-manifest.jsonld#th010$/,
+        /toRdf-manifest.jsonld#th011$/,
+        /toRdf-manifest.jsonld#th012$/,
+        /toRdf-manifest.jsonld#th013$/,
+        /toRdf-manifest.jsonld#th014$/,
+        /toRdf-manifest.jsonld#th015$/,
+        /toRdf-manifest.jsonld#th016$/,
+        /toRdf-manifest.jsonld#th017$/,
+        /toRdf-manifest.jsonld#th018$/,
+        /toRdf-manifest.jsonld#th019$/,
+        /toRdf-manifest.jsonld#th020$/,
+        /toRdf-manifest.jsonld#th021$/,
+        /toRdf-manifest.jsonld#th022$/,
         // JSON literal
         /toRdf-manifest.jsonld#tjs01$/,
         /toRdf-manifest.jsonld#tjs02$/,
@@ -333,6 +370,44 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#t0130$/,
         /toRdf-manifest.jsonld#t0131$/,
         /toRdf-manifest.jsonld#t0132$/,
+        // @vocab mapping
+        /toRdf-manifest.jsonld#te075$/,
+        // rel IRI
+        /toRdf-manifest.jsonld#te092$/,
+        /toRdf-manifest.jsonld#te109$/,
+        /toRdf-manifest.jsonld#te110$/,
+        /toRdf-manifest.jsonld#te111$/,
+        /toRdf-manifest.jsonld#te112$/,
+        // processing
+        /toRdf-manifest.jsonld#tp001$/,
+        /toRdf-manifest.jsonld#tp002$/,
+        // index maps
+        /toRdf-manifest.jsonld#tpi05$/,
+        /toRdf-manifest.jsonld#tpi06$/,
+        /toRdf-manifest.jsonld#tpi07$/,
+        /toRdf-manifest.jsonld#tpi08$/,
+        /toRdf-manifest.jsonld#tpi09$/,
+        /toRdf-manifest.jsonld#tpi10$/,
+        /toRdf-manifest.jsonld#tpi11$/,
+        // protected
+        /toRdf-manifest.jsonld#tpr28$/,
+        // prefix
+        /toRdf-manifest.jsonld#tpr29$/,
+        // @import
+        /toRdf-manifest.jsonld#tso01$/,
+        /toRdf-manifest.jsonld#tso02$/,
+        /toRdf-manifest.jsonld#tso03$/,
+        // @propogate
+        /toRdf-manifest.jsonld#tso05$/,
+        /toRdf-manifest.jsonld#tso06$/,
+        // protected
+        /toRdf-manifest.jsonld#tso07$/,
+        // context merging
+        /toRdf-manifest.jsonld#tso08$/,
+        /toRdf-manifest.jsonld#tso10$/,
+        /toRdf-manifest.jsonld#tso11$/,
+        // type:none
+        /toRdf-manifest.jsonld#ttn02$/,
       ]
     },
     fn: 'toRDF',
