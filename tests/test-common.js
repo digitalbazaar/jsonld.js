@@ -83,6 +83,19 @@ const TEST_TYPES = {
         // @propogate
         /compact-manifest.jsonld#tc026$/,
         /compact-manifest.jsonld#tc027$/,
+        // included
+        /compact-manifest.jsonld#tin01$/,
+        /compact-manifest.jsonld#tin02$/,
+        /compact-manifest.jsonld#tin03$/,
+        /compact-manifest.jsonld#tin04$/,
+        /compact-manifest.jsonld#tin05$/,
+        // index on @type
+        /compact-manifest.jsonld#tm020$/,
+        /compact-manifest.jsonld#tm021$/,
+        /compact-manifest.jsonld#tm022$/,
+        // context values
+        /compact-manifest.jsonld#ts001$/,
+        /compact-manifest.jsonld#ts002$/,
       ]
     },
     fn: 'compact',
@@ -187,6 +200,8 @@ const TEST_TYPES = {
         /remote-doc-manifest.jsonld#t0011$/,
         /remote-doc-manifest.jsonld#t0012$/,
         /remote-doc-manifest.jsonld#t0013$/,
+        /remote-doc-manifest.jsonld#tla01$/,
+        /remote-doc-manifest.jsonld#tla05$/,
         // @propogate
         /expand-manifest.jsonld#tc026$/,
         /expand-manifest.jsonld#tc027$/,
@@ -204,6 +219,26 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#tso08$/,
         /expand-manifest.jsonld#tso10$/,
         /expand-manifest.jsonld#tso11$/,
+        // colliding keywords
+        /expand-manifest.jsonld#t0114$/,
+        // vocab iri/term
+        /expand-manifest.jsonld#te046$/,
+        /expand-manifest.jsonld#te047$/,
+        // included
+        /expand-manifest.jsonld#tin01$/,
+        /expand-manifest.jsonld#tin02$/,
+        /expand-manifest.jsonld#tin03$/,
+        /expand-manifest.jsonld#tin04$/,
+        /expand-manifest.jsonld#tin05$/,
+        /expand-manifest.jsonld#tin06$/,
+        /expand-manifest.jsonld#tin07$/,
+        /expand-manifest.jsonld#tin08$/,
+        /expand-manifest.jsonld#tin09$/,
+        // index on @type
+        /expand-manifest.jsonld#tm017$/,
+        /expand-manifest.jsonld#tm020$/,
+        // @nest
+        /expand-manifest.jsonld#tn008$/,
       ]
     },
     fn: 'expand',
@@ -226,6 +261,13 @@ const TEST_TYPES = {
         /flatten-manifest.jsonld#th002$/,
         /flatten-manifest.jsonld#th003$/,
         /flatten-manifest.jsonld#th004$/,
+        // included
+        /flatten-manifest.jsonld#tin01$/,
+        /flatten-manifest.jsonld#tin02$/,
+        /flatten-manifest.jsonld#tin03$/,
+        /flatten-manifest.jsonld#tin04$/,
+        /flatten-manifest.jsonld#tin05$/,
+        /flatten-manifest.jsonld#tin06$/,
       ]
     },
     fn: 'flatten',
@@ -408,6 +450,20 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#tso11$/,
         // type:none
         /toRdf-manifest.jsonld#ttn02$/,
+        // colliding keyword
+        /toRdf-manifest.jsonld#te114$/,
+        // included
+        /toRdf-manifest.jsonld#tin01$/,
+        /toRdf-manifest.jsonld#tin02$/,
+        /toRdf-manifest.jsonld#tin03$/,
+        /toRdf-manifest.jsonld#tin04$/,
+        /toRdf-manifest.jsonld#tin05$/,
+        /toRdf-manifest.jsonld#tin06$/,
+        // index on @type
+        /toRdf-manifest.jsonld#tm017$/,
+        /toRdf-manifest.jsonld#tm020$/,
+        // @next
+        /toRdf-manifest.jsonld#tn008$/,
       ]
     },
     fn: 'toRDF',
