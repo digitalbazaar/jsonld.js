@@ -3,6 +3,7 @@
  *
  * @author goofballLogic
  */
+/* eslint-disable quote-props */
 const jsonld = require('..');
 const assert = require('assert');
 
@@ -17,6 +18,7 @@ describe('For the node.js document loader', function() {
   describe('When built with no options specified', function() {
     it('loading should work', function(done) {
       jsonld.useDocumentLoader(documentLoaderType);
+      /* eslint-disable-next-line no-unused-vars */
       jsonld.expand('http://schema.org/', function(err, expanded) {
         assert.ifError(err);
         done();
@@ -55,7 +57,9 @@ describe('For the node.js document loader', function() {
       'Authorization': 'Bearer d783jkjaods9f87o83hj'
     };
 
-    it('loading should pass the headers through on the request', function(done) {
+    /* eslint-disable indent */
+    it('loading should pass the headers through on the request',
+      function(done) {
       jsonld.useDocumentLoader(documentLoaderType, options);
       requestMock.calls = [];
       const iri = 'http://some.thing.test.com/my-thing.jsonld';
@@ -75,9 +79,12 @@ describe('For the node.js document loader', function() {
         done();
       });
     });
+    /* eslint-enable indent */
   });
 
-  describe('When built using headers that already contain an Accept header', function() {
+  /* eslint-disable indent */
+  describe('When built using headers that already contain an Accept header',
+    function() {
     const options = {request: requestMock};
     options.headers = {
       'x-test-header-3': 'Third value',
@@ -99,5 +106,5 @@ describe('For the node.js document loader', function() {
       done();
     });
   });
-
+  /* eslint-enable indent */
 });

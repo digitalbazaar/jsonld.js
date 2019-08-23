@@ -5,8 +5,12 @@
  *
  * Copyright (c) 2011-2017 Digital Bazaar, Inc. All rights reserved.
  */
+/* global IdlArray */
+/* global add_result_callback */
+/* global add_completion_callback */
+/* global done */
+/* eslint-disable no-var */
 const assert = require('chai').assert;
-const jsonld = require('..');
 
 require('./webidl/testharness.js');
 require('./webidl/WebIDLParser.js');
@@ -71,6 +75,7 @@ return new Promise((resolve, reject) => {
       done();
     };
   });
+  /* eslint-disable-next-line no-unused-vars */
   add_completion_callback(function(tests, status) {
     resolve(suite);
   });

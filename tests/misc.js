@@ -89,6 +89,7 @@ describe('other toRDF tests', () => {
   it('should process with options and promise', done => {
     const p = jsonld.toRDF({}, {});
     assert(p instanceof Promise);
+    /* eslint-disable-next-line no-unused-vars */
     p.catch(e => {
       assert.fail();
     }).then(output => {
@@ -100,6 +101,7 @@ describe('other toRDF tests', () => {
   it('should process with no options and promise', done => {
     const p = jsonld.toRDF({});
     assert(p instanceof Promise);
+    /* eslint-disable-next-line no-unused-vars */
     p.catch(e => {
       assert.fail();
     }).then(output => {
@@ -109,6 +111,7 @@ describe('other toRDF tests', () => {
   });
 
   it('should fail with no args and callback', done => {
+    /* eslint-disable-next-line no-unused-vars */
     jsonld.toRDF((err, output) => {
       assert(err);
       done();
@@ -118,6 +121,7 @@ describe('other toRDF tests', () => {
   it('should fail with no args and promise', done => {
     const p = jsonld.toRDF();
     assert(p instanceof Promise);
+    /* eslint-disable-next-line no-unused-vars */
     p.then(output => {
       assert.fail();
     }).catch(e => {
@@ -127,6 +131,7 @@ describe('other toRDF tests', () => {
   });
 
   it('should fail for bad format and callback', done => {
+    /* eslint-disable-next-line no-unused-vars */
     jsonld.toRDF({}, {format: 'bogus'}, (err, output) => {
       assert(err);
       assert.equal(err.name, 'jsonld.UnknownFormat');
@@ -198,6 +203,7 @@ describe('other fromRDF tests', () => {
   it('should process with options and promise', done => {
     const p = jsonld.fromRDF(emptyNQuads, {});
     assert(p instanceof Promise);
+    /* eslint-disable-next-line no-unused-vars */
     p.catch(e => {
       assert.fail();
     }).then(output => {
@@ -209,6 +215,7 @@ describe('other fromRDF tests', () => {
   it('should process with no options and promise', done => {
     const p = jsonld.fromRDF(emptyNQuads);
     assert(p instanceof Promise);
+    /* eslint-disable-next-line no-unused-vars */
     p.catch(e => {
       assert.fail();
     }).then(output => {
@@ -218,6 +225,7 @@ describe('other fromRDF tests', () => {
   });
 
   it('should fail with no args and callback', done => {
+    /* eslint-disable-next-line no-unused-vars */
     jsonld.fromRDF((err, output) => {
       assert(err);
       done();
@@ -227,6 +235,7 @@ describe('other fromRDF tests', () => {
   it('should fail with no args and promise', done => {
     const p = jsonld.fromRDF();
     assert(p instanceof Promise);
+    /* eslint-disable-next-line no-unused-vars */
     p.then(output => {
       assert.fail();
     }).catch(e => {
@@ -236,6 +245,7 @@ describe('other fromRDF tests', () => {
   });
 
   it('should fail for bad format and callback', done => {
+    /* eslint-disable-next-line no-unused-vars */
     jsonld.fromRDF(emptyNQuads, {format: 'bogus'}, (err, output) => {
       assert(err);
       assert.equal(err.name, 'jsonld.UnknownFormat');

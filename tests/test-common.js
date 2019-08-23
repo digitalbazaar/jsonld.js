@@ -836,7 +836,7 @@ function addTest(manifest, test, tests) {
               .on('error', err => {
                 reject(new Error(err));
               })
-              .on('complete', e => {
+              .on('complete', () => {
                 resolve();
               })
               .run({async: true});
@@ -1214,7 +1214,7 @@ function createDocumentLoader(test) {
     return p.then(readJson).then(json => {
       doc.document = json;
       return doc;
-    }).catch(err => {
+    }).catch(() => {
       throw {name: 'loading document failed', url};
     });
   }

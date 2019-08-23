@@ -22,6 +22,7 @@
  *
  * Copyright (c) 2011-2017 Digital Bazaar, Inc. All rights reserved.
  */
+/* global serverRequire */
 // FIXME: hack to ensure delay is set first
 mocha.setup({delay: true, ui: 'bdd'});
 
@@ -100,6 +101,7 @@ const options = {
   nodejs: false,
   assert,
   jsonld,
+  /* eslint-disable-next-line no-unused-vars */
   exit: code => {
     console.error('exit not implemented');
     throw new Error('exit not implemented');
@@ -126,6 +128,7 @@ const options = {
       return fs.outputFile(filename, data);
     });
   },
+  /* eslint-disable-next-line no-unused-vars */
   import: f => {
     console.error('import not implemented');
   }

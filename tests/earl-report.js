@@ -19,6 +19,7 @@ function EarlReport(options) {
       '0' + (today.getMonth() + 1) : today.getMonth() + 1) + '-' +
     (today.getDate() < 10 ? '0' + today.getDate() : today.getDate());
   this.id = options.id;
+  /* eslint-disable quote-props */
   this._report = {
     '@context': {
       'doap': 'http://usefulinc.com/ns/doap#',
@@ -66,6 +67,7 @@ function EarlReport(options) {
     },
     'subjectOf': []
   };
+  /* eslint-enable quote-props */
   this._report['@id'] += '#' + this.id;
   this._report['doap:name'] += ' ' + this.id;
   this._report['dc:title'] += ' ' + this.id;
