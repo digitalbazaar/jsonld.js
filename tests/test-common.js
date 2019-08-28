@@ -60,16 +60,6 @@ const TEST_TYPES = {
         /compact-manifest.jsonld#tpi04$/,
         /compact-manifest.jsonld#tpi05$/,
         /compact-manifest.jsonld#tpi06$/,
-        // JSON literals
-        /compact-manifest.jsonld#tjs01$/,
-        /compact-manifest.jsonld#tjs02$/,
-        /compact-manifest.jsonld#tjs03$/,
-        /compact-manifest.jsonld#tjs04$/,
-        /compact-manifest.jsonld#tjs05$/,
-        /compact-manifest.jsonld#tjs06$/,
-        /compact-manifest.jsonld#tjs07$/,
-        /compact-manifest.jsonld#tjs08$/,
-        /compact-manifest.jsonld#tjs09$/,
         // IRI confusion
         /compact-manifest.jsonld#te002$/,
         // @propogate
@@ -171,18 +161,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#tpi09$/,
         /expand-manifest.jsonld#tpi10$/,
         /expand-manifest.jsonld#tpi11$/,
-        // JSON literals
-        /expand-manifest.jsonld#tjs01$/,
-        /expand-manifest.jsonld#tjs02$/,
-        /expand-manifest.jsonld#tjs03$/,
-        /expand-manifest.jsonld#tjs04$/,
-        /expand-manifest.jsonld#tjs05$/,
-        /expand-manifest.jsonld#tjs06$/,
-        /expand-manifest.jsonld#tjs07$/,
-        /expand-manifest.jsonld#tjs08$/,
-        /expand-manifest.jsonld#tjs09$/,
-        /expand-manifest.jsonld#tjs10$/,
-        /expand-manifest.jsonld#tjs11$/,
         // misc
         /expand-manifest.jsonld#te043$/,
         /expand-manifest.jsonld#te044$/,
@@ -337,14 +315,6 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
-        // JSON literals
-        /fromRdf-manifest.jsonld#tjs01$/,
-        /fromRdf-manifest.jsonld#tjs02$/,
-        /fromRdf-manifest.jsonld#tjs03$/,
-        /fromRdf-manifest.jsonld#tjs04$/,
-        /fromRdf-manifest.jsonld#tjs05$/,
-        /fromRdf-manifest.jsonld#tjs06$/,
-        /fromRdf-manifest.jsonld#tjs07$/,
       ]
     },
     fn: 'fromRDF',
@@ -407,20 +377,6 @@ const TEST_TYPES = {
         /html-manifest.jsonld#tr020$/,
         /html-manifest.jsonld#tr021$/,
         /html-manifest.jsonld#tr022$/,
-        // JSON literal
-        /toRdf-manifest.jsonld#tjs01$/,
-        /toRdf-manifest.jsonld#tjs02$/,
-        /toRdf-manifest.jsonld#tjs03$/,
-        /toRdf-manifest.jsonld#tjs04$/,
-        /toRdf-manifest.jsonld#tjs05$/,
-        /toRdf-manifest.jsonld#tjs06$/,
-        /toRdf-manifest.jsonld#tjs07$/,
-        /toRdf-manifest.jsonld#tjs08$/,
-        /toRdf-manifest.jsonld#tjs09$/,
-        /toRdf-manifest.jsonld#tjs10$/,
-        /toRdf-manifest.jsonld#tjs11$/,
-        /toRdf-manifest.jsonld#tjs12$/,
-        /toRdf-manifest.jsonld#tjs13$/,
         // number fixes
         /toRdf-manifest.jsonld#trt01$/,
         // IRI resolution
