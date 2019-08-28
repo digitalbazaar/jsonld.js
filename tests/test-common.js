@@ -37,12 +37,6 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
-        // list of lists
-        /compact-manifest.jsonld#tli01$/,
-        /compact-manifest.jsonld#tli02$/,
-        /compact-manifest.jsonld#tli03$/,
-        /compact-manifest.jsonld#tli04$/,
-        /compact-manifest.jsonld#tli05$/,
         // terms
         /compact-manifest.jsonld#tp001$/,
         // rel iri
@@ -110,17 +104,6 @@ const TEST_TYPES = {
     skip: {
       // FIXME
       idRegex: [
-        // list of lists
-        /expand-manifest.jsonld#tli01$/,
-        /expand-manifest.jsonld#tli02$/,
-        /expand-manifest.jsonld#tli03$/,
-        /expand-manifest.jsonld#tli04$/,
-        /expand-manifest.jsonld#tli05$/,
-        /expand-manifest.jsonld#tli06$/,
-        /expand-manifest.jsonld#tli07$/,
-        /expand-manifest.jsonld#tli08$/,
-        /expand-manifest.jsonld#tli09$/,
-        /expand-manifest.jsonld#tli10$/,
         // mode
         /expand-manifest.jsonld#tp001$/,
         /expand-manifest.jsonld#tp002$/,
@@ -252,10 +235,6 @@ const TEST_TYPES = {
     skip: {
       // FIXME
       idRegex: [
-        // list of lists
-        /flatten-manifest.jsonld#tli01$/,
-        /flatten-manifest.jsonld#tli02$/,
-        /flatten-manifest.jsonld#tli03$/,
         // html
         /html-manifest.jsonld#tf001$/,
         /html-manifest.jsonld#tf002$/,
@@ -333,10 +312,6 @@ const TEST_TYPES = {
     skip: {
       // FIXME
       idRegex: [
-        // list of lists
-        /fromRdf-manifest.jsonld#tli01$/,
-        /fromRdf-manifest.jsonld#tli02$/,
-        /fromRdf-manifest.jsonld#tli03$/,
         // JSON literals
         /fromRdf-manifest.jsonld#tjs01$/,
         /fromRdf-manifest.jsonld#tjs02$/,
@@ -366,9 +341,6 @@ const TEST_TYPES = {
     skip: {
       // FIXME
       idRegex: [
-        // list of lists
-        /toRdf-manifest.jsonld#tli01$/,
-        /toRdf-manifest.jsonld#tli02$/,
         // blank node properties
         /toRdf-manifest.jsonld#t0118$/,
         // well formed

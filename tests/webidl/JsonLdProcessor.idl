@@ -37,7 +37,6 @@ dictionary JsonLdError {
 
 enum JsonLdErrorCode {
     "colliding keywords",
-    "compaction to list of lists",
     "conflicting indexes",
     "cyclic IRI mapping",
     "invalid @id value",
@@ -70,7 +69,6 @@ enum JsonLdErrorCode {
     "invalid value object value",
     "invalid vocab mapping",
     "keyword redefinition",
-    "list of lists",
     "loading document failed",
     "loading remote context failed",
     "multiple context link headers",
