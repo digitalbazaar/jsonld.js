@@ -102,6 +102,9 @@ const TEST_TYPES = {
   },
   'jld:ExpandTest': {
     skip: {
+      // skip tests where behavior changed for a 1.1 processor
+      // see JSON-LD 1.0 Errata
+      specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
         // mode
@@ -233,6 +236,9 @@ const TEST_TYPES = {
   },
   'jld:FlattenTest': {
     skip: {
+      // skip tests where behavior changed for a 1.1 processor
+      // see JSON-LD 1.0 Errata
+      specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
         // html
@@ -259,6 +265,9 @@ const TEST_TYPES = {
   },
   'jld:FrameTest': {
     skip: {
+      // skip tests where behavior changed for a 1.1 processor
+      // see JSON-LD 1.0 Errata
+      specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
         // ex
@@ -310,6 +319,9 @@ const TEST_TYPES = {
   },
   'jld:FromRDFTest': {
     skip: {
+      // skip tests where behavior changed for a 1.1 processor
+      // see JSON-LD 1.0 Errata
+      specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
         // JSON literals
@@ -339,6 +351,9 @@ const TEST_TYPES = {
   },
   'jld:ToRDFTest': {
     skip: {
+      // skip tests where behavior changed for a 1.1 processor
+      // see JSON-LD 1.0 Errata
+      specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
         // blank node properties
