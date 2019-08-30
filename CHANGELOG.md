@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 1.7.0 - 2019-08-30
+
 ### Added
 - Support list of lists.
 
