@@ -50,7 +50,6 @@
     "benchmark": "^2.1.4",
     "browserify": "^16.2.3",
     "chai": "^4.2.0",
-    "commander": "^2.19.0",
     "core-js": "3.x",
     "cors": "^2.7.1",
     "cross-env": "^5.2.0",
