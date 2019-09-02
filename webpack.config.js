@@ -17,15 +17,9 @@ const outputs = [
   // core jsonld library
   {
     entry: [
-      // 'babel-polyfill' is very large, list features explicitly
-      'core-js/fn/array/from',
-      'core-js/fn/array/includes',
-      'core-js/fn/map',
-      'core-js/fn/object/assign',
-      'core-js/fn/promise',
-      'core-js/fn/set',
-      'core-js/fn/string/starts-with',
-      'core-js/fn/symbol',
+      // use file that imports recommended polyfills so @babel/present-env can
+      // perform optimizations
+      './lib/polyfill.js',
       // main lib
       './lib/index.js'
     ],
@@ -73,7 +67,16 @@ outputs.forEach(info => {
           use: {
             loader: 'babel-loader',
             options: {
-              presets: ['@babel/preset-env'],
+              presets: [
+                [
+                  '@babel/preset-env',
+                  {
+                    useBuiltIns: 'entry',
+                    corejs: 2,
+                    //debug: true
+                  }
+                ]
+              ],
               plugins: [
                 [
                   '@babel/plugin-proposal-object-rest-spread',
@@ -126,21 +129,7 @@ outputs.forEach(info => {
       library: info.library || '[name]',
       libraryTarget: info.libraryTarget || 'umd'
     },
-    devtool: 'cheap-module-source-map',
-    plugins: [
-      /*
-      new webpack.optimize.UglifyJsPlugin({
-        //beautify: true,
-        compress: {
-          warnings: true
-        },
-        output: {
-          comments: false
-        },
-        sourceMap: true
-      })
-      */
-    ]
+    devtool: 'cheap-module-source-map'
   });
   if(info.library === null) {
     delete minify.output.library;

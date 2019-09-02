@@ -10,6 +10,7 @@
   and defaults to "@id".
 
 ### Changed
+- Updated dependencies.
 - Default processing mode changed to json-ld-1.1. Allows a 1.1 context to be
   used after non-1.1 contexts.
 - Indexing on an arbitrary property, not just "@index".
