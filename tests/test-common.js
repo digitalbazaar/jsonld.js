@@ -46,11 +46,9 @@ const TEST_TYPES = {
         /compact-manifest.jsonld#t0105$/,
         // rel vocab
         /compact-manifest.jsonld#t0107$/,
-        // html
-        /html-manifest.jsonld#tc001$/,
-        /html-manifest.jsonld#tc002$/,
-        /html-manifest.jsonld#tc003$/,
-        /html-manifest.jsonld#tc004$/,
+        // @container: @graph with multiple objects
+        /compact-manifest.jsonld#t0109$/,
+        /compact-manifest.jsonld#t0110$/,
         // @type: @none
         /compact-manifest.jsonld#ttn01$/,
         /compact-manifest.jsonld#ttn02$/,
@@ -90,6 +88,11 @@ const TEST_TYPES = {
         // context values
         /compact-manifest.jsonld#ts001$/,
         /compact-manifest.jsonld#ts002$/,
+        // html
+        /html-manifest.jsonld#tc001$/,
+        /html-manifest.jsonld#tc002$/,
+        /html-manifest.jsonld#tc003$/,
+        /html-manifest.jsonld#tc004$/,
       ]
     },
     fn: 'compact',
@@ -110,6 +113,8 @@ const TEST_TYPES = {
         // mode
         /expand-manifest.jsonld#tp001$/,
         /expand-manifest.jsonld#tp002$/,
+        // Don't double-expand an already expanded graph
+        /expand-manifest.jsonld#t0081$/,
         // rel iri
         /expand-manifest.jsonld#t0092$/,
         // iris
@@ -358,6 +363,13 @@ const TEST_TYPES = {
       idRegex: [
         // blank node properties
         /toRdf-manifest.jsonld#t0118$/,
+        // Don't double-expand an already expanded graph
+        /toRdf-manifest.jsonld#te081$/,
+        /toRdf-manifest.jsonld#te095$/,
+        // Does not create a new graph object
+        /toRdf-manifest.jsonld#te102$/,
+        /toRdf-manifest.jsonld#te103$/,
+        /toRdf-manifest.jsonld#te104$/,
         // well formed
         /toRdf-manifest.jsonld#twf01$/,
         /toRdf-manifest.jsonld#twf02$/,
