@@ -115,6 +115,13 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#tp002$/,
         // Don't double-expand an already expanded graph
         /expand-manifest.jsonld#t0081$/,
+        // Double-expand an already expanded graph
+        /expand-manifest.jsonld#t0095$/,
+        /expand-manifest.jsonld#t0104$/,
+        // indexed graph objects
+        /expand-manifest.jsonld#t0102$/,
+        // multiple graphs
+        /expand-manifest.jsonld#t0103$/,
         // rel iri
         /expand-manifest.jsonld#t0092$/,
         // iris
