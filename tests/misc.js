@@ -519,3 +519,20 @@ describe('js keywords', () => {
     assert.deepStrictEqual(e, ex);
   });
 });
+
+describe('literal JSON', () => {
+  it('handles error', done => {
+    const d =
+'_:b0 <ex:p> "bogus"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .'
+;
+    const p = jsonld.fromRDF(d);
+    assert(p instanceof Promise);
+    p.then(() => {
+      assert.fail();
+    }).catch(e => {
+      assert(e);
+      assert.equal(e.name, 'jsonld.InvalidJsonLiteral');
+      done();
+    });
+  });
+});
