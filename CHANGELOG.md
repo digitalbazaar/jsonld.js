@@ -2,6 +2,9 @@
 
 ### Added
 - Support literal JSON.
+  - **NOTE**: The JSON serialization is based on the JSON Canonicalization
+    Scheme (JCS) drafts. Changes in the JCS algorithm could cause changes in
+    the `toRdf` output.
 
 ## 1.7.0 - 2019-08-30
 
