@@ -943,6 +943,7 @@ function createDocumentLoader(test) {
   const localBases = [
     'http://json-ld.org/test-suite',
     'https://json-ld.org/test-suite',
+    'https://json-ld.org/benchmarks',
     'https://w3c.github.io/json-ld-api/tests',
     'https://w3c.github.io/json-ld-framing/tests'
   ];
