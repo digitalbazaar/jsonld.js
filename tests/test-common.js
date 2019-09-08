@@ -205,6 +205,7 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#tc027$/,
         /expand-manifest.jsonld#tc028$/,
         /expand-manifest.jsonld#tc029$/,
+        /expand-manifest.jsonld#tc030$/,
         // @import
         /expand-manifest.jsonld#tso01$/,
         /expand-manifest.jsonld#tso02$/,
