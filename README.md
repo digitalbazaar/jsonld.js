@@ -455,6 +455,13 @@ Use a command line with a test suite and a benchmark flag:
 
     JSONLD_TESTS=/tmp/benchmark-manifest.jsonld JSONLD_BENCHMARK=1 npm test
 
+EARL reports with benchmark data can be generated with an optional environment
+tag:
+
+    JSONLD_TESTS=`pwd`/../json-ld.org/benchmarks/b001-manifiest.jsonld JSONLD_BENCHMARK=1 EARL=earl-test.jsonld EARL_ENV='CPU=Intel-i7-4790K@4.00GHz,Node.js=v10.16.3,jsonld.js=v1.7.0' npm test
+
+These reports can be compared at the [JSON-LD Benchmarks][] site.
+
 [Digital Bazaar]: https://digitalbazaar.com/
 
 [JSON-LD 1.0 API]: http://www.w3.org/TR/2014/REC-json-ld-api-20140116/
@@ -477,6 +484,7 @@ Use a command line with a test suite and a benchmark flag:
 [JSON-LD WG Framing latest]: https://w3c.github.io/json-ld-framing/
 [JSON-LD WG latest]: https://w3c.github.io/json-ld-syntax/
 
+[JSON-LD Benchmarks]: https://json-ld.org/benchmarks/
 [JSON-LD Processor Conformance]: https://w3c.github.io/json-ld-api/reports
 [JSON-LD WG]: https://www.w3.org/2018/json-ld-wg/
 [JSON-LD]: https://json-ld.org/
