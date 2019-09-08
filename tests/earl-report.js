@@ -11,6 +11,7 @@
  *
  * @param options {Object} reporter options
  *          id: {String} report id
+ *          env: {String} environment description
  */
 function EarlReport(options) {
   let today = new Date();
@@ -22,6 +23,7 @@ function EarlReport(options) {
   this.now = new Date();
   this.now.setMilliseconds(0);
   this.id = options.id;
+  this.env = options.env;
   /* eslint-disable quote-props */
   this._report = {
     '@context': {
@@ -30,6 +32,7 @@ function EarlReport(options) {
       'dc': 'http://purl.org/dc/terms/',
       'earl': 'http://www.w3.org/ns/earl#',
       'xsd': 'http://www.w3.org/2001/XMLSchema#',
+      'jsonld': 'http://www.w3.org/ns/json-ld#',
       'doap:homepage': {'@type': '@id'},
       'doap:license': {'@type': '@id'},
       'dc:creator': {'@type': '@id'},
@@ -73,17 +76,16 @@ function EarlReport(options) {
     'subjectOf': []
   };
   /* eslint-enable quote-props */
-  const version = require('../package.json').version;
-  // FIXME: Improve "Node.js" vs "browser" id reporting
-  // this._report['@id'] += '#' + this.id;
-  // this._report['doap:name'] += ' ' + this.id;
-  // this._report['dc:title'] += ' ' + this.id;
-  this._report['doap:release']['doap:name'] =
-    this._report['doap:name'] + ' ' + version;
-  this._report['doap:release']['doap:revision'] = version;
+  this._report['@id'] +=
+    '#' + this.id;
+  this._report['doap:name'] +=
+    ' ' + this.id + (this.env ? ' ' + this.env : '');
+  this._report['dc:title'] +=
+    ' ' + this.id + (this.env ? ' ' + this.env : '');
 }
 
-EarlReport.prototype.addAssertion = function(test, pass) {
+EarlReport.prototype.addAssertion = function(test, pass, options) {
+  options = options || {};
   this._report.subjectOf.push({
     '@type': 'earl:Assertion',
     'earl:assertedBy': this._report['doap:developer']['@id'],
@@ -93,6 +95,7 @@ EarlReport.prototype.addAssertion = function(test, pass) {
       '@type': 'earl:TestResult',
       'dc:date': this.now.toISOString(),
       'earl:outcome': pass ? 'earl:passed' : 'earl:failed'
+      ...options.extra
     }
   });
   return this;
