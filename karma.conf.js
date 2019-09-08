@@ -68,6 +68,7 @@ module.exports = function(config) {
         new webpack.DefinePlugin({
           'process.env.BAIL': JSON.stringify(process.env.BAIL),
           'process.env.EARL': JSON.stringify(process.env.EARL),
+          'process.env.EARL_ENV': JSON.stringify(process.env.EARL_ENV),
           'process.env.JSONLD_BENCHMARK':
             JSON.stringify(process.env.JSONLD_BENCHMARK),
           'process.env.JSONLD_TESTS': JSON.stringify(process.env.JSONLD_TESTS),

@@ -518,7 +518,10 @@ const SKIP_TESTS = [];
 
 // create earl report
 if(options.earl && options.earl.filename) {
-  options.earl.report = new EarlReport({id: options.earl.id});
+  options.earl.report = new EarlReport({
+    id: options.earl.id,
+    env: options.earl.env
+  });
 }
 
 return new Promise(resolve => {
@@ -815,43 +818,28 @@ function addTest(manifest, test, tests) {
           throw Error('Unknown test type: ' + test.type);
         }
 
+        let benchResult = null
         if(options.benchmark) {
-          // pre-load params to avoid doc loader and parser timing
-          const benchParams = testInfo.params.map(param => param(test, {
-            load: true
-          }));
-          const benchValues = await Promise.all(benchParams);
-
-          await new Promise((resolve, reject) => {
-            const suite = new benchmark.Suite();
-            suite.add({
-              name: test.name,
-              defer: true,
-              fn: deferred => {
-                jsonld[fn].apply(null, benchValues).then(() => {
-                  deferred.resolve();
-                });
-              }
-            });
-            suite
-              .on('start', e => {
-                self.timeout((e.target.maxTime + 2) * 1000);
-              })
-              .on('cycle', e => {
-                console.log(String(e.target));
-              })
-              .on('error', err => {
-                reject(new Error(err));
-              })
-              .on('complete', () => {
-                resolve();
-              })
-              .run({async: true});
+          const result = await runBenchmark({
+            test,
+            fn,
+            params: testInfo.params.map(param => param(test, {
+              // pre-load params to avoid doc loader and parser timing
+              load: true
+            })),
+            mochaTest: self
           });
+          benchResult = {
+            'jsonld:benchmarkHz': result.target.hz
+          };
         }
 
         if(options.earl.report) {
-          options.earl.report.addAssertion(test, true);
+          options.earl.report.addAssertion(test, true, {
+            extra: {
+              ...benchResult
+            }
+          });
         }
       } catch(err) {
         if(options.bailOnError) {
@@ -868,6 +856,38 @@ function addTest(manifest, test, tests) {
       }
     };
   }
+}
+
+async function runBenchmark({test, fn, params, mochaTest}) {
+  const values = await Promise.all(params);
+
+  return new Promise((resolve, reject) => {
+    const suite = new benchmark.Suite();
+    suite.add({
+      name: test.name,
+      defer: true,
+      fn: deferred => {
+        jsonld[fn].apply(null, values).then(() => {
+          deferred.resolve();
+        });
+      }
+    });
+    suite
+      .on('start', e => {
+        // set timeout to a bit more than max benchmark time
+        mochaTest.timeout((e.target.maxTime + 2) * 1000);
+      })
+      .on('cycle', e => {
+        console.log(String(e.target));
+      })
+      .on('error', err => {
+        reject(new Error(err));
+      })
+      .on('complete', e => {
+        resolve(e);
+      })
+      .run({async: true});
+  });
 }
 
 function getJsonLdTestType(test) {
@@ -1133,6 +1153,26 @@ function basename(filename) {
   return filename.substr(idx + 1);
 }
 
+// check test.option.loader.rewrite map for url,
+// if no test rewrite, check manifest,
+// else no rewrite
+function rewrite(test, url) {
+  if(test.option &&
+    test.option.loader &&
+    test.option.loader.rewrite &&
+    url in test.option.loader.rewrite) {
+    return test.option.loader.rewrite[url];
+  }
+  const manifest = test.manifest;
+  if(manifest.option &&
+    manifest.option.loader &&
+    manifest.option.loader.rewrite &&
+    url in manifest.option.loader.rewrite) {
+    return manifest.option.loader.rewrite[url];
+  }
+  return url;
+}
+
 /**
  * Creates a test remote document loader.
  *
@@ -1144,14 +1184,19 @@ function createDocumentLoader(test) {
   const localBases = [
     'http://json-ld.org/test-suite',
     'https://json-ld.org/test-suite',
+    'https://json-ld.org/benchmarks',
     'https://w3c.github.io/json-ld-api/tests',
     'https://w3c.github.io/json-ld-framing/tests'
   ];
+
   const localLoader = function(url, callback) {
     // always load remote-doc tests remotely in node
     if(options.nodejs && test.manifest.name === 'Remote document') {
       return jsonld.loadDocument(url, callback);
     }
+
+    // handle loader rewrite options for test or manifest
+    url = rewrite(test, url);
 
     // FIXME: this check only works for main test suite and will not work if:
     // - running other tests and main test suite not installed

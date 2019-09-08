@@ -7,6 +7,8 @@
  *   JSONLD_TESTS="r1 r2 ..."
  * Output an EARL report:
  *   EARL=filename
+ * Output EARL environment description (any appropraite string):
+ *   EARL_ENV='CPU=Intel-i7-4790K@4.00GHz,Node.js=v10.16.3,jsonld.js=v1.7.0'
  * Bail with tests fail:
  *   BAIL=true
  * Verbose skip reasons:
@@ -119,6 +121,7 @@ const options = {
   exit: code => process.exit(code),
   earl: {
     id: 'node.js',
+    env: process.env.EARL_ENV,
     filename: process.env.EARL
   },
   verboseSkip: process.env.VERBOSE_SKIP === 'true',
