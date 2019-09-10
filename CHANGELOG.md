@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+- Support benchmarks in Karma tests.
+
 ## 5.2.0 - 2021-04-07
 
 ### Changed
