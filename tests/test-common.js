@@ -41,9 +41,6 @@ const TEST_TYPES = {
         /compact-manifest.jsonld#t0105$/,
         // rel vocab
         /compact-manifest.jsonld#t0107$/,
-        // @container: @graph with multiple objects
-        /compact-manifest.jsonld#t0109$/,
-        /compact-manifest.jsonld#t0110$/,
         // @type: @none
         /compact-manifest.jsonld#ttn01$/,
         /compact-manifest.jsonld#ttn02$/,
@@ -116,11 +113,6 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
-        // Don't double-expand an already expanded graph
-        /expand-manifest.jsonld#t0081$/,
-        // Double-expand an already expanded graph
-        /expand-manifest.jsonld#t0095$/,
-        /expand-manifest.jsonld#t0104$/,
         // indexed graph objects
         /expand-manifest.jsonld#t0102$/,
         // multiple graphs
@@ -424,13 +416,6 @@ const TEST_TYPES = {
       idRegex: [
         // blank node properties
         /toRdf-manifest.jsonld#t0118$/,
-        // Don't double-expand an already expanded graph
-        /toRdf-manifest.jsonld#te081$/,
-        /toRdf-manifest.jsonld#te095$/,
-        // Does not create a new graph object
-        /toRdf-manifest.jsonld#te102$/,
-        /toRdf-manifest.jsonld#te103$/,
-        /toRdf-manifest.jsonld#te104$/,
         // terms beginning with ':'
         /toRdf-manifest.jsonld#te117$/,
         /toRdf-manifest.jsonld#te118$/,
