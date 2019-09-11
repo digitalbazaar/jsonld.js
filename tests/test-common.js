@@ -481,9 +481,6 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#te110$/,
         /toRdf-manifest.jsonld#te111$/,
         /toRdf-manifest.jsonld#te112$/,
-        // processing
-        /toRdf-manifest.jsonld#tp001$/,
-        /toRdf-manifest.jsonld#tp002$/,
         // index maps
         /toRdf-manifest.jsonld#tpi05$/,
         /toRdf-manifest.jsonld#tpi06$/,
