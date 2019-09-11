@@ -116,9 +116,6 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
-        // mode
-        /expand-manifest.jsonld#tp001$/,
-        /expand-manifest.jsonld#tp002$/,
         // Don't double-expand an already expanded graph
         /expand-manifest.jsonld#t0081$/,
         // Double-expand an already expanded graph
