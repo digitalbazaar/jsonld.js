@@ -2,6 +2,11 @@
 
 ## 2.0.0 - 2019-xx-xx
 
+### Fixed
+- Expanding the value of a graph container which is already a graph object
+  generates a recursive graph object.
+- Compacting multiple nodes in a graph container places them in `@included`.
+
 ### Changed
 - Default processing mode changed to json-ld-1.1. Allows a 1.1 context to be
   used after non-1.1 contexts.
