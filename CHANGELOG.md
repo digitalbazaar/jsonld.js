@@ -3,7 +3,8 @@
 ## 2.0.0 - 2019-xx-xx
 
 ### Changed
-- Default processing mode changed to json-ld-1.1.
+- Default processing mode changed to json-ld-1.1. Allows a 1.1 context to be
+  used after non-1.1 contexts.
 
 ### Removed
 - **BREAKING**: Remove callback API support. This includes removing support
