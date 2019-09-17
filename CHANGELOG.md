@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 1.8.0 - 2019-09-10
+
 ### Added
 - Support literal JSON.
   - **NOTE**: The JSON serialization is based on the JSON Canonicalization
