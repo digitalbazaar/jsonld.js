@@ -78,6 +78,8 @@ const TEST_TYPES = {
         // context values
         /compact-manifest.jsonld#ts001$/,
         /compact-manifest.jsonld#ts002$/,
+        // @json null
+        /compact-manifest.jsonld#tjs11$/,
         // html
         /html-manifest.jsonld#tc001$/,
         /html-manifest.jsonld#tc002$/,
@@ -216,6 +218,16 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#tm020$/,
         // @nest
         /expand-manifest.jsonld#tn008$/,
+        // keywords
+        /expand-manifest.jsonld#tpr30$/,
+        /expand-manifest.jsonld#tpr31$/,
+        /expand-manifest.jsonld#tpr32$/,
+        /expand-manifest.jsonld#tpr33$/,
+        /expand-manifest.jsonld#tpr34$/,
+        /expand-manifest.jsonld#tpr35$/,
+        /expand-manifest.jsonld#tpr36$/,
+        /expand-manifest.jsonld#tpr37$/,
+        /expand-manifest.jsonld#tpr39$/,
       ]
     },
     fn: 'expand',
@@ -435,6 +447,16 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#tm020$/,
         // @next
         /toRdf-manifest.jsonld#tn008$/,
+        // keywords
+        /toRdf-manifest.jsonld#tpr30$/,
+        /toRdf-manifest.jsonld#tpr31$/,
+        /toRdf-manifest.jsonld#tpr32$/,
+        /toRdf-manifest.jsonld#tpr33$/,
+        /toRdf-manifest.jsonld#tpr34$/,
+        /toRdf-manifest.jsonld#tpr35$/,
+        /toRdf-manifest.jsonld#tpr36$/,
+        /toRdf-manifest.jsonld#tpr37$/,
+        /toRdf-manifest.jsonld#tpr39$/,
       ]
     },
     fn: 'toRDF',
