@@ -80,6 +80,14 @@ const TEST_TYPES = {
         /compact-manifest.jsonld#ts002$/,
         // @json null
         /compact-manifest.jsonld#tjs11$/,
+        // direction
+        /compact-manifest.jsonld#tdi01$/,
+        /compact-manifest.jsonld#tdi02$/,
+        /compact-manifest.jsonld#tdi03$/,
+        /compact-manifest.jsonld#tdi04$/,
+        /compact-manifest.jsonld#tdi05$/,
+        /compact-manifest.jsonld#tdi06$/,
+        /compact-manifest.jsonld#tdi07$/,
         // html
         /html-manifest.jsonld#tc001$/,
         /html-manifest.jsonld#tc002$/,
@@ -228,6 +236,16 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#tpr36$/,
         /expand-manifest.jsonld#tpr37$/,
         /expand-manifest.jsonld#tpr39$/,
+        // direction
+        /expand-manifest.jsonld#tdi01$/,
+        /expand-manifest.jsonld#tdi02$/,
+        /expand-manifest.jsonld#tdi03$/,
+        /expand-manifest.jsonld#tdi04$/,
+        /expand-manifest.jsonld#tdi05$/,
+        /expand-manifest.jsonld#tdi06$/,
+        /expand-manifest.jsonld#tdi07$/,
+        /expand-manifest.jsonld#tdi08$/,
+        /expand-manifest.jsonld#tdi09$/,
       ]
     },
     fn: 'expand',
@@ -327,6 +345,11 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
+        // direction
+        /fromRdf-manifest.jsonld#tdi05$/,
+        /fromRdf-manifest.jsonld#tdi06$/,
+        /fromRdf-manifest.jsonld#tdi11$/,
+        /fromRdf-manifest.jsonld#tdi12$/,
       ]
     },
     fn: 'fromRDF',
@@ -457,6 +480,19 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#tpr36$/,
         /toRdf-manifest.jsonld#tpr37$/,
         /toRdf-manifest.jsonld#tpr39$/,
+        // direction
+        /toRdf-manifest.jsonld#tdi01$/,
+        /toRdf-manifest.jsonld#tdi02$/,
+        /toRdf-manifest.jsonld#tdi03$/,
+        /toRdf-manifest.jsonld#tdi04$/,
+        /toRdf-manifest.jsonld#tdi05$/,
+        /toRdf-manifest.jsonld#tdi06$/,
+        /toRdf-manifest.jsonld#tdi07$/,
+        /toRdf-manifest.jsonld#tdi08$/,
+        /toRdf-manifest.jsonld#tdi09$/,
+        /toRdf-manifest.jsonld#tdi10$/,
+        /toRdf-manifest.jsonld#tdi11$/,
+        /toRdf-manifest.jsonld#tdi12$/,
       ]
     },
     fn: 'toRDF',
