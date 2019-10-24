@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Changed
+- Default processing mode changed to json-ld-1.1.
+
 ## 1.8.1 - 2019-10-24
 
 ### Fixed
