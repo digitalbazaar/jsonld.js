@@ -64,8 +64,11 @@ outputs.forEach(info => {
             // exclude node_modules by default
             exclude: /(node_modules)/
           }, {
-            // include rdf-canonize
-            include: /(node_modules\/rdf-canonize)/
+            // include specific packages
+            include: [
+              /(node_modules\/canonicalize)/,
+              /(node_modules\/rdf-canonize)/
+            ]
           }],
           use: {
             loader: 'babel-loader',
