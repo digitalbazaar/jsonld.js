@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 1.8.1 - 2019-10-24
+
 ### Fixed
 - Run babel on canonicalize. Fixes arrow function compatibility issue.
 
