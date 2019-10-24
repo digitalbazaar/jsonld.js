@@ -1042,7 +1042,9 @@ function createTestOptions(opts) {
 
 // find the expected output property or throw error
 function _getExpectProperty(test) {
-  if('expect' in test) {
+  if('expectErrorCode' in test) {
+    return 'expectErrorCode';
+  } else if('expect' in test) {
     return 'expect';
   } else if('result' in test) {
     return 'result';
