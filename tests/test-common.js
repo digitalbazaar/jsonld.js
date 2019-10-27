@@ -1,10 +1,5 @@
 /**
- * Common test runner for JSON-LD.
- *
- * @author Dave Longley
- * @author David I. Lehn
- *
- * Copyright (c) 2011-2017 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2011-2019 Digital Bazaar, Inc. All rights reserved.
  */
 /* eslint-disable indent */
 const EarlReport = require('./earl-report');
@@ -1210,10 +1205,10 @@ function createDocumentLoader(test) {
     'https://w3c.github.io/json-ld-api/tests',
     'https://w3c.github.io/json-ld-framing/tests'
   ];
-  const localLoader = function(url, callback) {
+  const localLoader = function(url) {
     // always load remote-doc tests remotely in node
     if(options.nodejs && test.manifest.name === 'Remote document') {
-      return jsonld.loadDocument(url, callback);
+      return jsonld.documentLoader(url);
     }
 
     // FIXME: this check only works for main test suite and will not work if:
@@ -1226,13 +1221,11 @@ function createDocumentLoader(test) {
     const isRelative = url.indexOf(':') === -1;
     if(isTestSuite || isRelative) {
       // attempt to load official test-suite files or relative URLs locally
-      loadLocally(url).then(callback.bind(null, null), callback);
-      // don't return the promise
-      return;
+      return loadLocally(url);
     }
 
     // load remotely
-    return jsonld.loadDocument(url, callback);
+    return jsonld.documentLoader(url);
   };
 
   return localLoader;

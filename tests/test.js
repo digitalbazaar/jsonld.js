@@ -20,7 +20,7 @@
  * @author Dave Longley
  * @author David I. Lehn
  *
- * Copyright (c) 2011-2017 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2011-2019 Digital Bazaar, Inc. All rights reserved.
  */
 
 // support async/await tests in node6
@@ -91,7 +91,6 @@ if(process.env.JSONLD_TESTS) {
   }
 
   // other tests
-  entries.push(path.resolve(_top, 'tests/callbacks.js'));
   entries.push(path.resolve(_top, 'tests/misc.js'));
   entries.push(path.resolve(_top, 'tests/graph-container.js'));
   entries.push(path.resolve(_top, 'tests/new-embed-api'));

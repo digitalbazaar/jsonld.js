@@ -18,8 +18,11 @@ describe('@graph container', () => {
         "value": "x"
       }
     };
-    jsonld.expand(doc, (err, expanded) => {
-      assert.ifError(err);
+    const p = jsonld.expand(doc);
+    assert(p instanceof Promise);
+    p.catch(e => {
+      assert.ifError(e);
+    }).then(expanded => {
       assert.deepEqual(expanded, [{
         "foo:input": [{
           "@graph": [{
@@ -44,8 +47,11 @@ describe('@graph container', () => {
         "value": "x"
       }]
     };
-    jsonld.expand(doc, (err, expanded) => {
-      assert.ifError(err);
+    const p = jsonld.expand(doc);
+    assert(p instanceof Promise);
+    p.catch(e => {
+      assert.ifError(e);
+    }).then(expanded => {
       assert.deepEqual(expanded, [{
         "foo:input": [{
           "@graph": [{
@@ -70,11 +76,16 @@ describe('@graph container', () => {
         "value": "x"
       }
     };
-    jsonld.expand(doc, (err, expanded) => {
-      assert.ifError(err);
-
-      jsonld.compact(expanded, doc['@context'], (err, compacted) => {
-        assert.ifError(err);
+    const p = jsonld.expand(doc);
+    assert(p instanceof Promise);
+    p.catch(e => {
+      assert.ifError(e);
+    }).then(expanded => {
+      const p = jsonld.compact(expanded, doc['@context']);
+      assert(p instanceof Promise);
+      p.catch(e => {
+        assert.ifError(e);
+      }).then(compacted => {
         assert.deepEqual(compacted, {
           "@context": {
             "@version": 1.1,
@@ -111,11 +122,16 @@ describe('@graph container', () => {
         "value": "foo:value"
       }
     };
-    jsonld.expand(doc, (err, expanded) => {
-      assert.ifError(err);
-
-      jsonld.compact(expanded, newContext, (err, compacted) => {
-        assert.ifError(err);
+    const p = jsonld.expand(doc);
+    assert(p instanceof Promise);
+    p.catch(e => {
+      assert.ifError(e);
+    }).then(expanded => {
+      const p = jsonld.compact(expanded, newContext);
+      assert(p instanceof Promise);
+      p.catch(e => {
+        assert.ifError(e);
+      }).then(compacted => {
         assert.deepEqual(compacted, {
           "@context": {
             "@version": 1.1,
