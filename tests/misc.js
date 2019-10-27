@@ -17,8 +17,11 @@ describe('link tests', () => {
   };
 
   it('should create a circular link', done => {
-    jsonld.link(doc, {}, (err, output) => {
-      assert.ifError(err);
+    const p = jsonld.link(doc, {});
+    assert(p instanceof Promise);
+    p.catch(e => {
+      assert.ifError(e);
+    }).then(output => {
       output = output['@graph'][0];
       assert.equal(output, output['a:foo']);
       done();
@@ -34,16 +37,22 @@ describe('merge tests', () => {
   const ctxMerged = {"@graph": [{"@id": "ex:1", "a:foo": 1, "b:foo": 2}]};
 
   it('should merge nodes from two different documents', done => {
-    jsonld.merge([docA, docB], (err, output) => {
-      assert.ifError(err);
+    const p = jsonld.merge([docA, docB]);
+    assert(p instanceof Promise);
+    p.catch(e => {
+      assert.ifError(e);
+    }).then(output => {
       assert.deepEqual(output, merged);
       done();
     });
   });
 
   it('should merge nodes from two different documents with context', done => {
-    jsonld.merge([docA, docB], context, (err, output) => {
-      assert.ifError(err);
+    const p = jsonld.merge([docA, docB], context);
+    assert(p instanceof Promise);
+    p.catch(e => {
+      assert.ifError(e);
+    }).then(output => {
       assert.deepEqual(output, ctxMerged);
       done();
     });
@@ -70,26 +79,9 @@ describe('createNodeMap', () => {
 describe('other toRDF tests', () => {
   const emptyRdf = [];
 
-  it('should process with options and callback', done => {
-    jsonld.toRDF({}, {}, (err, output) => {
-      assert.ifError(err);
-      assert.deepEqual(output, emptyRdf);
-      done();
-    });
-  });
-
-  it('should process with no options and callback', done => {
-    jsonld.toRDF({}, (err, output) => {
-      assert.ifError(err);
-      assert.deepEqual(output, emptyRdf);
-      done();
-    });
-  });
-
   it('should process with options and promise', done => {
     const p = jsonld.toRDF({}, {});
     assert(p instanceof Promise);
-    /* eslint-disable-next-line no-unused-vars */
     p.catch(e => {
       assert.fail();
     }).then(output => {
@@ -101,7 +93,6 @@ describe('other toRDF tests', () => {
   it('should process with no options and promise', done => {
     const p = jsonld.toRDF({});
     assert(p instanceof Promise);
-    /* eslint-disable-next-line no-unused-vars */
     p.catch(e => {
       assert.fail();
     }).then(output => {
@@ -110,31 +101,13 @@ describe('other toRDF tests', () => {
     });
   });
 
-  it('should fail with no args and callback', done => {
-    /* eslint-disable-next-line no-unused-vars */
-    jsonld.toRDF((err, output) => {
-      assert(err);
-      done();
-    });
-  });
-
   it('should fail with no args and promise', done => {
     const p = jsonld.toRDF();
     assert(p instanceof Promise);
-    /* eslint-disable-next-line no-unused-vars */
     p.then(output => {
       assert.fail();
     }).catch(e => {
       assert(e);
-      done();
-    });
-  });
-
-  it('should fail for bad format and callback', done => {
-    /* eslint-disable-next-line no-unused-vars */
-    jsonld.toRDF({}, {format: 'bogus'}, (err, output) => {
-      assert(err);
-      assert.equal(err.name, 'jsonld.UnknownFormat');
       done();
     });
   });
@@ -156,8 +129,11 @@ describe('other toRDF tests', () => {
       "@id": "https://example.com/",
       "https://example.com/test": "test"
     };
-    jsonld.toRDF(doc, {format: 'application/n-quads'}, (err, output) => {
-      assert.ifError(err);
+    const p = jsonld.toRDF(doc, {format: 'application/n-quads'});
+    assert(p instanceof Promise);
+    p.catch(e => {
+      assert.ifError(e);
+    }).then(output => {
       assert.equal(
         output,
         '<https://example.com/> <https://example.com/test> "test" .\n');
@@ -170,8 +146,11 @@ describe('other toRDF tests', () => {
       "@id": "https://example.com/",
       "https://example.com/test": "test"
     };
-    jsonld.toRDF(doc, {format: 'application/nquads'}, (err, output) => {
-      assert.ifError(err);
+    const p = jsonld.toRDF(doc, {format: 'application/nquads'});
+    assert(p instanceof Promise);
+    p.catch(e => {
+      assert.ifError(e);
+    }).then(output => {
       assert.equal(
         output,
         '<https://example.com/> <https://example.com/test> "test" .\n');
@@ -183,22 +162,6 @@ describe('other toRDF tests', () => {
 describe('other fromRDF tests', () => {
   const emptyNQuads = '';
   const emptyRdf = [];
-
-  it('should process with options and callback', done => {
-    jsonld.fromRDF('', {}, (err, output) => {
-      assert.ifError(err);
-      assert.deepEqual(output, emptyRdf);
-      done();
-    });
-  });
-
-  it('should process with no options and callback', done => {
-    jsonld.fromRDF(emptyNQuads, (err, output) => {
-      assert.ifError(err);
-      assert.deepEqual(output, emptyRdf);
-      done();
-    });
-  });
 
   it('should process with options and promise', done => {
     const p = jsonld.fromRDF(emptyNQuads, {});
@@ -224,14 +187,6 @@ describe('other fromRDF tests', () => {
     });
   });
 
-  it('should fail with no args and callback', done => {
-    /* eslint-disable-next-line no-unused-vars */
-    jsonld.fromRDF((err, output) => {
-      assert(err);
-      done();
-    });
-  });
-
   it('should fail with no args and promise', done => {
     const p = jsonld.fromRDF();
     assert(p instanceof Promise);
@@ -240,15 +195,6 @@ describe('other fromRDF tests', () => {
       assert.fail();
     }).catch(e => {
       assert(e);
-      done();
-    });
-  });
-
-  it('should fail for bad format and callback', done => {
-    /* eslint-disable-next-line no-unused-vars */
-    jsonld.fromRDF(emptyNQuads, {format: 'bogus'}, (err, output) => {
-      assert(err);
-      assert.equal(err.name, 'jsonld.UnknownFormat');
       done();
     });
   });
@@ -267,8 +213,11 @@ describe('other fromRDF tests', () => {
 
   it('should handle N-Quads format', done => {
     const nq = '<https://example.com/> <https://example.com/test> "test" .\n';
-    jsonld.fromRDF(nq, {format: 'application/n-quads'}, (err, output) => {
-      assert.ifError(err);
+    const p = jsonld.fromRDF(nq, {format: 'application/n-quads'});
+    assert(p instanceof Promise);
+    p.catch(e => {
+      assert.ifError(e);
+    }).then(output => {
       assert.deepEqual(
         output,
         [{
@@ -283,8 +232,11 @@ describe('other fromRDF tests', () => {
 
   it('should handle deprecated N-Quads format', done => {
     const nq = '<https://example.com/> <https://example.com/test> "test" .\n';
-    jsonld.fromRDF(nq, {format: 'application/nquads'}, (err, output) => {
-      assert.ifError(err);
+    const p = jsonld.fromRDF(nq, {format: 'application/nquads'});
+    assert(p instanceof Promise);
+    p.catch(e => {
+      assert.ifError(e);
+    }).then(output => {
       assert.deepEqual(
         output,
         [{
@@ -341,14 +293,6 @@ describe('loading multiple levels of contexts', () => {
   it('should handle loading multiple levels of contexts (promise)', () => {
     return jsonld.expand(doc, {documentLoader}).then(output => {
       assert.deepEqual(output, expected);
-    });
-  });
-
-  it('should handle loading multiple levels of contexts (callback)', done => {
-    jsonld.expand(doc, {documentLoader}, (err, output) => {
-      assert.ifError(err);
-      assert.deepEqual(output, expected);
-      done();
     });
   });
 });

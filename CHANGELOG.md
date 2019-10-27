@@ -1,7 +1,17 @@
 # jsonld ChangeLog
 
+## 2.0.0 - 2019-xx-xx
+
 ### Changed
 - Default processing mode changed to json-ld-1.1.
+
+### Removed
+- **BREAKING**: Remove callback API support. This includes removing support
+  for callback-based document loaders and rdf parsers. This is done to
+  facilitate JSON-LD 1.1 document loader features and to remove deprecated
+  code.
+- **BREAKING**: Remove deprecated `loadDocument` API and obsolete
+  `DocumentCache`.
 
 ## 1.8.1 - 2019-10-24
 
