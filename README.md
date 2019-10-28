@@ -255,7 +255,7 @@ const nquads = await jsonld.toRDF(doc, {format: 'application/n-quads'});
 
 ```js
 // deserialize N-Quads (RDF) to JSON-LD
-const doc = jsonld.fromRDF(nquads, {format: 'application/n-quads'});
+const doc = await jsonld.fromRDF(nquads, {format: 'application/n-quads'});
 // doc is JSON-LD
 ```
 
