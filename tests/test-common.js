@@ -111,8 +111,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#t0102$/,
         // multiple graphs
         /expand-manifest.jsonld#t0103$/,
-        // iris
-        /expand-manifest.jsonld#t0109$/,
         // terms beginning with ':'
         /expand-manifest.jsonld#t0117$/,
         /expand-manifest.jsonld#t0118$/,
