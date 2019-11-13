@@ -13,6 +13,7 @@
 - `@vocab` can be relative in 1.0, resolved against either a previous `@vocab`,
   `@base` or document base.
 - Better checking of absolute IRIs.
+- Terms that beging with a ':' are not considered absolute or compact IRIs.
 
 ### Removed
 - **BREAKING**: Remove callback API support. This includes removing support
