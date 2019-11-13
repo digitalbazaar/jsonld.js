@@ -136,6 +136,13 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#t0110$/,
         /expand-manifest.jsonld#t0111$/,
         /expand-manifest.jsonld#t0112$/,
+        // terms beginning with ':'
+        /expand-manifest.jsonld#t0117$/,
+        /expand-manifest.jsonld#t0118$/,
+        // terms having form of keyword
+        /expand-manifest.jsonld#t0119$/,
+        /expand-manifest.jsonld#t0120$/,
+        /expand-manifest.jsonld#t0122$/,
         // html
         /html-manifest.jsonld#te001$/,
         /html-manifest.jsonld#te002$/,
@@ -182,6 +189,8 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#te044$/,
         /expand-manifest.jsonld#te048$/,
         /expand-manifest.jsonld#te049$/,
+        // invalid keyword alias
+        /expand-manifest.jsonld#te051$/,
         // IRI prefixes
         /expand-manifest.jsonld#tpr29$/,
         // protected null IRI mapping
@@ -425,6 +434,13 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#te102$/,
         /toRdf-manifest.jsonld#te103$/,
         /toRdf-manifest.jsonld#te104$/,
+        // terms beginning with ':'
+        /toRdf-manifest.jsonld#te117$/,
+        /toRdf-manifest.jsonld#te118$/,
+        // terms having form of keyword
+        /toRdf-manifest.jsonld#te119$/,
+        /toRdf-manifest.jsonld#te120$/,
+        /toRdf-manifest.jsonld#te122$/,
         // well formed
         /toRdf-manifest.jsonld#twf01$/,
         /toRdf-manifest.jsonld#twf02$/,
