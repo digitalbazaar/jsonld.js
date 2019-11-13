@@ -111,9 +111,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#t0102$/,
         // multiple graphs
         /expand-manifest.jsonld#t0103$/,
-        // terms beginning with ':'
-        /expand-manifest.jsonld#t0117$/,
-        /expand-manifest.jsonld#t0118$/,
         // terms having form of keyword
         /expand-manifest.jsonld#t0119$/,
         /expand-manifest.jsonld#t0120$/,
@@ -402,9 +399,6 @@ const TEST_TYPES = {
       idRegex: [
         // blank node properties
         /toRdf-manifest.jsonld#t0118$/,
-        // terms beginning with ':'
-        /toRdf-manifest.jsonld#te117$/,
-        /toRdf-manifest.jsonld#te118$/,
         // terms having form of keyword
         /toRdf-manifest.jsonld#te119$/,
         /toRdf-manifest.jsonld#te120$/,
