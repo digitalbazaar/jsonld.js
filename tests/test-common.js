@@ -34,13 +34,9 @@ const TEST_TYPES = {
       idRegex: [
         // terms
         /compact-manifest.jsonld#tp001$/,
-        // rel iri
-        /compact-manifest.jsonld#t0095$/,
         // type set
         /compact-manifest.jsonld#t0104$/,
         /compact-manifest.jsonld#t0105$/,
-        // rel vocab
-        /compact-manifest.jsonld#t0107$/,
         // @type: @none
         /compact-manifest.jsonld#ttn01$/,
         /compact-manifest.jsonld#ttn02$/,
@@ -117,14 +113,8 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#t0102$/,
         // multiple graphs
         /expand-manifest.jsonld#t0103$/,
-        // rel iri
-        /expand-manifest.jsonld#t0092$/,
         // iris
         /expand-manifest.jsonld#t0109$/,
-        // rel vocab
-        /expand-manifest.jsonld#t0110$/,
-        /expand-manifest.jsonld#t0111$/,
-        /expand-manifest.jsonld#t0112$/,
         // terms beginning with ':'
         /expand-manifest.jsonld#t0117$/,
         /expand-manifest.jsonld#t0118$/,
@@ -460,10 +450,8 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#t0132$/,
         // @vocab mapping
         /toRdf-manifest.jsonld#te075$/,
-        // rel IRI
-        /toRdf-manifest.jsonld#te092$/,
         /toRdf-manifest.jsonld#te109$/,
-        /toRdf-manifest.jsonld#te110$/,
+        // Invalid Statement
         /toRdf-manifest.jsonld#te111$/,
         /toRdf-manifest.jsonld#te112$/,
         // index maps

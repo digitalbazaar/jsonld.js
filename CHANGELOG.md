@@ -10,6 +10,8 @@
 ### Changed
 - Default processing mode changed to json-ld-1.1. Allows a 1.1 context to be
   used after non-1.1 contexts.
+- `@vocab` can be relative in 1.0, resolved against either a previous `@vocab`,
+  `@base` or document base.
 
 ### Removed
 - **BREAKING**: Remove callback API support. This includes removing support
