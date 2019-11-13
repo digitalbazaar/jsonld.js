@@ -12,6 +12,7 @@
   used after non-1.1 contexts.
 - `@vocab` can be relative in 1.0, resolved against either a previous `@vocab`,
   `@base` or document base.
+- Better checking of absolute IRIs.
 
 ### Removed
 - **BREAKING**: Remove callback API support. This includes removing support
