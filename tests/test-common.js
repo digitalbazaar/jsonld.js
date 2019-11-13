@@ -48,8 +48,6 @@ const TEST_TYPES = {
         /compact-manifest.jsonld#tpi04$/,
         /compact-manifest.jsonld#tpi05$/,
         /compact-manifest.jsonld#tpi06$/,
-        // IRI confusion
-        /compact-manifest.jsonld#te002$/,
         // @propogate
         /compact-manifest.jsonld#tc026$/,
         /compact-manifest.jsonld#tc027$/,
