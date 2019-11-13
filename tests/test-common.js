@@ -197,9 +197,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#tso11$/,
         // colliding keywords
         /expand-manifest.jsonld#t0114$/,
-        // vocab iri/term
-        /expand-manifest.jsonld#te046$/,
-        /expand-manifest.jsonld#te047$/,
         // included
         /expand-manifest.jsonld#tin01$/,
         /expand-manifest.jsonld#tin02$/,
