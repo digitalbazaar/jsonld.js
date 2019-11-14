@@ -14,6 +14,7 @@
   `@base` or document base.
 - Better checking of absolute IRIs.
 - Terms that beging with a ':' are not considered absolute or compact IRIs.
+- Don't use terms with `@prefix`: false, or expanded term definitions to construct compact IRIs.
 
 ### Removed
 - **BREAKING**: Remove callback API support. This includes removing support
