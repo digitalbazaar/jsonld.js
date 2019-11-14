@@ -13,8 +13,8 @@
 - `@vocab` can be relative or a Compact IRI in 1.1, resolved against either a previous `@vocab`,
   `@base` or document base.
 - Better checking of absolute IRIs.
-- Terms that beggining with a ':' are not considered absolute or compact IRIs.
-- Don't use terms with `@prefix`: false, or expanded term definitions to construct compact IRIs.
+- Terms that begin with a ':' are not considered absolute or compact IRIs.
+- Don't use terms with `"@prefix": false` or expanded term definitions to construct compact IRIs.
 
 ### Removed
 - **BREAKING**: Remove callback API support. This includes removing support
