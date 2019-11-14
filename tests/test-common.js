@@ -32,8 +32,6 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
-        // terms
-        /compact-manifest.jsonld#tp001$/,
         // type set
         /compact-manifest.jsonld#t0104$/,
         /compact-manifest.jsonld#t0105$/,
@@ -163,8 +161,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#te049$/,
         // invalid keyword alias
         /expand-manifest.jsonld#te051$/,
-        // IRI prefixes
-        /expand-manifest.jsonld#tpr29$/,
         // protected null IRI mapping
         /expand-manifest.jsonld#tpr28$/,
         // remote
