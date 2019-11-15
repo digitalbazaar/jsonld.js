@@ -6,6 +6,8 @@
 - Expanding the value of a graph container which is already a graph object
   generates a recursive graph object.
 - Compacting multiple nodes in a graph container places them in `@included`.
+- Indexing on "@type" requires "@type" to be either "@id" or "@vocab",
+  and defaults to "@id".
 
 ### Changed
 - Default processing mode changed to json-ld-1.1. Allows a 1.1 context to be

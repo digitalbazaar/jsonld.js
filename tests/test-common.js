@@ -55,10 +55,6 @@ const TEST_TYPES = {
         /compact-manifest.jsonld#tin03$/,
         /compact-manifest.jsonld#tin04$/,
         /compact-manifest.jsonld#tin05$/,
-        // index on @type
-        /compact-manifest.jsonld#tm020$/,
-        /compact-manifest.jsonld#tm021$/,
-        /compact-manifest.jsonld#tm022$/,
         // context values
         /compact-manifest.jsonld#ts001$/,
         /compact-manifest.jsonld#ts002$/,
@@ -203,9 +199,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#tin07$/,
         /expand-manifest.jsonld#tin08$/,
         /expand-manifest.jsonld#tin09$/,
-        // index on @type
-        /expand-manifest.jsonld#tm017$/,
-        /expand-manifest.jsonld#tm020$/,
         // @nest
         /expand-manifest.jsonld#tn008$/,
         // keywords
@@ -473,9 +466,6 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#tin04$/,
         /toRdf-manifest.jsonld#tin05$/,
         /toRdf-manifest.jsonld#tin06$/,
-        // index on @type
-        /toRdf-manifest.jsonld#tm017$/,
-        /toRdf-manifest.jsonld#tm020$/,
         // @next
         /toRdf-manifest.jsonld#tn008$/,
         // keywords
