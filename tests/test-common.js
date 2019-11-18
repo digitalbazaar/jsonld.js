@@ -39,13 +39,8 @@ const TEST_TYPES = {
         /compact-manifest.jsonld#ttn01$/,
         /compact-manifest.jsonld#ttn02$/,
         /compact-manifest.jsonld#ttn03$/,
-        // property-valued indexes
-        /compact-manifest.jsonld#tpi01$/,
-        /compact-manifest.jsonld#tpi02$/,
-        /compact-manifest.jsonld#tpi03$/,
-        /compact-manifest.jsonld#tpi04$/,
-        /compact-manifest.jsonld#tpi05$/,
-        /compact-manifest.jsonld#tpi06$/,
+        // IRI confusion
+        /compact-manifest.jsonld#te002$/,
         // @propogate
         /compact-manifest.jsonld#tc026$/,
         /compact-manifest.jsonld#tc027$/,
@@ -138,18 +133,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#thc05$/,
         // @type: @none
         /expand-manifest.jsonld#ttn02$/,
-        // property index maps
-        /expand-manifest.jsonld#tpi01$/,
-        /expand-manifest.jsonld#tpi02$/,
-        /expand-manifest.jsonld#tpi03$/,
-        /expand-manifest.jsonld#tpi04$/,
-        /expand-manifest.jsonld#tpi05$/,
-        /expand-manifest.jsonld#tpi06$/,
-        /expand-manifest.jsonld#tpi07$/,
-        /expand-manifest.jsonld#tpi08$/,
-        /expand-manifest.jsonld#tpi09$/,
-        /expand-manifest.jsonld#tpi10$/,
-        /expand-manifest.jsonld#tpi11$/,
         // misc
         /expand-manifest.jsonld#te043$/,
         /expand-manifest.jsonld#te044$/,
