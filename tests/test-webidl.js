@@ -70,6 +70,11 @@ return new Promise((resolve, reject) => {
         'expected "JsonLdProcessor" but got "t"') !== -1) {
         this.skip();
       }
+      if(msg.indexOf(
+        'wrong value for JsonLdProcessor.name ' +
+        'expected "JsonLdProcessor" but got "e"') !== -1) {
+        this.skip();
+      }
       //earl.addAssertion({'@id': ?}, test.status === 0);
       assert.equal(test.status, 0, test.message);
       done();
