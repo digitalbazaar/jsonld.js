@@ -82,6 +82,7 @@ describe('other toRDF tests', () => {
   it('should process with options and promise', done => {
     const p = jsonld.toRDF({}, {});
     assert(p instanceof Promise);
+    /* eslint-disable-next-line no-unused-vars */
     p.catch(e => {
       assert.fail();
     }).then(output => {
@@ -93,6 +94,7 @@ describe('other toRDF tests', () => {
   it('should process with no options and promise', done => {
     const p = jsonld.toRDF({});
     assert(p instanceof Promise);
+    /* eslint-disable-next-line no-unused-vars */
     p.catch(e => {
       assert.fail();
     }).then(output => {
@@ -104,6 +106,7 @@ describe('other toRDF tests', () => {
   it('should fail with no args and promise', done => {
     const p = jsonld.toRDF();
     assert(p instanceof Promise);
+    /* eslint-disable-next-line no-unused-vars */
     p.then(output => {
       assert.fail();
     }).catch(e => {
