@@ -368,6 +368,12 @@ const TEST_TYPES = {
       idRegex: [
         // blank node properties
         /toRdf-manifest.jsonld#t0118$/,
+        // @propogate
+        /toRdf-manifest.jsonld#tc026$/,
+        /toRdf-manifest.jsonld#tc027$/,
+        /toRdf-manifest.jsonld#tc028$/,
+        /toRdf-manifest.jsonld#tc029$/,
+        /toRdf-manifest.jsonld#tc030$/,
         // terms having form of keyword
         /toRdf-manifest.jsonld#te119$/,
         /toRdf-manifest.jsonld#te120$/,
