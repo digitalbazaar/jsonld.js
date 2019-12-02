@@ -32,9 +32,6 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
-        // type set
-        /compact-manifest.jsonld#t0104$/,
-        /compact-manifest.jsonld#t0105$/,
         // @type: @none
         /compact-manifest.jsonld#ttn01$/,
         /compact-manifest.jsonld#ttn02$/,
