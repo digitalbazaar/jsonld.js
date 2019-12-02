@@ -18,6 +18,7 @@
 - Better checking of absolute IRIs.
 - Terms that begin with a ':' are not considered absolute or compact IRIs.
 - Don't use terms with `"@prefix": false` or expanded term definitions to construct compact IRIs.
+- "@type" may be used as a term definition only if "@container": "@set".
 
 ### Removed
 - **BREAKING**: Remove callback API support. This includes removing support
