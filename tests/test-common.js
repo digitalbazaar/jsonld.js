@@ -206,6 +206,8 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#tdi09$/,
         // @json
         /expand-manifest.jsonld#tjs09$/,
+        // relative @context
+        /expand-manifest.jsonld#tc031$/,
       ]
     },
     fn: 'expand',
@@ -480,6 +482,8 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#tdi10$/,
         /toRdf-manifest.jsonld#tdi11$/,
         /toRdf-manifest.jsonld#tdi12$/,
+        // relative @context
+        /toRdf-manifest.jsonld#tc031$/,
       ]
     },
     fn: 'toRDF',
