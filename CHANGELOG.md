@@ -6,19 +6,20 @@
 - Expanding the value of a graph container which is already a graph object
   generates a recursive graph object.
 - Compacting multiple nodes in a graph container places them in `@included`.
-- Indexing on "@type" requires "@type" to be either "@id" or "@vocab",
-  and defaults to "@id".
+- Indexing on `@type` requires `@type` to be either `@id` or `@vocab`, and
+  defaults to `@id`.
 
 ### Changed
 - Default processing mode changed to json-ld-1.1. Allows a 1.1 context to be
   used after non-1.1 contexts.
-- Indexing on an arbitrary property, not just "@index".
-- `@vocab` can be relative or a Compact IRI in 1.1, resolved against either
-  a previous `@vocab`, `@base` or document base.
+- Indexing on an arbitrary property, not just `@index`.
+- `@vocab` can be relative or a Compact IRI in 1.1, resolved against either a
+  previous `@vocab`, `@base` or document base.
 - Better checking of absolute IRIs.
 - Terms that begin with a ':' are not considered absolute or compact IRIs.
-- Don't use terms with `"@prefix": false` or expanded term definitions to construct compact IRIs.
-- "@type" may be used as a term definition only if "@container": "@set".
+- Don't use terms with `"@prefix": false` or expanded term definitions to
+  construct compact IRIs.
+- `@type` may be used as a term definition only if `"@container": "@set"`.
 
 ### Removed
 - **BREAKING**: Remove callback API support. This includes removing support
