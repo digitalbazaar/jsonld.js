@@ -8,6 +8,9 @@
 - Compacting multiple nodes in a graph container places them in `@included`.
 - Indexing on `@type` requires `@type` to be either `@id` or `@vocab`, and
   defaults to `@id`.
+- Expanding/compacting type scoped contexts uses context before applying
+  new versions to look for type scopes.
+- 
 
 ### Changed
 - Default processing mode changed to json-ld-1.1. Allows a 1.1 context to be
@@ -20,6 +23,9 @@
 - Don't use terms with `"@prefix": false` or expanded term definitions to
   construct compact IRIs.
 - `@type` may be used as a term definition only if `"@container": "@set"`.
+- Improve support for term propagation.
+- Context propagation no longer strictly related to use for property-scoped
+  or term-scoped contexts and can be overridden.
 
 ### Removed
 - **BREAKING**: Remove callback API support. This includes removing support
