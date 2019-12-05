@@ -38,9 +38,6 @@ const TEST_TYPES = {
         /compact-manifest.jsonld#ttn03$/,
         // IRI confusion
         /compact-manifest.jsonld#te002$/,
-        // @propogate
-        /compact-manifest.jsonld#tc026$/,
-        /compact-manifest.jsonld#tc027$/,
         // included
         /compact-manifest.jsonld#tin01$/,
         /compact-manifest.jsonld#tin02$/,
@@ -149,19 +146,13 @@ const TEST_TYPES = {
         /remote-doc-manifest.jsonld#t0013$/,
         /remote-doc-manifest.jsonld#tla01$/,
         /remote-doc-manifest.jsonld#tla05$/,
-        // @propogate
-        /expand-manifest.jsonld#tc026$/,
-        /expand-manifest.jsonld#tc027$/,
-        /expand-manifest.jsonld#tc028$/,
-        /expand-manifest.jsonld#tc029$/,
-        /expand-manifest.jsonld#tc030$/,
         // @import
         /expand-manifest.jsonld#tso01$/,
         /expand-manifest.jsonld#tso02$/,
         /expand-manifest.jsonld#tso03$/,
         /expand-manifest.jsonld#tso05$/,
         /expand-manifest.jsonld#tso06$/,
-        // protected
+        // @import and protected
         /expand-manifest.jsonld#tso07$/,
         // context merging
         /expand-manifest.jsonld#tso08$/,
@@ -365,12 +356,6 @@ const TEST_TYPES = {
       idRegex: [
         // blank node properties
         /toRdf-manifest.jsonld#t0118$/,
-        // @propogate
-        /toRdf-manifest.jsonld#tc026$/,
-        /toRdf-manifest.jsonld#tc027$/,
-        /toRdf-manifest.jsonld#tc028$/,
-        /toRdf-manifest.jsonld#tc029$/,
-        /toRdf-manifest.jsonld#tc030$/,
         // terms having form of keyword
         /toRdf-manifest.jsonld#te119$/,
         /toRdf-manifest.jsonld#te120$/,
@@ -424,7 +409,7 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#tpi09$/,
         /toRdf-manifest.jsonld#tpi10$/,
         /toRdf-manifest.jsonld#tpi11$/,
-        // protected
+        // protected null IRI mapping
         /toRdf-manifest.jsonld#tpr28$/,
         // prefix
         /toRdf-manifest.jsonld#tpr29$/,
@@ -432,10 +417,9 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#tso01$/,
         /toRdf-manifest.jsonld#tso02$/,
         /toRdf-manifest.jsonld#tso03$/,
-        // @propogate
         /toRdf-manifest.jsonld#tso05$/,
         /toRdf-manifest.jsonld#tso06$/,
-        // protected
+        // @import and protected
         /toRdf-manifest.jsonld#tso07$/,
         // context merging
         /toRdf-manifest.jsonld#tso08$/,
