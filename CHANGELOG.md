@@ -10,7 +10,6 @@
   defaults to `@id`.
 - Expanding/compacting type scoped contexts uses context before applying
   new versions to look for type scopes.
-- 
 
 ### Changed
 - Default processing mode changed to json-ld-1.1. Allows a 1.1 context to be
