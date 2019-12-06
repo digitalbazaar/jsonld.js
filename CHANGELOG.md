@@ -166,6 +166,7 @@
 - **BREAKING**: Remove deprecated `loadDocument` API and obsolete
   `DocumentCache`.
 - **BREAKING**: Remove deprecated support for parsing legacy dataset format.
+- **BREAKING**: RDFa parser moved to `jsonld-rdfa` package.
 
 ## 1.8.1 - 2019-10-24
 

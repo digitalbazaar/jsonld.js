@@ -35,8 +35,7 @@
     "object.fromentries": "^2.0.2",
     "rdf-canonize": "^2.0.1",
     "request": "^2.88.0",
-    "semver": "^6.3.0",
-    "xmldom": "0.1.19"
+    "semver": "^6.3.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.7.5",
@@ -86,8 +85,8 @@
   },
   "keywords": [
     "JSON",
-    "Linked Data",
     "JSON-LD",
+    "Linked Data",
     "RDF",
     "Semantic Web",
     "jsonld"
@@ -124,7 +123,6 @@
     "jsonld-request": false,
     "request": false,
     "url": false,
-    "util": false,
-    "xmldom": false
+    "util": false
   }
 }
