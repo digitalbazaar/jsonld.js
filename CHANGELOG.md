@@ -25,6 +25,8 @@
 - Improve support for term propagation.
 - Context propagation no longer strictly related to use for property-scoped
   or term-scoped contexts and can be overridden.
+- Refactored internal context resolution. Processed context cache feature
+  added. To be documented later.
 
 ### Removed
 - **BREAKING**: Remove callback API support. This includes removing support
