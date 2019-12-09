@@ -2,6 +2,14 @@
 
 ## 2.0.0 - 2019-xx-xx
 
+### Notes
+- An important **BREAKING** change in this release is the removal of callback
+  support in favor of Promises and async/await. This release does **not**
+  include a backwards compatible layer. If you need callback support, please
+  use the 1.x releases, the Node.js `callbackify` feature, or another similar
+  utility library. Suggestions on how best to provide a backwards compatibility
+  layer are welcome.
+
 ### Fixed
 - Expanding the value of a graph container which is already a graph object
   generates a recursive graph object.
@@ -30,7 +38,7 @@
 
 ### Removed
 - **BREAKING**: Remove callback API support. This includes removing support
-  for callback-based document loaders and rdf parsers. This is done to
+  for callback-based document loaders and RDF parsers. This is done to
   facilitate JSON-LD 1.1 document loader features and to remove deprecated
   code.
 - **BREAKING**: Remove deprecated `loadDocument` API and obsolete
