@@ -1,6 +1,6 @@
 # jsonld ChangeLog
 
-## 2.0.0 - 2019-xx-xx
+## 2.0.0 - 2019-12-09
 
 ### Notes
 - An important **BREAKING** change in this release is the removal of callback
