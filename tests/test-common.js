@@ -36,28 +36,12 @@ const TEST_TYPES = {
         /compact-manifest.jsonld#ttn01$/,
         /compact-manifest.jsonld#ttn02$/,
         /compact-manifest.jsonld#ttn03$/,
-        // IRI confusion
-        /compact-manifest.jsonld#te002$/,
         // included
         /compact-manifest.jsonld#tin01$/,
         /compact-manifest.jsonld#tin02$/,
         /compact-manifest.jsonld#tin03$/,
         /compact-manifest.jsonld#tin04$/,
         /compact-manifest.jsonld#tin05$/,
-        // context values
-        /compact-manifest.jsonld#ts001$/,
-        /compact-manifest.jsonld#ts002$/,
-        // @json
-        /compact-manifest.jsonld#tjs01$/,
-        /compact-manifest.jsonld#tjs02$/,
-        /compact-manifest.jsonld#tjs03$/,
-        /compact-manifest.jsonld#tjs04$/,
-        /compact-manifest.jsonld#tjs05$/,
-        /compact-manifest.jsonld#tjs06$/,
-        /compact-manifest.jsonld#tjs07$/,
-        /compact-manifest.jsonld#tjs08$/,
-        /compact-manifest.jsonld#tjs09$/,
-        /compact-manifest.jsonld#tjs10$/,
         // @json null
         /compact-manifest.jsonld#tjs11$/,
         // direction
@@ -90,10 +74,6 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
-        // indexed graph objects
-        /expand-manifest.jsonld#t0102$/,
-        // multiple graphs
-        /expand-manifest.jsonld#t0103$/,
         // terms having form of keyword
         /expand-manifest.jsonld#t0119$/,
         /expand-manifest.jsonld#t0120$/,
@@ -132,8 +112,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#te044$/,
         /expand-manifest.jsonld#te048$/,
         /expand-manifest.jsonld#te049$/,
-        // invalid keyword alias
-        /expand-manifest.jsonld#te051$/,
         // protected null IRI mapping
         /expand-manifest.jsonld#tpr28$/,
         // remote
@@ -192,8 +170,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#tdi07$/,
         /expand-manifest.jsonld#tdi08$/,
         /expand-manifest.jsonld#tdi09$/,
-        // @json
-        /expand-manifest.jsonld#tjs09$/,
       ]
     },
     fn: 'expand',
