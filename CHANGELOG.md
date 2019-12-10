@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Fixed
+- JSON literal value handling issues.
+
 ## 2.0.0 - 2019-12-09
 
 ### Notes
