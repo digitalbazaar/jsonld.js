@@ -99,6 +99,7 @@ const TEST_TYPES = {
         /html-manifest.jsonld#te020$/,
         /html-manifest.jsonld#te021$/,
         /html-manifest.jsonld#te022$/,
+        /html-manifest.jsonld#tex01$/,
         // HTML extraction
         /expand-manifest.jsonld#thc01$/,
         /expand-manifest.jsonld#thc02$/,
