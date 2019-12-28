@@ -35,11 +35,6 @@ const TEST_TYPES = {
       // NOTE: idRegex format:
       //MMM-manifest#tNNN$/,
       idRegex: [
-        // html
-        /html-manifest#tc001$/,
-        /html-manifest#tc002$/,
-        /html-manifest#tc003$/,
-        /html-manifest#tc004$/,
       ]
     },
     fn: 'compact',
@@ -63,33 +58,8 @@ const TEST_TYPES = {
         /expand-manifest#t0129$/,
 
         // html
-        /html-manifest#te001$/,
-        /html-manifest#te002$/,
-        /html-manifest#te003$/,
-        /html-manifest#te004$/,
-        /html-manifest#te005$/,
-        /html-manifest#te006$/,
-        /html-manifest#te007$/,
-        /html-manifest#te010$/,
-        /html-manifest#te011$/,
-        /html-manifest#te012$/,
-        /html-manifest#te013$/,
-        /html-manifest#te014$/,
-        /html-manifest#te015$/,
-        /html-manifest#te016$/,
-        /html-manifest#te017$/,
-        /html-manifest#te018$/,
-        /html-manifest#te019$/,
-        /html-manifest#te020$/,
-        /html-manifest#te021$/,
-        /html-manifest#te022$/,
-        /html-manifest#tex01$/,
-        // HTML extraction
-        /expand-manifest#thc01$/,
-        /expand-manifest#thc02$/,
-        /expand-manifest#thc03$/,
-        /expand-manifest#thc04$/,
-        /expand-manifest#thc05$/,
+        /html-manifest#tex01$/,  // XHTML
+        /html-manifest#te010$/,  // unescaped content
         // remote
         /remote-doc-manifest#t0013$/, // HTML
       ]
@@ -111,9 +81,6 @@ const TEST_TYPES = {
       //MMM-manifest#tNNN$/,
       idRegex: [
         // html
-        /html-manifest#tf001$/,
-        /html-manifest#tf002$/,
-        /html-manifest#tf003$/,
         /html-manifest#tf004$/,
       ]
     },
@@ -189,26 +156,7 @@ const TEST_TYPES = {
         /toRdf-manifest#twf05$/,
 
         // html
-        /html-manifest#tr001$/,
-        /html-manifest#tr002$/,
-        /html-manifest#tr003$/,
-        /html-manifest#tr004$/,
-        /html-manifest#tr005$/,
-        /html-manifest#tr006$/,
-        /html-manifest#tr007$/,
         /html-manifest#tr010$/,
-        /html-manifest#tr011$/,
-        /html-manifest#tr012$/,
-        /html-manifest#tr013$/,
-        /html-manifest#tr014$/,
-        /html-manifest#tr015$/,
-        /html-manifest#tr016$/,
-        /html-manifest#tr017$/,
-        /html-manifest#tr018$/,
-        /html-manifest#tr019$/,
-        /html-manifest#tr020$/,
-        /html-manifest#tr021$/,
-        /html-manifest#tr022$/,
         // Invalid Statement
         /toRdf-manifest#te075$/,
         /toRdf-manifest#te111$/,
@@ -894,11 +842,11 @@ function createDocumentLoader(test) {
     'https://w3c.github.io/json-ld-api/tests',
     'https://w3c.github.io/json-ld-framing/tests'
   ];
-  const localLoader = function(url) {
+  const localLoader = function(url, options) {
     // always load remote-doc tests remotely in node
     // NOTE: disabled due to github pages issues.
     //if(options.nodejs && test.manifest.name === 'Remote document') {
-    //  return jsonld.documentLoader(url);
+    //  return jsonld.documentLoader(url, options);
     //}
 
     // FIXME: this check only works for main test suite and will not work if:
@@ -915,25 +863,34 @@ function createDocumentLoader(test) {
     }
 
     // load remotely
-    return jsonld.documentLoader(url);
+    return jsonld.documentLoader(url, options);
   };
 
   return localLoader;
 
   function loadLocally(url) {
-    const doc = {contextUrl: null, documentUrl: url, document: null};
-    const options = test.option;
+    const doc = {
+      contextUrl: null,
+      documentUrl: url,
+      document: null,
+      contentType: null,
+      profile: null
+    };
+    const options = test.option || {};
+    doc.contentType = options.contentType;
+    if(!doc.contentType && url.indexOf('.jsonld', url.length - 7) !== -1) {
+      doc.contentType = 'application/ld+json';
+    }
+    if(!doc.contentType && url.indexOf('.json', url.length - 5) !== -1) {
+      doc.contentType = 'application/json';
+    }
+    if(!doc.contentType && url.indexOf('.html', url.length - 5) !== -1) {
+      doc.contentType = 'text/html';
+    }
     if(options && url === test.base) {
       if('redirectTo' in options && parseInt(options.httpStatus, 10) >= 300) {
         doc.documentUrl = test.manifest.baseIri + options.redirectTo;
       } else if('httpLink' in options) {
-        let contentType = options.contentType || null;
-        if(!contentType && url.indexOf('.jsonld', url.length - 7) !== -1) {
-          contentType = 'application/ld+json';
-        }
-        if(!contentType && url.indexOf('.json', url.length - 5) !== -1) {
-          contentType = 'application/json';
-        }
         let linkHeader = options.httpLink;
         if(Array.isArray(linkHeader)) {
           linkHeader = linkHeader.join(',');
@@ -941,7 +898,7 @@ function createDocumentLoader(test) {
         const linkHeaders = jsonld.parseLinkHeader(linkHeader);
         const linkedContext =
           linkHeaders['http://www.w3.org/ns/json-ld#context'];
-        if(linkedContext && contentType !== 'application/ld+json') {
+        if(linkedContext && doc.contentType !== 'application/ld+json') {
           if(Array.isArray(linkedContext)) {
             throw {name: 'multiple context link headers'};
           }
@@ -951,7 +908,8 @@ function createDocumentLoader(test) {
         // If not JSON-LD, alternate may point there
         if(linkHeaders['alternate'] &&
           linkHeaders['alternate'].type == 'application/ld+json' &&
-          !(contentType || '').match(/^application\/(\w*\+)?json$/)) {
+          !(doc.contentType || '').match(/^application\/(\w*\+)?json$/)) {
+          doc.contentType = 'application/ld+json';
           doc.documentUrl = prependBase(url, linkHeaders['alternate'].target);
         }
       }
@@ -975,12 +933,22 @@ function createDocumentLoader(test) {
       });
     }
 
-    return p.then(readJson).then(json => {
-      doc.document = json;
-      return doc;
-    }).catch(() => {
-      throw {name: 'loading document failed', url};
-    });
+    // parse JSON, if appropriate
+    if(!doc.contentType || doc.contentType.includes('json')) {
+      return p.then(readJson).then(json => {
+        doc.document = json;
+        return doc;
+      }).catch(() => {
+        throw {name: 'loading document failed', url};
+      });
+    } else {
+      return p.then(readFile).then(content => {
+        doc.document = content;
+        return doc;
+      }).catch(() => {
+        throw {name: 'loading document failed', url};
+      });
+    }
   }
 }
 
