@@ -87,6 +87,13 @@
 
 ## 2.0.1 - 2019-12-10
 
+### Added
+- Support for extracting JSON-LD from HTML, when the xmldom package is loaded.
+
+### Changed
+- Update calls to documentLoader to pass options
+- Pass requestProfile in Accept header when loading documents
+
 ### Fixed
 - JSON literal value handling issues.
 
