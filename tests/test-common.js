@@ -80,8 +80,6 @@ const TEST_TYPES = {
       // NOTE: idRegex format:
       //MMM-manifest#tNNN$/,
       idRegex: [
-        // html
-        /html-manifest#tf004$/,
       ]
     },
     fn: 'flatten',
@@ -157,6 +155,7 @@ const TEST_TYPES = {
 
         // html
         /html-manifest#tr010$/,
+        /html-manifest#tr010$/,  // unescaped content
         // Invalid Statement
         /toRdf-manifest#te075$/,
         /toRdf-manifest#te111$/,
