@@ -154,7 +154,6 @@ const TEST_TYPES = {
         /toRdf-manifest#twf05$/,
 
         // html
-        /html-manifest#tr010$/,
         /html-manifest#tr010$/,  // unescaped content
         // Invalid Statement
         /toRdf-manifest#te075$/,
