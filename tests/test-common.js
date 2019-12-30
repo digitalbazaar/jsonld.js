@@ -38,8 +38,6 @@ const TEST_TYPES = {
         /compact-manifest.jsonld#tin03$/,
         /compact-manifest.jsonld#tin04$/,
         /compact-manifest.jsonld#tin05$/,
-        // @json null
-        /compact-manifest.jsonld#tjs11$/,
         // direction
         /compact-manifest.jsonld#tdi01$/,
         /compact-manifest.jsonld#tdi02$/,
@@ -109,8 +107,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#te044$/,
         /expand-manifest.jsonld#te048$/,
         /expand-manifest.jsonld#te049$/,
-        /expand-manifest.jsonld#tjs22$/,
-        /expand-manifest.jsonld#tjs23$/,
         // protected null IRI mapping
         /expand-manifest.jsonld#tpr28$/,
         // remote
@@ -436,9 +432,6 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#tdi10$/,
         /toRdf-manifest.jsonld#tdi11$/,
         /toRdf-manifest.jsonld#tdi12$/,
-        // JSON literal
-        /toRdf-manifest.jsonld#tjs22$/,
-        /toRdf-manifest.jsonld#tjs23$/,
       ]
     },
     fn: 'toRDF',
