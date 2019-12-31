@@ -35,6 +35,9 @@
 
 ## 2.0.1 - 2019-12-10
 
+### Added
+- Added support for `@included` blocks
+
 ### Fixed
 - JSON literal value handling issues.
 
