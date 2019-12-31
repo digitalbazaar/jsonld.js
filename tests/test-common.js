@@ -33,12 +33,6 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
-        // included
-        /compact-manifest.jsonld#tin01$/,
-        /compact-manifest.jsonld#tin02$/,
-        /compact-manifest.jsonld#tin03$/,
-        /compact-manifest.jsonld#tin04$/,
-        /compact-manifest.jsonld#tin05$/,
         // direction
         /compact-manifest.jsonld#tdi01$/,
         /compact-manifest.jsonld#tdi02$/,
@@ -105,16 +99,6 @@ const TEST_TYPES = {
         /remote-doc-manifest.jsonld#t0013$/, // HTML
         // colliding keywords
         /expand-manifest.jsonld#t0114$/,
-        // included
-        /expand-manifest.jsonld#tin01$/,
-        /expand-manifest.jsonld#tin02$/,
-        /expand-manifest.jsonld#tin03$/,
-        /expand-manifest.jsonld#tin04$/,
-        /expand-manifest.jsonld#tin05$/,
-        /expand-manifest.jsonld#tin06$/,
-        /expand-manifest.jsonld#tin07$/,
-        /expand-manifest.jsonld#tin08$/,
-        /expand-manifest.jsonld#tin09$/,
         // keywords
         /expand-manifest.jsonld#tpr30$/,
         /expand-manifest.jsonld#tpr31$/,
@@ -159,13 +143,6 @@ const TEST_TYPES = {
         /html-manifest.jsonld#tf002$/,
         /html-manifest.jsonld#tf003$/,
         /html-manifest.jsonld#tf004$/,
-        // included
-        /flatten-manifest.jsonld#tin01$/,
-        /flatten-manifest.jsonld#tin02$/,
-        /flatten-manifest.jsonld#tin03$/,
-        /flatten-manifest.jsonld#tin04$/,
-        /flatten-manifest.jsonld#tin05$/,
-        /flatten-manifest.jsonld#tin06$/,
       ]
     },
     fn: 'flatten',
@@ -331,13 +308,6 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#te112$/,
         // colliding keyword
         /toRdf-manifest.jsonld#te114$/,
-        // included
-        /toRdf-manifest.jsonld#tin01$/,
-        /toRdf-manifest.jsonld#tin02$/,
-        /toRdf-manifest.jsonld#tin03$/,
-        /toRdf-manifest.jsonld#tin04$/,
-        /toRdf-manifest.jsonld#tin05$/,
-        /toRdf-manifest.jsonld#tin06$/,
         // keywords
         /toRdf-manifest.jsonld#tpr30$/,
         /toRdf-manifest.jsonld#tpr31$/,
