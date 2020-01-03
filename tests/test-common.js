@@ -96,7 +96,6 @@ const TEST_TYPES = {
         // colliding keywords
         /expand-manifest.jsonld#t0114$/,
         // keywords
-        /expand-manifest.jsonld#tpr32$/,
         /expand-manifest.jsonld#tpr33$/,
         // direction
         /expand-manifest.jsonld#tdi01$/,
@@ -294,8 +293,6 @@ const TEST_TYPES = {
         // colliding keyword
         /toRdf-manifest.jsonld#te114$/,
         // keywords
-        /toRdf-manifest.jsonld#tpr31$/,
-        /toRdf-manifest.jsonld#tpr32$/,
         /toRdf-manifest.jsonld#tpr33$/,
         // direction
         /toRdf-manifest.jsonld#tdi01$/,
