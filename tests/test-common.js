@@ -63,10 +63,6 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
-        // terms having form of keyword
-        /expand-manifest.jsonld#t0119$/,
-        /expand-manifest.jsonld#t0120$/,
-        /expand-manifest.jsonld#t0122$/,
         // html
         /html-manifest.jsonld#te001$/,
         /html-manifest.jsonld#te002$/,
@@ -100,15 +96,8 @@ const TEST_TYPES = {
         // colliding keywords
         /expand-manifest.jsonld#t0114$/,
         // keywords
-        /expand-manifest.jsonld#tpr30$/,
-        /expand-manifest.jsonld#tpr31$/,
         /expand-manifest.jsonld#tpr32$/,
         /expand-manifest.jsonld#tpr33$/,
-        /expand-manifest.jsonld#tpr34$/,
-        /expand-manifest.jsonld#tpr35$/,
-        /expand-manifest.jsonld#tpr36$/,
-        /expand-manifest.jsonld#tpr37$/,
-        /expand-manifest.jsonld#tpr39$/,
         // direction
         /expand-manifest.jsonld#tdi01$/,
         /expand-manifest.jsonld#tdi02$/,
@@ -275,10 +264,6 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
-        // terms having form of keyword
-        /toRdf-manifest.jsonld#te119$/,
-        /toRdf-manifest.jsonld#te120$/,
-        /toRdf-manifest.jsonld#te122$/,
         // well formed
         /toRdf-manifest.jsonld#twf05$/,
         // html
@@ -309,15 +294,9 @@ const TEST_TYPES = {
         // colliding keyword
         /toRdf-manifest.jsonld#te114$/,
         // keywords
-        /toRdf-manifest.jsonld#tpr30$/,
         /toRdf-manifest.jsonld#tpr31$/,
         /toRdf-manifest.jsonld#tpr32$/,
         /toRdf-manifest.jsonld#tpr33$/,
-        /toRdf-manifest.jsonld#tpr34$/,
-        /toRdf-manifest.jsonld#tpr35$/,
-        /toRdf-manifest.jsonld#tpr36$/,
-        /toRdf-manifest.jsonld#tpr37$/,
-        /toRdf-manifest.jsonld#tpr39$/,
         // direction
         /toRdf-manifest.jsonld#tdi01$/,
         /toRdf-manifest.jsonld#tdi02$/,
