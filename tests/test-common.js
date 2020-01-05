@@ -25,6 +25,15 @@ const manifest = options.manifest || {
   filename: '/'
 };
 
+let htmlSupport;
+try {
+  // xmldom may load but not have a DOMParser
+  htmlSupport = !!require('xmldom').DOMParser;
+} catch(e) {
+  htmlSupport = false;
+}
+console.log("HTML Support: " + htmlSupport);
+
 const TEST_TYPES = {
   'jld:CompactTest': {
     skip: {
@@ -382,6 +391,13 @@ function addTest(manifest, test, tests) {
           console.log('Skipping test due to unknown type:',
             {id: test['@id'], name: test.name, type});
         }
+        self.skip();
+      }
+
+      // if xmldom not loaded, skip HTML tests
+      if(isJsonLdType(test, 'jld:HtmlTest') && !htmlSupport) {
+        console.log('Skipping test due to lack of HTML support:',
+          {id: test['@id'], name: test.name});
         self.skip();
       }
 
