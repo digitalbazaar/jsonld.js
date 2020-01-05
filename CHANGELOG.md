@@ -4,6 +4,7 @@
 
 ### Fixed
 - JSON literal value handling issues.
+- More support for "@type": "@none"
 
 ## 2.0.0 - 2019-12-09
 
