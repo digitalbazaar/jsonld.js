@@ -32,10 +32,6 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
-        // @type: @none
-        /compact-manifest.jsonld#ttn01$/,
-        /compact-manifest.jsonld#ttn02$/,
-        /compact-manifest.jsonld#ttn03$/,
         // included
         /compact-manifest.jsonld#tin01$/,
         /compact-manifest.jsonld#tin02$/,
@@ -108,8 +104,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#thc03$/,
         /expand-manifest.jsonld#thc04$/,
         /expand-manifest.jsonld#thc05$/,
-        // @type: @none
-        /expand-manifest.jsonld#ttn02$/,
         // misc
         /expand-manifest.jsonld#te043$/,
         /expand-manifest.jsonld#te044$/,
@@ -408,8 +402,6 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#tso08$/,
         /toRdf-manifest.jsonld#tso10$/,
         /toRdf-manifest.jsonld#tso11$/,
-        // type:none
-        /toRdf-manifest.jsonld#ttn02$/,
         // colliding keyword
         /toRdf-manifest.jsonld#te114$/,
         // included
