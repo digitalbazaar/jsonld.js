@@ -78,6 +78,8 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#t0119$/,
         /expand-manifest.jsonld#t0120$/,
         /expand-manifest.jsonld#t0122$/,
+        // invalid datatype IRI
+        /expand-manifest.jsonld#t0123$/,
         // html
         /html-manifest.jsonld#te001$/,
         /html-manifest.jsonld#te002$/,
@@ -339,6 +341,8 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#te119$/,
         /toRdf-manifest.jsonld#te120$/,
         /toRdf-manifest.jsonld#te122$/,
+        // invalid datatype IRI
+        /toRdf-manifest.jsonld#te123$/,
         // well formed
         /toRdf-manifest.jsonld#twf01$/,
         /toRdf-manifest.jsonld#twf02$/,
