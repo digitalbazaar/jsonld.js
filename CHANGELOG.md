@@ -74,6 +74,7 @@
 - Top level `@graph` omitted if `omitGraph` is `true`.
 - Check for invalid values of `@embed`.
 - Support default values for `@type` when framing.
+- Support for extracting JSON-LD from HTML, when the xmldom package is loaded.
 
 ## 2.0.2 - 2020-01-17
 
