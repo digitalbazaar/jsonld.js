@@ -13,6 +13,7 @@
 - Terms of the form of an IRI must map to the same IRI.
 - Terms of the form of a relative IRI may not be used as prefixes.
 - Match spec error code "invalid context entry" vs "invalid context member".
+- Keywords may not be used as prefixes.
 
 ### Changed
 - Keep term definitions mapping to null so they may be protected.
@@ -22,6 +23,8 @@
 
 ### Added
 - Support for `"@import"`.
+- Added support for `@included` blocks
+- Skip things that have the form of a keyword, with warning.
 
 ## 2.0.2 - 2020-01-17
 
