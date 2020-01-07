@@ -1,7 +1,7 @@
 # jsonld ChangeLog
 
 ### Fixed
-- More support for "@type": "@none"
+- More support for `"@type": "@none"`.
 
 ## 2.0.1 - 2019-12-10
 
