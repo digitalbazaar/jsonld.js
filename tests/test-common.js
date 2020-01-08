@@ -33,14 +33,6 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
-        // direction
-        /compact-manifest.jsonld#tdi01$/,
-        /compact-manifest.jsonld#tdi02$/,
-        /compact-manifest.jsonld#tdi03$/,
-        /compact-manifest.jsonld#tdi04$/,
-        /compact-manifest.jsonld#tdi05$/,
-        /compact-manifest.jsonld#tdi06$/,
-        /compact-manifest.jsonld#tdi07$/,
         // html
         /html-manifest.jsonld#tc001$/,
         /html-manifest.jsonld#tc002$/,
@@ -93,16 +85,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#thc05$/,
         // remote
         /remote-doc-manifest.jsonld#t0013$/, // HTML
-        // direction
-        /expand-manifest.jsonld#tdi01$/,
-        /expand-manifest.jsonld#tdi02$/,
-        /expand-manifest.jsonld#tdi03$/,
-        /expand-manifest.jsonld#tdi04$/,
-        /expand-manifest.jsonld#tdi05$/,
-        /expand-manifest.jsonld#tdi06$/,
-        /expand-manifest.jsonld#tdi07$/,
-        /expand-manifest.jsonld#tdi08$/,
-        /expand-manifest.jsonld#tdi09$/,
         // unused scoped context
         /expand-manifest.jsonld#tc032$/,
         /expand-manifest.jsonld#tc033$/,
