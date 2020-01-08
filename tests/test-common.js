@@ -212,9 +212,7 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
-        // direction
-        /fromRdf-manifest.jsonld#tdi05$/,
-        /fromRdf-manifest.jsonld#tdi06$/,
+        // direction (compound-literal)
         /fromRdf-manifest.jsonld#tdi11$/,
         /fromRdf-manifest.jsonld#tdi12$/,
       ]
@@ -268,17 +266,7 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#te075$/,
         /toRdf-manifest.jsonld#te111$/,
         /toRdf-manifest.jsonld#te112$/,
-        // direction
-        /toRdf-manifest.jsonld#tdi01$/,
-        /toRdf-manifest.jsonld#tdi02$/,
-        /toRdf-manifest.jsonld#tdi03$/,
-        /toRdf-manifest.jsonld#tdi04$/,
-        /toRdf-manifest.jsonld#tdi05$/,
-        /toRdf-manifest.jsonld#tdi06$/,
-        /toRdf-manifest.jsonld#tdi07$/,
-        /toRdf-manifest.jsonld#tdi08$/,
-        /toRdf-manifest.jsonld#tdi09$/,
-        /toRdf-manifest.jsonld#tdi10$/,
+        // direction (compound-literal)
         /toRdf-manifest.jsonld#tdi11$/,
         /toRdf-manifest.jsonld#tdi12$/,
         // unused scoped context

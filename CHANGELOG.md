@@ -26,6 +26,8 @@
 - Added support for `@included` blocks
 - Skip things that have the form of a keyword, with warning.
 - Support for expansion and compaction of values container `"@direction"`.
+- Support for RDF transformation of `@direction`
+  when `rdfDirection` is 'i18n-datatype'.
 
 ## 2.0.2 - 2020-01-17
 
