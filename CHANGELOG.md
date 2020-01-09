@@ -30,6 +30,9 @@
 ### Changed
 - `isKeyword()` optimization for non-keyword fast path.
 
+### Added
+- Support for `"@import"`.
+
 ## 2.0.1 - 2019-12-10
 
 ### Fixed
