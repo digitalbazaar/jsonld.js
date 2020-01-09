@@ -103,14 +103,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#thc05$/,
         // remote
         /remote-doc-manifest.jsonld#t0013$/, // HTML
-        // @import
-        /expand-manifest.jsonld#tso01$/,
-        /expand-manifest.jsonld#tso02$/,
-        /expand-manifest.jsonld#tso03$/,
-        /expand-manifest.jsonld#tso05$/,
-        /expand-manifest.jsonld#tso06$/,
-        // @import and protected
-        /expand-manifest.jsonld#tso07$/,
         // context merging
         /expand-manifest.jsonld#tso08$/,
         /expand-manifest.jsonld#tso10$/,
@@ -341,14 +333,6 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#te075$/,
         /toRdf-manifest.jsonld#te111$/,
         /toRdf-manifest.jsonld#te112$/,
-        // @import
-        /toRdf-manifest.jsonld#tso01$/,
-        /toRdf-manifest.jsonld#tso02$/,
-        /toRdf-manifest.jsonld#tso03$/,
-        /toRdf-manifest.jsonld#tso05$/,
-        /toRdf-manifest.jsonld#tso06$/,
-        // @import and protected
-        /toRdf-manifest.jsonld#tso07$/,
         // context merging
         /toRdf-manifest.jsonld#tso08$/,
         /toRdf-manifest.jsonld#tso10$/,
