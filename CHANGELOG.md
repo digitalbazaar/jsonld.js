@@ -14,6 +14,8 @@
 
 ### Fixed
 - JSON literal value handling issues.
+- Do minimal checking to see if IRIs are valid by making sure they contain
+  no whitespace.
 
 ## 2.0.0 - 2019-12-09
 
