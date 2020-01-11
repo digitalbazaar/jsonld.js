@@ -16,6 +16,8 @@
 - JSON literal value handling issues.
 - Do minimal checking to see if IRIs are valid by making sure they contain
   no whitespace.
+- Terms of the form of an IRI must map to the same IRI.
+- Terms of the form of a relative IRI may not be used as prefixes.
 
 ## 2.0.0 - 2019-12-09
 
