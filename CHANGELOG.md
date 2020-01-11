@@ -19,6 +19,9 @@
 - Terms of the form of an IRI must map to the same IRI.
 - Terms of the form of a relative IRI may not be used as prefixes.
 
+### Changed
+- Keep term definitions mapping to null so they may be protected.
+
 ## 2.0.0 - 2019-12-09
 
 ### Notes
