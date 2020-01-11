@@ -100,8 +100,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#thc03$/,
         /expand-manifest.jsonld#thc04$/,
         /expand-manifest.jsonld#thc05$/,
-        // protected null IRI mapping
-        /expand-manifest.jsonld#tpr28$/,
         // remote
         /remote-doc-manifest.jsonld#t0005$/,
         /remote-doc-manifest.jsonld#t0006$/,
@@ -376,8 +374,6 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#tpi09$/,
         /toRdf-manifest.jsonld#tpi10$/,
         /toRdf-manifest.jsonld#tpi11$/,
-        // protected null IRI mapping
-        /toRdf-manifest.jsonld#tpr28$/,
         // prefix
         /toRdf-manifest.jsonld#tpr29$/,
         // @import
