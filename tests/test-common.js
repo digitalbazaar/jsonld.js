@@ -100,11 +100,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#thc03$/,
         /expand-manifest.jsonld#thc04$/,
         /expand-manifest.jsonld#thc05$/,
-        // misc
-        /expand-manifest.jsonld#te043$/,
-        /expand-manifest.jsonld#te044$/,
-        /expand-manifest.jsonld#te048$/,
-        /expand-manifest.jsonld#te049$/,
         // protected null IRI mapping
         /expand-manifest.jsonld#tpr28$/,
         // remote
