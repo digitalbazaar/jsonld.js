@@ -6,6 +6,7 @@ const EarlReport = require('./earl-report');
 const benchmark = require('benchmark');
 const join = require('join-path-js');
 const rdfCanonize = require('rdf-canonize');
+const {prependBase} = require('../lib/url');
 
 module.exports = function(options) {
 
@@ -102,8 +103,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#thc05$/,
         // remote
         /remote-doc-manifest.jsonld#t0013$/, // HTML
-        /remote-doc-manifest.jsonld#tla01$/,
-        /remote-doc-manifest.jsonld#tla05$/,
         // @import
         /expand-manifest.jsonld#tso01$/,
         /expand-manifest.jsonld#tso02$/,
@@ -1126,17 +1125,28 @@ function createDocumentLoader(test) {
         if(!contentType && url.indexOf('.jsonld', url.length - 7) !== -1) {
           contentType = 'application/ld+json';
         }
+        if(!contentType && url.indexOf('.json', url.length - 5) !== -1) {
+          contentType = 'application/json';
+        }
         let linkHeader = options.httpLink;
         if(Array.isArray(linkHeader)) {
           linkHeader = linkHeader.join(',');
         }
-        linkHeader = jsonld.parseLinkHeader(
-          linkHeader)['http://www.w3.org/ns/json-ld#context'];
-        if(linkHeader && contentType !== 'application/ld+json') {
-          if(Array.isArray(linkHeader)) {
+        const linkHeaders = jsonld.parseLinkHeader(
+          linkHeader)
+        const linkedContext = linkHeaders['http://www.w3.org/ns/json-ld#context'];
+        if(linkedContext && contentType !== 'application/ld+json') {
+          if(Array.isArray(linkedContext)) {
             throw {name: 'multiple context link headers'};
           }
-          doc.contextUrl = linkHeader.target;
+          doc.contextUrl = linkedContext.target;
+        }
+
+        // If not JSON-LD, alternate may point there
+        if(linkHeaders['alternate'] &&
+          linkHeaders['alternate'].type == 'application/ld+json' &&
+          !(contentType || '').match(/^application\/(\w*\+)?json$/)) {
+          doc.documentUrl = prependBase(url, linkHeaders['alternate'].target);
         }
       }
     }
