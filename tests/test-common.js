@@ -101,13 +101,7 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#thc04$/,
         /expand-manifest.jsonld#thc05$/,
         // remote
-        /remote-doc-manifest.jsonld#t0005$/,
-        /remote-doc-manifest.jsonld#t0006$/,
-        /remote-doc-manifest.jsonld#t0007$/,
-        /remote-doc-manifest.jsonld#t0010$/,
-        /remote-doc-manifest.jsonld#t0011$/,
-        /remote-doc-manifest.jsonld#t0012$/,
-        /remote-doc-manifest.jsonld#t0013$/,
+        /remote-doc-manifest.jsonld#t0013$/, // HTML
         /remote-doc-manifest.jsonld#tla01$/,
         /remote-doc-manifest.jsonld#tla05$/,
         // @import
@@ -1097,9 +1091,10 @@ function createDocumentLoader(test) {
   ];
   const localLoader = function(url) {
     // always load remote-doc tests remotely in node
-    if(options.nodejs && test.manifest.name === 'Remote document') {
-      return jsonld.documentLoader(url);
-    }
+    // NOTE: disabled due to github pages issues.
+    //if(options.nodejs && test.manifest.name === 'Remote document') {
+    //  return jsonld.documentLoader(url);
+    //}
 
     // FIXME: this check only works for main test suite and will not work if:
     // - running other tests and main test suite not installed
