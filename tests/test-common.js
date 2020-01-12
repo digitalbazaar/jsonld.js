@@ -127,8 +127,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#tin07$/,
         /expand-manifest.jsonld#tin08$/,
         /expand-manifest.jsonld#tin09$/,
-        // @nest
-        /expand-manifest.jsonld#tn008$/,
         // keywords
         /expand-manifest.jsonld#tpr30$/,
         /expand-manifest.jsonld#tpr31$/,
@@ -390,8 +388,6 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#tin04$/,
         /toRdf-manifest.jsonld#tin05$/,
         /toRdf-manifest.jsonld#tin06$/,
-        // @next
-        /toRdf-manifest.jsonld#tn008$/,
         // keywords
         /toRdf-manifest.jsonld#tpr30$/,
         /toRdf-manifest.jsonld#tpr31$/,
