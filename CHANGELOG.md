@@ -1,5 +1,9 @@
 # jsonld ChangeLog
 
+### Fixed
+- Always pass typeScopedContext to _expandObject.
+- Allow a keyword to exist when expanding in _expandObject when the key is `@included` or `@type`.
+
 ## 2.0.2 - 2020-01-17
 
 ### Fixed
