@@ -103,10 +103,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#thc05$/,
         // remote
         /remote-doc-manifest.jsonld#t0013$/, // HTML
-        // context merging
-        /expand-manifest.jsonld#tso08$/,
-        /expand-manifest.jsonld#tso10$/,
-        /expand-manifest.jsonld#tso11$/,
         // colliding keywords
         /expand-manifest.jsonld#t0114$/,
         // included
@@ -333,10 +329,6 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#te075$/,
         /toRdf-manifest.jsonld#te111$/,
         /toRdf-manifest.jsonld#te112$/,
-        // context merging
-        /toRdf-manifest.jsonld#tso08$/,
-        /toRdf-manifest.jsonld#tso10$/,
-        /toRdf-manifest.jsonld#tso11$/,
         // colliding keyword
         /toRdf-manifest.jsonld#te114$/,
         // included
