@@ -1,6 +1,8 @@
 # jsonld ChangeLog
 
 ### Fixed
+- More support for `"@type": "@none"`.
+- JSON literal value handling issues (`null` and `[]`).
 - Always pass typeScopedContext to _expandObject.
 - Allow a keyword to exist when expanding in _expandObject when the key is `@included` or `@type`.
 
