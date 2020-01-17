@@ -48,5 +48,11 @@
     "purpose": "RDF serialized in N-Quads may contain comments",
     "input": "fromRdf-0001-in.nq",
     "expect": "fromRdf-0001-out.jsonld"
+  }, {
+    "@id": "#t0008",
+    "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+    "name": "resolve context null values",
+    "input": "remote-0008-in.jsonld",
+    "expect": "remote-0008-out.jsonld"
   }]
 }

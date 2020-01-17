@@ -3,6 +3,7 @@
 ### Fixed
 - More support for `"@type": "@none"`.
 - JSON literal value handling issues (`null` and `[]`).
+- Fix resolving context `null` values.
 
 ## 2.0.1 - 2019-12-10
 

@@ -1,0 +1,4 @@
+{
+  "@context": "http://localhost:8000/context-0008.jsonld",
+  "t1": "t1 should have been nulled out"
+}
