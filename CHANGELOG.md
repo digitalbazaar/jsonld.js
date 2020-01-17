@@ -5,6 +5,9 @@
 - JSON literal value handling issues (`null` and `[]`).
 - Fix resolving context `null` values.
 
+### Changed
+- `isKeyword()` optimization for non-keyword fast path.
+
 ## 2.0.1 - 2019-12-10
 
 ### Fixed
