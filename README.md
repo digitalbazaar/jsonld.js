@@ -388,7 +388,7 @@ Remote context tests are also available:
     # run the context server in the background or another terminal
     node tests/remote-context-server.js
 
-    JSONLD_TESTS=./tests npm test
+    JSONLD_TESTS=`pwd`/tests npm test
 
 To generate earl reports:
 
