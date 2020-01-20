@@ -337,15 +337,12 @@ const TEST_TYPES = {
         /html-manifest.jsonld#tr020$/,
         /html-manifest.jsonld#tr021$/,
         /html-manifest.jsonld#tr022$/,
-        // number fixes
-        /toRdf-manifest.jsonld#trt01$/,
         // IRI resolution
         /toRdf-manifest.jsonld#t0130$/,
         /toRdf-manifest.jsonld#t0131$/,
         /toRdf-manifest.jsonld#t0132$/,
-        // @vocab mapping
-        /toRdf-manifest.jsonld#te075$/,
         // Invalid Statement
+        /toRdf-manifest.jsonld#te075$/,
         /toRdf-manifest.jsonld#te111$/,
         /toRdf-manifest.jsonld#te112$/,
         // @import
