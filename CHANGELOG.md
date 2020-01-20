@@ -6,6 +6,7 @@
 - Always pass typeScopedContext to _expandObject.
 - Allow a keyword to exist when expanding in _expandObject when the key is `@included` or `@type`.
 - Improve isDouble to look for big integers.
+- URI removeDotSegments only ensures preceding '/' if was already absolute.
 
 ## 2.0.2 - 2020-01-17
 
