@@ -337,10 +337,6 @@ const TEST_TYPES = {
         /html-manifest.jsonld#tr020$/,
         /html-manifest.jsonld#tr021$/,
         /html-manifest.jsonld#tr022$/,
-        // IRI resolution
-        /toRdf-manifest.jsonld#t0130$/,
-        /toRdf-manifest.jsonld#t0131$/,
-        /toRdf-manifest.jsonld#t0132$/,
         // Invalid Statement
         /toRdf-manifest.jsonld#te075$/,
         /toRdf-manifest.jsonld#te111$/,
