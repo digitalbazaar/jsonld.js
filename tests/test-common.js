@@ -310,20 +310,12 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
-        // blank node properties
-        /toRdf-manifest.jsonld#t0118$/,
         // terms having form of keyword
         /toRdf-manifest.jsonld#te119$/,
         /toRdf-manifest.jsonld#te120$/,
         /toRdf-manifest.jsonld#te122$/,
         // well formed
-        /toRdf-manifest.jsonld#twf01$/,
-        /toRdf-manifest.jsonld#twf02$/,
-        /toRdf-manifest.jsonld#twf03$/,
-        /toRdf-manifest.jsonld#twf04$/,
         /toRdf-manifest.jsonld#twf05$/,
-        /toRdf-manifest.jsonld#twf06$/,
-        /toRdf-manifest.jsonld#twf07$/,
         // html
         /html-manifest.jsonld#tr001$/,
         /html-manifest.jsonld#tr002$/,
@@ -353,20 +345,9 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#t0132$/,
         // @vocab mapping
         /toRdf-manifest.jsonld#te075$/,
-        /toRdf-manifest.jsonld#te109$/,
         // Invalid Statement
         /toRdf-manifest.jsonld#te111$/,
         /toRdf-manifest.jsonld#te112$/,
-        // index maps
-        /toRdf-manifest.jsonld#tpi05$/,
-        /toRdf-manifest.jsonld#tpi06$/,
-        /toRdf-manifest.jsonld#tpi07$/,
-        /toRdf-manifest.jsonld#tpi08$/,
-        /toRdf-manifest.jsonld#tpi09$/,
-        /toRdf-manifest.jsonld#tpi10$/,
-        /toRdf-manifest.jsonld#tpi11$/,
-        // prefix
-        /toRdf-manifest.jsonld#tpr29$/,
         // @import
         /toRdf-manifest.jsonld#tso01$/,
         /toRdf-manifest.jsonld#tso02$/,
