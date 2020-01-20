@@ -19,6 +19,9 @@
   renamed to `LINK_HEADER_CONTEXT`. It remains for now but will be removed in a
   future release.
 
+### Added
+- Support for `"@import"`.
+
 ## 2.0.2 - 2020-01-17
 
 ### Fixed
@@ -28,9 +31,6 @@
 
 ### Changed
 - `isKeyword()` optimization for non-keyword fast path.
-
-### Added
-- Support for `"@import"`.
 
 ## 2.0.1 - 2019-12-10
 
