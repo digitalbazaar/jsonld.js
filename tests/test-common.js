@@ -165,6 +165,9 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#tdi07$/,
         /expand-manifest.jsonld#tdi08$/,
         /expand-manifest.jsonld#tdi09$/,
+        // unused scoped context
+        /expand-manifest.jsonld#tc032$/,
+        /expand-manifest.jsonld#tc033$/,
       ]
     },
     fn: 'expand',
@@ -432,6 +435,9 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#tdi10$/,
         /toRdf-manifest.jsonld#tdi11$/,
         /toRdf-manifest.jsonld#tdi12$/,
+        // unused scoped context
+        /toRdf-manifest.jsonld#tc032$/,
+        /toRdf-manifest.jsonld#tc033$/,
       ]
     },
     fn: 'toRDF',
