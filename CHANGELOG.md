@@ -3,10 +3,18 @@
 ### Fixed
 - More support for `"@type": "@none"`.
 - JSON literal value handling issues (`null` and `[]`).
-- Always pass typeScopedContext to _expandObject.
-- Allow a keyword to exist when expanding in _expandObject when the key is `@included` or `@type`.
-- Improve isDouble to look for big integers.
-- URI removeDotSegments only ensures preceding '/' if was already absolute.
+- Always pass `typeScopedContext` to `_expandObject`.
+- Allow a keyword to exist when expanding in `_expandObject` when the key is
+  `@included` or `@type`.
+- Improve `isDouble` to look for big integers.
+- URI `removeDotSegments` only ensures preceding '/' if was already absolute.
+- Do minimal checking to see if IRIs are valid by making sure they contain no
+  whitespace.
+- Terms of the form of an IRI must map to the same IRI.
+- Terms of the form of a relative IRI may not be used as prefixes.
+
+### Changed
+- Keep term definitions mapping to null so they may be protected.
 
 ## 2.0.2 - 2020-01-17
 
@@ -22,13 +30,6 @@
 
 ### Fixed
 - JSON literal value handling issues.
-- Do minimal checking to see if IRIs are valid by making sure they contain
-  no whitespace.
-- Terms of the form of an IRI must map to the same IRI.
-- Terms of the form of a relative IRI may not be used as prefixes.
-
-### Changed
-- Keep term definitions mapping to null so they may be protected.
 
 ## 2.0.0 - 2019-12-09
 
