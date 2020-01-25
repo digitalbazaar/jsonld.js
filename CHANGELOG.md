@@ -15,6 +15,9 @@
 
 ### Changed
 - Keep term definitions mapping to null so they may be protected.
+- **NOTE**: `LINK_HEADER_REL` in `lib/constants.js` has been deprecated and
+  renamed to `LINK_HEADER_CONTEXT`. It remains for now but will be removed in a
+  future release.
 
 ## 2.0.2 - 2020-01-17
 
