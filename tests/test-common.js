@@ -1102,9 +1102,9 @@ function createDocumentLoader(test) {
         if(Array.isArray(linkHeader)) {
           linkHeader = linkHeader.join(',');
         }
-        const linkHeaders = jsonld.parseLinkHeader(
-          linkHeader)
-        const linkedContext = linkHeaders['http://www.w3.org/ns/json-ld#context'];
+        const linkHeaders = jsonld.parseLinkHeader(linkHeader);
+        const linkedContext =
+          linkHeaders['http://www.w3.org/ns/json-ld#context'];
         if(linkedContext && contentType !== 'application/ld+json') {
           if(Array.isArray(linkedContext)) {
             throw {name: 'multiple context link headers'};
