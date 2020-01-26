@@ -38,14 +38,8 @@
 
 ## 2.0.1 - 2019-12-10
 
-### Added
-- Added support for `@included` blocks
-- Skip things that have the form of a keyword, with warning.
-
 ### Fixed
 - JSON literal value handling issues.
-- Keywords may not be used as prefixes.
-
 
 ## 2.0.0 - 2019-12-09
 
