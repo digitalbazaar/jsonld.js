@@ -12,6 +12,7 @@
   whitespace.
 - Terms of the form of an IRI must map to the same IRI.
 - Terms of the form of a relative IRI may not be used as prefixes.
+- Match spec error code "invalid context entry" vs "invalid context member".
 
 ### Changed
 - Keep term definitions mapping to null so they may be protected.
