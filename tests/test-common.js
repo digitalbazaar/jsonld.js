@@ -93,10 +93,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#thc05$/,
         // remote
         /remote-doc-manifest.jsonld#t0013$/, // HTML
-        // colliding keywords
-        /expand-manifest.jsonld#t0114$/,
-        // keywords
-        /expand-manifest.jsonld#tpr33$/,
         // direction
         /expand-manifest.jsonld#tdi01$/,
         /expand-manifest.jsonld#tdi02$/,
@@ -290,10 +286,6 @@ const TEST_TYPES = {
         /toRdf-manifest.jsonld#te075$/,
         /toRdf-manifest.jsonld#te111$/,
         /toRdf-manifest.jsonld#te112$/,
-        // colliding keyword
-        /toRdf-manifest.jsonld#te114$/,
-        // keywords
-        /toRdf-manifest.jsonld#tpr33$/,
         // direction
         /toRdf-manifest.jsonld#tdi01$/,
         /toRdf-manifest.jsonld#tdi02$/,
