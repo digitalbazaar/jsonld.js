@@ -18,15 +18,15 @@ const outputs = [
   {
     entry: [
       // 'babel-polyfill' is very large, list features explicitly
-      'core-js/fn/array/from',
-      'core-js/fn/array/includes',
-      'core-js/fn/map',
-      'core-js/fn/object/assign',
-      'core-js/fn/object/entries',
-      'core-js/fn/promise',
-      'core-js/fn/set',
-      'core-js/fn/string/starts-with',
-      'core-js/fn/symbol',
+      'core-js/features/array/from',
+      'core-js/features/array/includes',
+      'core-js/features/map',
+      'core-js/features/object/assign',
+      'core-js/features/object/entries',
+      'core-js/features/promise',
+      'core-js/features/set',
+      'core-js/features/string/starts-with',
+      'core-js/features/symbol',
       // main lib
       './lib/index.js'
     ],

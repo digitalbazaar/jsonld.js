@@ -27,18 +27,18 @@
 mocha.setup({delay: true, ui: 'bdd'});
 
 // test suite compatibility
-require('core-js/fn/string/ends-with');
-require('core-js/fn/string/starts-with');
+require('core-js/features/string/ends-with');
+require('core-js/features/string/starts-with');
 
 // jsonld compatibility
-require('core-js/fn/array/from');
-require('core-js/fn/array/includes');
-require('core-js/fn/map');
-require('core-js/fn/object/assign');
-require('core-js/fn/object/entries');
-require('core-js/fn/promise');
-require('core-js/fn/set');
-require('core-js/fn/symbol');
+require('core-js/features/array/from');
+require('core-js/features/array/includes');
+require('core-js/features/map');
+require('core-js/features/object/assign');
+require('core-js/features/object/entries');
+require('core-js/features/promise');
+require('core-js/features/set');
+require('core-js/features/symbol');
 
 const assert = require('chai').assert;
 const common = require('./test-common');
