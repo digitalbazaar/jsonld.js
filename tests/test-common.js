@@ -543,6 +543,12 @@ function addTest(manifest, test, tests) {
         });
       }
 
+      // Make expandContext absolute to the manifest
+      if(test.hasOwnProperty('option') && test.option.expandContext) {
+        test.option.expandContext =
+          prependBase(test.manifest.baseIri, test.option.expandContext);
+      }
+
       const testOptions = getJsonLdValues(test, 'option');
 
       testOptions.forEach(function(opt) {
