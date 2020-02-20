@@ -22,6 +22,10 @@
 - **NOTE**: `LINK_HEADER_REL` in `lib/constants.js` has been deprecated and
   renamed to `LINK_HEADER_CONTEXT`. It remains for now but will be removed in a
   future release.
+- Changed framing defaults
+  - `embed` to "@once" and warn on "@first" or "@last".
+  - `pruneBlankNodeIdentifiers` based on processingMode.
+  - `omitGraph` based on processingMode.
 
 ### Added
 - Support for `"@import"`.
@@ -30,6 +34,7 @@
 - Support for expansion and compaction of values container `"@direction"`.
 - Support for RDF transformation of `@direction` when `rdfDirection` is
   'i18n-datatype'.
+- Top level `@graph` omitted if `omitGraph` is `true`. 
 
 ## 2.0.2 - 2020-01-17
 

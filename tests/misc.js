@@ -22,7 +22,6 @@ describe('link tests', () => {
     p.catch(e => {
       assert.ifError(e);
     }).then(output => {
-      output = output['@graph'][0];
       assert.equal(output, output['a:foo']);
       done();
     });
@@ -453,13 +452,9 @@ describe('js keywords', () => {
   "@context": {
     "@vocab": "http://example.org/"
   },
-  "@graph": [
-    {
-      "toString": {
-        "valueOf": "thing"
-      }
-    }
-  ]
+  "toString": {
+    "valueOf": "thing"
+  }
 }
 ;
     const e = await jsonld.frame(d, frame);
