@@ -35,6 +35,7 @@
 - Support for RDF transformation of `@direction` when `rdfDirection` is
   'i18n-datatype'.
 - Top level `@graph` omitted if `omitGraph` is `true`. 
+- Check for invalid values of `@embed`.
 
 ## 2.0.2 - 2020-01-17
 

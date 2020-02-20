@@ -170,8 +170,6 @@ const TEST_TYPES = {
         // blank nodes
         /frame-manifest.jsonld#t0052$/,
         /frame-manifest.jsonld#t0053$/,
-        // embed
-        /frame-manifest.jsonld#t0054$/,
         // lists
         /frame-manifest.jsonld#t0055$/,
         /frame-manifest.jsonld#t0058$/,
