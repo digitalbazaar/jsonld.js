@@ -126,8 +126,6 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
-        // ex
-        /frame-manifest.jsonld#tg001$/,
         // graphs
         /frame-manifest.jsonld#t0011$/,
         /frame-manifest.jsonld#t0010$/,
@@ -177,12 +175,8 @@ const TEST_TYPES = {
         // lists
         /frame-manifest.jsonld#t0055$/,
         /frame-manifest.jsonld#t0058$/,
-        // misc
-        /frame-manifest.jsonld#tp010$/,
-        /frame-manifest.jsonld#tp050$/,
-        /frame-manifest.jsonld#teo01$/,
+        // @preserve and @container: @set
         /frame-manifest.jsonld#t0062$/,
-        /frame-manifest.jsonld#t0063$/,
         // @embed:@first
         /frame-manifest.jsonld#t0060$/,
         // requireAll
