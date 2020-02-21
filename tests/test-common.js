@@ -126,47 +126,10 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
-        // graphs
-        /frame-manifest.jsonld#t0011$/,
-        /frame-manifest.jsonld#t0010$/,
-        /frame-manifest.jsonld#t0020$/,
-        /frame-manifest.jsonld#t0023$/,
-        /frame-manifest.jsonld#t0026$/,
-        /frame-manifest.jsonld#t0027$/,
-        /frame-manifest.jsonld#t0028$/,
-        /frame-manifest.jsonld#t0029$/,
-        /frame-manifest.jsonld#t0030$/,
-        /frame-manifest.jsonld#t0031$/,
-        /frame-manifest.jsonld#t0032$/,
-        /frame-manifest.jsonld#t0034$/,
-        /frame-manifest.jsonld#t0035$/,
-        /frame-manifest.jsonld#t0036$/,
-        /frame-manifest.jsonld#t0037$/,
-        /frame-manifest.jsonld#t0038$/,
-        /frame-manifest.jsonld#t0039$/,
-        /frame-manifest.jsonld#t0040$/,
-        /frame-manifest.jsonld#t0041$/,
-        /frame-manifest.jsonld#t0042$/,
-        /frame-manifest.jsonld#t0043$/,
-        /frame-manifest.jsonld#t0044$/,
-        /frame-manifest.jsonld#t0045$/,
-        /frame-manifest.jsonld#t0046$/,
-        /frame-manifest.jsonld#t0047$/,
-        /frame-manifest.jsonld#t0048$/,
-        /frame-manifest.jsonld#t0049$/,
-        /frame-manifest.jsonld#t0050$/,
-        /frame-manifest.jsonld#t0051$/,
+        // default value for @type
         /frame-manifest.jsonld#t0064$/,
-        /frame-manifest.jsonld#tg002$/,
-        /frame-manifest.jsonld#tg003$/,
-        /frame-manifest.jsonld#tg004$/,
-        /frame-manifest.jsonld#tg006$/,
-        /frame-manifest.jsonld#tg007$/,
-        /frame-manifest.jsonld#tg008$/,
-        /frame-manifest.jsonld#tg009$/,
+        // @container: @graph
         /frame-manifest.jsonld#tg010$/,
-        /frame-manifest.jsonld#tp046$/,
-        /frame-manifest.jsonld#tp049$/,
         // blank nodes
         /frame-manifest.jsonld#t0052$/,
         /frame-manifest.jsonld#t0053$/,
@@ -175,8 +138,6 @@ const TEST_TYPES = {
         /frame-manifest.jsonld#t0058$/,
         // @preserve and @container: @set
         /frame-manifest.jsonld#t0062$/,
-        // @embed:@first
-        /frame-manifest.jsonld#t0060$/,
         // requireAll
         /frame-manifest.jsonld#tra01$/,
         /frame-manifest.jsonld#tra02$/,
