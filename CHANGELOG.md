@@ -16,6 +16,8 @@
 - Keywords may not be used as prefixes.
 - Handle term definition on `@type` with empty map.
 - Handling of `@` values for `@reverse`.
+- Changes in object embedding.
+- Better support for graph framing.
 
 ### Changed
 - Keep term definitions mapping to null so they may be protected.
@@ -34,7 +36,7 @@
 - Support for expansion and compaction of values container `"@direction"`.
 - Support for RDF transformation of `@direction` when `rdfDirection` is
   'i18n-datatype'.
-- Top level `@graph` omitted if `omitGraph` is `true`. 
+- Top level `@graph` omitted if `omitGraph` is `true`.
 - Check for invalid values of `@embed`.
 
 ## 2.0.2 - 2020-01-17
