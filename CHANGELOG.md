@@ -39,6 +39,7 @@
   'i18n-datatype'.
 - Top level `@graph` omitted if `omitGraph` is `true`.
 - Check for invalid values of `@embed`.
+- Support default values for `@type` when framing.
 
 ## 2.0.2 - 2020-01-17
 
