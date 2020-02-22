@@ -18,6 +18,7 @@
 - Handling of `@` values for `@reverse`.
 - Changes in object embedding.
 - Better support for graph framing.
+- Better frame validation.
 
 ### Changed
 - Keep term definitions mapping to null so they may be protected.

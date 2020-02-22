@@ -126,9 +126,6 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
-        // blank nodes
-        /frame-manifest.jsonld#t0052$/,
-        /frame-manifest.jsonld#t0053$/,
         // lists
         /frame-manifest.jsonld#t0055$/,
         /frame-manifest.jsonld#t0058$/,
