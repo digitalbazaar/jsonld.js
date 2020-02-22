@@ -28,6 +28,7 @@
   - `embed` to "@once" and warn on "@first" or "@last".
   - `pruneBlankNodeIdentifiers` based on processingMode.
   - `omitGraph` based on processingMode.
+- replaced removePreserve with cleanupPreserve and cleanupNulls
 
 ### Added
 - Support for `"@import"`.
