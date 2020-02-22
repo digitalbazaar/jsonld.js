@@ -126,18 +126,12 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       idRegex: [
-        // default value for @type
-        /frame-manifest.jsonld#t0064$/,
-        // @container: @graph
-        /frame-manifest.jsonld#tg010$/,
         // blank nodes
         /frame-manifest.jsonld#t0052$/,
         /frame-manifest.jsonld#t0053$/,
         // lists
         /frame-manifest.jsonld#t0055$/,
         /frame-manifest.jsonld#t0058$/,
-        // @preserve and @container: @set
-        /frame-manifest.jsonld#t0062$/,
         // requireAll
         /frame-manifest.jsonld#tra01$/,
         /frame-manifest.jsonld#tra02$/,
