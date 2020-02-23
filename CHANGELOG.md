@@ -5,6 +5,9 @@
 - Support test environment in EARL output.
 - Support benchmark output in EARL output.
 - Benchmark comparison tool.
+- Event handler option "`handleEvent`" to allow custom handling of warnings and
+  potentially other events in the future. Handles event replay for cached
+  contexts.
 
 ### Changed
 - Change EARL Assertor to Digital Bazaar, Inc.
