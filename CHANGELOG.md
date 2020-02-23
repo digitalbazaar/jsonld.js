@@ -9,6 +9,9 @@
 ### Changed
 - Change EARL Assertor to Digital Bazaar, Inc.
 
+### Removed
+- Experimental non-standard `protectedMode` option.
+
 ## 5.2.0 - 2021-04-07
 
 ### Changed
