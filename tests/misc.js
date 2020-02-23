@@ -1264,3 +1264,172 @@ describe.only('expansionMap', () => {
     });
   });
 });
+
+describe('events', () => {
+  it('handle warning event with function', async () => {
+    const d =
+{
+  "@context": {
+    "@RESERVED": "ex:test-function-handler"
+  },
+  "@RESERVED": "test"
+}
+;
+    const ex = [];
+
+    let handled = false;
+    const e = await jsonld.expand(d, {
+      handleEvent: ({event, next}) => {
+        if(event.code === 'invalid reserved term') {
+          handled = true;
+        } else {
+          next();
+        }
+      }
+    });
+    assert.deepStrictEqual(e, ex);
+    assert.equal(handled, true);
+  });
+  it('cached context event replay', async () => {
+    const d =
+{
+  "@context": {
+    "@RESERVED": "ex:test"
+  },
+  "@RESERVED": "test"
+}
+;
+    const ex = [];
+
+    let handled0 = false;
+    let handled1 = false;
+    const e0 = await jsonld.expand(d, {
+      handleEvent: {
+        'invalid reserved term': () => {
+          handled0 = true;
+        }
+      }
+    });
+    // FIXME: ensure cache is being used
+    const e1 = await jsonld.expand(d, {
+      handleEvent: {
+        'invalid reserved term': () => {
+          handled1 = true;
+        }
+      }
+    });
+    assert.deepStrictEqual(e0, ex);
+    assert.deepStrictEqual(e1, ex);
+    assert.equal(handled0, true, 'handled 0');
+    assert.equal(handled1, true, 'handled 1');
+  });
+  it('handle warning event with array of functions', async () => {
+    const d =
+{
+  "@context": {
+    "@RESERVED": "ex:test-function-array-handler"
+  },
+  "@RESERVED": "test"
+}
+;
+    const ex = [];
+
+    let ranHandler0 = false;
+    let ranHandler1 = false;
+    let handled = false;
+    const e = await jsonld.expand(d, {
+      handleEvent: [
+        ({next}) => {
+          ranHandler0 = true;
+          // skip to next handler
+          next();
+        },
+        ({event, next}) => {
+          ranHandler1 = true;
+          if(event.code === 'invalid reserved term') {
+            handled = true;
+            return;
+          }
+          next();
+        }
+      ]
+    });
+    assert.deepStrictEqual(e, ex);
+    assert.equal(ranHandler0, true, 'ran handler 0');
+    assert.equal(ranHandler1, true, 'ran handler 1');
+    assert.equal(handled, true, 'handled');
+  });
+  it('handle warning event with code:function object', async () => {
+    const d =
+{
+  "@context": {
+    "@RESERVED": "ex:test-object-handler"
+  },
+  "@RESERVED": "test"
+}
+;
+    const ex = [];
+
+    let handled = false;
+    const e = await jsonld.expand(d, {
+      handleEvent: {
+        'invalid reserved term': ({event}) => {
+          assert.equal(event.details.term, '@RESERVED');
+          handled = true;
+        }
+      }
+    });
+    assert.deepStrictEqual(e, ex);
+    assert.equal(handled, true, 'handled');
+  });
+  it('handle warning event with complex handler', async () => {
+    const d =
+{
+  "@context": {
+    "@RESERVED": "ex:test-complex-handler"
+  },
+  "@RESERVED": "test"
+}
+;
+    const ex = [];
+
+    let ranHandler0 = false;
+    let ranHandler1 = false;
+    let ranHandler2 = false;
+    let ranHandler3 = false;
+    let handled = false;
+    const e = await jsonld.expand(d, {
+      handleEvent: [
+        ({next}) => {
+          ranHandler0 = true;
+          next();
+        },
+        [
+          ({next}) => {
+            ranHandler1 = true;
+            next();
+          },
+          {
+            'bogus code': () => {}
+          }
+        ],
+        ({next}) => {
+          ranHandler2 = true;
+          next();
+        },
+        {
+          'invalid reserved term': () => {
+            ranHandler3 = true;
+            handled = true;
+          }
+        }
+      ]
+    });
+    assert.deepStrictEqual(e, ex);
+    assert.equal(ranHandler0, true, 'ran handler 0');
+    assert.equal(ranHandler1, true, 'ran handler 1');
+    assert.equal(ranHandler2, true, 'ran handler 2');
+    assert.equal(ranHandler3, true, 'ran handler 3');
+    assert.equal(handled, true, 'handled');
+  });
+});
