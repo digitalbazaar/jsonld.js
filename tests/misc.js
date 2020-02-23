@@ -1432,4 +1432,109 @@ describe('events', () => {
     assert.equal(ranHandler3, true, 'ran handler 3');
     assert.equal(handled, true, 'handled');
   });
+  it('handle known warning events', async () => {
+    const d =
+{
+  "@context": {
+    "id-at": {"@id": "@test"},
+    "@RESERVED": "ex:test"
+  },
+  "@RESERVED": "test",
+  "ex:language": {
+    "@value": "test",
+    "@language": "!"
+  }
+}
+;
+    const ex =
+[
+  {
+    "ex:language": [
+      {
+        "@value": "test",
+        "@language": "!"
+      }
+    ]
+  }
+]
+;
+
+    let handledReservedTerm = false;
+    let handledReservedValue = false;
+    let handledLanguage = false;
+    const e = await jsonld.expand(d, {
+      handleEvent: {
+        'invalid reserved term': () => {
+          handledReservedTerm = true;
+        },
+        'invalid reserved value': () => {
+          handledReservedValue = true;
+        },
+        'invalid @language value': () => {
+          handledLanguage = true;
+        }
+      }
+    });
+    assert.deepStrictEqual(e, ex);
+    assert.equal(handledReservedTerm, true);
+    assert.equal(handledReservedValue, true);
+    assert.equal(handledLanguage, true);
+
+    // dataset with invalid language tag
+    // Equivalent N-Quads:
+    // <ex:s> <ex:p> "..."^^<https://www.w3.org/ns/i18n#!_rtl> .'
+    // Using JSON dataset to bypass N-Quads parser checks.
+    const d2 =
+[
+  {
+    "subject": {
+      "termType": "NamedNode",
+      "value": "ex:s"
+    },
+    "predicate": {
+      "termType": "NamedNode",
+      "value": "ex:p"
+    },
+    "object": {
+      "termType": "Literal",
+      "value": "invalid @language value",
+      "datatype": {
+        "termType": "NamedNode",
+        "value": "https://www.w3.org/ns/i18n#!_rtl"
+      }
+    },
+    "graph": {
+      "termType": "DefaultGraph",
+      "value": ""
+    }
+  }
+]
+;
+    const ex2 =
+[
+  {
+    "@id": "ex:s",
+    "ex:p": [
+      {
+        "@value": "invalid @language value",
+        "@language": "!",
+        "@direction": "rtl"
+      }
+    ]
+  }
+]
+;
+
+    let handledLanguage2 = false;
+    const e2 = await jsonld.fromRDF(d2, {
+      rdfDirection: 'i18n-datatype',
+      handleEvent: {
+        'invalid @language value': () => {
+          handledLanguage2 = true;
+        }
+      }
+    });
+    assert.deepStrictEqual(e2, ex2);
+    assert.equal(handledLanguage2, true);
+  });
 });
