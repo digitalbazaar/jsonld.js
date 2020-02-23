@@ -22,6 +22,7 @@ const outputs = [
       'core-js/fn/array/includes',
       'core-js/fn/map',
       'core-js/fn/object/assign',
+      'core-js/fn/object/entries',
       'core-js/fn/promise',
       'core-js/fn/set',
       'core-js/fn/string/starts-with',
