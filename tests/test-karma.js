@@ -35,6 +35,7 @@ require('core-js/fn/array/from');
 require('core-js/fn/array/includes');
 require('core-js/fn/map');
 require('core-js/fn/object/assign');
+require('core-js/fn/object/entries');
 require('core-js/fn/promise');
 require('core-js/fn/set');
 require('core-js/fn/symbol');
