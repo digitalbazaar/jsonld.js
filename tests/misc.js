@@ -1279,7 +1279,7 @@ describe('events', () => {
 
     let handled = false;
     const e = await jsonld.expand(d, {
-      handleEvent: ({event, next}) => {
+      eventHandler: ({event, next}) => {
         if(event.code === 'invalid reserved term') {
           handled = true;
         } else {
@@ -1304,7 +1304,7 @@ describe('events', () => {
     let handled0 = false;
     let handled1 = false;
     const e0 = await jsonld.expand(d, {
-      handleEvent: {
+      eventHandler: {
         'invalid reserved term': () => {
           handled0 = true;
         }
@@ -1312,7 +1312,7 @@ describe('events', () => {
     });
     // FIXME: ensure cache is being used
     const e1 = await jsonld.expand(d, {
-      handleEvent: {
+      eventHandler: {
         'invalid reserved term': () => {
           handled1 = true;
         }
@@ -1338,7 +1338,7 @@ describe('events', () => {
     let ranHandler1 = false;
     let handled = false;
     const e = await jsonld.expand(d, {
-      handleEvent: [
+      eventHandler: [
         ({next}) => {
           ranHandler0 = true;
           // skip to next handler
@@ -1372,7 +1372,7 @@ describe('events', () => {
 
     let handled = false;
     const e = await jsonld.expand(d, {
-      handleEvent: {
+      eventHandler: {
         'invalid reserved term': ({event}) => {
           assert.equal(event.details.term, '@RESERVED');
           handled = true;
@@ -1399,7 +1399,7 @@ describe('events', () => {
     let ranHandler3 = false;
     let handled = false;
     const e = await jsonld.expand(d, {
-      handleEvent: [
+      eventHandler: [
         ({next}) => {
           ranHandler0 = true;
           next();
@@ -1463,7 +1463,7 @@ describe('events', () => {
     let handledReservedValue = false;
     let handledLanguage = false;
     const e = await jsonld.expand(d, {
-      handleEvent: {
+      eventHandler: {
         'invalid reserved term': () => {
           handledReservedTerm = true;
         },
@@ -1528,7 +1528,7 @@ describe('events', () => {
     let handledLanguage2 = false;
     const e2 = await jsonld.fromRDF(d2, {
       rdfDirection: 'i18n-datatype',
-      handleEvent: {
+      eventHandler: {
         'invalid @language value': () => {
           handledLanguage2 = true;
         }
