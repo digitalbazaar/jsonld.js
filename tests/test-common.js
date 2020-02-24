@@ -129,12 +129,6 @@ const TEST_TYPES = {
         // lists
         /frame-manifest.jsonld#t0055$/,
         /frame-manifest.jsonld#t0058$/,
-        // requireAll
-        /frame-manifest.jsonld#tra01$/,
-        /frame-manifest.jsonld#tra02$/,
-        /frame-manifest.jsonld#tra03$/,
-        // wildcard
-        /frame-manifest.jsonld#t0061$/,
         // included
         /frame-manifest.jsonld#tin01$/,
         /frame-manifest.jsonld#tin02$/,

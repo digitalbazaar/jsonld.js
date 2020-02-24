@@ -19,6 +19,7 @@
 - Changes in object embedding.
 - Better support for graph framing.
 - Better frame validation.
+- Wildcard matching on `@id` and other requireAll semantics.
 
 ### Changed
 - Keep term definitions mapping to null so they may be protected.
