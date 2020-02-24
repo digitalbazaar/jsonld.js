@@ -19,7 +19,7 @@
 - Changes in object embedding.
 - Better support for graph framing.
 - Better frame validation.
-- Wildcard matching on `@id` and other requireAll semantics.
+- Wildcard matching on `@id` and other `requireAll` semantics.
 
 ### Changed
 - Keep term definitions mapping to null so they may be protected.
@@ -30,7 +30,7 @@
   - `embed` to "@once" and warn on "@first" or "@last".
   - `pruneBlankNodeIdentifiers` based on processingMode.
   - `omitGraph` based on processingMode.
-- replaced removePreserve with cleanupPreserve and cleanupNulls
+- Replaced `removePreserve` with `cleanupPreserve` and `cleanupNulls`.
 
 ### Added
 - Support for `"@import"`.
