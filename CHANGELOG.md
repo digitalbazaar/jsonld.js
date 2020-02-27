@@ -14,6 +14,7 @@
 - Terms of the form of a relative IRI may not be used as prefixes.
 - Match spec error code "invalid context entry" vs "invalid context member".
 - Keywords may not be used as prefixes.
+- Handle term definition on `@type` with empty map.
 
 ### Changed
 - Keep term definitions mapping to null so they may be protected.
