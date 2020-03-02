@@ -460,6 +460,48 @@ describe('js keywords', () => {
     const e = await jsonld.frame(d, frame);
     assert.deepStrictEqual(e, ex);
   });
+
+  it('frame js match on value', async () => {
+    const d =
+{
+  "@context": {
+    "@vocab": "https://schema.org/"
+  },
+  "@graph": [
+    {
+      "@id": "JOHN",
+      "@type": "Person",
+      "givenName": "John"
+    },
+    {
+      "@id": "JANE",
+      "@type": "Person",
+      "givenName": "Jane"
+    }
+  ]
+}
+;
+    const frame =
+{
+  "@context": {
+    "@vocab": "https://schema.org/"
+  },
+  "givenName": "John"
+}
+;
+    const ex =
+{
+  "@context": {
+    "@vocab": "https://schema.org/"
+  },
+  "@id": "JOHN",
+  "@type": "Person",
+  "givenName": "John"
+}
+;
+    const e = await jsonld.frame(d, frame);
+    assert.deepStrictEqual(e, ex);
+  });
 });
 
 describe('literal JSON', () => {
