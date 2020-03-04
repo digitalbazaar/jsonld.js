@@ -21,6 +21,7 @@
 - Better frame validation.
 - Wildcard matching on `@id` and other `requireAll` semantics.
 - Default frame for lists.
+- Check unused scoped contexts for validity.
 
 ### Changed
 - Keep term definitions mapping to null so they may be protected.
