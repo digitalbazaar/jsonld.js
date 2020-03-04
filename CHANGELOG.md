@@ -20,6 +20,7 @@
 - Better support for graph framing.
 - Better frame validation.
 - Wildcard matching on `@id` and other `requireAll` semantics.
+- Default frame for lists.
 
 ### Changed
 - Keep term definitions mapping to null so they may be protected.
