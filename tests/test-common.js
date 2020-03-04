@@ -127,7 +127,6 @@ const TEST_TYPES = {
       // FIXME
       idRegex: [
         // lists
-        /frame-manifest.jsonld#t0055$/,
         /frame-manifest.jsonld#t0058$/,
         // included
         /frame-manifest.jsonld#tin01$/,
