@@ -85,9 +85,6 @@ const TEST_TYPES = {
         /expand-manifest.jsonld#thc05$/,
         // remote
         /remote-doc-manifest.jsonld#t0013$/, // HTML
-        // unused scoped context
-        /expand-manifest.jsonld#tc032$/,
-        /expand-manifest.jsonld#tc033$/,
       ]
     },
     fn: 'expand',
@@ -206,9 +203,6 @@ const TEST_TYPES = {
         // direction (compound-literal)
         /toRdf-manifest.jsonld#tdi11$/,
         /toRdf-manifest.jsonld#tdi12$/,
-        // unused scoped context
-        /toRdf-manifest.jsonld#tc032$/,
-        /toRdf-manifest.jsonld#tc033$/,
       ]
     },
     fn: 'toRDF',
