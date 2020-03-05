@@ -32,6 +32,8 @@ const TEST_TYPES = {
       // see JSON-LD 1.0 Errata
       specVersion: ['json-ld-1.0'],
       // FIXME
+      // NOTE: idRegex format:
+      //MMM-manifest.jsonld#tNNN$/,
       idRegex: [
         // html
         /html-manifest.jsonld#tc001$/,
@@ -54,6 +56,8 @@ const TEST_TYPES = {
       // see JSON-LD 1.0 Errata
       specVersion: ['json-ld-1.0'],
       // FIXME
+      // NOTE: idRegex format:
+      //MMM-manifest.jsonld#tNNN$/,
       idRegex: [
         // html
         /html-manifest.jsonld#te001$/,
@@ -100,6 +104,8 @@ const TEST_TYPES = {
       // see JSON-LD 1.0 Errata
       specVersion: ['json-ld-1.0'],
       // FIXME
+      // NOTE: idRegex format:
+      //MMM-manifest.jsonld#tNNN$/,
       idRegex: [
         // html
         /html-manifest.jsonld#tf001$/,
@@ -122,7 +128,10 @@ const TEST_TYPES = {
       // see JSON-LD 1.0 Errata
       specVersion: ['json-ld-1.0'],
       // FIXME
-      idRegex: []
+      // NOTE: idRegex format:
+      //MMM-manifest.jsonld#tNNN$/,
+      idRegex: [
+      ]
     },
     fn: 'frame',
     params: [
@@ -138,6 +147,8 @@ const TEST_TYPES = {
       // see JSON-LD 1.0 Errata
       specVersion: ['json-ld-1.0'],
       // FIXME
+      // NOTE: idRegex format:
+      //MMM-manifest.jsonld#tNNN$/,
       idRegex: [
         // direction (compound-literal)
         /fromRdf-manifest.jsonld#tdi11$/,
@@ -165,6 +176,8 @@ const TEST_TYPES = {
       // see JSON-LD 1.0 Errata
       specVersion: ['json-ld-1.0'],
       // FIXME
+      // NOTE: idRegex format:
+      //MMM-manifest.jsonld#tNNN$/,
       idRegex: [
         // well formed
         /toRdf-manifest.jsonld#twf05$/,
