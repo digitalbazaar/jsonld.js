@@ -122,14 +122,7 @@ const TEST_TYPES = {
       // see JSON-LD 1.0 Errata
       specVersion: ['json-ld-1.0'],
       // FIXME
-      idRegex: [
-        // lists
-        /frame-manifest.jsonld#t0058$/,
-        // included
-        /frame-manifest.jsonld#tin01$/,
-        /frame-manifest.jsonld#tin02$/,
-        /frame-manifest.jsonld#tin03$/,
-      ]
+      idRegex: []
     },
     fn: 'frame',
     params: [
