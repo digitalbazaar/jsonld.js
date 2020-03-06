@@ -32,7 +32,7 @@ try {
 } catch(e) {
   htmlSupport = false;
 }
-console.log("HTML Support: " + htmlSupport);
+console.log('HTML Support: ' + htmlSupport);
 
 const TEST_TYPES = {
   'jld:CompactTest': {
