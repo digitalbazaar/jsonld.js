@@ -33,6 +33,7 @@
   - `pruneBlankNodeIdentifiers` based on processingMode.
   - `omitGraph` based on processingMode.
 - Replaced `removePreserve` with `cleanupPreserve` and `cleanupNulls`.
+- Remove unused framing `graphStack` code that was removed from the spec.
 
 ### Added
 - Support for `"@import"`.
