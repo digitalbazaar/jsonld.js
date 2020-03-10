@@ -1,5 +1,16 @@
 # jsonld ChangeLog
 
+### Notes
+- This release adds support for a majority of JSON-LD 1.1. Significant thanks
+  goes to Gregg Kellogg!
+- **BREAKING**: A notable change is that the framing `omitGraph` default
+  changed to match the JSON-LD 1.1 Framing spec. This is likely to cause issues
+  in most current uses of `frame()`. Result handling similar to
+  `framed['@graph'][0]` will have to be changed. Check your code.
+- The spec calls for various situations to issue warnings. This is currently
+  done with `console.warn`. This will be replaced by a new event notification
+  API in an upcoming release.
+
 ### Fixed
 - More support for `"@type": "@none"`.
 - JSON literal value handling issues (`null` and `[]`).
