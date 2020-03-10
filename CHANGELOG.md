@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 3.0.1 - 2020-03-10
+
 ### Fixed
 - Exclude `@type` from added values in Merge Node Maps step 2.2.1.
 
