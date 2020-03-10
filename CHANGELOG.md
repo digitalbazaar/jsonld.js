@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 3.0.0 - 2020-03-10
+
 ### Notes
 - This release adds support for a majority of JSON-LD 1.1. Significant thanks
   goes to Gregg Kellogg!
