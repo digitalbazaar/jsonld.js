@@ -786,13 +786,15 @@ async function compareExpectedError(test, err) {
     result = getJsonLdErrorCode(err);
     assert.ok(err, 'no error present');
     assert.strictEqual(result, expect);
-  } catch(err) {
+  } catch(_err) {
     if(options.bailOnError) {
       console.log('\nTEST FAILED\n');
       console.log('EXPECTED: ' + expect);
       console.log('ACTUAL: ' + result);
     }
-    throw err;
+    // log the unexpected error to help with debugging
+    console.log('Unexpected error:', err);
+    throw _err;
   }
 }
 
