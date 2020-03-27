@@ -3,6 +3,8 @@
 ### Fixed
 - Support recusrive scoped contexts.
 - Various EARL report updates.
+- Fixed `prependBase` to start path with a '/' for a zero length path
+  if there is an authority in base.
 
 ### Changed
 - Better support for using a processed context for `null` and caching
