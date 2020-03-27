@@ -59,9 +59,6 @@ const TEST_TYPES = {
       // NOTE: idRegex format:
       //MMM-manifest#tNNN$/,
       idRegex: [
-        // IRI resolution (PR #384)
-        /expand-manifest#t0129$/,
-
         // html
         /html-manifest#te001$/,
         /html-manifest#te002$/,
@@ -182,9 +179,6 @@ const TEST_TYPES = {
       // NOTE: idRegex format:
       //MMM-manifest#tNNN$/,
       idRegex: [
-        // IRI resolution (PR #384)
-        /toRdf-manifest#te129$/,
-
         // well formed
         /toRdf-manifest#twf05$/,
 
