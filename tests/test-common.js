@@ -33,13 +33,13 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       // NOTE: idRegex format:
-      //MMM-manifest.jsonld#tNNN$/,
+      //MMM-manifest#tNNN$/,
       idRegex: [
         // html
-        /html-manifest.jsonld#tc001$/,
-        /html-manifest.jsonld#tc002$/,
-        /html-manifest.jsonld#tc003$/,
-        /html-manifest.jsonld#tc004$/,
+        /html-manifest#tc001$/,
+        /html-manifest#tc002$/,
+        /html-manifest#tc003$/,
+        /html-manifest#tc004$/,
       ]
     },
     fn: 'compact',
@@ -57,38 +57,38 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       // NOTE: idRegex format:
-      //MMM-manifest.jsonld#tNNN$/,
+      //MMM-manifest#tNNN$/,
       idRegex: [
         // html
-        /html-manifest.jsonld#te001$/,
-        /html-manifest.jsonld#te002$/,
-        /html-manifest.jsonld#te003$/,
-        /html-manifest.jsonld#te004$/,
-        /html-manifest.jsonld#te005$/,
-        /html-manifest.jsonld#te006$/,
-        /html-manifest.jsonld#te007$/,
-        /html-manifest.jsonld#te010$/,
-        /html-manifest.jsonld#te011$/,
-        /html-manifest.jsonld#te012$/,
-        /html-manifest.jsonld#te013$/,
-        /html-manifest.jsonld#te014$/,
-        /html-manifest.jsonld#te015$/,
-        /html-manifest.jsonld#te016$/,
-        /html-manifest.jsonld#te017$/,
-        /html-manifest.jsonld#te018$/,
-        /html-manifest.jsonld#te019$/,
-        /html-manifest.jsonld#te020$/,
-        /html-manifest.jsonld#te021$/,
-        /html-manifest.jsonld#te022$/,
-        /html-manifest.jsonld#tex01$/,
+        /html-manifest#te001$/,
+        /html-manifest#te002$/,
+        /html-manifest#te003$/,
+        /html-manifest#te004$/,
+        /html-manifest#te005$/,
+        /html-manifest#te006$/,
+        /html-manifest#te007$/,
+        /html-manifest#te010$/,
+        /html-manifest#te011$/,
+        /html-manifest#te012$/,
+        /html-manifest#te013$/,
+        /html-manifest#te014$/,
+        /html-manifest#te015$/,
+        /html-manifest#te016$/,
+        /html-manifest#te017$/,
+        /html-manifest#te018$/,
+        /html-manifest#te019$/,
+        /html-manifest#te020$/,
+        /html-manifest#te021$/,
+        /html-manifest#te022$/,
+        /html-manifest#tex01$/,
         // HTML extraction
-        /expand-manifest.jsonld#thc01$/,
-        /expand-manifest.jsonld#thc02$/,
-        /expand-manifest.jsonld#thc03$/,
-        /expand-manifest.jsonld#thc04$/,
-        /expand-manifest.jsonld#thc05$/,
+        /expand-manifest#thc01$/,
+        /expand-manifest#thc02$/,
+        /expand-manifest#thc03$/,
+        /expand-manifest#thc04$/,
+        /expand-manifest#thc05$/,
         // remote
-        /remote-doc-manifest.jsonld#t0013$/, // HTML
+        /remote-doc-manifest#t0013$/, // HTML
       ]
     },
     fn: 'expand',
@@ -105,13 +105,13 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       // NOTE: idRegex format:
-      //MMM-manifest.jsonld#tNNN$/,
+      //MMM-manifest#tNNN$/,
       idRegex: [
         // html
-        /html-manifest.jsonld#tf001$/,
-        /html-manifest.jsonld#tf002$/,
-        /html-manifest.jsonld#tf003$/,
-        /html-manifest.jsonld#tf004$/,
+        /html-manifest#tf001$/,
+        /html-manifest#tf002$/,
+        /html-manifest#tf003$/,
+        /html-manifest#tf004$/,
       ]
     },
     fn: 'flatten',
@@ -129,7 +129,7 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       // NOTE: idRegex format:
-      //MMM-manifest.jsonld#tNNN$/,
+      //MMM-manifest#tNNN$/,
       idRegex: [
       ]
     },
@@ -148,11 +148,11 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       // NOTE: idRegex format:
-      //MMM-manifest.jsonld#tNNN$/,
+      //MMM-manifest#tNNN$/,
       idRegex: [
         // direction (compound-literal)
-        /fromRdf-manifest.jsonld#tdi11$/,
-        /fromRdf-manifest.jsonld#tdi12$/,
+        /fromRdf-manifest#tdi11$/,
+        /fromRdf-manifest#tdi12$/,
       ]
     },
     fn: 'fromRDF',
@@ -177,38 +177,38 @@ const TEST_TYPES = {
       specVersion: ['json-ld-1.0'],
       // FIXME
       // NOTE: idRegex format:
-      //MMM-manifest.jsonld#tNNN$/,
+      //MMM-manifest#tNNN$/,
       idRegex: [
         // well formed
-        /toRdf-manifest.jsonld#twf05$/,
+        /toRdf-manifest#twf05$/,
         // html
-        /html-manifest.jsonld#tr001$/,
-        /html-manifest.jsonld#tr002$/,
-        /html-manifest.jsonld#tr003$/,
-        /html-manifest.jsonld#tr004$/,
-        /html-manifest.jsonld#tr005$/,
-        /html-manifest.jsonld#tr006$/,
-        /html-manifest.jsonld#tr007$/,
-        /html-manifest.jsonld#tr010$/,
-        /html-manifest.jsonld#tr011$/,
-        /html-manifest.jsonld#tr012$/,
-        /html-manifest.jsonld#tr013$/,
-        /html-manifest.jsonld#tr014$/,
-        /html-manifest.jsonld#tr015$/,
-        /html-manifest.jsonld#tr016$/,
-        /html-manifest.jsonld#tr017$/,
-        /html-manifest.jsonld#tr018$/,
-        /html-manifest.jsonld#tr019$/,
-        /html-manifest.jsonld#tr020$/,
-        /html-manifest.jsonld#tr021$/,
-        /html-manifest.jsonld#tr022$/,
+        /html-manifest#tr001$/,
+        /html-manifest#tr002$/,
+        /html-manifest#tr003$/,
+        /html-manifest#tr004$/,
+        /html-manifest#tr005$/,
+        /html-manifest#tr006$/,
+        /html-manifest#tr007$/,
+        /html-manifest#tr010$/,
+        /html-manifest#tr011$/,
+        /html-manifest#tr012$/,
+        /html-manifest#tr013$/,
+        /html-manifest#tr014$/,
+        /html-manifest#tr015$/,
+        /html-manifest#tr016$/,
+        /html-manifest#tr017$/,
+        /html-manifest#tr018$/,
+        /html-manifest#tr019$/,
+        /html-manifest#tr020$/,
+        /html-manifest#tr021$/,
+        /html-manifest#tr022$/,
         // Invalid Statement
-        /toRdf-manifest.jsonld#te075$/,
-        /toRdf-manifest.jsonld#te111$/,
-        /toRdf-manifest.jsonld#te112$/,
+        /toRdf-manifest#te075$/,
+        /toRdf-manifest#te111$/,
+        /toRdf-manifest#te112$/,
         // direction (compound-literal)
-        /toRdf-manifest.jsonld#tdi11$/,
-        /toRdf-manifest.jsonld#tdi12$/,
+        /toRdf-manifest#tdi11$/,
+        /toRdf-manifest#tdi12$/,
       ]
     },
     fn: 'toRDF',
@@ -387,7 +387,7 @@ function addTest(manifest, test, tests) {
   // expand @id and input base
   const test_id = test['@id'] || test['id'];
   //var number = test_id.substr(2);
-  test['@id'] = manifest.baseIri + basename(manifest.filename) + test_id;
+  test['@id'] = manifest.baseIri + basename(manifest.filename).replace('.jsonld', '') + test_id;
   test.base = manifest.baseIri + test.input;
   test.manifest = manifest;
   const description = test_id + ' ' + (test.purpose || test.name);
