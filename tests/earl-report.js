@@ -36,7 +36,8 @@ function EarlReport(options) {
       'earl:mode': {'@type': '@id'},
       'earl:test': {'@type': '@id'},
       'earl:outcome': {'@type': '@id'},
-      'dc:date': {'@type': 'xsd:date'}
+      'dc:date': {'@type': 'xsd:dateTime'},
+      'doap:created': {'@type': 'xsd:date'}
     },
     '@id': 'https://github.com/digitalbazaar/jsonld.js',
     '@type': [
@@ -61,16 +62,21 @@ function EarlReport(options) {
       'foaf:name': 'Dave Longley',
       'foaf:homepage': 'https://github.com/dlongley'
     },
-    'dc:date': {
-      '@value': today,
-      '@type': 'xsd:date'
+    'doap:release': {
+      'doap:name': '',
+      'doap:revision': '',
+      'doap:created': today
     },
     'subjectOf': []
   };
   /* eslint-enable quote-props */
+  // FIXME: read this from somewhere
+  version = 'v3.0.1'
   this._report['@id'] += '#' + this.id;
   this._report['doap:name'] += ' ' + this.id;
   this._report['dc:title'] += ' ' + this.id;
+  this._report['doap:release']['doap:name'] = this._report['doap:name'] + ' ' + version;
+  this._report['doap:release']['doap:revision'] = version;
 }
 
 EarlReport.prototype.addAssertion = function(test, pass) {
