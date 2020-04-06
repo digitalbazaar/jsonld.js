@@ -7,6 +7,9 @@
 ### Changed
 - Better support for using a processed context for `null` and caching
   `@import`.
+- Don't set `@base` in initial context and don't resolve a relative IRI
+  when setting `@base` in a context, so that the document location can
+  be kept separate from the context itself.
 
 ## 3.0.1 - 2020-03-10
 
