@@ -388,7 +388,10 @@ function addTest(manifest, test, tests) {
   // expand @id and input base
   const test_id = test['@id'] || test['id'];
   //var number = test_id.substr(2);
-  test['@id'] = manifest.baseIri + basename(manifest.filename).replace('.jsonld', '') + test_id;
+  test['@id'] =
+    manifest.baseIri +
+    basename(manifest.filename).replace('.jsonld', '') +
+    test_id;
   test.base = manifest.baseIri + test.input;
   test.manifest = manifest;
   const description = test_id + ' ' + (test.purpose || test.name);
