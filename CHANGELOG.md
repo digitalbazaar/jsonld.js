@@ -1,5 +1,13 @@
 # jsonld ChangeLog
 
+### Fixed
+- Support recusrive scoped contexts.
+- Various EARL report updates.
+
+### Changed
+- Better support for using a processed context for `null` and caching
+  `@import`.
+
 ## 3.0.1 - 2020-03-10
 
 ### Fixed
