@@ -12,6 +12,7 @@
 - Don't set `@base` in initial context and don't resolve a relative IRI
   when setting `@base` in a context, so that the document location can
   be kept separate from the context itself.
+- Use `package.json` `version` field for EARL reports.
 
 ## 3.0.1 - 2020-03-10
 
