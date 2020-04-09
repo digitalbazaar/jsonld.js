@@ -70,12 +70,12 @@ function EarlReport(options) {
     'subjectOf': []
   };
   /* eslint-enable quote-props */
-  // FIXME: read this from somewhere
-  version = 'v3.0.1'
+  const version = require('../package.json').version;
   this._report['@id'] += '#' + this.id;
   this._report['doap:name'] += ' ' + this.id;
   this._report['dc:title'] += ' ' + this.id;
-  this._report['doap:release']['doap:name'] = this._report['doap:name'] + ' ' + version;
+  this._report['doap:release']['doap:name'] =
+    this._report['doap:name'] + ' ' + version;
   this._report['doap:release']['doap:revision'] = version;
 }
 
