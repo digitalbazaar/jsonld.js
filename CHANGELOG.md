@@ -13,6 +13,10 @@
   when setting `@base` in a context, so that the document location can
   be kept separate from the context itself.
 
+### Added
+- `maxRemoteContexts` option to control the limit before a "context overflow"
+  error.
+
 ## 3.0.1 - 2020-03-10
 
 ### Fixed
