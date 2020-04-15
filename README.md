@@ -83,7 +83,7 @@ yet supported.
 Installation
 ------------
 
-### node.js + npm
+### Node.js + npm
 
 ```
 npm install jsonld
@@ -146,7 +146,7 @@ import {promises} from 'jsonld';
 import {JsonLdProcessor} from 'jsonld';
 ```
 
-### node.js native canonize bindings
+### Node.js native canonize bindings
 
 For specialized use cases there is an optional [rdf-canonize-native][] package
 available which provides a native implementation for `canonize()`. It is used
@@ -288,7 +288,7 @@ const CONTEXTS = {
   }, ...
 };
 
-// grab the built-in node.js doc loader
+// grab the built-in Node.js doc loader
 const nodeDocumentLoader = jsonld.documentLoaders.node();
 // or grab the XHR one: jsonld.documentLoaders.xhr()
 
@@ -390,13 +390,27 @@ Remote context tests are also available:
 
     JSONLD_TESTS=`pwd`/tests npm test
 
-To generate earl reports:
+To generate EARL reports:
 
-    # generate the earl report for node.js
+    # generate the EARL report for Node.js
     EARL=earl-node.jsonld npm test
 
-    # generate the earl report for the browser
+    # generate the EARL report for the browser
     EARL=earl-firefox.jsonld npm run test-karma -- --browser Firefox
+
+To generate an EARL report with the `json-ld-api` and `json-ld-framing` tests
+as used on the official [JSON-LD Processor Conformance][] page
+
+    JSONLD_TESTS="`pwd`/../json-ld-api/tests `pwd`/../json-ld-framing/tests" EARL="jsonld-js-earl.jsonld" npm test
+
+The EARL `.jsonld` output can be converted to `.ttl` using the [rdf][] tool:
+
+    rdf serialize jsonld-js-earl.jsonld --output-format turtle -o jsonld-js-earl.ttl
+
+Optionally follow the [report
+instructions](https://github.com/w3c/json-ld-api/tree/master/reports) to
+generate the HTML report for inspection. Maintainers can
+[submit](https://github.com/w3c/json-ld-api/pulls) updated results as needed.
 
 Benchmarks
 ----------
@@ -428,6 +442,7 @@ Use a command line with a test suite and a benchmark flag:
 [JSON-LD WG Framing latest]: https://w3c.github.io/json-ld-framing/
 [JSON-LD WG latest]: https://w3c.github.io/json-ld-syntax/
 
+[JSON-LD Processor Conformance]: https://w3c.github.io/json-ld-api/reports
 [JSON-LD WG]: https://www.w3.org/2018/json-ld-wg/
 [JSON-LD]: https://json-ld.org/
 [Microdata]: http://www.w3.org/TR/microdata/
