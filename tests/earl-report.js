@@ -18,6 +18,9 @@ function EarlReport(options) {
     (today.getMonth() < 9 ?
       '0' + (today.getMonth() + 1) : today.getMonth() + 1) + '-' +
     (today.getDate() < 10 ? '0' + today.getDate() : today.getDate());
+  // one date for tests with no subsecond resolution
+  this.now = new Date();
+  this.now.setMilliseconds(0);
   this.id = options.id;
   /* eslint-disable quote-props */
   this._report = {
@@ -87,7 +90,7 @@ EarlReport.prototype.addAssertion = function(test, pass) {
     'earl:test': test['@id'],
     'earl:result': {
       '@type': 'earl:TestResult',
-      'dc:date': new Date().toISOString(),
+      'dc:date': this.now.toISOString(),
       'earl:outcome': pass ? 'earl:passed' : 'earl:failed'
     }
   });
