@@ -116,7 +116,7 @@ const options = {
   jsonld,
   exit: code => process.exit(code),
   earl: {
-    id: 'node.js',
+    id: 'Node.js',
     filename: process.env.EARL
   },
   verboseSkip: process.env.VERBOSE_SKIP === 'true',

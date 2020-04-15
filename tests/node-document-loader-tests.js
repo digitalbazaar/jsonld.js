@@ -1,5 +1,5 @@
 /**
- * Local tests for the node.js document loader
+ * Local tests for the Node.js document loader
  *
  * @author goofballLogic
  */
@@ -7,7 +7,7 @@
 const jsonld = require('..');
 const assert = require('assert');
 
-describe('For the node.js document loader', function() {
+describe('For the Node.js document loader', function() {
   const documentLoaderType = 'node';
   const requestMock = function(options, callback) {
     // store these for later inspection
