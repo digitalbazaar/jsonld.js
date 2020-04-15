@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 3.1.0 - 2020-04-15
+
 ### Fixed
 - Support recusrive scoped contexts.
 - Various EARL report updates.
