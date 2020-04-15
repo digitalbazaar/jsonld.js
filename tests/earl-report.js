@@ -36,7 +36,7 @@ function EarlReport(options) {
       'earl:mode': {'@type': '@id'},
       'earl:test': {'@type': '@id'},
       'earl:outcome': {'@type': '@id'},
-      'dc:date': {'@type': 'xsd:dateTime'},
+      'dc:date': {'@type': 'xsd:date'},
       'doap:created': {'@type': 'xsd:date'}
     },
     '@id': 'https://github.com/digitalbazaar/jsonld.js',
