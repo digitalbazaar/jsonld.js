@@ -74,9 +74,10 @@ function EarlReport(options) {
   };
   /* eslint-enable quote-props */
   const version = require('../package.json').version;
-  this._report['@id'] += '#' + this.id;
-  this._report['doap:name'] += ' ' + this.id;
-  this._report['dc:title'] += ' ' + this.id;
+  // FIXME: Improve "Node.js" vs "browser" id reporting
+  // this._report['@id'] += '#' + this.id;
+  // this._report['doap:name'] += ' ' + this.id;
+  // this._report['dc:title'] += ' ' + this.id;
   this._report['doap:release']['doap:name'] =
     this._report['doap:name'] + ' ' + version;
   this._report['doap:release']['doap:revision'] = version;
