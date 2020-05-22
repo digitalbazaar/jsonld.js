@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Fixed
+- Fix XHR document loader Link header processing.
+
 ## 3.1.0 - 2020-04-15
 
 ### Fixed
