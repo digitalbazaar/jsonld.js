@@ -1,5 +1,10 @@
 # jsonld ChangeLog
 
+### Fixed
+- Empty-property scoped context should not effect the outer context. Note that
+  in situations where this fix is used there is now an extra clone of the
+  active context which could potentially cause performance issues.
+
 ## 3.1.1 - 2020-05-22
 
 ### Fixed
