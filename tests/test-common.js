@@ -59,6 +59,11 @@ const TEST_TYPES = {
       // NOTE: idRegex format:
       //MMM-manifest#tNNN$/,
       idRegex: [
+        // misc
+        /expand-manifest#tc037$/,
+        /expand-manifest#tc038$/,
+        /expand-manifest#ter54$/,
+
         // html
         /html-manifest#te001$/,
         /html-manifest#te002$/,
@@ -179,6 +184,13 @@ const TEST_TYPES = {
       // NOTE: idRegex format:
       //MMM-manifest#tNNN$/,
       idRegex: [
+        // misc
+        /toRdf-manifest#tc037$/,
+        /toRdf-manifest#tc038$/,
+        /toRdf-manifest#ter54$/,
+        /toRdf-manifest#tli12$/,
+        /toRdf-manifest#tli14$/,
+
         // well formed
         /toRdf-manifest#twf05$/,
 
