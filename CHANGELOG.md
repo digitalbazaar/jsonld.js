@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 3.3.0 - 2021-01-21
+
 ### Changed
 - Update `rdf-canonize` to 2.0.1.
 - **NOTE**: The `rdf-canonize` update changes browser support and removes forge
