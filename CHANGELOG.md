@@ -9,6 +9,9 @@
   on some modern browsers. Due to other concerns and the expected minimal
   impact of this change, it is happening in a minor release. Please provide
   feedback if this decision causes problems.
+- Node.js 6 is no longer tested due to development tool dependency updates and
+  to avoid adding additional testing complexity. Node.js 6 will otherwise still
+  be supported until the next major release. Please report any issues found.
 
 ## 3.2.0 - 2020-10-13
 
