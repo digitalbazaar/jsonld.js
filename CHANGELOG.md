@@ -1,5 +1,15 @@
 # jsonld ChangeLog
 
+### Changed
+- Update `rdf-canonize` to 2.0.1.
+- **NOTE**: The `rdf-canonize` update changes browser support and removes forge
+  in favor of the WebCrypto `crypto.subtle` API. A WebCrypto polyfill *may* be
+  required if a jsonld.js API is used that calls `rdf-canonize`. The polyfill
+  is needed if older browsers are targeted or when not using a secure context
+  on some modern browsers. Due to other concerns and the expected minimal
+  impact of this change, it is happening in a minor release. Please provide
+  feedback if this decision causes problems.
+
 ## 3.2.0 - 2020-10-13
 
 ### Fixed

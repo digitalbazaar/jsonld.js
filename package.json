@@ -33,7 +33,7 @@
     "canonicalize": "^1.0.1",
     "lru-cache": "^5.1.1",
     "object.fromentries": "^2.0.2",
-    "rdf-canonize": "^1.0.2",
+    "rdf-canonize": "^2.0.1",
     "request": "^2.88.0",
     "semver": "^6.3.0",
     "xmldom": "0.1.19"
