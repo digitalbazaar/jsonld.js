@@ -103,9 +103,11 @@
     "fetch-json-ld-framing-test-suite": "if [ ! -e test-suites/json-wg-framing ]; then git clone --depth 1 https://github.com/w3c/json-ld-framing.git test-suites/json-ld-framing; fi",
     "fetch-json-ld-org-test-suite": "if [ ! -e test-suites/json-ld.org ]; then git clone --depth 1 https://github.com/json-ld/json-ld.org.git test-suites/json-ld.org; fi",
     "fetch-normalization-test-suite": "if [ ! -e test-suites/normalization ]; then git clone --depth 1 https://github.com/json-ld/normalization.git test-suites/normalization; fi",
-    "test": "cross-env NODE_ENV=test mocha --delay -t 30000 -A -R ${REPORTER:-spec} tests/test.js",
+    "test": "npm run test-node",
+    "test-node": "cross-env NODE_ENV=test mocha --delay -t 30000 -A -R ${REPORTER:-spec} tests/test.js",
     "test-karma": "cross-env NODE_ENV=test karma start",
     "coverage": "nyc --reporter=lcov --reporter=text-summary npm test",
+    "coverage-ci": "nyc --reporter=lcovonly npm run test",
     "coverage-report": "nyc report",
     "lint": "eslint *.js lib/**.js tests/**.js"
   },
