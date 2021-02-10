@@ -86,6 +86,7 @@ module.exports = function(config) {
               // include specific packages
               include: [
                 /(node_modules\/canonicalize)/,
+                /(node_modules\/lru-cache)/,
                 /(node_modules\/rdf-canonize)/
               ]
             }],
