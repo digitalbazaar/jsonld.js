@@ -68,6 +68,7 @@ outputs.forEach(info => {
             // include specific packages
             include: [
               /(node_modules\/canonicalize)/,
+              /(node_modules\/lru-cache)/,
               /(node_modules\/rdf-canonize)/
             ]
           }],
