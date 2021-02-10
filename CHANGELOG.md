@@ -1,5 +1,9 @@
 # jsonld ChangeLog
 
+### Fixed
+- Add `lru-cache` to packages run through babel for bundles. Fixes use of arrow
+  functions.
+
 ## 3.3.0 - 2021-01-21
 
 ### Changed
