@@ -1,5 +1,9 @@
 # jsonld ChangeLog
 
+### Fixed
+- Add `yallist` to packages run through babel for bundles. Fixes use of
+  `function*`.
+
 ## 3.3.1 - 2021-02-10
 
 ### Fixed

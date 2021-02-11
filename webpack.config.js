@@ -69,7 +69,8 @@ outputs.forEach(info => {
             include: [
               /(node_modules\/canonicalize)/,
               /(node_modules\/lru-cache)/,
-              /(node_modules\/rdf-canonize)/
+              /(node_modules\/rdf-canonize)/,
+              /(node_modules\/yallist)/
             ]
           }],
           use: {
