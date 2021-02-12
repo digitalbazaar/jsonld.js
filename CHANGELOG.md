@@ -1,9 +1,10 @@
 # jsonld ChangeLog
 
-## 4.0.0 - tbd
+## 4.0.0 - 2021-02-11
 
 ### Removed
-- **BREAKING**: RDFa parser moved to `jsonld-rdfa` package.
+- **BREAKING**: RDFa parser moved to `jsonld-rdfa` package, remove `xmldom`
+  dependency.
 
 ## 3.3.1 - 2021-02-10
 
