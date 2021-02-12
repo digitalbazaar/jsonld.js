@@ -1,5 +1,11 @@
 # jsonld ChangeLog
 
+## 4.0.1 - 2021-02-11
+
+### Changed
+- State which protected term is being redefined.
+- Switch to `core-js@3`.
+
 ## 4.0.0 - 2021-02-11
 
 ### Removed
