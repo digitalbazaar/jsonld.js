@@ -1,12 +1,13 @@
 # jsonld ChangeLog
 
-## 4.2.0 - TBD
+## 5.0.0 - TBD
 
 ### Added
 - New file `/lib/documentLoader/httpClient` a wrapper around `@digitalbazaar/http-client`.
 
 ### Changed
 - Node documentLoader now uses `@digitalbazaar/http-client` instead of `request`.
+- **BREAKING** Supported node version is node >= 10.
 
 ### Removed
 - Use of deprecated library `request` in node documentLoader.
