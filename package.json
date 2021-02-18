@@ -30,6 +30,7 @@
     "lib/**/*.js"
   ],
   "dependencies": {
+    "@digitalbazaar/http-client": "^1.0.0",
     "canonicalize": "^1.0.1",
     "lru-cache": "^5.1.1",
     "object.fromentries": "^2.0.2",
