@@ -2,15 +2,14 @@
 
 ## 5.0.0 - TBD
 
-### Added
-- New file `/lib/documentLoader/httpClient` a wrapper around `@digitalbazaar/http-client`.
-
 ### Changed
 - Node documentLoader now uses `@digitalbazaar/http-client` instead of `request`.
-- **BREAKING** Supported node version is node >= 10.
+- **BREAKING** Supported node version is now node >= 10.
 
 ### Removed
 - Use of deprecated library `request` in node documentLoader.
+- **BREAKING** Parameter `request` has been removed from the node documentLoader.
+- Node documentLoader should no longer be included in browser build.
 
 ## 4.0.1 - 2021-02-11
 
