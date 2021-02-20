@@ -118,7 +118,7 @@
   },
   "browser": {
     "lib/index.js": "./lib/jsonld.js",
-    "lib/documentLoaders/node": false,
+    "lib/documentLoaders/node.js": false,
     "crypto": false,
     "http": false,
     "jsonld-request": false,
