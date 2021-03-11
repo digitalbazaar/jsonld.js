@@ -101,7 +101,11 @@ module.exports = function(config) {
                       useBuiltIns: 'usage',
                       corejs: '3.9',
                       bugfixes: true,
-                      //debug: true
+                      //debug: true,
+                      targets: {
+                        // test with slightly looser browserslist defaults
+                        browsers: 'defaults, > 0.25%'
+                      }
                     }
                   ]
                 ],
