@@ -6,6 +6,9 @@
 - Node documentLoader now uses `@digitalbazaar/http-client` instead of
   `request`.
 - **BREAKING** Supported node version is now node >= 10.
+- Use Babel `usage` mode rather than listing individual polyfills. May increase
+  bundle size but is more automated and likely more accurately supporting
+  intended output targets.
 
 ### Removed
 - Use of deprecated library `request` in node documentLoader.

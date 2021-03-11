@@ -94,7 +94,17 @@ module.exports = function(config) {
             use: {
               loader: 'babel-loader',
               options: {
-                presets: ['@babel/preset-env'],
+                presets: [
+                  [
+                    '@babel/preset-env',
+                    {
+                      useBuiltIns: 'usage',
+                      corejs: '3.9',
+                      bugfixes: true,
+                      //debug: true
+                    }
+                  ]
+                ],
                 plugins: [
                   [
                     '@babel/plugin-proposal-object-rest-spread',
