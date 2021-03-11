@@ -12,6 +12,12 @@
 - **BREAKING**: RDFa parser moved to `jsonld-rdfa` package, remove `xmldom`
   dependency.
 
+## 3.3.2 - 2021-02-10
+
+### Fixed
+- Add `yallist` to packages run through babel for bundles. Fixes use of
+  `function*`.
+
 ## 3.3.1 - 2021-02-10
 
 ### Fixed
