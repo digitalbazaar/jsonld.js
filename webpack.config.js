@@ -17,16 +17,6 @@ const outputs = [
   // core jsonld library
   {
     entry: [
-      // 'babel-polyfill' is very large, list features explicitly
-      'core-js/features/array/from',
-      'core-js/features/array/includes',
-      'core-js/features/map',
-      'core-js/features/object/assign',
-      'core-js/features/object/entries',
-      'core-js/features/promise',
-      'core-js/features/set',
-      'core-js/features/string/starts-with',
-      'core-js/features/symbol',
       // main lib
       './lib/index.js'
     ],
@@ -76,7 +66,18 @@ outputs.forEach(info => {
           use: {
             loader: 'babel-loader',
             options: {
-              presets: ['@babel/preset-env'],
+              presets: [
+                [
+                  '@babel/preset-env',
+                  {
+                    useBuiltIns: 'usage',
+                    corejs: '3.9',
+                    // TODO: remove for babel 8
+                    bugfixes: true,
+                    //debug: true
+                  }
+                ]
+              ],
               plugins: [
                 [
                   '@babel/plugin-proposal-object-rest-spread',
