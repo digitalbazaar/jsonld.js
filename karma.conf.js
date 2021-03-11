@@ -131,8 +131,25 @@ module.exports = function(config) {
     },
 
     browserify: {
-      debug: true
-      //transform: ['uglifyify']
+      debug: false,
+      transform: [
+        //'uglifyify',
+        [
+          'envify', {
+            BAIL: process.env.BAIL,
+            EARL: process.env.EARL,
+            JSONLD_BENCHMARK: process.env.JSONLD_BENCHMARK,
+            JSONLD_TESTS: process.env.JSONLD_TESTS,
+            TEST_ROOT_DIR: __dirname,
+            VERBOSE_SKIP: process.env.VERBOSE_SKIP
+          }
+        ]
+      ],
+      plugin: [
+        [
+          require('esmify')
+        ]
+      ]
     },
 
     // test results reporter to use

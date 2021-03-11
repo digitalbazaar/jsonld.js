@@ -2,23 +2,33 @@
 
 ## 5.0.0 - TBD
 
+### Notes
+- Support is dropped for Node.js versions earlier than v12. This reduces the
+  maintenance burden of being limited by older APIs, development tools, and
+  dependencies. If you need to use an earlier Node.js then either use a
+  previous jsonld.js version or use translation tools and polyfills as needed.
+  (The built-in process to make browser bundles may work for this.) Bug fixes
+  and updates may be back-ported to previous versions from time to time or on
+  request (preferably with a patch).
+
 ### Changed
-- Node documentLoader now uses `@digitalbazaar/http-client` instead of
+- Node.js documentLoader now uses `@digitalbazaar/http-client` instead of
   `request`.
-- **BREAKING** Supported node version is now node >= 10.
+- **BREAKING** Only support Node.js >= 12. Remove related unneeded polyfills,
+  tests, and `node6` output. Update dependencies that needed newer Node.js
+  versions.
 - Use Babel `usage` mode rather than listing individual polyfills. May increase
-  bundle size but is more automated and likely more accurately supporting
-  intended output targets.
+  bundle size due to more accurate support of intended output targets.
 
 ### Added
 - Distribute a `jsonld.esm.min.js` bundle optimized for the features available
   in browsers that support ES Modules.
 
 ### Removed
-- Use of deprecated library `request` in node documentLoader.
-- **BREAKING** Parameter `request` has been removed from the node
+- Use of deprecated library `request` in Node.js documentLoader.
+- **BREAKING** Parameter `request` has been removed from the Node.js
   documentLoader.
-- Node documentLoader should no longer be included in browser build.
+- Node.js documentLoader should no longer be included in browser build.
 
 ## 4.0.1 - 2021-02-11
 
