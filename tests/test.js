@@ -22,20 +22,6 @@
  *
  * Copyright (c) 2011-2019 Digital Bazaar, Inc. All rights reserved.
  */
-
-// support async/await tests in node6
-if(!require('semver').gte(process.version, '8.6.0')) {
-  require('@babel/register')({
-    presets: [
-      [
-        '@babel/preset-env', {
-          targets: 'node 6'
-        }
-      ]
-    ]
-  });
-}
-
 const assert = require('chai').assert;
 const common = require('./test-common');
 const fs = require('fs-extra');

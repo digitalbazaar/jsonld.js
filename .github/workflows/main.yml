@@ -8,7 +8,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [10.x, 12.x, 14.x]
+        node-version: [12.x, 14.x]
     steps:
     - uses: actions/checkout@v2
     - name: Use Node.js ${{ matrix.node-version }}
@@ -27,6 +27,7 @@ jobs:
     strategy:
       matrix:
         node-version: [14.x]
+        bundler: [webpack, browserify]
     steps:
     - uses: actions/checkout@v2
     - name: Use Node.js ${{ matrix.node-version }}
@@ -39,6 +40,8 @@ jobs:
       run: npm run fetch-test-suites
     - name: Run karma tests
       run: npm run test-karma
+      env:
+        BUNDLER: ${{ matrix.bundler }}
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 10
