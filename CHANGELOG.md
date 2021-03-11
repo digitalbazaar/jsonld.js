@@ -10,6 +10,10 @@
   bundle size but is more automated and likely more accurately supporting
   intended output targets.
 
+### Added
+- Distribute a `jsonld.esm.min.js` bundle optimized for the features available
+  in browsers that support ES Modules.
+
 ### Removed
 - Use of deprecated library `request` in node documentLoader.
 - **BREAKING** Parameter `request` has been removed from the node

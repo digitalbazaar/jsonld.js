@@ -14,29 +14,44 @@ module.exports = [];
 // custom setup for each output
 // all built files will export the "jsonld" library but with different content
 const outputs = [
-  // core jsonld library
+  // core jsonld library (standard)
+  // larger version for wide compatibilty
   {
     entry: [
       // main lib
       './lib/index.js'
     ],
-    filenameBase: 'jsonld'
+    filenameBase: 'jsonld',
+    targets: {
+      // use slightly looser browserslist defaults
+      browsers: 'defaults, > 0.25%'
+    }
   },
-  /*
-  // core jsonld library + extra utils and networking support
+  // core jsonld library (esm)
+  // smaller version using features from browsers with ES Modules support
   {
-    entry: ['./lib/index.all.js'],
-    filenameBase: 'jsonld.all'
-  }
-  */
-  // custom builds can be created by specifying the high level files you need
-  // webpack will pull in dependencies as needed
-  // Note: if using UMD or similar, add jsonld.js *last* to properly export
-  // the top level jsonld namespace.
+    entry: [
+      // main lib
+      './lib/index.js'
+    ],
+    filenameBase: 'jsonld.esm',
+    targets: {
+      esmodules: true
+    }
+  },
+  // - custom builds can be created by specifying the high level files you need
+  // - webpack will pull in dependencies as needed
+  // - Note: if using UMD or similar, add jsonld.js *last* to properly export
+  //   the top level jsonld namespace.
+  // - see Babel and browserslist docs for targets
   //{
   //  entry: ['./lib/FOO.js', ..., './lib/jsonld.js'],
   //  filenameBase: 'jsonld.custom'
-  //  libraryTarget: 'umd'
+  //  libraryTarget: 'umd',
+  //  targets: {
+  //    // for example, just target latest browsers for development
+  //    browsers: 'last 1 chrome version, last 1 firefox version',
+  //  }
   //}
 ];
 
@@ -47,6 +62,10 @@ outputs.forEach(info => {
     entry: {
       jsonld: info.entry
     },
+    // enable for easier debugging
+    //optimization: {
+    //  minimize: false
+    //},
     module: {
       rules: [
         {
@@ -74,7 +93,8 @@ outputs.forEach(info => {
                     corejs: '3.9',
                     // TODO: remove for babel 8
                     bugfixes: true,
-                    //debug: true
+                    //debug: true,
+                    targets: info.targets
                   }
                 ]
               ],

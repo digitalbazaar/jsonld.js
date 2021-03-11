@@ -94,7 +94,35 @@ npm install jsonld
 const jsonld = require('jsonld');
 ```
 
-### Browser (AMD) + npm
+### Browser (bundler) + npm
+
+```
+npm install jsonld
+```
+
+Use your favorite bundling technology ([webpack][], [Rollup][], etc) to
+directly bundle your code that loads `jsonld`. Note that you will need support
+for ES2017+ code.
+
+### Browser Bundles
+
+The built npm package includes bundled code suitable for use in browsers. Two
+versions are provided:
+
+- `./dist/jsonld.min.js`: A version built for wide compatibility with modern
+  and older browsers.  Includes many polyfills and code transformations and is
+  larger and less efficient.
+- `./dist/jsonld.esm.min.js`: A version built for features available in
+  browsers that support ES Modules. Fewer polyfills and transformations are
+  required making the code smaller and more efficient.
+
+The two bundles can be used at the same to to allow modern browsers to use
+newer code. Lookup using `script` tags with `type="module"` and `nomodule`.
+
+Also see the `webpack.config.js` if you would like to make a custom bundle for
+specific targets.
+
+#### Browser (AMD) + npm
 
 ```
 npm install jsonld
@@ -102,7 +130,7 @@ npm install jsonld
 
 Use your favorite technology to load `node_modules/dist/jsonld.min.js`.
 
-### CDNJS CDN
+#### CDNJS CDN
 
 To use [CDNJS](https://cdnjs.com/) include this script tag:
 
@@ -112,7 +140,7 @@ To use [CDNJS](https://cdnjs.com/) include this script tag:
 
 Check https://cdnjs.com/libraries/jsonld for the latest available version.
 
-### jsDeliver CDN
+#### jsDeliver CDN
 
 To use [jsDeliver](https://www.jsdelivr.com/) include this script tag:
 
@@ -122,7 +150,7 @@ To use [jsDeliver](https://www.jsdelivr.com/) include this script tag:
 
 See https://www.jsdelivr.com/package/npm/jsonld for the latest available version.
 
-### unpkg CDN
+#### unpkg CDN
 
 To use [unpkg](https://unpkg.com/) include this script tag:
 
@@ -450,6 +478,7 @@ Use a command line with a test suite and a benchmark flag:
 [Microformats]: http://microformats.org/
 [RDFa]: http://www.w3.org/TR/rdfa-core/
 [RFC7159]: http://tools.ietf.org/html/rfc7159
+[Rollup]: https://rollupjs.org/
 [WG test suite]: https://github.com/w3c/json-ld-api/tree/master/tests
 [errata]: http://www.w3.org/2014/json-ld-errata
 [jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
@@ -457,3 +486,4 @@ Use a command line with a test suite and a benchmark flag:
 [rdf-canonize-native]: https://github.com/digitalbazaar/rdf-canonize-native
 [test runner]: https://github.com/digitalbazaar/jsonld.js/blob/master/tests/test-common.js
 [test suite]: https://github.com/json-ld/json-ld.org/tree/master/test-suite
+[webpack]: https://webpack.js.org/
