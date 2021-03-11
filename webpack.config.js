@@ -129,21 +129,7 @@ outputs.forEach(info => {
       library: info.library || '[name]',
       libraryTarget: info.libraryTarget || 'umd'
     },
-    devtool: 'cheap-module-source-map',
-    plugins: [
-      /*
-      new webpack.optimize.UglifyJsPlugin({
-        //beautify: true,
-        compress: {
-          warnings: true
-        },
-        output: {
-          comments: false
-        },
-        sourceMap: true
-      })
-      */
-    ]
+    devtool: 'cheap-module-source-map'
   });
   if(info.library === null) {
     delete minify.output.library;
