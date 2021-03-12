@@ -19,10 +19,12 @@
   versions.
 - Use Babel `usage` mode rather than listing individual polyfills. May increase
   bundle size due to more accurate support of intended output targets.
+- Default Node.js document loader `user-agent` header set to "jsonld.js".
 
 ### Added
 - Distribute a `jsonld.esm.min.js` bundle optimized for the features available
   in browsers that support ES Modules.
+- Default Node.js document loader `httpAgent` and `httpsAgent` options.
 
 ### Removed
 - Use of deprecated library `request` in Node.js documentLoader.

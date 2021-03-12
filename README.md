@@ -340,6 +340,12 @@ const compacted = await jsonld.compact(
   doc, context, {documentLoader: customLoader});
 ```
 
+### Node.js Document Loader User-Agent
+
+It is recommended to set a default `user-agent` header for Node.js
+applications. The default for the default Node.js document loader is
+`jsonld.js`.
+
 Related Modules
 ---------------
 
