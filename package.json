@@ -40,7 +40,6 @@
     "@babel/plugin-transform-modules-commonjs": "^7.13.8",
     "@babel/plugin-transform-runtime": "^7.13.10",
     "@babel/preset-env": "^7.13.10",
-    "@babel/register": "^7.13.8",
     "@babel/runtime": "^7.13.10",
     "babel-loader": "^8.0.5",
     "benchmark": "^2.1.4",
