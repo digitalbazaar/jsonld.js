@@ -25,6 +25,8 @@
 - Distribute a `jsonld.esm.min.js` bundle optimized for the features available
   in browsers that support ES Modules.
 - Default Node.js document loader `httpAgent` and `httpsAgent` options.
+- Add note to README about setting a custom `user-agent` header for the default
+  Node.js document loader.
 
 ### Removed
 - Use of deprecated library `request` in Node.js documentLoader.
