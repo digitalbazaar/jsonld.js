@@ -1,6 +1,6 @@
 # jsonld ChangeLog
 
-## 5.0.0 - TBD
+## 5.0.0 - 2021-03-18
 
 ### Notes
 - Support is dropped for Node.js versions earlier than v12. This reduces the
