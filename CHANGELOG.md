@@ -1,5 +1,12 @@
 # jsonld ChangeLog
 
+## 6.0.0 -
+
+### Changed
+- **BREAKING**: No longer manually define browser global `JsonLdProcessor`;
+  this is left to Webpack and other bundlers. (Currently, this is messing up
+  downstream bundling and karma tests.)
+
 ## 5.0.0 - 2021-03-18
 
 ### Notes
