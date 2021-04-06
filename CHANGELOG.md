@@ -18,7 +18,7 @@
 ### Changed
 - Node.js documentLoader now uses `@digitalbazaar/http-client` instead of
   `request`.
-- **BREAKING** Only support Node.js >= 12. Remove related unneeded polyfills,
+- **BREAKING**: Only support Node.js >= 12. Remove related unneeded polyfills,
   tests, and `node6` output. Update dependencies that needed newer Node.js
   versions.
 - Use Babel `usage` mode rather than listing individual polyfills. May increase
@@ -34,7 +34,7 @@
 
 ### Removed
 - Use of deprecated library `request` in Node.js documentLoader.
-- **BREAKING** Parameter `request` has been removed from the Node.js
+- **BREAKING**: Parameter `request` has been removed from the Node.js
   documentLoader.
 - Node.js documentLoader should no longer be included in browser build.
 
