@@ -3,6 +3,8 @@
 ### Changed
 - Use `globalThis` to set globals in browser contexts.
 - Split platform support out into Node.js and browser files.
+- Update `@digitalbazaar/http-client` dependency to address engine
+  compatibility issues with newer Node.js versions.
 
 ### Fixed
 - Browser override path style.
