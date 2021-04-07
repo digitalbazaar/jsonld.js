@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 5.1.0 - 2021-04-07
+
 ### Changed
 - Use `globalThis` to set globals in browser contexts.
 - Split platform support out into Node.js and browser files.
