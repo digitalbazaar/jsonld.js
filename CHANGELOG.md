@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 5.2.0 - 2021-04-07
+
 ### Changed
 - Update `rdf-canonize`.
 
