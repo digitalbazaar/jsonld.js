@@ -398,7 +398,7 @@ function addManifest(manifest, parent) {
  */
 function addTest(manifest, test, tests) {
   // expand @id and input base
-  const test_id = test['@id'] || test['id'];
+  const test_id = test['@id'] || test.id;
   //var number = test_id.substr(2);
   test['@id'] =
     manifest.baseIri +
@@ -958,10 +958,10 @@ function createDocumentLoader(test) {
         }
 
         // If not JSON-LD, alternate may point there
-        if(linkHeaders['alternate'] &&
-          linkHeaders['alternate'].type == 'application/ld+json' &&
+        if(linkHeaders.alternate &&
+          linkHeaders.alternate.type == 'application/ld+json' &&
           !(contentType || '').match(/^application\/(\w*\+)?json$/)) {
-          doc.documentUrl = prependBase(url, linkHeaders['alternate'].target);
+          doc.documentUrl = prependBase(url, linkHeaders.alternate.target);
         }
       }
     }
