@@ -534,7 +534,7 @@ describe('expansionMap', () => {
 
     let expansionMapCalled = false;
     const expansionMap = info => {
-      if(info.relativeIri && info.relativeIri.value === 'relativeiri') {
+      if(info.relativeIri === 'relativeiri') {
         expansionMapCalled = true;
       }
     };
@@ -557,7 +557,7 @@ describe('expansionMap', () => {
 
     let expansionMapCalled = false;
     const expansionMap = info => {
-      if(info.relativeIri && info.relativeIri.value === 'relativeiri') {
+      if(info.relativeIri === 'relativeiri') {
         expansionMapCalled = true;
       }
     };
@@ -579,7 +579,7 @@ describe('expansionMap', () => {
 
     let expansionMapCalled = false;
     const expansionMap = info => {
-      if(info.relativeIri && info.relativeIri.value === 'relativeiri') {
+      if(info.relativeIri === 'relativeiri') {
         expansionMapCalled = true;
       }
     };
@@ -601,7 +601,7 @@ describe('expansionMap', () => {
 
     let expansionMapCalled = false;
     const expansionMap = info => {
-      if(info.relativeIri && info.relativeIri.value === 'relativeiri') {
+      if(info.relativeIri === 'relativeiri') {
         expansionMapCalled = true;
       }
     };
@@ -624,16 +624,15 @@ describe('expansionMap', () => {
 
     let expansionMapCalledTimes = 0;
     const expansionMap = info => {
-      if(info.relativeIri &&
-        (info.relativeIri.value === 'relativeiri' ||
-         info.relativeIri.value === 'anotherRelativeiri')) {
+      if(info.relativeIri === 'relativeiri' ||
+         info.relativeIri === 'anotherRelativeiri') {
         expansionMapCalledTimes++;
       }
     };
 
     await jsonld.expand(docWithRelativeIriId, {expansionMap});
 
-    assert.equal(expansionMapCalledTimes, 2);
+    assert.equal(expansionMapCalledTimes, 3);
   });
 
   it('should be called on relative iri for \
@@ -649,7 +648,7 @@ describe('expansionMap', () => {
 
     let expansionMapCalled = false;
     const expansionMap = info => {
-      if(info.relativeIri && info.relativeIri.value === 'relativeiri') {
+      if(info.relativeIri === 'relativeiri') {
         expansionMapCalled = true;
       }
     };
@@ -672,7 +671,7 @@ describe('expansionMap', () => {
 
     let expansionMapCalled = false;
     const expansionMap = info => {
-      if(info.relativeIri && info.relativeIri.value === 'relativeiri') {
+      if(info.relativeIri === 'relativeiri') {
         expansionMapCalled = true;
       }
     };
