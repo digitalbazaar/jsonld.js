@@ -478,3 +478,207 @@ describe('literal JSON', () => {
     });
   });
 });
+
+describe('expansionMap', () => {
+  it('should be called on un-mapped term', async () => {
+    const docWithUnMappedTerm = {
+      '@context': {
+        'definedTerm': 'https://example.com#definedTerm'
+      },
+      definedTerm: "is defined",
+      testUndefined: "is undefined"
+    };
+
+    let expansionMapCalled = false;
+    const expansionMap = info => {
+      if(info.unmappedProperty === 'testUndefined') {
+        expansionMapCalled = true;
+      }
+    };
+
+    await jsonld.expand(docWithUnMappedTerm, {expansionMap});
+
+    assert.equal(expansionMapCalled, true);
+  });
+
+  it('should be called on nested un-mapped term', async () => {
+    const docWithUnMappedTerm = {
+      '@context': {
+        'definedTerm': 'https://example.com#definedTerm'
+      },
+      definedTerm: {
+        testUndefined: "is undefined"
+      }
+    };
+
+    let expansionMapCalled = false;
+    const expansionMap = info => {
+      if(info.unmappedProperty === 'testUndefined') {
+        expansionMapCalled = true;
+      }
+    };
+
+    await jsonld.expand(docWithUnMappedTerm, {expansionMap});
+
+    assert.equal(expansionMapCalled, true);
+  });
+
+  it('should be called on relative iri for id term', async () => {
+    const docWithRelativeIriId = {
+      '@context': {
+        'definedTerm': 'https://example.com#definedTerm'
+      },
+      '@id': "relativeiri",
+      definedTerm: "is defined"
+    };
+
+    let expansionMapCalled = false;
+    const expansionMap = info => {
+      if(info.relativeIri && info.relativeIri.value === 'relativeiri') {
+        expansionMapCalled = true;
+      }
+    };
+
+    await jsonld.expand(docWithRelativeIriId, {expansionMap});
+
+    assert.equal(expansionMapCalled, true);
+  });
+
+  it('should be called on relative iri for id term (nested)', async () => {
+    const docWithRelativeIriId = {
+      '@context': {
+        'definedTerm': 'https://example.com#definedTerm'
+      },
+      '@id': "urn:absoluteIri",
+      definedTerm: {
+        '@id': "relativeiri"
+      }
+    };
+
+    let expansionMapCalled = false;
+    const expansionMap = info => {
+      if(info.relativeIri && info.relativeIri.value === 'relativeiri') {
+        expansionMapCalled = true;
+      }
+    };
+
+    await jsonld.expand(docWithRelativeIriId, {expansionMap});
+
+    assert.equal(expansionMapCalled, true);
+  });
+
+  it('should be called on relative iri for aliased id term', async () => {
+    const docWithRelativeIriId = {
+      '@context': {
+        'id': '@id',
+        'definedTerm': 'https://example.com#definedTerm'
+      },
+      'id': "relativeiri",
+      definedTerm: "is defined"
+    };
+
+    let expansionMapCalled = false;
+    const expansionMap = info => {
+      if(info.relativeIri && info.relativeIri.value === 'relativeiri') {
+        expansionMapCalled = true;
+      }
+    };
+
+    await jsonld.expand(docWithRelativeIriId, {expansionMap});
+
+    assert.equal(expansionMapCalled, true);
+  });
+
+  it('should be called on relative iri for type term', async () => {
+    const docWithRelativeIriId = {
+      '@context': {
+        'definedTerm': 'https://example.com#definedTerm'
+      },
+      'id': "urn:absoluteiri",
+      '@type': "relativeiri",
+      definedTerm: "is defined"
+    };
+
+    let expansionMapCalled = false;
+    const expansionMap = info => {
+      if(info.relativeIri && info.relativeIri.value === 'relativeiri') {
+        expansionMapCalled = true;
+      }
+    };
+
+    await jsonld.expand(docWithRelativeIriId, {expansionMap});
+
+    assert.equal(expansionMapCalled, true);
+  });
+
+  it('should be called on relative iri for \
+  type term with multiple relative iri types', async () => {
+    const docWithRelativeIriId = {
+      '@context': {
+        'definedTerm': 'https://example.com#definedTerm'
+      },
+      'id': "urn:absoluteiri",
+      '@type': ["relativeiri", "anotherRelativeiri" ],
+      definedTerm: "is defined"
+    };
+
+    let expansionMapCalledTimes = 0;
+    const expansionMap = info => {
+      if(info.relativeIri &&
+        (info.relativeIri.value === 'relativeiri' ||
+         info.relativeIri.value === 'anotherRelativeiri')) {
+        expansionMapCalledTimes++;
+      }
+    };
+
+    await jsonld.expand(docWithRelativeIriId, {expansionMap});
+
+    assert.equal(expansionMapCalledTimes, 2);
+  });
+
+  it('should be called on relative iri for \
+  type term with multiple types', async () => {
+    const docWithRelativeIriId = {
+      '@context': {
+        'definedTerm': 'https://example.com#definedTerm'
+      },
+      'id': "urn:absoluteiri",
+      '@type': ["relativeiri", "definedTerm" ],
+      definedTerm: "is defined"
+    };
+
+    let expansionMapCalled = false;
+    const expansionMap = info => {
+      if(info.relativeIri && info.relativeIri.value === 'relativeiri') {
+        expansionMapCalled = true;
+      }
+    };
+
+    await jsonld.expand(docWithRelativeIriId, {expansionMap});
+
+    assert.equal(expansionMapCalled, true);
+  });
+
+  it('should be called on relative iri for aliased type term', async () => {
+    const docWithRelativeIriId = {
+      '@context': {
+        'type': "@type",
+        'definedTerm': 'https://example.com#definedTerm'
+      },
+      'id': "urn:absoluteiri",
+      'type': "relativeiri",
+      definedTerm: "is defined"
+    };
+
+    let expansionMapCalled = false;
+    const expansionMap = info => {
+      if(info.relativeIri && info.relativeIri.value === 'relativeiri') {
+        expansionMapCalled = true;
+      }
+    };
+
+    await jsonld.expand(docWithRelativeIriId, {expansionMap});
+
+    assert.equal(expansionMapCalled, true);
+  });
+});
