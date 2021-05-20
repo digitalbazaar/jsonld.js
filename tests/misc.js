@@ -686,12 +686,52 @@ describe('expansionMap', () => {
       '@context': {
         "@base": "./",
       },
-      '@id': "absoluteiri",
+      '@id': "relativeiri",
     };
 
     let expansionMapCalled = false;
     const expansionMap = info => {
-      if(info.relativeIri === '/absoluteiri') {
+      if(info.relativeIri === '/relativeiri') {
+        expansionMapCalled = true;
+      }
+    };
+
+    await jsonld.expand(docWithRelativeIriId, {expansionMap});
+
+    assert.equal(expansionMapCalled, true);
+  });
+
+  it("should be called on relative iri when @base value is './'", async () => {
+    const docWithRelativeIriId = {
+      '@context': {
+        "@base": "./",
+      },
+      '@id': "relativeiri",
+    };
+
+    let expansionMapCalled = false;
+    const expansionMap = info => {
+      if(info.relativeIri === '/relativeiri') {
+        expansionMapCalled = true;
+      }
+    };
+
+    await jsonld.expand(docWithRelativeIriId, {expansionMap});
+
+    assert.equal(expansionMapCalled, true);
+  });
+
+  it("should be called on relative iri when @vocab value is './'", async () => {
+    const docWithRelativeIriId = {
+      '@context': {
+        "@vocab": "./",
+      },
+      '@type': "relativeiri",
+    };
+
+    let expansionMapCalled = false;
+    const expansionMap = info => {
+      if(info.relativeIri === '/relativeiri') {
         expansionMapCalled = true;
       }
     };
