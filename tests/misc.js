@@ -501,7 +501,7 @@ describe('expansionMap', () => {
     assert.equal(expansionMapCalled, true);
   });
 
-  it('should be called on nested un-mapped term', async () => {
+  it('should be called on nested unmapped term', async () => {
     const docWithUnMappedTerm = {
       '@context': {
         'definedTerm': 'https://example.com#definedTerm'
