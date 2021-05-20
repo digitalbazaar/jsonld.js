@@ -480,7 +480,7 @@ describe('literal JSON', () => {
 });
 
 describe('expansionMap', () => {
-  it('should be called on un-mapped term', async () => {
+  it('should be called on unmapped term', async () => {
     const docWithUnMappedTerm = {
       '@context': {
         'definedTerm': 'https://example.com#definedTerm'
