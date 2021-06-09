@@ -614,6 +614,36 @@ describe('expansionMap', () => {
       assert.equal(expansionMapCalled, true);
     });
 
+    it('should be called on relative iri for type term in scoped context', async () => {
+      const docWithRelativeIriId = {
+        '@context': {
+          'definedType': {
+            '@id': 'https://example.com#definedType',
+            '@context': {
+              'definedTerm': 'https://example.com#definedTerm'
+
+            }
+          }
+        },
+        'id': "urn:absoluteiri",
+        '@type': "definedType",
+        definedTerm: {
+          '@type': 'relativeiri'
+        }
+      };
+
+      let expansionMapCalled = false;
+      const expansionMap = info => {
+        if(info.relativeIri === 'relativeiri') {
+          expansionMapCalled = true;
+        }
+      };
+
+      await jsonld.expand(docWithRelativeIriId, {expansionMap});
+
+      assert.equal(expansionMapCalled, true);
+    });
+
     it('should be called on relative iri for \
     type term with multiple relative iri types', async () => {
       const docWithRelativeIriId = {
@@ -623,6 +653,38 @@ describe('expansionMap', () => {
         'id': "urn:absoluteiri",
         '@type': ["relativeiri", "anotherRelativeiri" ],
         definedTerm: "is defined"
+      };
+
+      let expansionMapCalledTimes = 0;
+      const expansionMap = info => {
+        if(info.relativeIri === 'relativeiri' ||
+           info.relativeIri === 'anotherRelativeiri') {
+          expansionMapCalledTimes++;
+        }
+      };
+
+      await jsonld.expand(docWithRelativeIriId, {expansionMap});
+
+      assert.equal(expansionMapCalledTimes, 3);
+    });
+
+    it('should be called on relative iri for \
+    type term with multiple relative iri types in scoped context', async () => {
+      const docWithRelativeIriId = {
+        '@context': {
+          'definedType': {
+            '@id': 'https://example.com#definedType',
+            '@context': {
+              'definedTerm': 'https://example.com#definedTerm'
+
+            }
+          }
+        },
+        'id': "urn:absoluteiri",
+        '@type': "definedType",
+        definedTerm: {
+          '@type': ["relativeiri", "anotherRelativeiri" ]
+        }
       };
 
       let expansionMapCalledTimes = 0;
@@ -764,6 +826,7 @@ describe('expansionMap', () => {
           type: '@vocab',
           vocab: 'http://example.com/',
           value: 'term',
+          typeExpansion: false,
           result: 'http://example.com/term'
         });
         expansionMapCalled = true;
@@ -789,6 +852,7 @@ describe('expansionMap', () => {
           type: '@vocab',
           vocab: 'http://example.com/',
           value: 'relativeIri',
+          typeExpansion: true,
           result: 'http://example.com/relativeIri'
         });
         expansionMapCalled = true;
@@ -815,6 +879,7 @@ describe('expansionMap', () => {
           type: '@vocab',
           vocab: 'http://example.com/',
           value: 'relativeIri',
+          typeExpansion: true,
           result: 'http://example.com/relativeIri'
         });
         expansionMapCalled = true;
@@ -841,6 +906,7 @@ describe('expansionMap', () => {
             type: '@base',
             base: 'http://example.com/',
             value: 'relativeIri',
+            typeExpansion: false,
             result: 'http://example.com/relativeIri'
           });
           expansionMapCalled = true;
@@ -869,6 +935,7 @@ describe('expansionMap', () => {
             type: '@base',
             base: 'http://example.com/',
             value: 'relativeIri',
+            typeExpansion: false,
             result: 'http://example.com/relativeIri'
           });
           expansionMapCalled = true;
@@ -896,6 +963,7 @@ describe('expansionMap', () => {
             type: '@base',
             base: 'http://example.com/',
             value: 'relativeIri',
+            typeExpansion: true,
             result: 'http://example.com/relativeIri'
           });
           expansionMapCalled = true;
@@ -924,6 +992,7 @@ describe('expansionMap', () => {
             type: '@base',
             base: 'http://example.com/',
             value: 'relativeIri',
+            typeExpansion: true,
             result: 'http://example.com/relativeIri'
           });
           expansionMapCalled = true;
