@@ -614,7 +614,8 @@ describe('expansionMap', () => {
       assert.equal(expansionMapCalled, true);
     });
 
-    it('should be called on relative iri for type term in scoped context', async () => {
+    it('should be called on relative iri for type\
+     term in scoped context', async () => {
       const docWithRelativeIriId = {
         '@context': {
           'definedType': {
