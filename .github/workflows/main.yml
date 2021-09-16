@@ -57,6 +57,7 @@ jobs:
     - run: npm install
     - name: Run eslint
       run: npm run lint
+    - uses: wagoid/commitlint-github-action@v4
   coverage:
     needs: [test-node, test-karma]
     runs-on: ubuntu-latest

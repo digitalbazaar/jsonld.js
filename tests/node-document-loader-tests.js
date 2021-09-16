@@ -412,7 +412,7 @@ pjbO9zEyMn/Ksr6YsbaJ44GPJ5U9/ymu288GMA+aqN+jwQKW7Wo8SQ==
   });
 
   describe('link context header should work', function() {
-    it('load url with context link', async function() {
+    it ('load url with context link', async function() {
       jsonld.useDocumentLoader(documentLoaderType);
       const url = _makeHttpUrl({type: 'contextlink', id: 'd2'});
       const expanded = await jsonld.expand(url);

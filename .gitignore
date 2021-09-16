@@ -16,3 +16,6 @@ node_modules
 npm-debug.log
 tests/webidl/*-new
 v8.log
+/.idea
+*.iml
+package-lock.json
