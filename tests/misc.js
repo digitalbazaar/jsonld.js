@@ -479,7 +479,7 @@ describe('literal JSON', () => {
   });
 });
 
-describe('expansionMap', () => {
+describe.only('expansionMap', () => {
   describe('unmappedProperty', () => {
     it('should be called on unmapped term', async () => {
       const docWithUnMappedTerm = {
@@ -614,8 +614,8 @@ describe('expansionMap', () => {
       assert.equal(expansionMapCalled, true);
     });
 
-    it('should be called on relative iri for type\
-     term in scoped context', async () => {
+    it('should be called on relative iri for type ' +
+      'term in scoped context', async () => {
       const docWithRelativeIriId = {
         '@context': {
           'definedType': {
@@ -645,8 +645,8 @@ describe('expansionMap', () => {
       assert.equal(expansionMapCalled, true);
     });
 
-    it('should be called on relative iri for \
-    type term with multiple relative iri types', async () => {
+    it('should be called on relative iri for ' +
+      'type term with multiple relative iri types', async () => {
       const docWithRelativeIriId = {
         '@context': {
           'definedTerm': 'https://example.com#definedTerm'
@@ -669,8 +669,9 @@ describe('expansionMap', () => {
       assert.equal(expansionMapCalledTimes, 3);
     });
 
-    it('should be called on relative iri for \
-    type term with multiple relative iri types in scoped context', async () => {
+    it('should be called on relative iri for ' +
+      'type term with multiple relative iri types in scoped context' +
+      '', async () => {
       const docWithRelativeIriId = {
         '@context': {
           'definedType': {
@@ -701,8 +702,8 @@ describe('expansionMap', () => {
       assert.equal(expansionMapCalledTimes, 3);
     });
 
-    it('should be called on relative iri for \
-    type term with multiple types', async () => {
+    it('should be called on relative iri for ' +
+      'type term with multiple types', async () => {
       const docWithRelativeIriId = {
         '@context': {
           'definedTerm': 'https://example.com#definedTerm'
@@ -747,8 +748,8 @@ describe('expansionMap', () => {
       assert.equal(expansionMapCalled, true);
     });
 
-    it("should be called on relative iri when \
-    @base value is './'", async () => {
+    it("should be called on relative iri when " +
+      "@base value is './'", async () => {
       const docWithRelativeIriId = {
         '@context': {
           "@base": "./",
@@ -768,8 +769,8 @@ describe('expansionMap', () => {
       assert.equal(expansionMapCalled, true);
     });
 
-    it("should be called on relative iri when \
-    @base value is './'", async () => {
+    it("should be called on relative iri when " +
+      "@base value is './'", async () => {
       const docWithRelativeIriId = {
         '@context': {
           "@base": "./",
@@ -789,8 +790,8 @@ describe('expansionMap', () => {
       assert.equal(expansionMapCalled, true);
     });
 
-    it("should be called on relative iri when \
-    @vocab value is './'", async () => {
+    it("should be called on relative iri when " +
+      "@vocab value is './'", async () => {
       const docWithRelativeIriId = {
         '@context': {
           "@vocab": "./",
@@ -812,8 +813,8 @@ describe('expansionMap', () => {
   });
 
   describe('prependedIri', () => {
-    it("should be called when property is \
-    being expanded with `@vocab`", async () => {
+    it("should be called when property is " +
+      "being expanded with `@vocab`", async () => {
       const doc = {
         '@context': {
           "@vocab": "http://example.com/",
@@ -838,8 +839,8 @@ describe('expansionMap', () => {
       assert.equal(expansionMapCalled, true);
     });
 
-    it("should be called when '@type' is \
-    being expanded with `@vocab`", async () => {
+    it("should be called when '@type' is " +
+      "being expanded with `@vocab`", async () => {
       const doc = {
         '@context': {
           "@vocab": "http://example.com/",
@@ -864,8 +865,8 @@ describe('expansionMap', () => {
       assert.equal(expansionMapCalled, true);
     });
 
-    it("should be called when aliased '@type' is \
-    being expanded with `@vocab`", async () => {
+    it("should be called when aliased '@type' is " +
+      "being expanded with `@vocab`", async () => {
       const doc = {
         '@context': {
           "@vocab": "http://example.com/",
@@ -891,8 +892,8 @@ describe('expansionMap', () => {
       assert.equal(expansionMapCalled, true);
     });
 
-    it("should be called when '@id' is being \
-    expanded with `@base`", async () => {
+    it("should be called when '@id' is being " +
+      "expanded with `@base`", async () => {
       const doc = {
         '@context': {
           "@base": "http://example.com/",
@@ -919,8 +920,8 @@ describe('expansionMap', () => {
       assert.equal(expansionMapCalled, true);
     });
 
-    it("should be called when aliased '@id' \
-    is being expanded with `@base`", async () => {
+    it("should be called when aliased '@id' " +
+      "is being expanded with `@base`", async () => {
       const doc = {
         '@context': {
           "@base": "http://example.com/",
@@ -948,8 +949,8 @@ describe('expansionMap', () => {
       assert.equal(expansionMapCalled, true);
     });
 
-    it("should be called when '@type' is \
-    being expanded with `@base`", async () => {
+    it("should be called when '@type' is " +
+      "being expanded with `@base`", async () => {
       const doc = {
         '@context': {
           "@base": "http://example.com/",
@@ -976,8 +977,8 @@ describe('expansionMap', () => {
       assert.equal(expansionMapCalled, true);
     });
 
-    it("should be called when aliased '@type' is \
-    being expanded with `@base`", async () => {
+    it("should be called when aliased '@type' is " +
+      "being expanded with `@base`", async () => {
       const doc = {
         '@context': {
           "@base": "http://example.com/",
