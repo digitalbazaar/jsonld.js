@@ -480,6 +480,48 @@ describe('literal JSON', () => {
 });
 
 describe.only('expansionMap', () => {
+  // track all the counts
+  // use simple count object (don't use tricky test keys!)
+  function addCounts(counts, info) {
+    // overall call count
+    counts.expansionMap = counts.expansionMap || 0;
+    counts.expansionMap++;
+
+    if(info.unmappedProperty) {
+      const c = counts.unmappedProperty = counts.unmappedProperty || {};
+      const k = info.unmappedProperty;
+      c[k] = c[k] || 0;
+      c[k]++;
+    }
+
+    if(info.unmappedValue) {
+      const c = counts.unmappedValue = counts.unmappedValue || {};
+      const v = info.unmappedValue;
+      let k;
+      if(Object.keys(v).length === 1 && '@id' in v) {
+        k = v['@id'];
+      } else {
+        k = '__unknown__';
+      }
+      c[k] = c[k] || 0;
+      c[k]++;
+    }
+
+    if(info.relativeIri) {
+      const c = counts.relativeIri = counts.relativeIri || {};
+      const k = info.relativeIri;
+      c[k] = c[k] || 0;
+      c[k]++;
+    }
+
+    if(info.prependedIri) {
+      const c = counts.prependedIri = counts.prependedIri || {};
+      const k = info.prependedIri.value;
+      c[k] = c[k] || 0;
+      c[k]++;
+    }
+  }
+
   describe('unmappedProperty', () => {
     it('should be called on unmapped term', async () => {
       const docWithUnMappedTerm = {
@@ -490,16 +532,22 @@ describe.only('expansionMap', () => {
         testUndefined: "is undefined"
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
-        if(info.unmappedProperty === 'testUndefined') {
-          expansionMapCalled = true;
-        }
+        addCounts(counts, info);
       };
 
       await jsonld.expand(docWithUnMappedTerm, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 3,
+        relativeIri: {
+          testUndefined: 2
+        },
+        unmappedProperty: {
+          testUndefined: 1
+        }
+      });
     });
 
     it('should be called on nested unmapped term', async () => {
@@ -512,16 +560,22 @@ describe.only('expansionMap', () => {
         }
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
-        if(info.unmappedProperty === 'testUndefined') {
-          expansionMapCalled = true;
-        }
+        addCounts(counts, info);
       };
 
       await jsonld.expand(docWithUnMappedTerm, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 3,
+        relativeIri: {
+          testUndefined: 2
+        },
+        unmappedProperty: {
+          testUndefined: 1
+        }
+      });
     });
   });
 
@@ -535,16 +589,22 @@ describe.only('expansionMap', () => {
         definedTerm: "is defined"
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
-        if(info.relativeIri === 'relativeiri') {
-          expansionMapCalled = true;
-        }
+        addCounts(counts, info);
       };
 
       await jsonld.expand(docWithRelativeIriId, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 2,
+        prependedIri: {
+          relativeiri: 1
+        },
+        relativeIri: {
+          relativeiri: 1
+        }
+      });
     });
 
     it('should be called on relative iri for id term (nested)', async () => {
@@ -558,16 +618,22 @@ describe.only('expansionMap', () => {
         }
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
-        if(info.relativeIri === 'relativeiri') {
-          expansionMapCalled = true;
-        }
+        addCounts(counts, info);
       };
 
       await jsonld.expand(docWithRelativeIriId, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 2,
+        prependedIri: {
+          relativeiri: 1
+        },
+        relativeIri: {
+          relativeiri: 1
+        }
+      });
     });
 
     it('should be called on relative iri for aliased id term', async () => {
@@ -580,16 +646,22 @@ describe.only('expansionMap', () => {
         definedTerm: "is defined"
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
-        if(info.relativeIri === 'relativeiri') {
-          expansionMapCalled = true;
-        }
+        addCounts(counts, info);
       };
 
       await jsonld.expand(docWithRelativeIriId, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 2,
+        prependedIri: {
+          relativeiri: 1
+        },
+        relativeIri: {
+          relativeiri: 1
+        }
+      });
     });
 
     it('should be called on relative iri for type term', async () => {
@@ -602,16 +674,26 @@ describe.only('expansionMap', () => {
         definedTerm: "is defined"
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
-        if(info.relativeIri === 'relativeiri') {
-          expansionMapCalled = true;
-        }
+        addCounts(counts, info);
       };
 
       await jsonld.expand(docWithRelativeIriId, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 6,
+        prependedIri: {
+          relativeiri: 1
+        },
+        relativeIri: {
+          id: 2,
+          relativeiri: 2
+        },
+        unmappedProperty: {
+          id: 1
+        }
+      });
     });
 
     it('should be called on relative iri for type ' +
@@ -633,16 +715,26 @@ describe.only('expansionMap', () => {
         }
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
-        if(info.relativeIri === 'relativeiri') {
-          expansionMapCalled = true;
-        }
+        addCounts(counts, info);
       };
 
       await jsonld.expand(docWithRelativeIriId, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 6,
+        prependedIri: {
+          relativeiri: 1
+        },
+        relativeIri: {
+          id: 2,
+          relativeiri: 2
+        },
+        unmappedProperty: {
+          id: 1
+        }
+      });
     });
 
     it('should be called on relative iri for ' +
@@ -656,17 +748,28 @@ describe.only('expansionMap', () => {
         definedTerm: "is defined"
       };
 
-      let expansionMapCalledTimes = 0;
+      const counts = {};
       const expansionMap = info => {
-        if(info.relativeIri === 'relativeiri' ||
-           info.relativeIri === 'anotherRelativeiri') {
-          expansionMapCalledTimes++;
-        }
+        addCounts(counts, info);
       };
 
       await jsonld.expand(docWithRelativeIriId, {expansionMap});
 
-      assert.equal(expansionMapCalledTimes, 3);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 8,
+        prependedIri: {
+          anotherRelativeiri: 1,
+          relativeiri: 1
+        },
+        relativeIri: {
+          anotherRelativeiri: 1,
+          id: 2,
+          relativeiri: 2
+        },
+        unmappedProperty: {
+          id: 1
+        }
+      });
     });
 
     it('should be called on relative iri for ' +
@@ -689,17 +792,28 @@ describe.only('expansionMap', () => {
         }
       };
 
-      let expansionMapCalledTimes = 0;
+      const counts = {};
       const expansionMap = info => {
-        if(info.relativeIri === 'relativeiri' ||
-           info.relativeIri === 'anotherRelativeiri') {
-          expansionMapCalledTimes++;
-        }
+        addCounts(counts, info);
       };
 
       await jsonld.expand(docWithRelativeIriId, {expansionMap});
 
-      assert.equal(expansionMapCalledTimes, 3);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 8,
+        prependedIri: {
+          anotherRelativeiri: 1,
+          relativeiri: 1
+        },
+        relativeIri: {
+          anotherRelativeiri: 1,
+          id: 2,
+          relativeiri: 2
+        },
+        unmappedProperty: {
+          id: 1
+        }
+      });
     });
 
     it('should be called on relative iri for ' +
@@ -713,16 +827,26 @@ describe.only('expansionMap', () => {
         definedTerm: "is defined"
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
-        if(info.relativeIri === 'relativeiri') {
-          expansionMapCalled = true;
-        }
+        addCounts(counts, info);
       };
 
       await jsonld.expand(docWithRelativeIriId, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 6,
+        prependedIri: {
+          relativeiri: 1
+        },
+        relativeIri: {
+          id: 2,
+          relativeiri: 2
+        },
+        unmappedProperty: {
+          id: 1
+        }
+      });
     });
 
     it('should be called on relative iri for aliased type term', async () => {
@@ -736,16 +860,26 @@ describe.only('expansionMap', () => {
         definedTerm: "is defined"
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
-        if(info.relativeIri === 'relativeiri') {
-          expansionMapCalled = true;
-        }
+        addCounts(counts, info);
       };
 
       await jsonld.expand(docWithRelativeIriId, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 6,
+        prependedIri: {
+          relativeiri: 1
+        },
+        relativeIri: {
+          id: 2,
+          relativeiri: 2
+        },
+        unmappedProperty: {
+          id: 1
+        }
+      });
     });
 
     it("should be called on relative iri when " +
@@ -757,16 +891,25 @@ describe.only('expansionMap', () => {
         '@id': "relativeiri",
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
-        if(info.relativeIri === '/relativeiri') {
-          expansionMapCalled = true;
-        }
+        addCounts(counts, info);
       };
 
       await jsonld.expand(docWithRelativeIriId, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 3,
+        prependedIri: {
+          'relativeiri': 1
+        },
+        relativeIri: {
+          '/relativeiri': 1
+        },
+        unmappedValue: {
+          '/relativeiri': 1
+        }
+      });
     });
 
     it("should be called on relative iri when " +
@@ -778,16 +921,25 @@ describe.only('expansionMap', () => {
         '@id': "relativeiri",
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
-        if(info.relativeIri === '/relativeiri') {
-          expansionMapCalled = true;
-        }
+        addCounts(counts, info);
       };
 
       await jsonld.expand(docWithRelativeIriId, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 3,
+        prependedIri: {
+          relativeiri: 1
+        },
+        relativeIri: {
+          '/relativeiri': 1
+        },
+        unmappedValue: {
+          '/relativeiri': 1
+        }
+      });
     });
 
     it("should be called on relative iri when " +
@@ -799,16 +951,24 @@ describe.only('expansionMap', () => {
         '@type': "relativeiri",
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
-        if(info.relativeIri === '/relativeiri') {
-          expansionMapCalled = true;
-        }
+        addCounts(counts, info);
       };
 
       await jsonld.expand(docWithRelativeIriId, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 6,
+        prependedIri: {
+          './': 1,
+          relativeiri: 2
+        },
+        relativeIri: {
+          '/': 1,
+          '/relativeiri': 2
+        }
+      });
     });
   });
 
@@ -822,8 +982,9 @@ describe.only('expansionMap', () => {
         'term': "termValue",
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
+        addCounts(counts, info);
         assert.deepStrictEqual(info.prependedIri, {
           type: '@vocab',
           vocab: 'http://example.com/',
@@ -831,12 +992,16 @@ describe.only('expansionMap', () => {
           typeExpansion: false,
           result: 'http://example.com/term'
         });
-        expansionMapCalled = true;
       };
 
       await jsonld.expand(doc, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 4,
+        prependedIri: {
+          term: 4
+        }
+      });
     });
 
     it("should be called when '@type' is " +
@@ -848,8 +1013,9 @@ describe.only('expansionMap', () => {
         '@type': "relativeIri",
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
+        addCounts(counts, info);
         assert.deepStrictEqual(info.prependedIri, {
           type: '@vocab',
           vocab: 'http://example.com/',
@@ -857,12 +1023,16 @@ describe.only('expansionMap', () => {
           typeExpansion: true,
           result: 'http://example.com/relativeIri'
         });
-        expansionMapCalled = true;
       };
 
       await jsonld.expand(doc, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 2,
+        prependedIri: {
+          relativeIri: 2
+        }
+      });
     });
 
     it("should be called when aliased '@type' is " +
@@ -875,8 +1045,9 @@ describe.only('expansionMap', () => {
         'type': "relativeIri",
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
+        addCounts(counts, info);
         assert.deepStrictEqual(info.prependedIri, {
           type: '@vocab',
           vocab: 'http://example.com/',
@@ -884,12 +1055,16 @@ describe.only('expansionMap', () => {
           typeExpansion: true,
           result: 'http://example.com/relativeIri'
         });
-        expansionMapCalled = true;
       };
 
       await jsonld.expand(doc, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 2,
+        prependedIri: {
+          relativeIri: 2
+        }
+      });
     });
 
     it("should be called when '@id' is being " +
@@ -901,8 +1076,9 @@ describe.only('expansionMap', () => {
         '@id': "relativeIri",
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
+        addCounts(counts, info);
         if(info.prependedIri) {
           assert.deepStrictEqual(info.prependedIri, {
             type: '@base',
@@ -911,13 +1087,20 @@ describe.only('expansionMap', () => {
             typeExpansion: false,
             result: 'http://example.com/relativeIri'
           });
-          expansionMapCalled = true;
         }
       };
 
       await jsonld.expand(doc, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 2,
+        prependedIri: {
+          relativeIri: 1
+        },
+        unmappedValue: {
+          'http://example.com/relativeIri': 1
+        }
+      });
     });
 
     it("should be called when aliased '@id' " +
@@ -930,8 +1113,9 @@ describe.only('expansionMap', () => {
         'id': "relativeIri",
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
+        addCounts(counts, info);
         if(info.prependedIri) {
           assert.deepStrictEqual(info.prependedIri, {
             type: '@base',
@@ -940,13 +1124,20 @@ describe.only('expansionMap', () => {
             typeExpansion: false,
             result: 'http://example.com/relativeIri'
           });
-          expansionMapCalled = true;
         }
       };
 
       await jsonld.expand(doc, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 2,
+        prependedIri: {
+          relativeIri: 1
+        },
+        unmappedValue: {
+          'http://example.com/relativeIri': 1
+        }
+      });
     });
 
     it("should be called when '@type' is " +
@@ -958,8 +1149,9 @@ describe.only('expansionMap', () => {
         '@type': "relativeIri",
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
+        addCounts(counts, info);
         if(info.prependedIri) {
           assert.deepStrictEqual(info.prependedIri, {
             type: '@base',
@@ -968,13 +1160,20 @@ describe.only('expansionMap', () => {
             typeExpansion: true,
             result: 'http://example.com/relativeIri'
           });
-          expansionMapCalled = true;
         }
       };
 
       await jsonld.expand(doc, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 2,
+        prependedIri: {
+          relativeIri: 1
+        },
+        relativeIri: {
+          relativeIri: 1
+        }
+      });
     });
 
     it("should be called when aliased '@type' is " +
@@ -987,8 +1186,9 @@ describe.only('expansionMap', () => {
         'type': "relativeIri",
       };
 
-      let expansionMapCalled = false;
+      const counts = {};
       const expansionMap = info => {
+        addCounts(counts, info);
         if(info.prependedIri) {
           assert.deepStrictEqual(info.prependedIri, {
             type: '@base',
@@ -997,13 +1197,20 @@ describe.only('expansionMap', () => {
             typeExpansion: true,
             result: 'http://example.com/relativeIri'
           });
-          expansionMapCalled = true;
         }
       };
 
       await jsonld.expand(doc, {expansionMap});
 
-      assert.equal(expansionMapCalled, true);
+      assert.deepStrictEqual(counts, {
+        expansionMap: 2,
+        prependedIri: {
+          relativeIri: 1
+        },
+        relativeIri: {
+          relativeIri: 1
+        }
+      });
     });
   });
 });
