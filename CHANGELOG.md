@@ -1,6 +1,10 @@
 # jsonld ChangeLog
 
+### Added
 - Support benchmarks in Karma tests.
+
+### Changed
+- Change EARL Assertor to Digital Bazaar, Inc.
 
 ## 5.2.0 - 2021-04-07
 
