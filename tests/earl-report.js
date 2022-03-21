@@ -94,7 +94,7 @@ EarlReport.prototype.addAssertion = function(test, pass, options) {
     'earl:result': {
       '@type': 'earl:TestResult',
       'dc:date': this.now.toISOString(),
-      'earl:outcome': pass ? 'earl:passed' : 'earl:failed'
+      'earl:outcome': pass ? 'earl:passed' : 'earl:failed',
       ...options.extra
     }
   });
