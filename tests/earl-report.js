@@ -3,7 +3,7 @@
  *
  * @author Dave Longley
  *
- * Copyright (c) 2011-2017 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2011-2022 Digital Bazaar, Inc. All rights reserved.
  */
 
 /**
@@ -58,15 +58,15 @@ function EarlReport(options) {
       'https://github.com/digitalbazaar/jsonld.js/blob/master/LICENSE',
     'doap:description': 'A JSON-LD processor for JavaScript',
     'doap:programming-language': 'JavaScript',
-    'dc:creator': 'https://github.com/dlongley',
+    'dc:creator': 'https://github.com/digitalbazaar',
     'doap:developer': {
-      '@id': 'https://github.com/dlongley',
+      '@id': 'https://github.com/digitalbazaar',
       '@type': [
-        'foaf:Person',
+        'foaf:Organization',
         'earl:Assertor'
       ],
-      'foaf:name': 'Dave Longley',
-      'foaf:homepage': 'https://github.com/dlongley'
+      'foaf:name': 'Digital Bazaar, Inc.',
+      'foaf:homepage': 'https://github.com/digitalbazaar'
     },
     'doap:release': {
       'doap:name': '',
