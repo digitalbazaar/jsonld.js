@@ -456,11 +456,14 @@ Use a command line with a test suite and a benchmark flag:
     JSONLD_TESTS=/tmp/benchmark-manifest.jsonld JSONLD_BENCHMARK=1 npm test
 
 EARL reports with benchmark data can be generated with an optional environment
-tag:
+details:
 
-    JSONLD_TESTS=`pwd`/../json-ld.org/benchmarks/b001-manifiest.jsonld JSONLD_BENCHMARK=1 EARL=earl-test.jsonld EARL_ENV='CPU=Intel-i7-4790K@4.00GHz,Node.js=v10.16.3,jsonld.js=v1.7.0' npm test
+    JSONLD_TESTS=`pwd`/../json-ld.org/benchmarks/b001-manifiest.jsonld JSONLD_BENCHMARK=1 EARL=earl-test.jsonld TEST_ENV=1 npm test
 
-These reports can be compared at the [JSON-LD Benchmarks][] site.
+See `tests/test.js` for more `TEST_ENV` control and options.
+
+These reports can be compared with the `tests/benchmark-compare` tool and at
+the [JSON-LD Benchmarks][] site.
 
 [Digital Bazaar]: https://digitalbazaar.com/
 

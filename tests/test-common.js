@@ -266,8 +266,11 @@ const SKIP_TESTS = [];
 if(options.earl && options.earl.filename) {
   options.earl.report = new EarlReport({
     id: options.earl.id,
-    env: options.earl.env
+    env: options.testEnv
   });
+  if(options.benchmarkOptions) {
+    options.earl.report.setupForBenchmarks({testEnv: options.testEnv});
+  }
 }
 
 return new Promise(resolve => {
@@ -573,7 +576,7 @@ function addTest(manifest, test, tests) {
           throw Error('Unknown test type: ' + test.type);
         }
 
-        let benchResult = null;
+        let benchmarkResult = null;
         if(options.benchmarkOptions) {
           const result = await runBenchmark({
             test,
@@ -584,16 +587,16 @@ function addTest(manifest, test, tests) {
             })),
             mochaTest: self
           });
-          benchResult = {
-            'jsonld:benchmarkHz': result.target.hz
+          benchmarkResult = {
+            '@type': 'jldb:BenchmarkResult',
+            'jldb:hz': result.target.hz,
+            'jldb:rme': result.target.stats.rme
           };
         }
 
         if(options.earl.report) {
           options.earl.report.addAssertion(test, true, {
-            extra: {
-              ...benchResult
-            }
+            benchmarkResult
           });
         }
       } catch(err) {

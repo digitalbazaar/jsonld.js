@@ -2,6 +2,8 @@
 
 ### Added
 - Support benchmarks in Karma tests.
+- Support test environment in EARL output.
+- Support benchmark output in EARL output.
 
 ### Changed
 - Change EARL Assertor to Digital Bazaar, Inc.
