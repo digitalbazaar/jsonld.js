@@ -78,7 +78,7 @@ function EarlReport(options) {
   };
   /* eslint-enable quote-props */
   if(this.env && this.env.version) {
-    this._report['doap:release']['doap:name'] = this.env.version;
+    this._report['doap:release']['doap:revision'] = this.env.version;
   }
 }
 
