@@ -286,11 +286,13 @@ const _tests = [];
 
 return addManifest(manifest, _tests)
   .then(() => {
-    _testsToMocha(_tests);
-  }).then(() => {
+    return _testsToMocha(_tests);
+  }).then(result => {
     if(options.earl.report) {
       describe('Writing EARL report to: ' + options.earl.filename, function() {
-        it('should print the earl report', function() {
+        // print out EARL even if .only was used
+        const _it = result.hadOnly ? it.only : it;
+        _it('should print the earl report', function() {
           return options.writeFile(
             options.earl.filename, options.earl.report.reportJson());
         });
@@ -300,6 +302,7 @@ return addManifest(manifest, _tests)
 
 // build mocha tests from local test structure
 function _testsToMocha(tests) {
+  let hadOnly = false;
   tests.forEach(suite => {
     if(suite.skip) {
       describe.skip(suite.title);
@@ -308,17 +311,22 @@ function _testsToMocha(tests) {
     describe(suite.title, () => {
       suite.tests.forEach(test => {
         if(test.only) {
+          hadOnly = true;
           it.only(test.title, test.f);
           return;
         }
         it(test.title, test.f);
       });
-      _testsToMocha(suite.suites);
+      const {hadOnly: _hadOnly} = _testsToMocha(suite.suites);
+      hadOnly = hadOnly || _hadOnly;
     });
     suite.imports.forEach(f => {
       options.import(f);
     });
   });
+  return {
+    hadOnly
+  };
 }
 
 });
