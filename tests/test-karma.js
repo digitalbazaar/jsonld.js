@@ -54,9 +54,10 @@ const join = require('join-path-js');
 
 // special benchmark setup
 const _ = require('lodash');
-const _process = require('process');
+//const _process = require('process');
 const benchmark = require('benchmark');
-const Benchmark = benchmark.runInContext({_, _process});
+//const Benchmark = benchmark.runInContext({_, _process});
+const Benchmark = benchmark.runInContext({_});
 window.Benchmark = Benchmark;
 
 const entries = [];
