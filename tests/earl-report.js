@@ -58,15 +58,15 @@ function EarlReport(options) {
       'https://github.com/digitalbazaar/jsonld.js/blob/master/LICENSE',
     'doap:description': 'A JSON-LD processor for JavaScript',
     'doap:programming-language': 'JavaScript',
-    'dc:creator': 'https://github.com/digitalbazaar',
+    'dc:creator': 'https://digitalbazaar.com/',
     'doap:developer': {
-      '@id': 'https://github.com/digitalbazaar',
+      '@id': 'https://digitalbazaar.com/',
       '@type': [
         'foaf:Organization',
         'earl:Assertor'
       ],
       'foaf:name': 'Digital Bazaar, Inc.',
-      'foaf:homepage': 'https://github.com/digitalbazaar'
+      'foaf:homepage': 'https://digitalbazaar.com/'
     },
     'doap:release': {
       'doap:name': '',
