@@ -13,6 +13,7 @@
  *
  * Copyright (c) 2011-2017 Digital Bazaar, Inc. All rights reserved.
  */
+const os = require('os');
 const webpack = require('webpack');
 
 module.exports = function(config) {
@@ -67,12 +68,19 @@ module.exports = function(config) {
         new webpack.DefinePlugin({
           'process.env.BAIL': JSON.stringify(process.env.BAIL),
           'process.env.EARL': JSON.stringify(process.env.EARL),
-          'process.env.EARL_ENV': JSON.stringify(process.env.EARL_ENV),
+          'process.env.TEST_ENV': JSON.stringify(process.env.TEST_ENV),
           'process.env.JSONLD_BENCHMARK':
             JSON.stringify(process.env.JSONLD_BENCHMARK),
           'process.env.JSONLD_TESTS': JSON.stringify(process.env.JSONLD_TESTS),
           'process.env.TEST_ROOT_DIR': JSON.stringify(__dirname),
-          'process.env.VERBOSE_SKIP': JSON.stringify(process.env.VERBOSE_SKIP)
+          'process.env.VERBOSE_SKIP': JSON.stringify(process.env.VERBOSE_SKIP),
+          // for 'auto' test env
+          'process.env._TEST_ENV_ARCH': JSON.stringify(process.arch),
+          'process.env._TEST_ENV_CPU': JSON.stringify(os.cpus()[0].model),
+          'process.env._TEST_ENV_CPU_COUNT': JSON.stringify(os.cpus().length),
+          'process.env._TEST_ENV_PLATFORM': JSON.stringify(process.platform),
+          'process.env._TEST_VERSION':
+            JSON.stringify(require('./package.json').version)
         })
       ],
       module: {
@@ -142,10 +150,17 @@ module.exports = function(config) {
           'envify', {
             BAIL: process.env.BAIL,
             EARL: process.env.EARL,
+            TEST_ENV: process.env.TEST_ENV,
             JSONLD_BENCHMARK: process.env.JSONLD_BENCHMARK,
             JSONLD_TESTS: process.env.JSONLD_TESTS,
             TEST_ROOT_DIR: __dirname,
-            VERBOSE_SKIP: process.env.VERBOSE_SKIP
+            VERBOSE_SKIP: process.env.VERBOSE_SKIP,
+            // for 'auto' test env
+            _TEST_ENV_ARCH: process.arch,
+            _TEST_ENV_CPU: os.cpus()[0].model,
+            _TEST_ENV_CPU_COUNT: os.cpus().length,
+            _TEST_ENV_PLATFORM: process.platform,
+            _TEST_VERSION: require('./package.json').version
           }
         ]
       ],

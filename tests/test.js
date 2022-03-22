@@ -7,8 +7,25 @@
  *   JSONLD_TESTS="r1 r2 ..."
  * Output an EARL report:
  *   EARL=filename
- * Output EARL environment description (any appropraite string):
- *   EARL_ENV='CPU=Intel-i7-4790K@4.00GHz,Node.js=v10.16.3,jsonld.js=v1.7.0'
+ * Test environment details for EARL report:
+ *   This is useful for benchmark comparison.
+ *   By default no details are added for privacy reasons.
+ *   Automatic details can be added for all fields with '1', 'true', or 'auto':
+ *   TEST_ENV=1
+ *   To include only certain fields, set them, or use 'auto':
+ *   TEST_ENV=cpu='Intel i7-4790K @ 4.00GHz',runtime='Node.js',...
+ *   TEST_ENV=cpu=auto # only cpu
+ *   TEST_ENV=cpu,runtime # only cpu and runtime
+ *   TEST_ENV=auto,comment='special test' # all auto with override
+ *   Available fields:
+ *   - arch - ex: 'x64'
+ *   - cpu - ex: 'Intel(R) Core(TM) i7-4790K CPU @ 4.00GHz'
+ *   - cpuCount - ex: 8
+ *   - platform - ex: 'linux'
+ *   - runtime - ex: 'Node.js'
+ *   - runtimeVersion - ex: 'v14.19.0'
+ *   - comment: any text
+ *   - version: jsonld.js version
  * Bail with tests fail:
  *   BAIL=true
  * Verbose skip reasons:
@@ -22,13 +39,14 @@
  * @author Dave Longley
  * @author David I. Lehn
  *
- * Copyright (c) 2011-2019 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2011-2022 Digital Bazaar, Inc. All rights reserved.
  */
 const assert = require('chai').assert;
 const benchmark = require('benchmark');
 const common = require('./test-common');
 const fs = require('fs-extra');
 const jsonld = require('..');
+const os = require('os');
 const path = require('path');
 
 const entries = [];
@@ -85,14 +103,71 @@ if(process.env.JSONLD_TESTS) {
   entries.push(path.resolve(_top, 'tests/node-document-loader-tests.js'));
 }
 
+// test environment
+let testEnv = null;
+if(process.env.TEST_ENV) {
+  let _test_env = process.env.TEST_ENV;
+  if(!(['0', 'false'].includes(_test_env))) {
+    testEnv = {};
+    if(['1', 'true', 'auto'].includes(_test_env)) {
+      _test_env = 'auto';
+    }
+    _test_env.split(',').forEach(pair => {
+      if(pair === 'auto') {
+        testEnv.arch = 'auto';
+        testEnv.cpu = 'auto';
+        testEnv.cpuCount = 'auto';
+        testEnv.platform = 'auto';
+        testEnv.runtime = 'auto';
+        testEnv.runtimeVersion = 'auto';
+        testEnv.comment = 'auto';
+        testEnv.version = 'auto';
+      } else {
+        const kv = pair.split('=');
+        if(kv.length === 1) {
+          testEnv[kv[0]] = 'auto';
+        } else {
+          testEnv[kv[0]] = kv.slice(1).join('=');
+        }
+      }
+    });
+    if(testEnv.arch === 'auto') {
+      testEnv.arch = process.arch;
+    }
+    if(testEnv.cpu === 'auto') {
+      testEnv.cpu = os.cpus()[0].model;
+    }
+    if(testEnv.cpuCount === 'auto') {
+      testEnv.cpuCount = os.cpus().length;
+    }
+    if(testEnv.platform === 'auto') {
+      testEnv.platform = process.platform;
+    }
+    if(testEnv.runtime === 'auto') {
+      testEnv.runtime = 'Node.js';
+    }
+    if(testEnv.runtimeVersion === 'auto') {
+      testEnv.runtimeVersion = process.version;
+    }
+    if(testEnv.comment === 'auto') {
+      testEnv.comment = '';
+    }
+    if(testEnv.version === 'auto') {
+      testEnv.version = require('../package.json').version;
+    }
+  }
+}
+
 let benchmarkOptions = null;
 if(process.env.JSONLD_BENCHMARK) {
-  benchmarkOptions = {};
-  if(!(['1', 'true'].includes(process.env.JSONLD_BENCHMARK))) {
-    process.env.JSONLD_BENCHMARK.split(',').forEach(pair => {
-      const kv = pair.split('=');
-      benchmarkOptions[kv[0]] = kv[1];
-    });
+  if(!(['0', 'false'].includes(process.env.JSONLD_BENCHMARK))) {
+    benchmarkOptions = {};
+    if(!(['1', 'true'].includes(process.env.JSONLD_BENCHMARK))) {
+      process.env.JSONLD_BENCHMARK.split(',').forEach(pair => {
+        const kv = pair.split('=');
+        benchmarkOptions[kv[0]] = kv[1];
+      });
+    }
   }
 }
 
@@ -105,13 +180,12 @@ const options = {
   jsonld,
   exit: code => process.exit(code),
   earl: {
-    id: 'Node.js',
-    env: process.env.EARL_ENV,
     filename: process.env.EARL
   },
   verboseSkip: process.env.VERBOSE_SKIP === 'true',
   bailOnError: process.env.BAIL === 'true',
   entries,
+  testEnv,
   benchmarkOptions,
   readFile: filename => {
     return fs.readFile(filename, 'utf8');
