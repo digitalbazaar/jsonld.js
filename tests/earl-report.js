@@ -126,6 +126,9 @@ const _benchmarkContext = {
   'jldb:Environment': {'@type': '@id'},
 
   // per environment
+  // label
+  // ex: 'Setup 1' (for reports)
+  'jldb:label': {'@type': 'xsd:string'},
   // architecture type
   // ex: x86
   'jldb:arch': {'@type': 'xsd:string'},
@@ -171,6 +174,7 @@ EarlReport.prototype.setupForBenchmarks = function(options) {
   if(options.testEnv) {
     // add report environment
     const fields = [
+      ['label', 'jldb:label'],
       ['arch', 'jldb:arch'],
       ['cpu', 'jldb:cpu'],
       ['cpuCount', 'jldb:cpuCount'],
