@@ -18,6 +18,7 @@
  *   TEST_ENV=cpu,runtime # only cpu and runtime
  *   TEST_ENV=auto,comment='special test' # all auto with override
  *   Available fields:
+ *   - label - ex: 'Setup 1' (short label for reports)
  *   - arch - ex: 'x64'
  *   - cpu - ex: 'Intel(R) Core(TM) i7-4790K CPU @ 4.00GHz'
  *   - cpuCount - ex: 8
@@ -114,6 +115,7 @@ if(process.env.TEST_ENV) {
     }
     _test_env.split(',').forEach(pair => {
       if(pair === 'auto') {
+        testEnv.name = 'auto';
         testEnv.arch = 'auto';
         testEnv.cpu = 'auto';
         testEnv.cpuCount = 'auto';
@@ -131,6 +133,9 @@ if(process.env.TEST_ENV) {
         }
       }
     });
+    if(testEnv.label === 'auto') {
+      testEnv.label = '';
+    }
     if(testEnv.arch === 'auto') {
       testEnv.arch = process.arch;
     }
