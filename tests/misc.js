@@ -479,6 +479,280 @@ describe('literal JSON', () => {
   });
 });
 
+describe.only('events', () => {
+  it('handle warning event with function', async () => {
+    const d =
+{
+  "@context": {
+    "@RESERVED": "ex:test-function-handler"
+  },
+  "@RESERVED": "test"
+}
+;
+    const ex = [];
+
+    let handled = false;
+    const e = await jsonld.expand(d, {
+      eventHandler: ({event, next}) => {
+        if(event.code === 'invalid reserved term') {
+          handled = true;
+        } else {
+          next();
+        }
+      }
+    });
+    assert.deepStrictEqual(e, ex);
+    assert.equal(handled, true);
+  });
+  it('cached context event replay', async () => {
+    const d =
+{
+  "@context": {
+    "@RESERVED": "ex:test"
+  },
+  "@RESERVED": "test"
+}
+;
+    const ex = [];
+
+    let handled0 = false;
+    let handled1 = false;
+    const e0 = await jsonld.expand(d, {
+      eventHandler: {
+        'invalid reserved term': () => {
+          handled0 = true;
+        }
+      }
+    });
+    // FIXME: ensure cache is being used
+    const e1 = await jsonld.expand(d, {
+      eventHandler: {
+        'invalid reserved term': () => {
+          handled1 = true;
+        }
+      }
+    });
+    assert.deepStrictEqual(e0, ex);
+    assert.deepStrictEqual(e1, ex);
+    assert.equal(handled0, true, 'handled 0');
+    assert.equal(handled1, true, 'handled 1');
+  });
+  it('handle warning event with array of functions', async () => {
+    const d =
+{
+  "@context": {
+    "@RESERVED": "ex:test-function-array-handler"
+  },
+  "@RESERVED": "test"
+}
+;
+    const ex = [];
+
+    let ranHandler0 = false;
+    let ranHandler1 = false;
+    let handled = false;
+    const e = await jsonld.expand(d, {
+      eventHandler: [
+        ({next}) => {
+          ranHandler0 = true;
+          // skip to next handler
+          next();
+        },
+        ({event, next}) => {
+          ranHandler1 = true;
+          if(event.code === 'invalid reserved term') {
+            handled = true;
+            return;
+          }
+          next();
+        }
+      ]
+    });
+    assert.deepStrictEqual(e, ex);
+    assert.equal(ranHandler0, true, 'ran handler 0');
+    assert.equal(ranHandler1, true, 'ran handler 1');
+    assert.equal(handled, true, 'handled');
+  });
+  it('handle warning event with code:function object', async () => {
+    const d =
+{
+  "@context": {
+    "@RESERVED": "ex:test-object-handler"
+  },
+  "@RESERVED": "test"
+}
+;
+    const ex = [];
+
+    let handled = false;
+    const e = await jsonld.expand(d, {
+      eventHandler: {
+        'invalid reserved term': ({event}) => {
+          assert.equal(event.details.term, '@RESERVED');
+          handled = true;
+        }
+      }
+    });
+    assert.deepStrictEqual(e, ex);
+    assert.equal(handled, true, 'handled');
+  });
+  it('handle warning event with complex handler', async () => {
+    const d =
+{
+  "@context": {
+    "@RESERVED": "ex:test-complex-handler"
+  },
+  "@RESERVED": "test"
+}
+;
+    const ex = [];
+
+    let ranHandler0 = false;
+    let ranHandler1 = false;
+    let ranHandler2 = false;
+    let ranHandler3 = false;
+    let handled = false;
+    const e = await jsonld.expand(d, {
+      eventHandler: [
+        ({next}) => {
+          ranHandler0 = true;
+          next();
+        },
+        [
+          ({next}) => {
+            ranHandler1 = true;
+            next();
+          },
+          {
+            'bogus code': () => {}
+          }
+        ],
+        ({next}) => {
+          ranHandler2 = true;
+          next();
+        },
+        {
+          'invalid reserved term': () => {
+            ranHandler3 = true;
+            handled = true;
+          }
+        }
+      ]
+    });
+    assert.deepStrictEqual(e, ex);
+    assert.equal(ranHandler0, true, 'ran handler 0');
+    assert.equal(ranHandler1, true, 'ran handler 1');
+    assert.equal(ranHandler2, true, 'ran handler 2');
+    assert.equal(ranHandler3, true, 'ran handler 3');
+    assert.equal(handled, true, 'handled');
+  });
+  it('handle known warning events', async () => {
+    const d =
+{
+  "@context": {
+    "id-at": {"@id": "@test"},
+    "@RESERVED": "ex:test"
+  },
+  "@RESERVED": "test",
+  "ex:language": {
+    "@value": "test",
+    "@language": "!"
+  }
+}
+;
+    const ex =
+[
+  {
+    "ex:language": [
+      {
+        "@value": "test",
+        "@language": "!"
+      }
+    ]
+  }
+]
+;
+
+    let handledReservedTerm = false;
+    let handledReservedValue = false;
+    let handledLanguage = false;
+    const e = await jsonld.expand(d, {
+      eventHandler: {
+        'invalid reserved term': () => {
+          handledReservedTerm = true;
+        },
+        'invalid reserved value': () => {
+          handledReservedValue = true;
+        },
+        'invalid @language value': () => {
+          handledLanguage = true;
+        }
+      }
+    });
+    assert.deepStrictEqual(e, ex);
+    assert.equal(handledReservedTerm, true);
+    assert.equal(handledReservedValue, true);
+    assert.equal(handledLanguage, true);
+
+    // dataset with invalid language tag
+    // Equivalent N-Quads:
+    // <ex:s> <ex:p> "..."^^<https://www.w3.org/ns/i18n#!_rtl> .'
+    // Using JSON dataset to bypass N-Quads parser checks.
+    const d2 =
+[
+  {
+    "subject": {
+      "termType": "NamedNode",
+      "value": "ex:s"
+    },
+    "predicate": {
+      "termType": "NamedNode",
+      "value": "ex:p"
+    },
+    "object": {
+      "termType": "Literal",
+      "value": "invalid @language value",
+      "datatype": {
+        "termType": "NamedNode",
+        "value": "https://www.w3.org/ns/i18n#!_rtl"
+      }
+    },
+    "graph": {
+      "termType": "DefaultGraph",
+      "value": ""
+    }
+  }
+]
+;
+    const ex2 =
+[
+  {
+    "@id": "ex:s",
+    "ex:p": [
+      {
+        "@value": "invalid @language value",
+        "@language": "!",
+        "@direction": "rtl"
+      }
+    ]
+  }
+]
+;
+
+    let handledLanguage2 = false;
+    const e2 = await jsonld.fromRDF(d2, {
+      rdfDirection: 'i18n-datatype',
+      eventHandler: {
+        'invalid @language value': () => {
+          handledLanguage2 = true;
+        }
+      }
+    });
+    assert.deepStrictEqual(e2, ex2);
+    assert.equal(handledLanguage2, true);
+  });
+});
+
 describe.only('expansionMap', () => {
   // track all the counts
   // use simple count object (don't use tricky test keys!)
@@ -1262,279 +1536,5 @@ describe.only('expansionMap', () => {
         }
       });
     });
-  });
-});
-
-describe.only('events', () => {
-  it('handle warning event with function', async () => {
-    const d =
-{
-  "@context": {
-    "@RESERVED": "ex:test-function-handler"
-  },
-  "@RESERVED": "test"
-}
-;
-    const ex = [];
-
-    let handled = false;
-    const e = await jsonld.expand(d, {
-      eventHandler: ({event, next}) => {
-        if(event.code === 'invalid reserved term') {
-          handled = true;
-        } else {
-          next();
-        }
-      }
-    });
-    assert.deepStrictEqual(e, ex);
-    assert.equal(handled, true);
-  });
-  it('cached context event replay', async () => {
-    const d =
-{
-  "@context": {
-    "@RESERVED": "ex:test"
-  },
-  "@RESERVED": "test"
-}
-;
-    const ex = [];
-
-    let handled0 = false;
-    let handled1 = false;
-    const e0 = await jsonld.expand(d, {
-      eventHandler: {
-        'invalid reserved term': () => {
-          handled0 = true;
-        }
-      }
-    });
-    // FIXME: ensure cache is being used
-    const e1 = await jsonld.expand(d, {
-      eventHandler: {
-        'invalid reserved term': () => {
-          handled1 = true;
-        }
-      }
-    });
-    assert.deepStrictEqual(e0, ex);
-    assert.deepStrictEqual(e1, ex);
-    assert.equal(handled0, true, 'handled 0');
-    assert.equal(handled1, true, 'handled 1');
-  });
-  it('handle warning event with array of functions', async () => {
-    const d =
-{
-  "@context": {
-    "@RESERVED": "ex:test-function-array-handler"
-  },
-  "@RESERVED": "test"
-}
-;
-    const ex = [];
-
-    let ranHandler0 = false;
-    let ranHandler1 = false;
-    let handled = false;
-    const e = await jsonld.expand(d, {
-      eventHandler: [
-        ({next}) => {
-          ranHandler0 = true;
-          // skip to next handler
-          next();
-        },
-        ({event, next}) => {
-          ranHandler1 = true;
-          if(event.code === 'invalid reserved term') {
-            handled = true;
-            return;
-          }
-          next();
-        }
-      ]
-    });
-    assert.deepStrictEqual(e, ex);
-    assert.equal(ranHandler0, true, 'ran handler 0');
-    assert.equal(ranHandler1, true, 'ran handler 1');
-    assert.equal(handled, true, 'handled');
-  });
-  it('handle warning event with code:function object', async () => {
-    const d =
-{
-  "@context": {
-    "@RESERVED": "ex:test-object-handler"
-  },
-  "@RESERVED": "test"
-}
-;
-    const ex = [];
-
-    let handled = false;
-    const e = await jsonld.expand(d, {
-      eventHandler: {
-        'invalid reserved term': ({event}) => {
-          assert.equal(event.details.term, '@RESERVED');
-          handled = true;
-        }
-      }
-    });
-    assert.deepStrictEqual(e, ex);
-    assert.equal(handled, true, 'handled');
-  });
-  it('handle warning event with complex handler', async () => {
-    const d =
-{
-  "@context": {
-    "@RESERVED": "ex:test-complex-handler"
-  },
-  "@RESERVED": "test"
-}
-;
-    const ex = [];
-
-    let ranHandler0 = false;
-    let ranHandler1 = false;
-    let ranHandler2 = false;
-    let ranHandler3 = false;
-    let handled = false;
-    const e = await jsonld.expand(d, {
-      eventHandler: [
-        ({next}) => {
-          ranHandler0 = true;
-          next();
-        },
-        [
-          ({next}) => {
-            ranHandler1 = true;
-            next();
-          },
-          {
-            'bogus code': () => {}
-          }
-        ],
-        ({next}) => {
-          ranHandler2 = true;
-          next();
-        },
-        {
-          'invalid reserved term': () => {
-            ranHandler3 = true;
-            handled = true;
-          }
-        }
-      ]
-    });
-    assert.deepStrictEqual(e, ex);
-    assert.equal(ranHandler0, true, 'ran handler 0');
-    assert.equal(ranHandler1, true, 'ran handler 1');
-    assert.equal(ranHandler2, true, 'ran handler 2');
-    assert.equal(ranHandler3, true, 'ran handler 3');
-    assert.equal(handled, true, 'handled');
-  });
-  it('handle known warning events', async () => {
-    const d =
-{
-  "@context": {
-    "id-at": {"@id": "@test"},
-    "@RESERVED": "ex:test"
-  },
-  "@RESERVED": "test",
-  "ex:language": {
-    "@value": "test",
-    "@language": "!"
-  }
-}
-;
-    const ex =
-[
-  {
-    "ex:language": [
-      {
-        "@value": "test",
-        "@language": "!"
-      }
-    ]
-  }
-]
-;
-
-    let handledReservedTerm = false;
-    let handledReservedValue = false;
-    let handledLanguage = false;
-    const e = await jsonld.expand(d, {
-      eventHandler: {
-        'invalid reserved term': () => {
-          handledReservedTerm = true;
-        },
-        'invalid reserved value': () => {
-          handledReservedValue = true;
-        },
-        'invalid @language value': () => {
-          handledLanguage = true;
-        }
-      }
-    });
-    assert.deepStrictEqual(e, ex);
-    assert.equal(handledReservedTerm, true);
-    assert.equal(handledReservedValue, true);
-    assert.equal(handledLanguage, true);
-
-    // dataset with invalid language tag
-    // Equivalent N-Quads:
-    // <ex:s> <ex:p> "..."^^<https://www.w3.org/ns/i18n#!_rtl> .'
-    // Using JSON dataset to bypass N-Quads parser checks.
-    const d2 =
-[
-  {
-    "subject": {
-      "termType": "NamedNode",
-      "value": "ex:s"
-    },
-    "predicate": {
-      "termType": "NamedNode",
-      "value": "ex:p"
-    },
-    "object": {
-      "termType": "Literal",
-      "value": "invalid @language value",
-      "datatype": {
-        "termType": "NamedNode",
-        "value": "https://www.w3.org/ns/i18n#!_rtl"
-      }
-    },
-    "graph": {
-      "termType": "DefaultGraph",
-      "value": ""
-    }
-  }
-]
-;
-    const ex2 =
-[
-  {
-    "@id": "ex:s",
-    "ex:p": [
-      {
-        "@value": "invalid @language value",
-        "@language": "!",
-        "@direction": "rtl"
-      }
-    ]
-  }
-]
-;
-
-    let handledLanguage2 = false;
-    const e2 = await jsonld.fromRDF(d2, {
-      rdfDirection: 'i18n-datatype',
-      eventHandler: {
-        'invalid @language value': () => {
-          handledLanguage2 = true;
-        }
-      }
-    });
-    assert.deepStrictEqual(e2, ex2);
-    assert.equal(handledLanguage2, true);
   });
 });
