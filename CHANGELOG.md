@@ -4,6 +4,7 @@
 - Support benchmarks in Karma tests.
 - Support test environment in EARL output.
 - Support benchmark output in EARL output.
+- Benchmark comparison tool.
 
 ### Changed
 - Change EARL Assertor to Digital Bazaar, Inc.
