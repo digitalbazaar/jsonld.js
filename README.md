@@ -462,8 +462,8 @@ details:
 
 See `tests/test.js` for more `TEST_ENV` control and options.
 
-These reports can be compared with the `tests/benchmark-compare` tool and at
-the [JSON-LD Benchmarks][] site.
+These reports can be compared with the `benchmarks/compare/` tool and at the
+[JSON-LD Benchmarks][] site.
 
 [Digital Bazaar]: https://digitalbazaar.com/
 

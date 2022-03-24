@@ -1,0 +1,51 @@
+{
+  "name": "jsonld-benchmarks-compare",
+  "version": "0.0.1-0",
+  "private": true,
+  "description": "A JSON-LD benchmark comparison tool.",
+  "homepage": "https://github.com/digitalbazaar/jsonld.js",
+  "author": {
+    "name": "Digital Bazaar, Inc.",
+    "email": "support@digitalbazaar.com",
+    "url": "https://digitalbazaar.com/"
+  },
+  "contributors": [
+    "Dave Longley <dlongley@digitalbazaar.com>",
+    "David I. Lehn <dlehn@digitalbazaar.com>"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/digitalbazaar/jsonld.js"
+  },
+  "bugs": {
+    "url": "https://github.com/digitalbazaar/jsonld.js/issues",
+    "email": "support@digitalbazaar.com"
+  },
+  "license": "BSD-3-Clause",
+  "type": "module",
+  "main": "compare.js",
+  "dependencies": {
+    "common-path-prefix": "^3.0.0",
+    "markdown-table": "^3.0.2",
+    "yargs": "^17.4.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.11.0",
+    "eslint-config-digitalbazaar": "^2.8.0"
+  },
+  "engines": {
+    "node": ">=12"
+  },
+  "keywords": [
+    "JSON",
+    "JSON-LD",
+    "Linked Data",
+    "RDF",
+    "Semantic Web",
+    "jsonld",
+    "benchmark"
+  ],
+  "scripts": {
+    "lint": "eslint *.js"
+  }
+}
