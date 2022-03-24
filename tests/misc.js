@@ -948,11 +948,13 @@ describe.only('expansionMap', () => {
 
     // FIXME move to value section
     it.skip('should have zero counts with no terms', async () => {
-      const docWithNoTerms = {
-        '@context': {
-          'definedTerm': 'https://example.com#definedTerm'
-        }
-      };
+      const docWithNoTerms =
+{
+  "@context": {
+    "definedTerm": "https://example.com#definedTerm"
+  }
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -965,9 +967,11 @@ describe.only('expansionMap', () => {
     });
 
     it.skip('should have zero counts with absolute term', async () => {
-      const docWithMappedTerm = {
-        'urn:definedTerm': "is defined"
-      };
+      const docWithMappedTerm =
+{
+  "urn:definedTerm": "is defined"
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -980,12 +984,14 @@ describe.only('expansionMap', () => {
     });
 
     it.skip('should have zero counts with mapped term', async () => {
-      const docWithMappedTerm = {
-        '@context': {
-          'definedTerm': 'https://example.com#definedTerm'
-        },
-        definedTerm: "is defined"
-      };
+      const docWithMappedTerm =
+{
+  "@context": {
+    "definedTerm": "https://example.com#definedTerm"
+  },
+  "definedTerm": "is defined"
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -998,9 +1004,10 @@ describe.only('expansionMap', () => {
     });
 
     it.skip('should be called on unmapped term with no context', async () => {
-      const docWithUnMappedTerm = {
-        testUndefined: "is undefined"
-      };
+      const docWithUnMappedTerm =
+{
+  "testUndefined": 'is undefined'
+};
 
       const counts = {};
       const expansionMap = info => {
@@ -1021,12 +1028,14 @@ describe.only('expansionMap', () => {
     });
 
     it('should be called on unmapped term with context [1]', async () => {
-      const docWithUnMappedTerm = {
-        '@context': {
-          'definedTerm': 'https://example.com#definedTerm'
-        },
-        testUndefined: "is undefined"
-      };
+      const docWithUnMappedTerm =
+{
+  '@context': {
+    'definedTerm': 'https://example.com#definedTerm'
+  },
+  "testUndefined": 'is undefined'
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1050,13 +1059,15 @@ describe.only('expansionMap', () => {
     });
 
     it('should be called on unmapped term with context [2]', async () => {
-      const docWithUnMappedTerm = {
-        '@context': {
-          'definedTerm': 'https://example.com#definedTerm'
-        },
-        definedTerm: "is defined",
-        testUndefined: "is undefined"
-      };
+      const docWithUnMappedTerm =
+{
+  "@context": {
+    "definedTerm": "https://example.com#definedTerm"
+  },
+  "definedTerm": "is defined",
+  "testUndefined": "is undefined"
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1077,14 +1088,16 @@ describe.only('expansionMap', () => {
     });
 
     it('should be called on nested unmapped term', async () => {
-      const docWithUnMappedTerm = {
-        '@context': {
-          'definedTerm': 'https://example.com#definedTerm'
-        },
-        definedTerm: {
-          testUndefined: "is undefined"
-        }
-      };
+      const docWithUnMappedTerm =
+{
+  "@context": {
+    "definedTerm": "https://example.com#definedTerm"
+  },
+  "definedTerm": {
+    "testUndefined": "is undefined"
+  }
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1106,14 +1119,16 @@ describe.only('expansionMap', () => {
   });
 
   describe('relativeIri', () => {
-    it('should be called on relative iri for id term', async () => {
-      const docWithRelativeIriId = {
-        '@context': {
-          'definedTerm': 'https://example.com#definedTerm'
-        },
-        '@id': "relativeiri",
-        definedTerm: "is defined"
-      };
+    it('should be called on relative IRI for id term', async () => {
+      const docWithRelativeIriId =
+{
+  "@context": {
+    "definedTerm": "https://example.com#definedTerm"
+  },
+  "@id": "relativeiri",
+  "definedTerm": "is defined"
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1133,16 +1148,18 @@ describe.only('expansionMap', () => {
       });
     });
 
-    it('should be called on relative iri for id term (nested)', async () => {
-      const docWithRelativeIriId = {
-        '@context': {
-          'definedTerm': 'https://example.com#definedTerm'
-        },
-        '@id': "urn:absoluteIri",
-        definedTerm: {
-          '@id': "relativeiri"
-        }
-      };
+    it('should be called on relative IRI for id term (nested)', async () => {
+      const docWithRelativeIriId =
+{
+  "@context": {
+    "definedTerm": "https://example.com#definedTerm"
+  },
+  "@id": "urn:absoluteIri",
+  "definedTerm": {
+    "@id": "relativeiri"
+  }
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1162,15 +1179,17 @@ describe.only('expansionMap', () => {
       });
     });
 
-    it('should be called on relative iri for aliased id term', async () => {
-      const docWithRelativeIriId = {
-        '@context': {
-          'id': '@id',
-          'definedTerm': 'https://example.com#definedTerm'
-        },
-        'id': "relativeiri",
-        definedTerm: "is defined"
-      };
+    it('should be called on relative IRI for aliased id term', async () => {
+      const docWithRelativeIriId =
+{
+  "@context": {
+    "id": "@id",
+    "definedTerm": "https://example.com#definedTerm"
+  },
+  "id": "relativeiri",
+  "definedTerm": "is defined"
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1190,15 +1209,17 @@ describe.only('expansionMap', () => {
       });
     });
 
-    it('should be called on relative iri for type term', async () => {
-      const docWithRelativeIriId = {
-        '@context': {
-          'definedTerm': 'https://example.com#definedTerm'
-        },
-        'id': "urn:absoluteiri",
-        '@type': "relativeiri",
-        definedTerm: "is defined"
-      };
+    it('should be called on relative IRI for type term', async () => {
+      const docWithRelativeIriId =
+{
+  "@context": {
+    "definedTerm": "https://example.com#definedTerm"
+  },
+  "id": "urn:absoluteiri",
+  "@type": "relativeiri",
+  "definedTerm": "is defined"
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1222,24 +1243,26 @@ describe.only('expansionMap', () => {
       });
     });
 
-    it('should be called on relative iri for type ' +
+    it('should be called on relative IRI for type ' +
       'term in scoped context', async () => {
-      const docWithRelativeIriId = {
-        '@context': {
-          'definedType': {
-            '@id': 'https://example.com#definedType',
-            '@context': {
-              'definedTerm': 'https://example.com#definedTerm'
+      const docWithRelativeIriId =
+{
+  "@context": {
+    "definedType": {
+      "@id": "https://example.com#definedType",
+      "@context": {
+        "definedTerm": "https://example.com#definedTerm"
 
-            }
-          }
-        },
-        'id': "urn:absoluteiri",
-        '@type': "definedType",
-        definedTerm: {
-          '@type': 'relativeiri'
-        }
-      };
+      }
+    }
+  },
+  "id": "urn:absoluteiri",
+  "@type": "definedType",
+  "definedTerm": {
+    "@type": "relativeiri"
+  }
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1263,16 +1286,18 @@ describe.only('expansionMap', () => {
       });
     });
 
-    it('should be called on relative iri for ' +
-      'type term with multiple relative iri types', async () => {
-      const docWithRelativeIriId = {
-        '@context': {
-          'definedTerm': 'https://example.com#definedTerm'
-        },
-        'id': "urn:absoluteiri",
-        '@type': ["relativeiri", "anotherRelativeiri" ],
-        definedTerm: "is defined"
-      };
+    it('should be called on relative IRI for ' +
+      'type term with multiple relative IRI types', async () => {
+      const docWithRelativeIriId =
+{
+  "@context": {
+    "definedTerm": "https://example.com#definedTerm"
+  },
+  "id": "urn:absoluteiri",
+  "@type": ["relativeiri", "anotherRelativeiri"],
+  "definedTerm": "is defined"
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1298,25 +1323,26 @@ describe.only('expansionMap', () => {
       });
     });
 
-    it('should be called on relative iri for ' +
-      'type term with multiple relative iri types in scoped context' +
+    it('should be called on relative IRI for ' +
+      'type term with multiple relative IRI types in scoped context' +
       '', async () => {
-      const docWithRelativeIriId = {
-        '@context': {
-          'definedType': {
-            '@id': 'https://example.com#definedType',
-            '@context': {
-              'definedTerm': 'https://example.com#definedTerm'
-
-            }
-          }
-        },
-        'id': "urn:absoluteiri",
-        '@type': "definedType",
-        definedTerm: {
-          '@type': ["relativeiri", "anotherRelativeiri" ]
-        }
-      };
+      const docWithRelativeIriId =
+{
+  "@context": {
+    "definedType": {
+      "@id": "https://example.com#definedType",
+      "@context": {
+        "definedTerm": "https://example.com#definedTerm"
+      }
+    }
+  },
+  "id": "urn:absoluteiri",
+  "@type": "definedType",
+  "definedTerm": {
+    "@type": ["relativeiri", "anotherRelativeiri" ]
+  }
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1342,16 +1368,18 @@ describe.only('expansionMap', () => {
       });
     });
 
-    it('should be called on relative iri for ' +
+    it('should be called on relative IRI for ' +
       'type term with multiple types', async () => {
-      const docWithRelativeIriId = {
-        '@context': {
-          'definedTerm': 'https://example.com#definedTerm'
-        },
-        'id': "urn:absoluteiri",
-        '@type': ["relativeiri", "definedTerm" ],
-        definedTerm: "is defined"
-      };
+      const docWithRelativeIriId =
+{
+  "@context": {
+    "definedTerm": "https://example.com#definedTerm"
+  },
+  "id": "urn:absoluteiri",
+  "@type": ["relativeiri", "definedTerm"],
+  "definedTerm": "is defined"
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1375,16 +1403,17 @@ describe.only('expansionMap', () => {
       });
     });
 
-    it('should be called on relative iri for aliased type term', async () => {
-      const docWithRelativeIriId = {
-        '@context': {
-          'type': "@type",
-          'definedTerm': 'https://example.com#definedTerm'
-        },
-        'id': "urn:absoluteiri",
-        'type': "relativeiri",
-        definedTerm: "is defined"
-      };
+    it('should be called on relative IRI for aliased type term', async () => {
+      const docWithRelativeIriId =
+{
+  "@context": {
+    "type": "@type",
+    "definedTerm": "https://example.com#definedTerm"
+  },
+  "id": "urn:absoluteiri",
+  "type": "relativeiri",
+  "definedTerm": "is defined"
+};
 
       const counts = {};
       const expansionMap = info => {
@@ -1408,14 +1437,16 @@ describe.only('expansionMap', () => {
       });
     });
 
-    it("should be called on relative iri when " +
-      "@base value is './'", async () => {
-      const docWithRelativeIriId = {
-        '@context': {
-          "@base": "./",
-        },
-        '@id': "relativeiri",
-      };
+    it('should be called on relative IRI when ' +
+      '@base value is `./`', async () => {
+      const docWithRelativeIriId =
+{
+  "@context": {
+    "@base": "./"
+  },
+  "@id": "relativeiri"
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1438,14 +1469,16 @@ describe.only('expansionMap', () => {
       });
     });
 
-    it("should be called on relative iri when " +
-      "@base value is './'", async () => {
-      const docWithRelativeIriId = {
-        '@context': {
-          "@base": "./",
-        },
-        '@id': "relativeiri",
-      };
+    it('should be called on relative IRI when ' +
+      '@base value is `./`', async () => {
+      const docWithRelativeIriId =
+{
+  "@context": {
+    "@base": "./"
+  },
+  "@id": "relativeiri"
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1468,14 +1501,16 @@ describe.only('expansionMap', () => {
       });
     });
 
-    it("should be called on relative iri when " +
-      "@vocab value is './'", async () => {
-      const docWithRelativeIriId = {
-        '@context': {
-          "@vocab": "./",
-        },
-        '@type': "relativeiri",
-      };
+    it('should be called on relative IRI when ' +
+      '`@vocab` value is `./`', async () => {
+      const docWithRelativeIriId =
+{
+  "@context": {
+    "@vocab": "./"
+  },
+  "@type": "relativeiri"
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1499,14 +1534,15 @@ describe.only('expansionMap', () => {
   });
 
   describe('prependedIri', () => {
-    it("should be called when property is " +
-      "being expanded with `@vocab`", async () => {
-      const doc = {
-        '@context': {
-          "@vocab": "http://example.com/",
-        },
-        'term': "termValue",
-      };
+    it('should be called when property is ' +
+      'being expanded with `@vocab`', async () => {
+      const doc =
+{
+  "@context": {
+    "@vocab": "http://example.com/"
+  },
+  "term": "termValue"
+};
 
       const counts = {};
       const expansionMap = info => {
@@ -1530,14 +1566,16 @@ describe.only('expansionMap', () => {
       });
     });
 
-    it("should be called when '@type' is " +
-      "being expanded with `@vocab`", async () => {
-      const doc = {
-        '@context': {
-          "@vocab": "http://example.com/",
-        },
-        '@type': "relativeIri",
-      };
+    it('should be called when `@type` is ' +
+      'being expanded with `@vocab`', async () => {
+      const doc =
+{
+  "@context": {
+    "@vocab": "http://example.com/"
+  },
+  "@type": "relativeIri"
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1561,15 +1599,17 @@ describe.only('expansionMap', () => {
       });
     });
 
-    it("should be called when aliased '@type' is " +
-      "being expanded with `@vocab`", async () => {
-      const doc = {
-        '@context': {
-          "@vocab": "http://example.com/",
-          "type": "@type"
-        },
-        'type': "relativeIri",
-      };
+    it('should be called when aliased `@type` is ' +
+      'being expanded with `@vocab`', async () => {
+      const doc =
+{
+  "@context": {
+    "@vocab": "http://example.com/",
+    "type": "@type"
+  },
+  "type": "relativeIri"
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1593,14 +1633,16 @@ describe.only('expansionMap', () => {
       });
     });
 
-    it("should be called when '@id' is being " +
-      "expanded with `@base`", async () => {
-      const doc = {
-        '@context': {
-          "@base": "http://example.com/",
-        },
-        '@id': "relativeIri",
-      };
+    it('should be called when `@id` is being ' +
+      'expanded with `@base`', async () => {
+      const doc =
+{
+  "@context": {
+    "@base": "http://example.com/"
+  },
+  "@id": "relativeIri"
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1629,15 +1671,17 @@ describe.only('expansionMap', () => {
       });
     });
 
-    it("should be called when aliased '@id' " +
-      "is being expanded with `@base`", async () => {
-      const doc = {
-        '@context': {
-          "@base": "http://example.com/",
-          "id": "@id"
-        },
-        'id': "relativeIri",
-      };
+    it('should be called when aliased `@id` ' +
+      'is being expanded with `@base`', async () => {
+      const doc =
+{
+  "@context": {
+    "@base": "http://example.com/",
+    "id": "@id"
+  },
+  "id": "relativeIri"
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1666,14 +1710,16 @@ describe.only('expansionMap', () => {
       });
     });
 
-    it("should be called when '@type' is " +
-      "being expanded with `@base`", async () => {
-      const doc = {
-        '@context': {
-          "@base": "http://example.com/",
-        },
-        '@type': "relativeIri",
-      };
+    it('should be called when `@type` is ' +
+      'being expanded with `@base`', async () => {
+      const doc =
+{
+  "@context": {
+    "@base": "http://example.com/"
+  },
+  "@type": "relativeIri"
+}
+;
 
       const counts = {};
       const expansionMap = info => {
@@ -1702,15 +1748,17 @@ describe.only('expansionMap', () => {
       });
     });
 
-    it("should be called when aliased '@type' is " +
-      "being expanded with `@base`", async () => {
-      const doc = {
-        '@context': {
-          "@base": "http://example.com/",
-          "type": "@type"
-        },
-        'type': "relativeIri",
-      };
+    it('should be called when aliased `@type` is ' +
+      'being expanded with `@base`', async () => {
+      const doc =
+{
+  "@context": {
+    "@base": "http://example.com/",
+    "type": "@type"
+  },
+  "type": "relativeIri"
+}
+;
 
       const counts = {};
       const expansionMap = info => {
