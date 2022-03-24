@@ -479,7 +479,23 @@ describe('literal JSON', () => {
   });
 });
 
+// track all the event counts
+// use simple count object (don't use tricky test keys!)
+function addEventCounts(counts, event) {
+  // overall call counts
+  counts.events = counts.events || 0;
+  counts.codes = counts.codes || {};
+
+  counts.codes[event.code] = counts.codes[event.code] || 0;
+
+  counts.events++;
+  counts.codes[event.code]++;
+}
+
 describe.only('events', () => {
+  // FIXME add default handler tests
+  // FIXME add object '*' handler tests
+
   it('handle warning event with function', async () => {
     const d =
 {
@@ -491,19 +507,22 @@ describe.only('events', () => {
 ;
     const ex = [];
 
-    let handled = false;
+    const counts = {};
     const e = await jsonld.expand(d, {
-      eventHandler: ({event, next}) => {
-        if(event.code === 'invalid reserved term') {
-          handled = true;
-        } else {
-          next();
-        }
+      eventHandler: ({event}) => {
+        addEventCounts(counts, event);
       }
     });
     assert.deepStrictEqual(e, ex);
-    assert.equal(handled, true);
+    assert.deepStrictEqual(counts, {
+      codes: {
+        'invalid property expansion': 1,
+        'invalid reserved term': 1
+      },
+      events: 2
+    });
   });
+
   it('cached context event replay', async () => {
     const d =
 {
@@ -515,28 +534,39 @@ describe.only('events', () => {
 ;
     const ex = [];
 
-    let handled0 = false;
-    let handled1 = false;
+    const counts0 = {};
+    const counts1 = {};
     const e0 = await jsonld.expand(d, {
       eventHandler: {
-        'invalid reserved term': () => {
-          handled0 = true;
+        'invalid reserved term': ({event}) => {
+          addEventCounts(counts0, event);
         }
       }
     });
     // FIXME: ensure cache is being used
     const e1 = await jsonld.expand(d, {
       eventHandler: {
-        'invalid reserved term': () => {
-          handled1 = true;
+        'invalid reserved term': ({event}) => {
+          addEventCounts(counts1, event);
         }
       }
     });
     assert.deepStrictEqual(e0, ex);
     assert.deepStrictEqual(e1, ex);
-    assert.equal(handled0, true, 'handled 0');
-    assert.equal(handled1, true, 'handled 1');
+    assert.deepStrictEqual(counts0, {
+      codes: {
+        'invalid reserved term': 1
+      },
+      events: 1
+    }, 'counts 0');
+    assert.deepStrictEqual(counts1, {
+      codes: {
+        'invalid reserved term': 1
+      },
+      events: 1
+    }, 'counts 1');
   });
+
   it('handle warning event with array of functions', async () => {
     const d =
 {
@@ -548,31 +578,89 @@ describe.only('events', () => {
 ;
     const ex = [];
 
-    let ranHandler0 = false;
-    let ranHandler1 = false;
-    let handled = false;
+    const handlerCounts0 = {};
+    const handlerCounts1 = {};
+    const handledCounts = {};
     const e = await jsonld.expand(d, {
       eventHandler: [
-        ({next}) => {
-          ranHandler0 = true;
+        ({event, next}) => {
+          addEventCounts(handlerCounts0, event);
           // skip to next handler
           next();
         },
-        ({event, next}) => {
-          ranHandler1 = true;
+        ({event}) => {
+          addEventCounts(handlerCounts1, event);
           if(event.code === 'invalid reserved term') {
-            handled = true;
+            addEventCounts(handledCounts, event);
             return;
           }
-          next();
         }
       ]
     });
     assert.deepStrictEqual(e, ex);
-    assert.equal(ranHandler0, true, 'ran handler 0');
-    assert.equal(ranHandler1, true, 'ran handler 1');
-    assert.equal(handled, true, 'handled');
+    assert.deepStrictEqual(handlerCounts0, {
+      codes: {
+        'invalid property expansion': 1,
+        'invalid reserved term': 1
+      },
+      events: 2
+    }, 'counts handler 0');
+    assert.deepStrictEqual(handlerCounts1, {
+      codes: {
+        'invalid property expansion': 1,
+        'invalid reserved term': 1
+      },
+      events: 2
+    }, 'counts handler 1');
+    assert.deepStrictEqual(handledCounts, {
+      codes: {
+        'invalid reserved term': 1
+      },
+      events: 1
+    }, 'counts handled');
   });
+
+  it('handle warning event early with array of functions', async () => {
+    const d =
+{
+  "@context": {
+    "@RESERVED": "ex:test-function-array-handler"
+  },
+  "@RESERVED": "test"
+}
+;
+    const ex = [];
+
+    const handlerCounts0 = {};
+    const handlerCounts1 = {};
+    const handledCounts = {};
+    const e = await jsonld.expand(d, {
+      eventHandler: [
+        ({event}) => {
+          addEventCounts(handlerCounts0, event);
+          // don't skip to next handler
+        },
+        ({event}) => {
+          addEventCounts(handlerCounts1, event);
+          if(event.code === 'invalid reserved term') {
+            addEventCounts(handledCounts, event);
+            return;
+          }
+        }
+      ]
+    });
+    assert.deepStrictEqual(e, ex);
+    assert.deepStrictEqual(handlerCounts0, {
+      codes: {
+        'invalid property expansion': 1,
+        'invalid reserved term': 1
+      },
+      events: 2
+    }, 'counts handler 0');
+    assert.deepStrictEqual(handlerCounts1, {}, 'counts handler 1');
+    assert.deepStrictEqual(handledCounts, {}, 'counts handled');
+  });
+
   it('handle warning event with code:function object', async () => {
     const d =
 {
@@ -584,18 +672,24 @@ describe.only('events', () => {
 ;
     const ex = [];
 
-    let handled = false;
+    const counts = {};
     const e = await jsonld.expand(d, {
       eventHandler: {
         'invalid reserved term': ({event}) => {
-          assert.equal(event.details.term, '@RESERVED');
-          handled = true;
+          addEventCounts(counts, event);
+          assert.strictEqual(event.details.term, '@RESERVED');
         }
       }
     });
     assert.deepStrictEqual(e, ex);
-    assert.equal(handled, true, 'handled');
+    assert.deepStrictEqual(counts, {
+      codes: {
+        'invalid reserved term': 1
+      },
+      events: 1
+    }, 'counts');
   });
+
   it('handle warning event with complex handler', async () => {
     const d =
 {
@@ -607,45 +701,66 @@ describe.only('events', () => {
 ;
     const ex = [];
 
-    let ranHandler0 = false;
-    let ranHandler1 = false;
-    let ranHandler2 = false;
-    let ranHandler3 = false;
-    let handled = false;
+    const handlerCounts0 = {};
+    const handlerCounts1 = {};
+    const handlerCounts2 = {};
+    const handlerCounts3 = {};
     const e = await jsonld.expand(d, {
       eventHandler: [
-        ({next}) => {
-          ranHandler0 = true;
+        ({event, next}) => {
+          addEventCounts(handlerCounts0, event);
           next();
         },
         [
-          ({next}) => {
-            ranHandler1 = true;
+          ({event, next}) => {
+            addEventCounts(handlerCounts1, event);
             next();
           },
           {
             'bogus code': () => {}
           }
         ],
-        ({next}) => {
-          ranHandler2 = true;
+        ({event, next}) => {
+          addEventCounts(handlerCounts2, event);
           next();
         },
         {
-          'invalid reserved term': () => {
-            ranHandler3 = true;
-            handled = true;
+          'invalid reserved term': ({event}) => {
+            addEventCounts(handlerCounts3, event);
           }
         }
       ]
     });
     assert.deepStrictEqual(e, ex);
-    assert.equal(ranHandler0, true, 'ran handler 0');
-    assert.equal(ranHandler1, true, 'ran handler 1');
-    assert.equal(ranHandler2, true, 'ran handler 2');
-    assert.equal(ranHandler3, true, 'ran handler 3');
-    assert.equal(handled, true, 'handled');
+    assert.deepStrictEqual(handlerCounts0, {
+      codes: {
+        'invalid property expansion': 1,
+        'invalid reserved term': 1
+      },
+      events: 2
+    }, 'counts handler 0');
+    assert.deepStrictEqual(handlerCounts1, {
+      codes: {
+        'invalid property expansion': 1,
+        'invalid reserved term': 1
+      },
+      events: 2
+    }, 'counts handler 1');
+    assert.deepStrictEqual(handlerCounts2, {
+      codes: {
+        'invalid property expansion': 1,
+        'invalid reserved term': 1
+      },
+      events: 2
+    }, 'counts handler 2');
+    assert.deepStrictEqual(handlerCounts3, {
+      codes: {
+        'invalid reserved term': 1
+      },
+      events: 1
+    }, 'counts handler 3');
   });
+
   it('handle known warning events', async () => {
     const d =
 {
@@ -673,26 +788,41 @@ describe.only('events', () => {
 ]
 ;
 
-    let handledReservedTerm = false;
-    let handledReservedValue = false;
-    let handledLanguage = false;
+    const handledReservedTermCounts = {};
+    const handledReservedValueCounts = {};
+    const handledLanguageCounts = {};
     const e = await jsonld.expand(d, {
       eventHandler: {
-        'invalid reserved term': () => {
-          handledReservedTerm = true;
+        'invalid reserved term': ({event}) => {
+          addEventCounts(handledReservedTermCounts, event);
         },
-        'invalid reserved value': () => {
-          handledReservedValue = true;
+        'invalid reserved value': ({event}) => {
+          addEventCounts(handledReservedValueCounts, event);
         },
-        'invalid @language value': () => {
-          handledLanguage = true;
+        'invalid @language value': ({event}) => {
+          addEventCounts(handledLanguageCounts, event);
         }
       }
     });
     assert.deepStrictEqual(e, ex);
-    assert.equal(handledReservedTerm, true);
-    assert.equal(handledReservedValue, true);
-    assert.equal(handledLanguage, true);
+    assert.deepStrictEqual(handledReservedTermCounts, {
+      codes: {
+        'invalid reserved term': 1
+      },
+      events: 1
+    }, 'handled reserved term counts');
+    assert.deepStrictEqual(handledReservedValueCounts, {
+      codes: {
+        'invalid reserved value': 1
+      },
+      events: 1
+    }, 'handled reserved value counts');
+    assert.deepStrictEqual(handledLanguageCounts, {
+      codes: {
+        'invalid @language value': 1
+      },
+      events: 1
+    }, 'handled language counts');
 
     // dataset with invalid language tag
     // Equivalent N-Quads:
@@ -739,17 +869,22 @@ describe.only('events', () => {
 ]
 ;
 
-    let handledLanguage2 = false;
+    const handledLanguageCounts2 = {};
     const e2 = await jsonld.fromRDF(d2, {
       rdfDirection: 'i18n-datatype',
       eventHandler: {
-        'invalid @language value': () => {
-          handledLanguage2 = true;
+        'invalid @language value': ({event}) => {
+          addEventCounts(handledLanguageCounts2, event);
         }
       }
     });
     assert.deepStrictEqual(e2, ex2);
-    assert.equal(handledLanguage2, true);
+    assert.deepStrictEqual(handledLanguageCounts2, {
+      codes: {
+        'invalid @language value': 1
+      },
+      events: 1
+    }, 'handled language counts');
   });
 });
 
@@ -829,6 +964,21 @@ describe.only('expansionMap', () => {
       assert.deepStrictEqual(counts, {});
     });
 
+    it.skip('should have zero counts with absolute term', async () => {
+      const docWithMappedTerm = {
+        'urn:definedTerm': "is defined"
+      };
+
+      const counts = {};
+      const expansionMap = info => {
+        addCounts(counts, info);
+      };
+
+      await jsonld.expand(docWithMappedTerm, {expansionMap});
+
+      assert.deepStrictEqual(counts, {});
+    });
+
     it.skip('should have zero counts with mapped term', async () => {
       const docWithMappedTerm = {
         '@context': {
@@ -847,7 +997,59 @@ describe.only('expansionMap', () => {
       assert.deepStrictEqual(counts, {});
     });
 
-    it('should be called on unmapped term', async () => {
+    it.skip('should be called on unmapped term with no context', async () => {
+      const docWithUnMappedTerm = {
+        testUndefined: "is undefined"
+      };
+
+      const counts = {};
+      const expansionMap = info => {
+        addCounts(counts, info);
+      };
+
+      await jsonld.expand(docWithUnMappedTerm, {expansionMap});
+
+      assert.deepStrictEqual(counts, {
+        expansionMap: 3,
+        relativeIri: {
+          testUndefined: 2
+        },
+        unmappedProperty: {
+          testUndefined: 1
+        }
+      });
+    });
+
+    it('should be called on unmapped term with context [1]', async () => {
+      const docWithUnMappedTerm = {
+        '@context': {
+          'definedTerm': 'https://example.com#definedTerm'
+        },
+        testUndefined: "is undefined"
+      };
+
+      const counts = {};
+      const expansionMap = info => {
+        addCounts(counts, info);
+      };
+
+      await jsonld.expand(docWithUnMappedTerm, {expansionMap});
+
+      assert.deepStrictEqual(counts, {
+        expansionMap: 4,
+        relativeIri: {
+          testUndefined: 2
+        },
+        unmappedProperty: {
+          testUndefined: 1
+        },
+        unmappedValue: {
+          '__unknown__': 1
+        }
+      });
+    });
+
+    it('should be called on unmapped term with context [2]', async () => {
       const docWithUnMappedTerm = {
         '@context': {
           'definedTerm': 'https://example.com#definedTerm'
