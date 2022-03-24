@@ -523,6 +523,56 @@ describe.only('expansionMap', () => {
   }
 
   describe('unmappedProperty', () => {
+    // FIXME move to value section
+    it.skip('should have zero counts with empty input', async () => {
+      const docWithNoContent = {};
+
+      const counts = {};
+      const expansionMap = info => {
+        addCounts(counts, info);
+      };
+
+      await jsonld.expand(docWithNoContent, {expansionMap});
+
+      assert.deepStrictEqual(counts, {});
+    });
+
+    // FIXME move to value section
+    it.skip('should have zero counts with no terms', async () => {
+      const docWithNoTerms = {
+        '@context': {
+          'definedTerm': 'https://example.com#definedTerm'
+        }
+      };
+
+      const counts = {};
+      const expansionMap = info => {
+        addCounts(counts, info);
+      };
+
+      await jsonld.expand(docWithNoTerms, {expansionMap});
+
+      assert.deepStrictEqual(counts, {});
+    });
+
+    it.skip('should have zero counts with mapped term', async () => {
+      const docWithMappedTerm = {
+        '@context': {
+          'definedTerm': 'https://example.com#definedTerm'
+        },
+        definedTerm: "is defined"
+      };
+
+      const counts = {};
+      const expansionMap = info => {
+        addCounts(counts, info);
+      };
+
+      await jsonld.expand(docWithMappedTerm, {expansionMap});
+
+      assert.deepStrictEqual(counts, {});
+    });
+
     it('should be called on unmapped term', async () => {
       const docWithUnMappedTerm = {
         '@context': {
