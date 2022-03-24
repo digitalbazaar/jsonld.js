@@ -1265,7 +1265,7 @@ describe.only('expansionMap', () => {
   });
 });
 
-describe('events', () => {
+describe.only('events', () => {
   it('handle warning event with function', async () => {
     const d =
 {
