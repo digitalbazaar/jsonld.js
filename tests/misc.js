@@ -931,23 +931,33 @@ describe.only('expansionMap', () => {
     }
   }
 
-  describe('unmappedProperty', () => {
+  describe('unmappedValue', () => {
     // FIXME move to value section
-    it.skip('should have zero counts with empty input', async () => {
+    it('should have zero counts with empty input', async () => {
       const docWithNoContent = {};
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithNoContent, {expansionMap});
+      await jsonld.expand(docWithNoContent, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {});
+      assert.deepStrictEqual(mapCounts, {
+        expansionMap: 1,
+        unmappedValue: {
+          '__unknown__': 1
+        }
+      });
+      console.error('FIXME');
+      assert.deepStrictEqual(eventCounts, {});
     });
 
-    // FIXME move to value section
-    it.skip('should have zero counts with no terms', async () => {
+    it('should have zero counts with no terms', async () => {
       const docWithNoTerms =
 {
   "@context": {
@@ -956,34 +966,52 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithNoTerms, {expansionMap});
+      await jsonld.expand(docWithNoTerms, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {});
+      assert.deepStrictEqual(mapCounts, {
+        expansionMap: 1,
+        unmappedValue: {
+          '__unknown__': 1
+        }
+      });
+      console.error('FIXME');
+      assert.deepStrictEqual(eventCounts, {});
     });
+  });
 
-    it.skip('should have zero counts with absolute term', async () => {
+  describe('unmappedProperty', () => {
+    it('should have zero counts with absolute term', async () => {
       const docWithMappedTerm =
 {
   "urn:definedTerm": "is defined"
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithMappedTerm, {expansionMap});
+      await jsonld.expand(docWithMappedTerm, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {});
+      assert.deepStrictEqual(mapCounts, {});
+      assert.deepStrictEqual(eventCounts, {});
     });
 
-    it.skip('should have zero counts with mapped term', async () => {
+    it('should have zero counts with mapped term', async () => {
       const docWithMappedTerm =
 {
   "@context": {
@@ -993,58 +1021,39 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithMappedTerm, {expansionMap});
+      await jsonld.expand(docWithMappedTerm, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {});
+      assert.deepStrictEqual(mapCounts, {});
+      assert.deepStrictEqual(eventCounts, {});
     });
 
-    it.skip('should be called on unmapped term with no context', async () => {
+    it('should be called on unmapped term with no context', async () => {
       const docWithUnMappedTerm =
 {
-  "testUndefined": 'is undefined'
+  "testUndefined": "is undefined"
 };
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithUnMappedTerm, {expansionMap});
+      await jsonld.expand(docWithUnMappedTerm, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
-        expansionMap: 3,
-        relativeIri: {
-          testUndefined: 2
-        },
-        unmappedProperty: {
-          testUndefined: 1
-        }
-      });
-    });
-
-    it('should be called on unmapped term with context [1]', async () => {
-      const docWithUnMappedTerm =
-{
-  '@context': {
-    'definedTerm': 'https://example.com#definedTerm'
-  },
-  "testUndefined": 'is undefined'
-}
-;
-
-      const counts = {};
-      const expansionMap = info => {
-        addCounts(counts, info);
-      };
-
-      await jsonld.expand(docWithUnMappedTerm, {expansionMap});
-
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 4,
         relativeIri: {
           testUndefined: 2
@@ -1055,6 +1064,55 @@ describe.only('expansionMap', () => {
         unmappedValue: {
           '__unknown__': 1
         }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'invalid property expansion': 1,
+          'relative IRI after expansion': 2
+        },
+        events: 3
+      });
+    });
+
+    it('should be called on unmapped term with context [1]', async () => {
+      const docWithUnMappedTerm =
+{
+  "@context": {
+    "definedTerm": "https://example.com#definedTerm"
+  },
+  "testUndefined": "is undefined"
+}
+;
+
+      const mapCounts = {};
+      const expansionMap = info => {
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
+      };
+
+      await jsonld.expand(docWithUnMappedTerm, {expansionMap, eventHandler});
+
+      assert.deepStrictEqual(mapCounts, {
+        expansionMap: 4,
+        relativeIri: {
+          testUndefined: 2
+        },
+        unmappedProperty: {
+          testUndefined: 1
+        },
+        unmappedValue: {
+          '__unknown__': 1
+        }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'invalid property expansion': 1,
+          'relative IRI after expansion': 2
+        },
+        events: 3
       });
     });
 
@@ -1069,14 +1127,18 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithUnMappedTerm, {expansionMap});
+      await jsonld.expand(docWithUnMappedTerm, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 3,
         relativeIri: {
           testUndefined: 2
@@ -1084,6 +1146,13 @@ describe.only('expansionMap', () => {
         unmappedProperty: {
           testUndefined: 1
         }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'invalid property expansion': 1,
+          'relative IRI after expansion': 2
+        },
+        events: 3
       });
     });
 
@@ -1099,14 +1168,18 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithUnMappedTerm, {expansionMap});
+      await jsonld.expand(docWithUnMappedTerm, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 3,
         relativeIri: {
           testUndefined: 2
@@ -1115,11 +1188,92 @@ describe.only('expansionMap', () => {
           testUndefined: 1
         }
       });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'invalid property expansion': 1,
+          'relative IRI after expansion': 2
+        },
+        events: 3
+      });
     });
   });
 
   describe('relativeIri', () => {
-    it('should be called on relative IRI for id term', async () => {
+    it('should be called on relative IRI for id term [1]', async () => {
+      const docWithRelativeIriId =
+{
+  "@id": "relativeiri"
+}
+;
+
+      const mapCounts = {};
+      const expansionMap = info => {
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
+      };
+
+      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
+
+      assert.deepStrictEqual(mapCounts, {
+        expansionMap: 3,
+        prependedIri: {
+          relativeiri: 1
+        },
+        relativeIri: {
+          relativeiri: 1
+        },
+        unmappedValue: {
+          relativeiri: 1
+        }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'relative IRI after expansion': 1
+        },
+        events: 1
+      });
+    });
+
+    it('should be called on relative IRI for id term [2]', async () => {
+      const docWithRelativeIriId =
+{
+  "@id": "relativeiri",
+  "urn:test": "value"
+}
+;
+
+      const mapCounts = {};
+      const expansionMap = info => {
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
+      };
+
+      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
+
+      assert.deepStrictEqual(mapCounts, {
+        expansionMap: 2,
+        prependedIri: {
+          relativeiri: 1
+        },
+        relativeIri: {
+          relativeiri: 1
+        }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'relative IRI after expansion': 1
+        },
+        events: 1
+      });
+    });
+
+    it('should be called on relative IRI for id term [3]', async () => {
       const docWithRelativeIriId =
 {
   "@context": {
@@ -1130,14 +1284,18 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithRelativeIriId, {expansionMap});
+      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 2,
         prependedIri: {
           relativeiri: 1
@@ -1145,6 +1303,12 @@ describe.only('expansionMap', () => {
         relativeIri: {
           relativeiri: 1
         }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'relative IRI after expansion': 1
+        },
+        events: 1
       });
     });
 
@@ -1161,14 +1325,18 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithRelativeIriId, {expansionMap});
+      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 2,
         prependedIri: {
           relativeiri: 1
@@ -1176,6 +1344,12 @@ describe.only('expansionMap', () => {
         relativeIri: {
           relativeiri: 1
         }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'relative IRI after expansion': 1
+        },
+        events: 1
       });
     });
 
@@ -1191,14 +1365,18 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithRelativeIriId, {expansionMap});
+      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 2,
         prependedIri: {
           relativeiri: 1
@@ -1206,6 +1384,12 @@ describe.only('expansionMap', () => {
         relativeIri: {
           relativeiri: 1
         }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'relative IRI after expansion': 1
+        },
+        events: 1
       });
     });
 
@@ -1221,14 +1405,18 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithRelativeIriId, {expansionMap});
+      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 6,
         prependedIri: {
           relativeiri: 1
@@ -1240,6 +1428,13 @@ describe.only('expansionMap', () => {
         unmappedProperty: {
           id: 1
         }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'invalid property expansion': 1,
+          'relative IRI after expansion': 4
+        },
+        events: 5
       });
     });
 
@@ -1264,14 +1459,18 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithRelativeIriId, {expansionMap});
+      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 6,
         prependedIri: {
           relativeiri: 1
@@ -1283,6 +1482,13 @@ describe.only('expansionMap', () => {
         unmappedProperty: {
           id: 1
         }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'invalid property expansion': 1,
+          'relative IRI after expansion': 4
+        },
+        events: 5
       });
     });
 
@@ -1299,14 +1505,18 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithRelativeIriId, {expansionMap});
+      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 8,
         prependedIri: {
           anotherRelativeiri: 1,
@@ -1320,6 +1530,13 @@ describe.only('expansionMap', () => {
         unmappedProperty: {
           id: 1
         }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'invalid property expansion': 1,
+          'relative IRI after expansion': 5
+        },
+        events: 6
       });
     });
 
@@ -1344,14 +1561,18 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithRelativeIriId, {expansionMap});
+      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 8,
         prependedIri: {
           anotherRelativeiri: 1,
@@ -1365,6 +1586,13 @@ describe.only('expansionMap', () => {
         unmappedProperty: {
           id: 1
         }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'invalid property expansion': 1,
+          'relative IRI after expansion': 5
+        },
+        events: 6
       });
     });
 
@@ -1381,14 +1609,18 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithRelativeIriId, {expansionMap});
+      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 6,
         prependedIri: {
           relativeiri: 1
@@ -1400,6 +1632,13 @@ describe.only('expansionMap', () => {
         unmappedProperty: {
           id: 1
         }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'invalid property expansion': 1,
+          'relative IRI after expansion': 4
+        },
+        events: 5
       });
     });
 
@@ -1415,14 +1654,18 @@ describe.only('expansionMap', () => {
   "definedTerm": "is defined"
 };
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithRelativeIriId, {expansionMap});
+      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 6,
         prependedIri: {
           relativeiri: 1
@@ -1435,37 +1678,54 @@ describe.only('expansionMap', () => {
           id: 1
         }
       });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'invalid property expansion': 1,
+          'relative IRI after expansion': 4
+        },
+        events: 5
+      });
     });
 
     it('should be called on relative IRI when ' +
-      '@base value is `./`', async () => {
+      '@base value is `null`', async () => {
       const docWithRelativeIriId =
 {
   "@context": {
-    "@base": "./"
+    "@base": null
   },
   "@id": "relativeiri"
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithRelativeIriId, {expansionMap});
+      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 3,
         prependedIri: {
           'relativeiri': 1
         },
         relativeIri: {
-          '/relativeiri': 1
+          'relativeiri': 1
         },
         unmappedValue: {
-          '/relativeiri': 1
+          'relativeiri': 1
         }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'relative IRI after expansion': 1
+        },
+        events: 1
       });
     });
 
@@ -1480,14 +1740,18 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithRelativeIriId, {expansionMap});
+      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 3,
         prependedIri: {
           relativeiri: 1
@@ -1498,6 +1762,51 @@ describe.only('expansionMap', () => {
         unmappedValue: {
           '/relativeiri': 1
         }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'relative IRI after expansion': 1
+        },
+        events: 1
+      });
+    });
+
+    it('should be called on relative IRI when ' +
+      '`@vocab` value is `null`', async () => {
+      const docWithRelativeIriId =
+{
+  "@context": {
+    "@vocab": null
+  },
+  "@type": "relativeiri"
+}
+;
+
+      const mapCounts = {};
+      const expansionMap = info => {
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
+      };
+
+      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
+
+      assert.deepStrictEqual(mapCounts, {
+        expansionMap: 3,
+        prependedIri: {
+          relativeiri: 1
+        },
+        relativeIri: {
+          'relativeiri': 2
+        }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'relative IRI after expansion': 2
+        },
+        events: 2
       });
     });
 
@@ -1512,14 +1821,18 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
+      };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
       };
 
-      await jsonld.expand(docWithRelativeIriId, {expansionMap});
+      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 6,
         prependedIri: {
           './': 1,
@@ -1529,6 +1842,12 @@ describe.only('expansionMap', () => {
           '/': 1,
           '/relativeiri': 2
         }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'relative IRI after expansion': 3
+        },
+        events: 3
       });
     });
   });
@@ -1544,9 +1863,9 @@ describe.only('expansionMap', () => {
   "term": "termValue"
 };
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
         assert.deepStrictEqual(info.prependedIri, {
           type: '@vocab',
           vocab: 'http://example.com/',
@@ -1555,15 +1874,20 @@ describe.only('expansionMap', () => {
           result: 'http://example.com/term'
         });
       };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
+      };
 
-      await jsonld.expand(doc, {expansionMap});
+      await jsonld.expand(doc, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 4,
         prependedIri: {
           term: 4
         }
       });
+      assert.deepStrictEqual(eventCounts, {});
     });
 
     it('should be called when `@type` is ' +
@@ -1577,9 +1901,9 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
         assert.deepStrictEqual(info.prependedIri, {
           type: '@vocab',
           vocab: 'http://example.com/',
@@ -1588,15 +1912,20 @@ describe.only('expansionMap', () => {
           result: 'http://example.com/relativeIri'
         });
       };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
+      };
 
-      await jsonld.expand(doc, {expansionMap});
+      await jsonld.expand(doc, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 2,
         prependedIri: {
           relativeIri: 2
         }
       });
+      assert.deepStrictEqual(eventCounts, {});
     });
 
     it('should be called when aliased `@type` is ' +
@@ -1611,9 +1940,9 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
         assert.deepStrictEqual(info.prependedIri, {
           type: '@vocab',
           vocab: 'http://example.com/',
@@ -1622,15 +1951,20 @@ describe.only('expansionMap', () => {
           result: 'http://example.com/relativeIri'
         });
       };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
+      };
 
-      await jsonld.expand(doc, {expansionMap});
+      await jsonld.expand(doc, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 2,
         prependedIri: {
           relativeIri: 2
         }
       });
+      assert.deepStrictEqual(eventCounts, {});
     });
 
     it('should be called when `@id` is being ' +
@@ -1644,9 +1978,9 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
         if(info.prependedIri) {
           assert.deepStrictEqual(info.prependedIri, {
             type: '@base',
@@ -1657,10 +1991,14 @@ describe.only('expansionMap', () => {
           });
         }
       };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
+      };
 
-      await jsonld.expand(doc, {expansionMap});
+      await jsonld.expand(doc, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 2,
         prependedIri: {
           relativeIri: 1
@@ -1669,6 +2007,7 @@ describe.only('expansionMap', () => {
           'http://example.com/relativeIri': 1
         }
       });
+      assert.deepStrictEqual(eventCounts, {});
     });
 
     it('should be called when aliased `@id` ' +
@@ -1683,9 +2022,9 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
         if(info.prependedIri) {
           assert.deepStrictEqual(info.prependedIri, {
             type: '@base',
@@ -1696,10 +2035,14 @@ describe.only('expansionMap', () => {
           });
         }
       };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
+      };
 
-      await jsonld.expand(doc, {expansionMap});
+      await jsonld.expand(doc, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 2,
         prependedIri: {
           relativeIri: 1
@@ -1708,6 +2051,7 @@ describe.only('expansionMap', () => {
           'http://example.com/relativeIri': 1
         }
       });
+      assert.deepStrictEqual(eventCounts, {});
     });
 
     it('should be called when `@type` is ' +
@@ -1721,9 +2065,9 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
         if(info.prependedIri) {
           assert.deepStrictEqual(info.prependedIri, {
             type: '@base',
@@ -1734,10 +2078,14 @@ describe.only('expansionMap', () => {
           });
         }
       };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
+      };
 
-      await jsonld.expand(doc, {expansionMap});
+      await jsonld.expand(doc, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 2,
         prependedIri: {
           relativeIri: 1
@@ -1745,6 +2093,13 @@ describe.only('expansionMap', () => {
         relativeIri: {
           relativeIri: 1
         }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'relative IRI after expansion': 1
+        },
+        events: 1,
+        //FIXME: true
       });
     });
 
@@ -1760,9 +2115,9 @@ describe.only('expansionMap', () => {
 }
 ;
 
-      const counts = {};
+      const mapCounts = {};
       const expansionMap = info => {
-        addCounts(counts, info);
+        addCounts(mapCounts, info);
         if(info.prependedIri) {
           assert.deepStrictEqual(info.prependedIri, {
             type: '@base',
@@ -1773,10 +2128,14 @@ describe.only('expansionMap', () => {
           });
         }
       };
+      const eventCounts = {};
+      const eventHandler = ({event}) => {
+        addEventCounts(eventCounts, event);
+      };
 
-      await jsonld.expand(doc, {expansionMap});
+      await jsonld.expand(doc, {expansionMap, eventHandler});
 
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(mapCounts, {
         expansionMap: 2,
         prependedIri: {
           relativeIri: 1
@@ -1784,6 +2143,13 @@ describe.only('expansionMap', () => {
         relativeIri: {
           relativeIri: 1
         }
+      });
+      assert.deepStrictEqual(eventCounts, {
+        codes: {
+          'relative IRI after expansion': 1
+        },
+        events: 1,
+        //FIXME: true
       });
     });
   });
