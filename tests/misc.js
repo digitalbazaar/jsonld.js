@@ -493,8 +493,37 @@ function addEventCounts(counts, event) {
 }
 
 describe.only('events', () => {
-  // FIXME add default handler tests
-  // FIXME add object '*' handler tests
+  // FIXME/TODO add object '*' handler and tests?
+
+  it('check default handler called', async () => {
+    const d =
+{
+  "relative": "test"
+}
+;
+    const ex = [];
+
+    const counts = {};
+    const eventHandler = ({event}) => {
+      addEventCounts(counts, event);
+    };
+
+    jsonld.setDefaultEventHandler({eventHandler});
+
+    const e = await jsonld.expand(d);
+
+    assert.deepStrictEqual(e, ex);
+    assert.deepStrictEqual(counts, {
+      codes: {
+        'invalid property expansion': 1,
+        'relative IRI after expansion': 2
+      },
+      events: 3
+    });
+
+    // reset default
+    jsonld.setDefaultEventHandler();
+  });
 
   it('handle warning event with function', async () => {
     const d =
