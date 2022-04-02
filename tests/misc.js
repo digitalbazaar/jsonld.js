@@ -507,7 +507,7 @@ function trackEvent({events, event}) {
   });
 }
 
-describe.only('events', () => {
+describe('events', () => {
   // FIXME/TODO add object '*' handler and tests?
 
   it('check default handler called', async () => {
@@ -932,7 +932,7 @@ describe.only('events', () => {
   });
 });
 
-describe.only('expansionMap', () => {
+describe('expansionMap', () => {
   // track all the counts
   // use simple count object (don't use tricky test keys!)
   function addCounts(counts, info) {
@@ -1025,6 +1025,161 @@ describe.only('expansionMap', () => {
         expansionMap: 1,
         unmappedValue: {
           '__unknown__': 1
+        }
+      });
+      console.error('FIXME');
+      assert.deepStrictEqual(events, {});
+    });
+
+    it('should notify for @set free-floating scaler', async () => {
+      const docWithNoTerms =
+{
+  "@set": [
+    "free-floating strings in set objects are removed",
+    {
+      "@id": "http://example.com/free-floating-node"
+    },
+    {
+      "@id": "http://example.com/node",
+      "urn:property": "nodes with properties are not removed"
+    }
+  ]
+}
+;
+      const ex =
+[
+  {
+    "@id": "http://example.com/node",
+    "urn:property": [
+      {
+        "@value": "nodes with properties are not removed"
+      }
+    ]
+  }
+]
+;
+
+      const mapCounts = {};
+      const expansionMap = info => {
+        addCounts(mapCounts, info);
+      };
+      const events = {};
+      const eventHandler = ({event}) => {
+        trackEvent({events, event});
+      };
+
+      const e = await jsonld.expand(docWithNoTerms, {
+        expansionMap, eventHandler
+      });
+
+      assert.deepStrictEqual(e, ex);
+      assert.deepStrictEqual(mapCounts, {
+        expansionMap: 4,
+        unmappedValue: {
+          '__unknown__': 2,
+          'http://example.com/free-floating-node': 2
+        }
+      });
+      console.error('FIXME');
+      assert.deepStrictEqual(events, {});
+    });
+
+    it('should notify for @list free-floating scaler', async () => {
+      const docWithNoTerms =
+{
+  "@list": [
+    "free-floating strings in list objects are removed",
+    {
+      "@id": "http://example.com/free-floating-node"
+    },
+    {
+      "@id": "http://example.com/node",
+      "urn:property": "nodes are removed with the @list"
+    }
+  ]
+}
+;
+      const ex = [];
+
+      const mapCounts = {};
+      const expansionMap = info => {
+        addCounts(mapCounts, info);
+      };
+      const events = {};
+      const eventHandler = ({event}) => {
+        trackEvent({events, event});
+      };
+
+      const e = await jsonld.expand(docWithNoTerms, {
+        expansionMap, eventHandler
+      });
+
+      assert.deepStrictEqual(e, ex);
+      assert.deepStrictEqual(mapCounts, {
+        expansionMap: 5,
+        unmappedValue: {
+          '__unknown__': 3,
+          'http://example.com/free-floating-node': 2
+        }
+      });
+      console.error('FIXME');
+      assert.deepStrictEqual(events, {});
+    });
+
+    it('should notify for null @value', async () => {
+      const docWithNoTerms =
+{
+  "urn:property": {
+    "@value": null
+  }
+}
+;
+
+      const mapCounts = {};
+      const expansionMap = info => {
+        addCounts(mapCounts, info);
+      };
+      const events = {};
+      const eventHandler = ({event}) => {
+        trackEvent({events, event});
+      };
+
+      await jsonld.expand(docWithNoTerms, {expansionMap, eventHandler});
+
+      assert.deepStrictEqual(mapCounts, {
+        expansionMap: 3,
+        unmappedValue: {
+          '__unknown__': 3
+        }
+      });
+      console.error('FIXME');
+      assert.deepStrictEqual(events, {});
+    });
+
+    it('should notify for @language alone', async () => {
+      const docWithNoTerms =
+{
+  "urn:property": {
+    "@language": "en"
+  }
+}
+;
+
+      const mapCounts = {};
+      const expansionMap = info => {
+        addCounts(mapCounts, info);
+      };
+      const events = {};
+      const eventHandler = ({event}) => {
+        trackEvent({events, event});
+      };
+
+      await jsonld.expand(docWithNoTerms, {expansionMap, eventHandler});
+
+      assert.deepStrictEqual(mapCounts, {
+        expansionMap: 3,
+        unmappedValue: {
+          '__unknown__': 2
         }
       });
       console.error('FIXME');
