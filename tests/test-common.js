@@ -35,7 +35,6 @@ const TEST_TYPES = {
       // NOTE: idRegex format:
       //MMM-manifest#tNNN$/,
       idRegex: [
-        /compact-manifest#t0111$/,
         /compact-manifest#t0112$/,
         /compact-manifest#t0113$/,
         // html
