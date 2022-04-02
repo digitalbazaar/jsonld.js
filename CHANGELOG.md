@@ -1,5 +1,8 @@
 # jsonld ChangeLog
 
+### Fixed
+- compact t0111 test: "Keyword-like relative IRIs"
+
 ### Changed
 - Change EARL Assertor to Digital Bazaar, Inc.
 - Update eslint dependencies.
