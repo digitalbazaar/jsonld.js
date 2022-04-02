@@ -346,6 +346,166 @@ It is recommended to set a default `user-agent` header for Node.js
 applications. The default for the default Node.js document loader is
 `jsonld.js`.
 
+### Events
+
+**WARNING**: This feature is **experimental** and the API, events, codes,
+levels, and messages may change.
+
+Various events may occur during processing. The event handler system allows
+callers to handle events as appropriate. Use cases can be as simple as logging
+warnings, to displaying helpful UI hints, to failing on specific conditions.
+
+**Note**: By default no event handler is used. This is due to general
+performance considerations and the impossibility of providing a default handler
+that would work for all use cases. Event construction and the handling system
+are avoided by default providing the best performance for use cases where data
+quality is known events are unnecessary.
+
+#### Event Structure
+
+Events are basic JSON objects with the following properties:
+
+- **`code`**: A basic string code, similar to existing JSON-LD error codes.
+- **`level`**: The severity level. Currently only `warning` is emitted.
+- **`tags`**: Optional hints for the type of event. Currently defined:
+  - **`unsafe`**: Event is considered unsafe.
+  - **`lossy`**: Event is related to potential data loss.
+  - **`empty`**: Event is related to empty data structures.
+- **`message`**: A human readable message describing the event.
+- **`details`**: A JSON object with event specific details.
+
+#### Event Handlers
+
+Event handlers are chainable functions, arrays of handlers, objects mapping
+codes to handlers, or any mix of these structures. Each function is passed an
+object with two properties:
+
+- **`event`**: The event data.
+- **`next`**: A function to call to an `event` and a `next`.
+
+The event handling system will process the handler structure, calling all
+handlers, and continuing onto the next handler if `next()` is called. To stop
+processing, throw an error, or return without calling `next()`.
+
+This design allows for composable handler structures, for instance to handle
+some conditions with a custom handler, and default to generic "unknown event"
+or logging handler.
+
+**Note**: Handlers are currently synchronous due to possible performance
+issues. This may change to an `async`/`await` design in the future.
+
+```js
+// expand a document with a logging event handler
+const expanded = await jsonld.expand(data, {
+  // simple logging handler
+  eventHandler: function({event, next}) {
+    console.log('event', {event});
+  }
+});
+```
+
+```js
+function logEventHandler({event, next}) {
+  console.log('event', {event});
+  next();
+}
+
+function noWarningsEventHandler({event, next}) {
+  if(event.level === 'warning') {
+    throw new Error('No warnings!', {event});
+  }
+  next();
+}
+
+function unknownEventHandler({event, next}) {
+  throw new Error('Unknown event', {event});
+}
+
+// expand a document with an array of event handlers
+const expanded = await jsonld.expand(data, {
+  // array of handlers
+  eventHandler: [
+    logEventHandler,
+    noWarningsEventHandler,
+    unknownEventHandler
+  ]}
+});
+```
+
+```js
+const handler = {
+  'a mild event code': function({event}) {
+    console.log('the thing happened', {event});
+  },
+  'a serious event code': function({event}) {
+    throw new Error('the specific thing happened', {event});
+  }
+};
+// expand a document with a code map event handler
+const expanded = await jsonld.expand(data, {eventHandler});
+```
+
+#### Safe Mode
+
+A common use case is to avoid JSON-LD constructs that will result in lossy
+behavior. The JSON-LD specifications have notes about when data is dropped.
+This can be especially important when calling [`canonize`][] in order to
+digitally sign data. The event system can be used to detect and avoid these
+situations. A special "safe mode" is available that will inject an initial
+event handler that fails on conditions that would result in data loss. More
+benign events may fall back to the passed event handler, if any.
+
+**Note**: This mode is designed to be the common way that digital signing and
+similar applications use this library.
+
+The `safe` options flag set to `true` enables this behavior:
+
+```js
+// expand a document in safe mode
+const expanded = await jsonld.expand(data, {safe: true});
+```
+
+```js
+// expand a document in safe mode, with fallback handler
+const expanded = await jsonld.expand(data, {
+  safe: true
+  eventHandler: function({event}) { /* ... */ }
+});
+```
+
+#### Available Handlers
+
+Some predefined event handlers are available to use alone or as part of a more
+complex handler:
+
+- **safeModeEventHandler**: The handler used when `safe` is `true`.
+- **strictModeEventHandler**: A handler that is more strict than the `safe`
+  handler and also fails on other detectable events related to poor input
+  structure.
+- **logEventHandler**: A debugging handler that outputs to the console.
+- **logWarningHandler**: A debugging handler that outputs `warning` level
+  events to the console.
+- **unhandledEventHandler**: Throws on all events not yet handled.
+
+#### Default Event Handler
+
+A default event handler can be set. It will be the only handler when not in
+safe mode, and the second handler when in safe mode.
+
+```js
+// fail on unknown events
+jsonld.setDefaultEventHandler(jsonld.unhandledEventHandler);
+// will use safe mode handler, like `{safe: true}`
+const expanded = await jsonld.expand(data);
+```
+
+```js
+// always use safe mode event handler, ignore other events
+jsonld.setDefaultEventHandler(jsonld.safeModeEventHandler);
+// will use safe mode handler, like `{safe: true}`
+const expanded = await jsonld.expand(data);
+```
+
 Related Modules
 ---------------
 
