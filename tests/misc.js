@@ -566,6 +566,96 @@ describe('events', () => {
     //});
   }
 
+  // test different apis
+  // use appropriate options
+  async function _test({
+    // expand, compact, frame, fromRdf, toRdf, etc
+    type,
+    input,
+    expected,
+    exception,
+    mapCounts,
+    mapLog,
+    eventCounts,
+    eventLog,
+    options
+  }) {
+    const maps = {counts: {}, log: []};
+    const expansionMap = info => {
+      trackMap({maps, info});
+    };
+    const events = {counts: {}, log: []};
+    const eventHandler = ({event}) => {
+      trackEvent({events, event});
+    };
+
+    let result;
+    let error;
+    const opts = {...options};
+    if(mapCounts || mapLog) {
+      opts.expansionMap = expansionMap;
+    }
+    if(eventCounts || eventLog) {
+      opts.eventHandler = eventHandler;
+    }
+    if(!['expand'].includes(type)) {
+      throw new Error(`Unknown test type: "${type}"`);
+    }
+    try {
+      if(type === 'expand') {
+        result = await jsonld.expand(input, opts);
+      }
+    } catch(e) {
+      error = e;
+    }
+
+    if(exception) {
+      assert(error);
+      assert.equal(error.name, exception);
+    }
+    if(!exception && error) {
+      throw error;
+    }
+    if(expected) {
+      assert.deepStrictEqual(result, expected);
+    }
+    if(mapCounts) {
+      assert.deepStrictEqual(maps.counts, mapCounts);
+    }
+    if(mapLog) {
+      assert.deepStrictEqual(maps.log, mapLog);
+    }
+    if(eventCounts) {
+      assert.deepStrictEqual(events.counts, eventCounts);
+    }
+    if(mapLog) {
+      assert.deepStrictEqual(events.log, eventLog);
+    }
+  }
+
+  // test passes with safe=true
+  async function _testSafe({
+    type,
+    input
+  }) {
+    await _test({type, input, options: {safe: true}});
+  }
+
+  // test fails with safe=true
+  async function _testUnsafe({
+    type,
+    input
+  }) {
+    let error;
+    try {
+      await _test({type, input, options: {safe: true}});
+    } catch(e) {
+      error = e;
+    }
+
+    assert(error);
+  }
+
   describe('event system', () => {
     it('check default handler called', async () => {
       const d =
@@ -990,29 +1080,24 @@ describe('events', () => {
   });
 
   describe('unmappedValue', () => {
-    // FIXME move to value section
     it('should have zero counts with empty input', async () => {
       const docWithNoContent = {};
+      const expected = [];
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithNoContent, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 1,
-        unmappedValue: {
-          '__unknown__': 1
-        }
-      });
       console.error('FIXME');
-      assert.deepStrictEqual(events, {});
+
+      await _test({
+        type: 'expand',
+        input: docWithNoContent,
+        expected,
+        mapCounts: {
+          expansionMap: 1,
+          unmappedValue: {
+            '__unknown__': 1
+          }
+        },
+        eventCounts: {}
+      });
     });
 
     it('should have zero counts with no terms', async () => {
@@ -1023,30 +1108,25 @@ describe('events', () => {
   }
 }
 ;
+      const expected = [];
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithNoTerms, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 1,
-        unmappedValue: {
-          '__unknown__': 1
-        }
-      });
       console.error('FIXME');
-      assert.deepStrictEqual(events, {});
+      await _test({
+        type: 'expand',
+        input: docWithNoTerms,
+        expected,
+        mapCounts: {
+          expansionMap: 1,
+          unmappedValue: {
+            '__unknown__': 1
+          }
+        },
+        eventCounts: {}
+      });
     });
 
     it('should notify for @set free-floating scaler', async () => {
-      const docWithNoTerms =
+      const input =
 {
   "@set": [
     "free-floating strings in set objects are removed",
@@ -1060,7 +1140,7 @@ describe('events', () => {
   ]
 }
 ;
-      const ex =
+      const expected =
 [
   {
     "@id": "http://example.com/node",
@@ -1073,33 +1153,24 @@ describe('events', () => {
 ]
 ;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      const e = await jsonld.expand(docWithNoTerms, {
-        expansionMap, eventHandler
-      });
-
-      assert.deepStrictEqual(e, ex);
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 4,
-        unmappedValue: {
-          '__unknown__': 2,
-          'http://example.com/free-floating-node': 2
-        }
-      });
       console.error('FIXME');
-      assert.deepStrictEqual(events, {});
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 4,
+          unmappedValue: {
+            '__unknown__': 2,
+            'http://example.com/free-floating-node': 2
+          }
+        },
+        eventCounts: {}
+      });
     });
 
     it('should notify for @list free-floating scaler', async () => {
-      const docWithNoTerms =
+      const input =
 {
   "@list": [
     "free-floating strings in list objects are removed",
@@ -1113,119 +1184,105 @@ describe('events', () => {
   ]
 }
 ;
-      const ex = [];
+      const expected = [];
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      const e = await jsonld.expand(docWithNoTerms, {
-        expansionMap, eventHandler
-      });
-
-      assert.deepStrictEqual(e, ex);
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 5,
-        unmappedValue: {
-          '__unknown__': 3,
-          'http://example.com/free-floating-node': 2
-        }
-      });
       console.error('FIXME');
-      assert.deepStrictEqual(events, {});
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 5,
+          unmappedValue: {
+            '__unknown__': 3,
+            'http://example.com/free-floating-node': 2
+          }
+        },
+        eventCounts: {}
+      });
     });
 
     it('should notify for null @value', async () => {
-      const docWithNoTerms =
+      const input =
 {
   "urn:property": {
     "@value": null
   }
 }
 ;
+      const expected = [];
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithNoTerms, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 3,
-        unmappedValue: {
-          '__unknown__': 3
-        }
-      });
       console.error('FIXME');
-      assert.deepStrictEqual(events, {});
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 3,
+          unmappedValue: {
+            '__unknown__': 3
+          }
+        },
+        eventCounts: {}
+      });
     });
 
     it('should notify for @language alone', async () => {
-      const docWithNoTerms =
+      const input =
 {
   "urn:property": {
     "@language": "en"
   }
 }
 ;
+      const expected = [];
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithNoTerms, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 3,
-        unmappedValue: {
-          '__unknown__': 2
-        }
-      });
       console.error('FIXME');
-      assert.deepStrictEqual(events, {});
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 3,
+          unmappedValue: {
+            '__unknown__': 2
+          }
+        },
+        eventCounts: {}
+      });
     });
   });
 
   describe('unmappedProperty', () => {
     it('should have zero counts with absolute term', async () => {
-      const docWithMappedTerm =
+      const input =
 {
   "urn:definedTerm": "is defined"
 }
 ;
+      const expected =
+[
+  {
+    "urn:definedTerm": [
+      {
+        "@value": "is defined"
+      }
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithMappedTerm, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps, {});
-      assert.deepStrictEqual(events, {});
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {},
+        eventCounts: {}
+      });
     });
 
     it('should have zero counts with mapped term', async () => {
-      const docWithMappedTerm =
+      const input =
 {
   "@context": {
     "definedTerm": "https://example.com#definedTerm"
@@ -1233,86 +1290,88 @@ describe('events', () => {
   "definedTerm": "is defined"
 }
 ;
+      const expected =
+[
+  {
+    "https://example.com#definedTerm": [
+      {
+        "@value": "is defined"
+      }
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithMappedTerm, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps, {});
-      assert.deepStrictEqual(events, {});
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {},
+        eventCounts: {}
+      });
     });
 
     // XXX
     it('should be called on unmapped term with no context', async () => {
-      const docWithUnMappedTerm =
+      const input =
 {
   "testUndefined": "is undefined"
-};
+}
+;
+      const expected = [];
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithUnMappedTerm, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 4,
-        relativeIri: {
-          testUndefined: 2
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 4,
+          relativeIri: {
+            testUndefined: 2
+          },
+          unmappedProperty: {
+            testUndefined: 1
+          },
+          unmappedValue: {
+            '__unknown__': 1
+          }
         },
-        unmappedProperty: {
-          testUndefined: 1
+        eventCounts: {
+          codes: {
+            'invalid property expansion': 1,
+            'relative IRI after expansion': 2
+          },
+          events: 3
         },
-        unmappedValue: {
-          '__unknown__': 1
-        }
+        eventLog: [
+          {
+            code: 'relative IRI after expansion',
+            details: {
+              value: 'testUndefined'
+            },
+            level: 'warning'
+          },
+          {
+            code: 'relative IRI after expansion',
+            details: {
+              value: 'testUndefined'
+            },
+            level: 'warning'
+          },
+          {
+            code: 'invalid property expansion',
+            details: {
+              property: 'testUndefined'
+            },
+            level: 'warning'
+          }
+        ]
       });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'invalid property expansion': 1,
-          'relative IRI after expansion': 2
-        },
-        events: 3
-      });
-      assert.deepStrictEqual(events.log, [
-        {
-          code: 'relative IRI after expansion',
-          details: {
-            value: 'testUndefined'
-          },
-          level: 'warning'
-        },
-        {
-          code: 'relative IRI after expansion',
-          details: {
-            value: 'testUndefined'
-          },
-          level: 'warning'
-        },
-        {
-          code: 'invalid property expansion',
-          details: {
-            property: 'testUndefined'
-          },
-          level: 'warning'
-        }
-      ]);
+      await _testUnsafe({type: 'expand', input});
     });
 
     it('should be called on unmapped term with context [1]', async () => {
-      const docWithUnMappedTerm =
+      const input =
 {
   "@context": {
     "definedTerm": "https://example.com#definedTerm"
@@ -1320,41 +1379,36 @@ describe('events', () => {
   "testUndefined": "is undefined"
 }
 ;
+      const expected = [];
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithUnMappedTerm, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 4,
-        relativeIri: {
-          testUndefined: 2
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 4,
+          relativeIri: {
+            testUndefined: 2
+          },
+          unmappedProperty: {
+            testUndefined: 1
+          },
+          unmappedValue: {
+            '__unknown__': 1
+          }
         },
-        unmappedProperty: {
-          testUndefined: 1
-        },
-        unmappedValue: {
-          '__unknown__': 1
+        eventCounts: {
+          codes: {
+            'invalid property expansion': 1,
+            'relative IRI after expansion': 2
+          },
+          events: 3
         }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'invalid property expansion': 1,
-          'relative IRI after expansion': 2
-        },
-        events: 3
       });
     });
 
     it('should be called on unmapped term with context [2]', async () => {
-      const docWithUnMappedTerm =
+      const input =
 {
   "@context": {
     "definedTerm": "https://example.com#definedTerm"
@@ -1363,38 +1417,43 @@ describe('events', () => {
   "testUndefined": "is undefined"
 }
 ;
+      const expected =
+[
+  {
+    "https://example.com#definedTerm": [
+      {
+        "@value": "is defined"
+      }
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithUnMappedTerm, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 3,
-        relativeIri: {
-          testUndefined: 2
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 3,
+          relativeIri: {
+            testUndefined: 2
+          },
+          unmappedProperty: {
+            testUndefined: 1
+          }
         },
-        unmappedProperty: {
-          testUndefined: 1
+        eventCounts: {
+          codes: {
+            'invalid property expansion': 1,
+            'relative IRI after expansion': 2
+          },
+          events: 3
         }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'invalid property expansion': 1,
-          'relative IRI after expansion': 2
-        },
-        events: 3
       });
     });
 
     it('should be called on nested unmapped term', async () => {
-      const docWithUnMappedTerm =
+      const input =
 {
   "@context": {
     "definedTerm": "https://example.com#definedTerm"
@@ -1404,114 +1463,119 @@ describe('events', () => {
   }
 }
 ;
+      const expected =
+[
+  {
+    "https://example.com#definedTerm": [
+      {}
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithUnMappedTerm, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 3,
-        relativeIri: {
-          testUndefined: 2
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 3,
+          relativeIri: {
+            testUndefined: 2
+          },
+          unmappedProperty: {
+            testUndefined: 1
+          }
         },
-        unmappedProperty: {
-          testUndefined: 1
+        eventCounts: {
+          codes: {
+            'invalid property expansion': 1,
+            'relative IRI after expansion': 2
+          },
+          events: 3
         }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'invalid property expansion': 1,
-          'relative IRI after expansion': 2
-        },
-        events: 3
       });
     });
   });
 
+  // FIXME naming
   describe('relativeIri', () => {
     it('should be called on relative IRI for id term [1]', async () => {
-      const docWithRelativeIriId =
+      const input =
 {
   "@id": "relativeiri"
 }
 ;
+      const expected = [];
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 3,
-        prependedIri: {
-          relativeiri: 1
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 3,
+          prependedIri: {
+            relativeiri: 1
+          },
+          relativeIri: {
+            relativeiri: 1
+          },
+          unmappedValue: {
+            relativeiri: 1
+          }
         },
-        relativeIri: {
-          relativeiri: 1
-        },
-        unmappedValue: {
-          relativeiri: 1
+        eventCounts: {
+          codes: {
+            'relative IRI after expansion': 1
+          },
+          events: 1
         }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'relative IRI after expansion': 1
-        },
-        events: 1
       });
     });
 
     it('should be called on relative IRI for id term [2]', async () => {
-      const docWithRelativeIriId =
+      const input =
 {
   "@id": "relativeiri",
   "urn:test": "value"
 }
 ;
+      const expected =
+[
+  {
+    "@id": "relativeiri",
+    "urn:test": [
+      {
+        "@value": "value"
+      }
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 2,
-        prependedIri: {
-          relativeiri: 1
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 2,
+          prependedIri: {
+            relativeiri: 1
+          },
+          relativeIri: {
+            relativeiri: 1
+          }
         },
-        relativeIri: {
-          relativeiri: 1
+        eventCounts: {
+          codes: {
+            'relative IRI after expansion': 1
+          },
+          events: 1
         }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'relative IRI after expansion': 1
-        },
-        events: 1
       });
     });
 
     it('should be called on relative IRI for id term [3]', async () => {
-      const docWithRelativeIriId =
+      const input =
 {
   "@context": {
     "definedTerm": "https://example.com#definedTerm"
@@ -1520,37 +1584,43 @@ describe('events', () => {
   "definedTerm": "is defined"
 }
 ;
+      const expected =
+[
+  {
+    "@id": "relativeiri",
+    "https://example.com#definedTerm": [
+      {
+        "@value": "is defined"
+      }
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 2,
-        prependedIri: {
-          relativeiri: 1
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 2,
+          prependedIri: {
+            relativeiri: 1
+          },
+          relativeIri: {
+            relativeiri: 1
+          }
         },
-        relativeIri: {
-          relativeiri: 1
+        eventCounts: {
+          codes: {
+            'relative IRI after expansion': 1
+          },
+          events: 1
         }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'relative IRI after expansion': 1
-        },
-        events: 1
       });
     });
 
     it('should be called on relative IRI for id term (nested)', async () => {
-      const docWithRelativeIriId =
+      const input =
 {
   "@context": {
     "definedTerm": "https://example.com#definedTerm"
@@ -1561,37 +1631,43 @@ describe('events', () => {
   }
 }
 ;
+      const expected =
+[
+  {
+    "@id": "urn:absoluteIri",
+    "https://example.com#definedTerm": [
+      {
+        "@id": "relativeiri"
+      }
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 2,
-        prependedIri: {
-          relativeiri: 1
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 2,
+          prependedIri: {
+            relativeiri: 1
+          },
+          relativeIri: {
+            relativeiri: 1
+          }
         },
-        relativeIri: {
-          relativeiri: 1
+        eventCounts: {
+          codes: {
+            'relative IRI after expansion': 1
+          },
+          events: 1
         }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'relative IRI after expansion': 1
-        },
-        events: 1
       });
     });
 
     it('should be called on relative IRI for aliased id term', async () => {
-      const docWithRelativeIriId =
+      const input =
 {
   "@context": {
     "id": "@id",
@@ -1601,37 +1677,43 @@ describe('events', () => {
   "definedTerm": "is defined"
 }
 ;
+      const expected =
+[
+  {
+    "@id": "relativeiri",
+    "https://example.com#definedTerm": [
+      {
+        "@value": "is defined"
+      }
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 2,
-        prependedIri: {
-          relativeiri: 1
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 2,
+          prependedIri: {
+            relativeiri: 1
+          },
+          relativeIri: {
+            relativeiri: 1
+          }
         },
-        relativeIri: {
-          relativeiri: 1
+        eventCounts: {
+          codes: {
+            'relative IRI after expansion': 1
+          },
+          events: 1
         }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'relative IRI after expansion': 1
-        },
-        events: 1
       });
     });
 
     it('should be called on relative IRI for type term', async () => {
-      const docWithRelativeIriId =
+      const input =
 {
   "@context": {
     "definedTerm": "https://example.com#definedTerm"
@@ -1641,43 +1723,51 @@ describe('events', () => {
   "definedTerm": "is defined"
 }
 ;
+      const expected =
+[
+  {
+    "@type": [
+      "relativeiri"
+    ],
+    "https://example.com#definedTerm": [
+      {
+        "@value": "is defined"
+      }
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 6,
-        prependedIri: {
-          relativeiri: 1
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 6,
+          prependedIri: {
+            relativeiri: 1
+          },
+          relativeIri: {
+            id: 2,
+            relativeiri: 2
+          },
+          unmappedProperty: {
+            id: 1
+          }
         },
-        relativeIri: {
-          id: 2,
-          relativeiri: 2
-        },
-        unmappedProperty: {
-          id: 1
+        eventCounts: {
+          codes: {
+            'invalid property expansion': 1,
+            'relative IRI after expansion': 4
+          },
+          events: 5
         }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'invalid property expansion': 1,
-          'relative IRI after expansion': 4
-        },
-        events: 5
       });
     });
 
     it('should be called on relative IRI for type ' +
       'term in scoped context', async () => {
-      const docWithRelativeIriId =
+      const input =
 {
   "@context": {
     "definedType": {
@@ -1695,43 +1785,53 @@ describe('events', () => {
   }
 }
 ;
+      const expected =
+[
+  {
+    "@type": [
+      "https://example.com#definedType"
+    ],
+    "https://example.com#definedTerm": [
+      {
+        "@type": [
+          "relativeiri"
+        ]
+      }
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 6,
-        prependedIri: {
-          relativeiri: 1
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 6,
+          prependedIri: {
+            relativeiri: 1
+          },
+          relativeIri: {
+            id: 2,
+            relativeiri: 2
+          },
+          unmappedProperty: {
+            id: 1
+          }
         },
-        relativeIri: {
-          id: 2,
-          relativeiri: 2
-        },
-        unmappedProperty: {
-          id: 1
+        eventCounts: {
+          codes: {
+            'invalid property expansion': 1,
+            'relative IRI after expansion': 4
+          },
+          events: 5
         }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'invalid property expansion': 1,
-          'relative IRI after expansion': 4
-        },
-        events: 5
       });
     });
 
     it('should be called on relative IRI for ' +
       'type term with multiple relative IRI types', async () => {
-      const docWithRelativeIriId =
+      const input =
 {
   "@context": {
     "definedTerm": "https://example.com#definedTerm"
@@ -1741,46 +1841,55 @@ describe('events', () => {
   "definedTerm": "is defined"
 }
 ;
+      const expected =
+[
+  {
+    "@type": [
+      "relativeiri",
+      "anotherRelativeiri"
+    ],
+    "https://example.com#definedTerm": [
+      {
+        "@value": "is defined"
+      }
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 8,
-        prependedIri: {
-          anotherRelativeiri: 1,
-          relativeiri: 1
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 8,
+          prependedIri: {
+            anotherRelativeiri: 1,
+            relativeiri: 1
+          },
+          relativeIri: {
+            anotherRelativeiri: 1,
+            id: 2,
+            relativeiri: 2
+          },
+          unmappedProperty: {
+            id: 1
+          }
         },
-        relativeIri: {
-          anotherRelativeiri: 1,
-          id: 2,
-          relativeiri: 2
-        },
-        unmappedProperty: {
-          id: 1
+        eventCounts: {
+          codes: {
+            'invalid property expansion': 1,
+            'relative IRI after expansion': 5
+          },
+          events: 6
         }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'invalid property expansion': 1,
-          'relative IRI after expansion': 5
-        },
-        events: 6
       });
     });
 
     it('should be called on relative IRI for ' +
       'type term with multiple relative IRI types in scoped context' +
       '', async () => {
-      const docWithRelativeIriId =
+      const input =
 {
   "@context": {
     "definedType": {
@@ -1797,45 +1906,56 @@ describe('events', () => {
   }
 }
 ;
+      const expected =
+[
+  {
+    "@type": [
+      "https://example.com#definedType"
+    ],
+    "https://example.com#definedTerm": [
+      {
+        "@type": [
+          "relativeiri",
+          "anotherRelativeiri"
+        ]
+      }
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 8,
-        prependedIri: {
-          anotherRelativeiri: 1,
-          relativeiri: 1
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 8,
+          prependedIri: {
+            anotherRelativeiri: 1,
+            relativeiri: 1
+          },
+          relativeIri: {
+            anotherRelativeiri: 1,
+            id: 2,
+            relativeiri: 2
+          },
+          unmappedProperty: {
+            id: 1
+          }
         },
-        relativeIri: {
-          anotherRelativeiri: 1,
-          id: 2,
-          relativeiri: 2
-        },
-        unmappedProperty: {
-          id: 1
+        eventCounts: {
+          codes: {
+            'invalid property expansion': 1,
+            'relative IRI after expansion': 5
+          },
+          events: 6
         }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'invalid property expansion': 1,
-          'relative IRI after expansion': 5
-        },
-        events: 6
       });
     });
 
     it('should be called on relative IRI for ' +
       'type term with multiple types', async () => {
-      const docWithRelativeIriId =
+      const input =
 {
   "@context": {
     "definedTerm": "https://example.com#definedTerm"
@@ -1845,42 +1965,51 @@ describe('events', () => {
   "definedTerm": "is defined"
 }
 ;
+      const expected =
+[
+  {
+    "@type": [
+      "relativeiri",
+      "https://example.com#definedTerm"
+    ],
+    "https://example.com#definedTerm": [
+      {
+        "@value": "is defined"
+      }
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 6,
-        prependedIri: {
-          relativeiri: 1
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 6,
+          prependedIri: {
+            relativeiri: 1
+          },
+          relativeIri: {
+            id: 2,
+            relativeiri: 2
+          },
+          unmappedProperty: {
+            id: 1
+          }
         },
-        relativeIri: {
-          id: 2,
-          relativeiri: 2
-        },
-        unmappedProperty: {
-          id: 1
+        eventCounts: {
+          codes: {
+            'invalid property expansion': 1,
+            'relative IRI after expansion': 4
+          },
+          events: 5
         }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'invalid property expansion': 1,
-          'relative IRI after expansion': 4
-        },
-        events: 5
       });
     });
 
     it('should be called on relative IRI for aliased type term', async () => {
-      const docWithRelativeIriId =
+      const input =
 {
   "@context": {
     "type": "@type",
@@ -1890,43 +2019,51 @@ describe('events', () => {
   "type": "relativeiri",
   "definedTerm": "is defined"
 };
+      const expected =
+[
+  {
+    "@type": [
+      "relativeiri"
+    ],
+    "https://example.com#definedTerm": [
+      {
+        "@value": "is defined"
+      }
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 6,
-        prependedIri: {
-          relativeiri: 1
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 6,
+          prependedIri: {
+            relativeiri: 1
+          },
+          relativeIri: {
+            id: 2,
+            relativeiri: 2
+          },
+          unmappedProperty: {
+            id: 1
+          }
         },
-        relativeIri: {
-          id: 2,
-          relativeiri: 2
-        },
-        unmappedProperty: {
-          id: 1
+        eventCounts: {
+          codes: {
+            'invalid property expansion': 1,
+            'relative IRI after expansion': 4
+          },
+          events: 5
         }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'invalid property expansion': 1,
-          'relative IRI after expansion': 4
-        },
-        events: 5
       });
     });
 
     it('should be called on relative IRI when ' +
       '@base value is `null`', async () => {
-      const docWithRelativeIriId =
+      const input =
 {
   "@context": {
     "@base": null
@@ -1934,41 +2071,39 @@ describe('events', () => {
   "@id": "relativeiri"
 }
 ;
+      const expected =
+[
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 3,
-        prependedIri: {
-          'relativeiri': 1
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 3,
+          prependedIri: {
+            'relativeiri': 1
+          },
+          relativeIri: {
+            'relativeiri': 1
+          },
+          unmappedValue: {
+            'relativeiri': 1
+          }
         },
-        relativeIri: {
-          'relativeiri': 1
-        },
-        unmappedValue: {
-          'relativeiri': 1
+        eventCounts: {
+          codes: {
+            'relative IRI after expansion': 1
+          },
+          events: 1
         }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'relative IRI after expansion': 1
-        },
-        events: 1
       });
     });
 
     it('should be called on relative IRI when ' +
       '@base value is `./`', async () => {
-      const docWithRelativeIriId =
+      const input =
 {
   "@context": {
     "@base": "./"
@@ -1976,41 +2111,39 @@ describe('events', () => {
   "@id": "relativeiri"
 }
 ;
+      const expected =
+[
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 3,
-        prependedIri: {
-          relativeiri: 1
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 3,
+          prependedIri: {
+            relativeiri: 1
+          },
+          relativeIri: {
+            '/relativeiri': 1
+          },
+          unmappedValue: {
+            '/relativeiri': 1
+          }
         },
-        relativeIri: {
-          '/relativeiri': 1
-        },
-        unmappedValue: {
-          '/relativeiri': 1
+        eventCounts: {
+          codes: {
+            'relative IRI after expansion': 1
+          },
+          events: 1
         }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'relative IRI after expansion': 1
-        },
-        events: 1
       });
     });
 
     it('should be called on relative IRI when ' +
       '`@vocab` value is `null`', async () => {
-      const docWithRelativeIriId =
+      const input =
 {
   "@context": {
     "@vocab": null
@@ -2018,38 +2151,41 @@ describe('events', () => {
   "@type": "relativeiri"
 }
 ;
+      const expected =
+[
+  {
+    "@type": [
+      "relativeiri"
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 3,
-        prependedIri: {
-          relativeiri: 1
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 3,
+          prependedIri: {
+            relativeiri: 1
+          },
+          relativeIri: {
+            'relativeiri': 2
+          }
         },
-        relativeIri: {
-          'relativeiri': 2
+        eventCounts: {
+          codes: {
+            'relative IRI after expansion': 2
+          },
+          events: 2
         }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'relative IRI after expansion': 2
-        },
-        events: 2
       });
     });
 
     it('should be called on relative IRI when ' +
       '`@vocab` value is `./`', async () => {
-      const docWithRelativeIriId =
+      const input =
 {
   "@context": {
     "@vocab": "./"
@@ -2057,34 +2193,37 @@ describe('events', () => {
   "@type": "relativeiri"
 }
 ;
+      const expected =
+[
+  {
+    "@type": [
+      "/relativeiri"
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(docWithRelativeIriId, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 6,
-        prependedIri: {
-          './': 1,
-          relativeiri: 2
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 6,
+          prependedIri: {
+            './': 1,
+            relativeiri: 2
+          },
+          relativeIri: {
+            '/': 1,
+            '/relativeiri': 2
+          }
         },
-        relativeIri: {
-          '/': 1,
-          '/relativeiri': 2
+        eventCounts: {
+          codes: {
+            'relative IRI after expansion': 3
+          },
+          events: 3
         }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'relative IRI after expansion': 3
-        },
-        events: 3
       });
     });
   });
@@ -2092,44 +2231,53 @@ describe('events', () => {
   describe('prependedIri', () => {
     it('should be called when property is ' +
       'being expanded with `@vocab`', async () => {
-      const doc =
+      const input =
 {
   "@context": {
     "@vocab": "http://example.com/"
   },
   "term": "termValue"
 };
+      const expected =
+[
+  {
+    "http://example.com/term": [
+      {
+        "@value": "termValue"
+      }
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-        assert.deepStrictEqual(info.prependedIri, {
-          type: '@vocab',
-          vocab: 'http://example.com/',
-          value: 'term',
-          typeExpansion: false,
-          result: 'http://example.com/term'
-        });
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(doc, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 4,
-        prependedIri: {
-          term: 4
-        }
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 4,
+          prependedIri: {
+            term: 4
+          }
+        },
+        eventCounts: {},
+        eventLog: [
+          {
+            prependedIri: {
+              type: '@vocab',
+              vocab: 'http://example.com/',
+              value: 'term',
+              typeExpansion: false,
+              result: 'http://example.com/term'
+            }
+          }
+        ]
       });
-      assert.deepStrictEqual(events, {});
     });
 
     it('should be called when `@type` is ' +
       'being expanded with `@vocab`', async () => {
-      const doc =
+      const input =
 {
   "@context": {
     "@vocab": "http://example.com/"
@@ -2137,37 +2285,44 @@ describe('events', () => {
   "@type": "relativeIri"
 }
 ;
+      const expected =
+[
+  {
+    "@type": [
+      "http://example.com/relativeIri"
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-        assert.deepStrictEqual(info.prependedIri, {
-          type: '@vocab',
-          vocab: 'http://example.com/',
-          value: 'relativeIri',
-          typeExpansion: true,
-          result: 'http://example.com/relativeIri'
-        });
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(doc, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 2,
-        prependedIri: {
-          relativeIri: 2
-        }
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 2,
+          prependedIri: {
+            relativeIri: 2
+          }
+        },
+        eventCounts: {},
+        eventLog: [
+          {
+            prependedIri: {
+              type: '@vocab',
+              vocab: 'http://example.com/',
+              value: 'relativeIri',
+              typeExpansion: true,
+              result: 'http://example.com/relativeIri'
+            }
+          }
+        ]
       });
-      assert.deepStrictEqual(events, {});
     });
 
     it('should be called when aliased `@type` is ' +
       'being expanded with `@vocab`', async () => {
-      const doc =
+      const input =
 {
   "@context": {
     "@vocab": "http://example.com/",
@@ -2176,37 +2331,44 @@ describe('events', () => {
   "type": "relativeIri"
 }
 ;
+      const expected =
+[
+  {
+    "@type": [
+      "http://example.com/relativeIri"
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-        assert.deepStrictEqual(info.prependedIri, {
-          type: '@vocab',
-          vocab: 'http://example.com/',
-          value: 'relativeIri',
-          typeExpansion: true,
-          result: 'http://example.com/relativeIri'
-        });
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(doc, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 2,
-        prependedIri: {
-          relativeIri: 2
-        }
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 2,
+          prependedIri: {
+            relativeIri: 2
+          }
+        },
+        eventCounts: {},
+        eventLog: [
+          {
+            prependedIri: {
+              type: '@vocab',
+              vocab: 'http://example.com/',
+              value: 'relativeIri',
+              typeExpansion: true,
+              result: 'http://example.com/relativeIri'
+            }
+          }
+        ]
       });
-      assert.deepStrictEqual(events, {});
     });
 
     it('should be called when `@id` is being ' +
       'expanded with `@base`', async () => {
-      const doc =
+      const input =
 {
   "@context": {
     "@base": "http://example.com/"
@@ -2214,42 +2376,42 @@ describe('events', () => {
   "@id": "relativeIri"
 }
 ;
+      const expected =
+[
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-        if(info.prependedIri) {
-          assert.deepStrictEqual(info.prependedIri, {
-            type: '@base',
-            base: 'http://example.com/',
-            value: 'relativeIri',
-            typeExpansion: false,
-            result: 'http://example.com/relativeIri'
-          });
-        }
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(doc, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 2,
-        prependedIri: {
-          relativeIri: 1
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 2,
+          prependedIri: {
+            relativeIri: 1
+          },
+          unmappedValue: {
+            'http://example.com/relativeIri': 1
+          }
         },
-        unmappedValue: {
-          'http://example.com/relativeIri': 1
-        }
+        eventCounts: {},
+        eventMap: [
+          {
+            prependedIri: {
+              type: '@base',
+              base: 'http://example.com/',
+              value: 'relativeIri',
+              typeExpansion: false,
+              result: 'http://example.com/relativeIri'
+            }
+          }
+        ]
       });
-      assert.deepStrictEqual(events, {});
     });
 
     it('should be called when aliased `@id` ' +
       'is being expanded with `@base`', async () => {
-      const doc =
+      const input =
 {
   "@context": {
     "@base": "http://example.com/",
@@ -2258,42 +2420,42 @@ describe('events', () => {
   "id": "relativeIri"
 }
 ;
+      const expected =
+[
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-        if(info.prependedIri) {
-          assert.deepStrictEqual(info.prependedIri, {
-            type: '@base',
-            base: 'http://example.com/',
-            value: 'relativeIri',
-            typeExpansion: false,
-            result: 'http://example.com/relativeIri'
-          });
-        }
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(doc, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 2,
-        prependedIri: {
-          relativeIri: 1
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 2,
+          prependedIri: {
+            relativeIri: 1
+          },
+          unmappedValue: {
+            'http://example.com/relativeIri': 1
+          }
         },
-        unmappedValue: {
-          'http://example.com/relativeIri': 1
-        }
+        eventCounts: {},
+        eventLog: [
+          {
+            prependedIri: {
+              type: '@base',
+              base: 'http://example.com/',
+              value: 'relativeIri',
+              typeExpansion: false,
+              result: 'http://example.com/relativeIri'
+            }
+          }
+        ]
       });
-      assert.deepStrictEqual(events, {});
     });
 
     it('should be called when `@type` is ' +
       'being expanded with `@base`', async () => {
-      const doc =
+      const input =
 {
   "@context": {
     "@base": "http://example.com/"
@@ -2301,48 +2463,53 @@ describe('events', () => {
   "@type": "relativeIri"
 }
 ;
+      const expected =
+[
+  {
+    "@type": [
+      "http://example.com/relativeIri"
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-        if(info.prependedIri) {
-          assert.deepStrictEqual(info.prependedIri, {
-            type: '@base',
-            base: 'http://example.com/',
-            value: 'relativeIri',
-            typeExpansion: true,
-            result: 'http://example.com/relativeIri'
-          });
-        }
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(doc, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 2,
-        prependedIri: {
-          relativeIri: 1
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 2,
+          prependedIri: {
+            relativeIri: 1
+          },
+          relativeIri: {
+            relativeIri: 1
+          }
         },
-        relativeIri: {
-          relativeIri: 1
-        }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'relative IRI after expansion': 1
+        eventCounts: {
+          codes: {
+            'relative IRI after expansion': 1
+          },
+          events: 1,
+          //FIXME: true
         },
-        events: 1,
-        //FIXME: true
+        eventLog: [
+          {
+            prependedIri: {
+              type: '@base',
+              base: 'http://example.com/',
+              value: 'relativeIri',
+              typeExpansion: true,
+              result: 'http://example.com/relativeIri'
+            }
+          }
+        ]
       });
     });
 
     it('should be called when aliased `@type` is ' +
       'being expanded with `@base`', async () => {
-      const doc =
+      const input =
 {
   "@context": {
     "@base": "http://example.com/",
@@ -2351,42 +2518,47 @@ describe('events', () => {
   "type": "relativeIri"
 }
 ;
+      const expected =
+[
+  {
+    "@type": [
+      "http://example.com/relativeIri"
+    ]
+  }
+]
+;
 
-      const maps = {};
-      const expansionMap = info => {
-        trackMap({maps, info});
-        if(info.prependedIri) {
-          assert.deepStrictEqual(info.prependedIri, {
-            type: '@base',
-            base: 'http://example.com/',
-            value: 'relativeIri',
-            typeExpansion: true,
-            result: 'http://example.com/relativeIri'
-          });
-        }
-      };
-      const events = {};
-      const eventHandler = ({event}) => {
-        trackEvent({events, event});
-      };
-
-      await jsonld.expand(doc, {expansionMap, eventHandler});
-
-      assert.deepStrictEqual(maps.counts, {
-        expansionMap: 2,
-        prependedIri: {
-          relativeIri: 1
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 2,
+          prependedIri: {
+            relativeIri: 1
+          },
+          relativeIri: {
+            relativeIri: 1
+          }
         },
-        relativeIri: {
-          relativeIri: 1
-        }
-      });
-      assert.deepStrictEqual(events.counts, {
-        codes: {
-          'relative IRI after expansion': 1
+        eventCounts: {
+          codes: {
+            'relative IRI after expansion': 1
+          },
+          events: 1,
+          //FIXME: true
         },
-        events: 1,
-        //FIXME: true
+        eventLog: [
+          {
+            prependedIri: {
+              type: '@base',
+              base: 'http://example.com/',
+              value: 'relativeIri',
+              typeExpansion: true,
+              result: 'http://example.com/relativeIri'
+            }
+          }
+        ]
       });
     });
   });
