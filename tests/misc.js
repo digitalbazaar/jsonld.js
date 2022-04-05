@@ -578,7 +578,12 @@ describe('events', () => {
     mapLog,
     eventCounts,
     eventLog,
-    options
+    options,
+    testSafe,
+    testNotSafe,
+    testStrict,
+    testNotStrict,
+    verbose
   }) {
     const maps = {counts: {}, log: []};
     const expansionMap = info => {
@@ -609,6 +614,17 @@ describe('events', () => {
       error = e;
     }
 
+    if(verbose) {
+      console.log(JSON.stringify({
+        type,
+        input,
+        options,
+        expected,
+        result,
+        maps,
+        events
+      }, null, 2));
+    }
     if(exception) {
       assert(error);
       assert.equal(error.name, exception);
@@ -631,29 +647,44 @@ describe('events', () => {
     if(mapLog) {
       assert.deepStrictEqual(events.log, eventLog);
     }
-  }
-
-  // test passes with safe=true
-  async function _testSafe({
-    type,
-    input
-  }) {
-    await _test({type, input, options: {safe: true}});
-  }
-
-  // test fails with safe=true
-  async function _testUnsafe({
-    type,
-    input
-  }) {
-    let error;
-    try {
-      await _test({type, input, options: {safe: true}});
-    } catch(e) {
-      error = e;
+    // test passes with safe=true
+    if(testSafe) {
+      await _test({type, input, options: {...options, safe: true}});
     }
+    // test fails with safe=true
+    if(testNotSafe) {
+      let error;
+      try {
+        await _test({type, input, options: {...options, safe: true}});
+      } catch(e) {
+        error = e;
+      }
 
-    assert(error);
+      assert(error);
+    }
+    // test passes with strict event handler
+    if(testStrict) {
+      await _test({
+        type, input, options: {
+          eventHandler: jsonld.strictEventHandler
+        }
+      });
+    }
+    // test fails with strict event handler
+    if(testNotStrict) {
+      let error;
+      try {
+        await _test({
+          type, input, options: {
+            eventHandler: jsonld.strictEventHandler
+          }
+        });
+      } catch(e) {
+        error = e;
+      }
+
+      assert(error);
+    }
   }
 
   describe('event system', () => {
@@ -677,10 +708,11 @@ describe('events', () => {
       assert.deepStrictEqual(e, ex);
       assert.deepStrictEqual(counts, {
         codes: {
+          'dropping empty object': 1,
           'invalid property expansion': 1,
           'relative IRI after expansion': 2
         },
-        events: 3
+        events: 4
       });
 
       // reset default
@@ -707,10 +739,11 @@ describe('events', () => {
       assert.deepStrictEqual(e, ex);
       assert.deepStrictEqual(counts, {
         codes: {
+          'dropping empty object': 1,
           'invalid property expansion': 1,
           'invalid reserved term': 1
         },
-        events: 2
+        events: 3
       });
     });
 
@@ -791,17 +824,19 @@ describe('events', () => {
       assert.deepStrictEqual(e, ex);
       assert.deepStrictEqual(handlerCounts0, {
         codes: {
+          'dropping empty object': 1,
           'invalid property expansion': 1,
           'invalid reserved term': 1
         },
-        events: 2
+        events: 3
       }, 'counts handler 0');
       assert.deepStrictEqual(handlerCounts1, {
         codes: {
+          'dropping empty object': 1,
           'invalid property expansion': 1,
           'invalid reserved term': 1
         },
-        events: 2
+        events: 3
       }, 'counts handler 1');
       assert.deepStrictEqual(handledCounts, {
         codes: {
@@ -843,10 +878,11 @@ describe('events', () => {
       assert.deepStrictEqual(e, ex);
       assert.deepStrictEqual(handlerCounts0, {
         codes: {
+          'dropping empty object': 1,
           'invalid property expansion': 1,
           'invalid reserved term': 1
         },
-        events: 2
+        events: 3
       }, 'counts handler 0');
       assert.deepStrictEqual(handlerCounts1, {}, 'counts handler 1');
       assert.deepStrictEqual(handledCounts, {}, 'counts handled');
@@ -925,24 +961,27 @@ describe('events', () => {
       assert.deepStrictEqual(e, ex);
       assert.deepStrictEqual(handlerCounts0, {
         codes: {
+          'dropping empty object': 1,
           'invalid property expansion': 1,
           'invalid reserved term': 1
         },
-        events: 2
+        events: 3
       }, 'counts handler 0');
       assert.deepStrictEqual(handlerCounts1, {
         codes: {
+          'dropping empty object': 1,
           'invalid property expansion': 1,
           'invalid reserved term': 1
         },
-        events: 2
+        events: 3
       }, 'counts handler 1');
       assert.deepStrictEqual(handlerCounts2, {
         codes: {
+          'dropping empty object': 1,
           'invalid property expansion': 1,
           'invalid reserved term': 1
         },
-        events: 2
+        events: 3
       }, 'counts handler 2');
       assert.deepStrictEqual(handlerCounts3, {
         codes: {
@@ -1080,15 +1119,34 @@ describe('events', () => {
   });
 
   describe('unmappedValue', () => {
-    it('should have zero counts with empty input', async () => {
-      const docWithNoContent = {};
+    it('should have zero counts with empty list', async () => {
+      const input = [];
       const expected = [];
 
       console.error('FIXME');
 
       await _test({
         type: 'expand',
-        input: docWithNoContent,
+        input,
+        expected,
+        mapCounts: {},
+        // FIXME
+        eventCounts: {},
+        // FIXME
+        testSafe: true,
+        testStrict: true
+      });
+    });
+
+    it('should have zero counts with empty object', async () => {
+      const input = {};
+      const expected = [];
+
+      console.error('FIXME');
+
+      await _test({
+        type: 'expand',
+        input,
         expected,
         mapCounts: {
           expansionMap: 1,
@@ -1096,12 +1154,19 @@ describe('events', () => {
             '__unknown__': 1
           }
         },
-        eventCounts: {}
+        eventCounts: {
+          codes: {
+            'dropping empty object': 1
+          },
+          events: 1
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
     it('should have zero counts with no terms', async () => {
-      const docWithNoTerms =
+      const input =
 {
   "@context": {
     "definedTerm": "https://example.com#definedTerm"
@@ -1113,7 +1178,7 @@ describe('events', () => {
       console.error('FIXME');
       await _test({
         type: 'expand',
-        input: docWithNoTerms,
+        input,
         expected,
         mapCounts: {
           expansionMap: 1,
@@ -1121,7 +1186,14 @@ describe('events', () => {
             '__unknown__': 1
           }
         },
-        eventCounts: {}
+        eventCounts: {
+          codes: {
+            'dropping empty object': 1
+          },
+          events: 1
+        },
+        testNotSafe: true,
+        testNotStrict: false
       });
     });
 
@@ -1165,7 +1237,14 @@ describe('events', () => {
             'http://example.com/free-floating-node': 2
           }
         },
-        eventCounts: {}
+        eventCounts: {
+          codes: {
+            'dropping free-floating scalar': 1,
+            'dropping object with only @id': 1,
+            'no value after expansion': 2
+          },
+          events: 4
+        }
       });
     });
 
@@ -1198,7 +1277,15 @@ describe('events', () => {
             'http://example.com/free-floating-node': 2
           }
         },
-        eventCounts: {}
+        eventCounts: {
+          codes: {
+            'dropping free-floating scalar': 1,
+            'dropping object with only @id': 1,
+            'dropping object with only @list': 1,
+            'no value after expansion': 2
+          },
+          events: 5
+        }
       });
     });
 
@@ -1223,7 +1310,13 @@ describe('events', () => {
             '__unknown__': 3
           }
         },
-        eventCounts: {}
+        eventCounts: {
+          codes: {
+            'dropping empty object': 1,
+            'no value after expansion': 1
+          },
+          events: 2
+        }
       });
     });
 
@@ -1248,7 +1341,13 @@ describe('events', () => {
             '__unknown__': 2
           }
         },
-        eventCounts: {}
+        eventCounts: {
+          codes: {
+            'dropping empty object': 1,
+            'dropping object with only @language': 1,
+          },
+          events: 2
+        }
       });
     });
   });
@@ -1338,10 +1437,11 @@ describe('events', () => {
         },
         eventCounts: {
           codes: {
+            'dropping empty object': 1,
             'invalid property expansion': 1,
             'relative IRI after expansion': 2
           },
-          events: 3
+          events: 4
         },
         eventLog: [
           {
@@ -1365,9 +1465,10 @@ describe('events', () => {
             },
             level: 'warning'
           }
-        ]
+        ],
+        testNotSafe: true,
+        testNotStrict: true
       });
-      await _testUnsafe({type: 'expand', input});
     });
 
     it('should be called on unmapped term with context [1]', async () => {
@@ -1399,10 +1500,11 @@ describe('events', () => {
         },
         eventCounts: {
           codes: {
+            'dropping empty object': 1,
             'invalid property expansion': 1,
             'relative IRI after expansion': 2
           },
-          events: 3
+          events: 4
         }
       });
     });
@@ -1525,9 +1627,10 @@ describe('events', () => {
         },
         eventCounts: {
           codes: {
+            'dropping object with only @id': 1,
             'relative IRI after expansion': 1
           },
-          events: 1
+          events: 2
         }
       });
     });
@@ -2094,9 +2197,10 @@ describe('events', () => {
         },
         eventCounts: {
           codes: {
+            'dropping object with only @id': 1,
             'relative IRI after expansion': 1
           },
-          events: 1
+          events: 2
         }
       });
     });
@@ -2134,9 +2238,10 @@ describe('events', () => {
         },
         eventCounts: {
           codes: {
+            'dropping object with only @id': 1,
             'relative IRI after expansion': 1
           },
-          events: 1
+          events: 2
         }
       });
     });
@@ -2394,7 +2499,12 @@ describe('events', () => {
             'http://example.com/relativeIri': 1
           }
         },
-        eventCounts: {},
+        eventCounts: {
+          codes: {
+            'dropping object with only @id': 1
+          },
+          events: 1
+        },
         eventMap: [
           {
             prependedIri: {
@@ -2438,7 +2548,12 @@ describe('events', () => {
             'http://example.com/relativeIri': 1
           }
         },
-        eventCounts: {},
+        eventCounts: {
+          codes: {
+            'dropping object with only @id': 1
+          },
+          events: 1
+        },
         eventLog: [
           {
             prependedIri: {
@@ -2449,7 +2564,9 @@ describe('events', () => {
               result: 'http://example.com/relativeIri'
             }
           }
-        ]
+        ],
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
