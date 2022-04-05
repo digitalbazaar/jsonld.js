@@ -363,14 +363,11 @@ quality is known events are unnecessary.
 
 #### Event Structure
 
-Events are basic JSON objects with the following properties:
+Events are JSON objects with the following properties:
 
+- **`type`**: ['JsonLdEvent'] and optionally an array with others.
 - **`code`**: A basic string code, similar to existing JSON-LD error codes.
 - **`level`**: The severity level. Currently only `warning` is emitted.
-- **`tags`**: Optional hints for the type of event. Currently defined:
-  - **`unsafe`**: Event is considered unsafe.
-  - **`lossy`**: Event is related to potential data loss.
-  - **`empty`**: Event is related to empty data structures.
 - **`message`**: A human readable message describing the event.
 - **`details`**: A JSON object with event specific details.
 
@@ -445,7 +442,7 @@ const handler = {
 const expanded = await jsonld.expand(data, {eventHandler});
 ```
 
-#### Safe Mode
+#### Safe Validation
 
 A common use case is to avoid JSON-LD constructs that will result in lossy
 behavior. The JSON-LD specifications have notes about when data is dropped.
@@ -473,15 +470,29 @@ const expanded = await jsonld.expand(data, {
 });
 ```
 
+#### Strict Validation
+
+Some data may be valid and "safe" but still have issues that could indicate
+data problems. A "strict" validation mode is available that handles more issues
+that the "safe" validation mode. This mode may cause false positives so may be
+best suited for JSON-LD authoring tools.
+
+```js
+// expand a document in strict mode
+const expanded = await jsonld.expand(data, {
+  eventHandler: jsonld.strictEventHandler
+});
+```
+
 #### Available Handlers
 
 Some predefined event handlers are available to use alone or as part of a more
 complex handler:
 
-- **safeModeEventHandler**: The handler used when `safe` is `true`.
-- **strictModeEventHandler**: A handler that is more strict than the `safe`
-  handler and also fails on other detectable events related to poor input
-  structure.
+- **safeEventHandler**: The handler used when `safe` is `true`.
+- **strictEventHandler**: A handler that is more strict than the `safe`
+  handler and also fails on other detectable events related to possible input
+  issues.
 - **logEventHandler**: A debugging handler that outputs to the console.
 - **logWarningHandler**: A debugging handler that outputs `warning` level
   events to the console.
@@ -495,13 +506,13 @@ safe mode, and the second handler when in safe mode.
 ```js
 // fail on unknown events
 jsonld.setDefaultEventHandler(jsonld.unhandledEventHandler);
-// will use safe mode handler, like `{safe: true}`
+// will use unhandled event handler by default
 const expanded = await jsonld.expand(data);
 ```
 
 ```js
 // always use safe mode event handler, ignore other events
-jsonld.setDefaultEventHandler(jsonld.safeModeEventHandler);
+jsonld.setDefaultEventHandler(jsonld.safeEventHandler);
 // will use safe mode handler, like `{safe: true}`
 const expanded = await jsonld.expand(data);
 ```
