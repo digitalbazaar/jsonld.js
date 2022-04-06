@@ -581,8 +581,6 @@ describe('events', () => {
     options,
     testSafe,
     testNotSafe,
-    testStrict,
-    testNotStrict,
     verbose
   }) {
     const maps = {counts: {}, log: []};
@@ -661,29 +659,6 @@ describe('events', () => {
       }
 
       assert(error, 'missing safe validation error');
-    }
-    // test passes with strict event handler
-    if(testStrict) {
-      await _test({
-        type, input, options: {
-          eventHandler: jsonld.strictEventHandler
-        }
-      });
-    }
-    // test fails with strict event handler
-    if(testNotStrict) {
-      let error;
-      try {
-        await _test({
-          type, input, options: {
-            eventHandler: jsonld.strictEventHandler
-          }
-        });
-      } catch(e) {
-        error = e;
-      }
-
-      assert(error, 'missing strict validation error');
     }
   }
 
@@ -1133,8 +1108,7 @@ describe('events', () => {
         // FIXME
         eventCounts: {},
         // FIXME
-        testSafe: true,
-        testStrict: true
+        testSafe: true
       });
     });
 
@@ -1160,8 +1134,7 @@ describe('events', () => {
           },
           events: 1
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -1192,8 +1165,7 @@ describe('events', () => {
           },
           events: 1
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -1245,8 +1217,7 @@ describe('events', () => {
           },
           events: 4
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -1288,8 +1259,7 @@ describe('events', () => {
           },
           events: 5
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -1321,8 +1291,7 @@ describe('events', () => {
           },
           events: 2
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -1354,8 +1323,7 @@ describe('events', () => {
           },
           events: 2
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -1393,8 +1361,7 @@ describe('events', () => {
           },
           events: 1
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -1432,8 +1399,7 @@ describe('events', () => {
           },
           events: 1
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -1486,8 +1452,7 @@ describe('events', () => {
           },
           events: 1
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
   });
@@ -1517,8 +1482,7 @@ describe('events', () => {
         expected,
         mapCounts: {},
         eventCounts: {},
-        testSafe: true,
-        testStrict: true
+        testSafe: true
       });
     });
 
@@ -1549,8 +1513,7 @@ describe('events', () => {
         expected,
         mapCounts: {},
         eventCounts: {},
-        testSafe: true,
-        testStrict: true
+        testSafe: true
       });
     });
 
@@ -1618,8 +1581,7 @@ describe('events', () => {
             }
           }
         ],
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -1658,8 +1620,7 @@ describe('events', () => {
           },
           events: 4
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -1705,8 +1666,7 @@ describe('events', () => {
           },
           events: 3
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -1751,8 +1711,7 @@ describe('events', () => {
           },
           events: 3
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -1788,8 +1747,7 @@ describe('events', () => {
           },
           events: 3
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
   });
@@ -1827,8 +1785,7 @@ describe('events', () => {
           },
           events: 2
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -1871,8 +1828,7 @@ describe('events', () => {
           },
           events: 1
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -1918,8 +1874,7 @@ describe('events', () => {
           },
           events: 1
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -1967,8 +1922,7 @@ describe('events', () => {
           },
           events: 1
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -2015,8 +1969,7 @@ describe('events', () => {
           },
           events: 1
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -2070,8 +2023,7 @@ describe('events', () => {
           },
           events: 4
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -2136,8 +2088,7 @@ describe('events', () => {
           },
           events: 4
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -2195,8 +2146,7 @@ describe('events', () => {
           },
           events: 5
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -2264,8 +2214,7 @@ describe('events', () => {
           },
           events: 5
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -2321,8 +2270,7 @@ describe('events', () => {
           },
           events: 4
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -2376,8 +2324,7 @@ describe('events', () => {
           },
           events: 4
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -2419,8 +2366,7 @@ describe('events', () => {
           },
           events: 2
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -2462,8 +2408,7 @@ describe('events', () => {
           },
           events: 2
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -2506,8 +2451,7 @@ describe('events', () => {
           },
           events: 1
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -2552,8 +2496,7 @@ describe('events', () => {
           },
           events: 2
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
   });
@@ -2591,8 +2534,7 @@ describe('events', () => {
           }
         },
         eventCounts: {},
-        testSafe: true,
-        testStrict: true
+        testSafe: true
       });
     });
 
@@ -2627,8 +2569,7 @@ describe('events', () => {
           }
         },
         eventCounts: {},
-        testSafe: true,
-        testStrict: true
+        testSafe: true
       });
     });
 
@@ -2664,8 +2605,7 @@ describe('events', () => {
           }
         },
         eventCounts: {},
-        testSafe: true,
-        testStrict: true
+        testSafe: true
       });
     });
 
@@ -2703,8 +2643,7 @@ describe('events', () => {
           },
           events: 1
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -2743,8 +2682,7 @@ describe('events', () => {
           },
           events: 1
         },
-        testNotSafe: true,
-        testNotStrict: true
+        testNotSafe: true
       });
     });
 
@@ -2783,8 +2721,7 @@ describe('events', () => {
         },
         eventCounts: {},
         // FIXME
-        testSafe: true,
-        testStrict: true
+        testSafe: true
       });
     });
 
@@ -2823,7 +2760,8 @@ describe('events', () => {
           }
         },
         eventCounts: {},
-        eventLog: []
+        eventLog: [],
+        testSafe: true
       });
     });
   });
