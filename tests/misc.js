@@ -1193,7 +1193,7 @@ describe('events', () => {
           events: 1
         },
         testNotSafe: true,
-        testNotStrict: false
+        testNotStrict: true
       });
     });
 
@@ -1244,7 +1244,9 @@ describe('events', () => {
             'no value after expansion': 2
           },
           events: 4
-        }
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -1285,7 +1287,9 @@ describe('events', () => {
             'no value after expansion': 2
           },
           events: 5
-        }
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -1316,7 +1320,9 @@ describe('events', () => {
             'no value after expansion': 1
           },
           events: 2
-        }
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -1347,7 +1353,9 @@ describe('events', () => {
             'dropping object with only @language': 1,
           },
           events: 2
-        }
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
   });
@@ -1376,7 +1384,9 @@ describe('events', () => {
         input,
         expected,
         mapCounts: {},
-        eventCounts: {}
+        eventCounts: {},
+        testSafe: true,
+        testStrict: true
       });
     });
 
@@ -1406,7 +1416,9 @@ describe('events', () => {
         input,
         expected,
         mapCounts: {},
-        eventCounts: {}
+        eventCounts: {},
+        testSafe: true,
+        testStrict: true
       });
     });
 
@@ -1461,9 +1473,17 @@ describe('events', () => {
           {
             code: 'invalid property expansion',
             details: {
+              expandedProperty: 'testUndefined',
               property: 'testUndefined'
             },
             level: 'warning'
+          },
+          {
+            code: 'dropping empty object',
+            level: 'warning',
+            details: {
+              value: {}
+            }
           }
         ],
         testNotSafe: true,
@@ -1505,7 +1525,9 @@ describe('events', () => {
             'relative IRI after expansion': 2
           },
           events: 4
-        }
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -1550,7 +1572,9 @@ describe('events', () => {
             'relative IRI after expansion': 2
           },
           events: 3
-        }
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -1594,7 +1618,9 @@ describe('events', () => {
             'relative IRI after expansion': 2
           },
           events: 3
-        }
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
   });
@@ -1631,7 +1657,9 @@ describe('events', () => {
             'relative IRI after expansion': 1
           },
           events: 2
-        }
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -1673,7 +1701,9 @@ describe('events', () => {
             'relative IRI after expansion': 1
           },
           events: 1
-        }
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -1718,7 +1748,9 @@ describe('events', () => {
             'relative IRI after expansion': 1
           },
           events: 1
-        }
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -1765,7 +1797,9 @@ describe('events', () => {
             'relative IRI after expansion': 1
           },
           events: 1
-        }
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -1811,7 +1845,9 @@ describe('events', () => {
             'relative IRI after expansion': 1
           },
           events: 1
-        }
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -1861,10 +1897,12 @@ describe('events', () => {
         eventCounts: {
           codes: {
             'invalid property expansion': 1,
-            'relative IRI after expansion': 4
+            'relative IRI after expansion': 3
           },
-          events: 5
-        }
+          events: 4
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -1925,10 +1963,12 @@ describe('events', () => {
         eventCounts: {
           codes: {
             'invalid property expansion': 1,
-            'relative IRI after expansion': 4
+            'relative IRI after expansion': 3
           },
-          events: 5
-        }
+          events: 4
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -1982,10 +2022,12 @@ describe('events', () => {
         eventCounts: {
           codes: {
             'invalid property expansion': 1,
-            'relative IRI after expansion': 5
+            'relative IRI after expansion': 4
           },
-          events: 6
-        }
+          events: 5
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -2049,10 +2091,12 @@ describe('events', () => {
         eventCounts: {
           codes: {
             'invalid property expansion': 1,
-            'relative IRI after expansion': 5
+            'relative IRI after expansion': 4
           },
-          events: 6
-        }
+          events: 5
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -2104,10 +2148,12 @@ describe('events', () => {
         eventCounts: {
           codes: {
             'invalid property expansion': 1,
-            'relative IRI after expansion': 4
+            'relative IRI after expansion': 3
           },
-          events: 5
-        }
+          events: 4
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -2157,10 +2203,12 @@ describe('events', () => {
         eventCounts: {
           codes: {
             'invalid property expansion': 1,
-            'relative IRI after expansion': 4
+            'relative IRI after expansion': 3
           },
-          events: 5
-        }
+          events: 4
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -2201,7 +2249,9 @@ describe('events', () => {
             'relative IRI after expansion': 1
           },
           events: 2
-        }
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -2242,7 +2292,9 @@ describe('events', () => {
             'relative IRI after expansion': 1
           },
           events: 2
-        }
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -2281,10 +2333,12 @@ describe('events', () => {
         },
         eventCounts: {
           codes: {
-            'relative IRI after expansion': 2
+            'relative IRI after expansion': 1
           },
-          events: 2
-        }
+          events: 1
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -2325,10 +2379,12 @@ describe('events', () => {
         },
         eventCounts: {
           codes: {
-            'relative IRI after expansion': 3
+            'relative IRI after expansion': 2
           },
-          events: 3
-        }
+          events: 2
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
   });
@@ -2365,7 +2421,9 @@ describe('events', () => {
             term: 4
           }
         },
-        eventCounts: {}
+        eventCounts: {},
+        testSafe: true,
+        testStrict: true
       });
     });
 
@@ -2399,7 +2457,9 @@ describe('events', () => {
             relativeIri: 2
           }
         },
-        eventCounts: {}
+        eventCounts: {},
+        testSafe: true,
+        testStrict: true
       });
     });
 
@@ -2434,7 +2494,9 @@ describe('events', () => {
             relativeIri: 2
           }
         },
-        eventCounts: {}
+        eventCounts: {},
+        testSafe: true,
+        testStrict: true
       });
     });
 
@@ -2471,7 +2533,9 @@ describe('events', () => {
             'dropping object with only @id': 1
           },
           events: 1
-        }
+        },
+        testNotSafe: true,
+        testNotStrict: true
       });
     });
 
@@ -2548,13 +2612,10 @@ describe('events', () => {
             relativeIri: 1
           }
         },
-        eventCounts: {
-          codes: {
-            'relative IRI after expansion': 1
-          },
-          events: 1,
-          //FIXME: true
-        }
+        eventCounts: {},
+        // FIXME
+        testSafe: true,
+        testStrict: true
       });
     });
 
@@ -2592,13 +2653,7 @@ describe('events', () => {
             relativeIri: 1
           }
         },
-        eventCounts: {
-          codes: {
-            'relative IRI after expansion': 1
-          },
-          events: 1,
-          //FIXME: true
-        },
+        eventCounts: {},
         eventLog: []
       });
     });
