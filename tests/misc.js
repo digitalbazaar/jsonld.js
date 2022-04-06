@@ -1363,7 +1363,7 @@ describe('events', () => {
       const input =
 {
   "urn:property": {
-    "@language": "en_us",
+    "@language": "en_bad",
     "@value": "test"
   }
 }
@@ -1373,7 +1373,7 @@ describe('events', () => {
   {
     "urn:property": [
       {
-        "@language": "en_us",
+        "@language": "en_bad",
         "@value": "test"
       }
     ]
@@ -1402,7 +1402,7 @@ describe('events', () => {
       const input =
 {
   "@context": {
-    "@language": "en_us"
+    "@language": "en_bad"
   },
   "urn:property": "value"
 }
@@ -1412,7 +1412,7 @@ describe('events', () => {
   {
     "urn:property": [
       {
-        "@language": "en_us",
+        "@language": "en_bad",
         "@value": "value"
       }
     ]
@@ -1426,6 +1426,60 @@ describe('events', () => {
         input,
         expected,
         mapCounts: {},
+        eventCounts: {
+          codes: {
+            'invalid @language value': 1
+          },
+          events: 1
+        },
+        testNotSafe: true,
+        testNotStrict: true
+      });
+    });
+
+    it('should emit for invalid @language map value', async () => {
+      const input =
+{
+  "@context": {
+    "urn:property": {
+      "@container": "@language"
+    }
+  },
+  "urn:property": {
+    "en_bad": "en",
+    "de": "de"
+  }
+}
+;
+      const expected =
+[
+  {
+    "urn:property": [
+      {
+        "@language": "de",
+        "@value": "de"
+      },
+      {
+        "@language": "en_bad",
+        "@value": "en"
+      }
+    ]
+  }
+]
+;
+
+      console.error('FIXME');
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 2,
+          relativeIri: {
+            de: 1,
+            en_bad: 1
+          }
+        },
         eventCounts: {
           codes: {
             'invalid @language value': 1
