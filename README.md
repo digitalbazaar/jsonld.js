@@ -470,29 +470,12 @@ const expanded = await jsonld.expand(data, {
 });
 ```
 
-#### Strict Validation
-
-Some data may be valid and "safe" but still have issues that could indicate
-data problems. A "strict" validation mode is available that handles more issues
-that the "safe" validation mode. This mode may cause false positives so may be
-best suited for JSON-LD authoring tools.
-
-```js
-// expand a document in strict mode
-const expanded = await jsonld.expand(data, {
-  eventHandler: jsonld.strictEventHandler
-});
-```
-
 #### Available Handlers
 
 Some predefined event handlers are available to use alone or as part of a more
 complex handler:
 
 - **safeEventHandler**: The handler used when `safe` is `true`.
-- **strictEventHandler**: A handler that is more strict than the `safe`
-  handler and also fails on other detectable events related to possible input
-  issues.
 - **logEventHandler**: A debugging handler that outputs to the console.
 - **logWarningHandler**: A debugging handler that outputs `warning` level
   events to the console.
