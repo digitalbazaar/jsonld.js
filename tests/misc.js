@@ -644,7 +644,7 @@ describe('events', () => {
     if(eventCounts) {
       assert.deepStrictEqual(events.counts, eventCounts);
     }
-    if(mapLog) {
+    if(eventLog) {
       assert.deepStrictEqual(events.log, eventLog);
     }
     // test passes with safe=true
@@ -2365,18 +2365,7 @@ describe('events', () => {
             term: 4
           }
         },
-        eventCounts: {},
-        eventLog: [
-          {
-            prependedIri: {
-              type: '@vocab',
-              vocab: 'http://example.com/',
-              value: 'term',
-              typeExpansion: false,
-              result: 'http://example.com/term'
-            }
-          }
-        ]
+        eventCounts: {}
       });
     });
 
@@ -2410,18 +2399,7 @@ describe('events', () => {
             relativeIri: 2
           }
         },
-        eventCounts: {},
-        eventLog: [
-          {
-            prependedIri: {
-              type: '@vocab',
-              vocab: 'http://example.com/',
-              value: 'relativeIri',
-              typeExpansion: true,
-              result: 'http://example.com/relativeIri'
-            }
-          }
-        ]
+        eventCounts: {}
       });
     });
 
@@ -2456,18 +2434,7 @@ describe('events', () => {
             relativeIri: 2
           }
         },
-        eventCounts: {},
-        eventLog: [
-          {
-            prependedIri: {
-              type: '@vocab',
-              vocab: 'http://example.com/',
-              value: 'relativeIri',
-              typeExpansion: true,
-              result: 'http://example.com/relativeIri'
-            }
-          }
-        ]
+        eventCounts: {}
       });
     });
 
@@ -2504,18 +2471,7 @@ describe('events', () => {
             'dropping object with only @id': 1
           },
           events: 1
-        },
-        eventMap: [
-          {
-            prependedIri: {
-              type: '@base',
-              base: 'http://example.com/',
-              value: 'relativeIri',
-              typeExpansion: false,
-              result: 'http://example.com/relativeIri'
-            }
-          }
-        ]
+        }
       });
     });
 
@@ -2554,17 +2510,6 @@ describe('events', () => {
           },
           events: 1
         },
-        eventLog: [
-          {
-            prependedIri: {
-              type: '@base',
-              base: 'http://example.com/',
-              value: 'relativeIri',
-              typeExpansion: false,
-              result: 'http://example.com/relativeIri'
-            }
-          }
-        ],
         testNotSafe: true,
         testNotStrict: true
       });
@@ -2609,18 +2554,7 @@ describe('events', () => {
           },
           events: 1,
           //FIXME: true
-        },
-        eventLog: [
-          {
-            prependedIri: {
-              type: '@base',
-              base: 'http://example.com/',
-              value: 'relativeIri',
-              typeExpansion: true,
-              result: 'http://example.com/relativeIri'
-            }
-          }
-        ]
+        }
       });
     });
 
@@ -2665,17 +2599,7 @@ describe('events', () => {
           events: 1,
           //FIXME: true
         },
-        eventLog: [
-          {
-            prependedIri: {
-              type: '@base',
-              base: 'http://example.com/',
-              value: 'relativeIri',
-              typeExpansion: true,
-              result: 'http://example.com/relativeIri'
-            }
-          }
-        ]
+        eventLog: []
       });
     });
   });
