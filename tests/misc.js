@@ -601,12 +601,15 @@ describe('events', () => {
     if(eventCounts || eventLog) {
       opts.eventHandler = eventHandler;
     }
-    if(!['expand'].includes(type)) {
+    if(!['expand', 'fromRDF'].includes(type)) {
       throw new Error(`Unknown test type: "${type}"`);
     }
     try {
       if(type === 'expand') {
         result = await jsonld.expand(input, opts);
+      }
+      if(type === 'fromRDF') {
+        result = await jsonld.fromRDF(input, opts);
       }
     } catch(e) {
       error = e;
@@ -2762,6 +2765,108 @@ describe('events', () => {
         eventCounts: {},
         eventLog: [],
         testSafe: true
+      });
+    });
+  });
+
+  describe('fromRDF', () => {
+    it('should emit for invalid N-Quads @language value', async () => {
+      // N-Quads with invalid language tag (too long)
+      // FIXME: should N-Quads parser catch this instead?
+      const input =
+'_:b0 <urn:property> "test"@abcdefghi .'
+;
+      const expected =
+[
+  {
+    "@id": "_:b0",
+    "urn:property": [
+      {
+        "@language": "abcdefghi",
+        "@value": "test"
+      }
+    ]
+  }
+]
+;
+
+      console.error('FIXME');
+      await _test({
+        type: 'fromRDF',
+        input,
+        expected,
+        mapCounts: {},
+        eventCounts: {
+          codes: {
+            'invalid @language value': 1
+          },
+          events: 1
+        },
+        testNotSafe: true
+      });
+    });
+
+    it('should emit for invalid Dataset @language value', async () => {
+      // dataset with invalid language tag (too long)
+      // Equivalent N-Quads:
+      // '<ex:s> <ex:p> "test"^^<https://www.w3.org/ns/i18n#abcdefghi_rtl> .'
+      // Using JSON dataset to bypass N-Quads parser checks.
+      const input =
+[
+  {
+    "subject": {
+      "termType": "NamedNode",
+      "value": "ex:s"
+    },
+    "predicate": {
+      "termType": "NamedNode",
+      "value": "ex:p"
+    },
+    "object": {
+      "termType": "Literal",
+      "value": "test",
+      "datatype": {
+        "termType": "NamedNode",
+        "value": "https://www.w3.org/ns/i18n#abcdefghi_rtl"
+      }
+    },
+    "graph": {
+      "termType": "DefaultGraph",
+      "value": ""
+    }
+  }
+]
+;
+      const expected =
+[
+  {
+    "@id": "ex:s",
+    "ex:p": [
+      {
+        "@value": "test",
+        "@language": "abcdefghi",
+        "@direction": "rtl"
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'fromRDF',
+        input,
+        options: {
+          rdfDirection: 'i18n-datatype',
+        },
+        expected,
+        mapCounts: {},
+        eventCounts: {
+          codes: {
+            'invalid @language value': 1
+          },
+          events: 1
+        },
+        testNotSafe: true
       });
     });
   });
