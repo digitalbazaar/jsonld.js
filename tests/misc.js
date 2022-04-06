@@ -660,7 +660,7 @@ describe('events', () => {
         error = e;
       }
 
-      assert(error);
+      assert(error, 'missing safe validation error');
     }
     // test passes with strict event handler
     if(testStrict) {
@@ -683,7 +683,7 @@ describe('events', () => {
         error = e;
       }
 
-      assert(error);
+      assert(error, 'missing strict validation error');
     }
   }
 
@@ -1118,7 +1118,7 @@ describe('events', () => {
     });
   });
 
-  describe('unmappedValue', () => {
+  describe('values', () => {
     it('should have zero counts with empty list', async () => {
       const input = [];
       const expected = [];
@@ -1197,7 +1197,7 @@ describe('events', () => {
       });
     });
 
-    it('should notify for @set free-floating scaler', async () => {
+    it('should emit for @set free-floating scaler', async () => {
       const input =
 {
   "@set": [
@@ -1250,7 +1250,7 @@ describe('events', () => {
       });
     });
 
-    it('should notify for @list free-floating scaler', async () => {
+    it('should emit for @list free-floating scaler', async () => {
       const input =
 {
   "@list": [
@@ -1293,7 +1293,7 @@ describe('events', () => {
       });
     });
 
-    it('should notify for null @value', async () => {
+    it('should emit for null @value', async () => {
       const input =
 {
   "urn:property": {
@@ -1326,7 +1326,7 @@ describe('events', () => {
       });
     });
 
-    it('should notify for @language alone', async () => {
+    it('should emit for @language alone', async () => {
       const input =
 {
   "urn:property": {
@@ -1438,7 +1438,7 @@ describe('events', () => {
     });
   });
 
-  describe('unmappedProperty', () => {
+  describe('properties', () => {
     it('should have zero counts with absolute term', async () => {
       const input =
 {
