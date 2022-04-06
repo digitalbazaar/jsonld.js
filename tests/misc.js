@@ -1358,6 +1358,84 @@ describe('events', () => {
         testNotStrict: true
       });
     });
+
+    it('should emit for invalid @language value', async () => {
+      const input =
+{
+  "urn:property": {
+    "@language": "en_us",
+    "@value": "test"
+  }
+}
+;
+      const expected =
+[
+  {
+    "urn:property": [
+      {
+        "@language": "en_us",
+        "@value": "test"
+      }
+    ]
+  }
+]
+;
+
+      console.error('FIXME');
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {},
+        eventCounts: {
+          codes: {
+            'invalid @language value': 1
+          },
+          events: 1
+        },
+        testNotSafe: true,
+        testNotStrict: true
+      });
+    });
+
+    it('should emit for invalid default @language value', async () => {
+      const input =
+{
+  "@context": {
+    "@language": "en_us"
+  },
+  "urn:property": "value"
+}
+;
+      const expected =
+[
+  {
+    "urn:property": [
+      {
+        "@language": "en_us",
+        "@value": "value"
+      }
+    ]
+  }
+]
+;
+
+      console.error('FIXME');
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {},
+        eventCounts: {
+          codes: {
+            'invalid @language value': 1
+          },
+          events: 1
+        },
+        testNotSafe: true,
+        testNotStrict: true
+      });
+    });
   });
 
   describe('unmappedProperty', () => {
