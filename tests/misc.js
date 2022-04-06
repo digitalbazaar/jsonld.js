@@ -1701,6 +1701,43 @@ describe('events', () => {
         testNotStrict: true
       });
     });
+
+    it('should be called on invalid reserved term', async () => {
+      const input =
+{
+  "@context": {
+    "@RESERVED": "ex:test-function-handler"
+  },
+  "@RESERVED": "test"
+}
+;
+      const expected = [];
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 2,
+          unmappedProperty: {
+            '@RESERVED': 1
+          },
+          unmappedValue: {
+            '__unknown__': 1
+          }
+        },
+        eventCounts: {
+          codes: {
+            'dropping empty object': 1,
+            'invalid property expansion': 1,
+            'invalid reserved term': 1
+          },
+          events: 3
+        },
+        testNotSafe: true,
+        testNotStrict: true
+      });
+    });
   });
 
   // FIXME naming
