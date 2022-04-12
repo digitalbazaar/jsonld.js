@@ -520,6 +520,8 @@ function addTest(manifest, test, tests) {
       }
 
       const testOptions = getJsonLdValues(test, 'option');
+      // allow special handling in case of normative test failures
+      let normativeTest = true;
 
       testOptions.forEach(function(opt) {
         const processingModes = getJsonLdValues(opt, 'processingMode');
@@ -552,6 +554,13 @@ function addTest(manifest, test, tests) {
             }
             self.skip();
           }
+        });
+      });
+
+      testOptions.forEach(function(opt) {
+        const normative = getJsonLdValues(opt, 'normative');
+        normative.forEach(function(n) {
+          normativeTest = normativeTest && n;
         });
       });
 
@@ -608,6 +617,16 @@ function addTest(manifest, test, tests) {
           });
         }
       } catch(err) {
+        // FIXME: improve handling of non-normative errors
+        // FIXME: for now, explicitly disabling tests.
+        //if(!normativeTest) {
+        //  // failure ok
+        //  if(options.verboseSkip) {
+        //    console.log('Skipping non-normative test due to failure:',
+        //      {id: test['@id'], name: test.name});
+        //  }
+        //  self.skip();
+        //}
         if(options.bailOnError) {
           if(err.name !== 'AssertionError') {
             console.error('\nError: ', JSON.stringify(err, null, 2));
