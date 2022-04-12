@@ -1099,6 +1099,330 @@ describe('events', () => {
     });
   });
 
+  describe('reserved', () => {
+    it('should handle reserved context @id values [1]', async () => {
+      const input =
+{
+  "@context": {
+    "resId": {"@id": "@RESERVED"}
+  },
+  "@id": "ex:id",
+  "resId": "resIdValue",
+  "ex:p": "v"
+}
+;
+      const expected =
+[
+  {
+    "@id": "ex:id",
+    "ex:p": [
+      {
+        "@value": "v"
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 3,
+          relativeIri: {
+            resId: 2
+          },
+          unmappedProperty: {
+            resId: 1
+          }
+        },
+        eventCodeLog: [
+          'reserved @id value',
+          'invalid property'
+        ],
+        testUnSafe: true
+      });
+    });
+
+    it('should handle reserved context @id values [2]', async () => {
+      const input =
+{
+  "@context": {
+    "resId": "@RESERVED"
+  },
+  "@id": "ex:id",
+  "resId": "resIdValue",
+  "ex:p": "v"
+}
+;
+      const expected =
+[
+  {
+    "@id": "ex:id",
+    "ex:p": [
+      {
+        "@value": "v"
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 3,
+          relativeIri: {
+            resId: 2
+          },
+          unmappedProperty: {
+            resId: 1
+          }
+        },
+        eventCounts: {
+          codes: {
+            'invalid property': 1,
+            'reserved @id value': 1
+          },
+          events: 2
+        },
+        testUnSafe: true
+      });
+    });
+
+    it('should handle reserved content @id values', async () => {
+      const input =
+{
+  "@id": "@RESERVED",
+  "ex:p": "v"
+}
+;
+      const expected =
+[
+  {
+    "ex:p": [
+      {
+        "@value": "v"
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {},
+        eventCounts: {
+          codes: {
+            'reserved @id value': 1
+          },
+          events: 1
+        },
+        testUnSafe: true
+      });
+    });
+
+    it('should handle reserved content id values [1]', async () => {
+      const input =
+{
+  "@context": {
+    "p": {"@id": "ex:idp", "@type": "@id"}
+  },
+  "p": "@RESERVED",
+  "ex:p": "v"
+}
+;
+      const expected =
+[
+  {
+    "ex:idp": [{}],
+    "ex:p": [
+      {
+        "@value": "v"
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {},
+        eventCounts: {
+          codes: {
+            'reserved @id value': 1
+          },
+          events: 1
+        },
+        testUnSafe: true
+      });
+    });
+
+    it('should handle reserved content id values [2]', async () => {
+      const input =
+{
+  "@context": {
+    "id": "@id"
+  },
+  "id": "@RESERVED",
+  "ex:p": "v"
+}
+;
+      const expected =
+[
+  {
+    "ex:p": [
+      {
+        "@value": "v"
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {},
+        eventCounts: {
+          codes: {
+            'reserved @id value': 1
+          },
+          events: 1
+        },
+        testUnSafe: true
+      });
+    });
+
+    it('should handle reserved content id values [3]', async () => {
+      const input =
+{
+  "@context": {
+    "p": {"@id": "ex:idp", "@type": "@id"}
+  },
+  "p": {"@id": "@RESERVED"},
+  "ex:p": "v"
+}
+;
+      const expected =
+[
+  {
+    "ex:idp": [{}],
+    "ex:p": [
+      {
+        "@value": "v"
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {},
+        eventCounts: {
+          codes: {
+            'reserved @id value': 1
+          },
+          events: 1
+        },
+        testUnSafe: true
+      });
+    });
+
+    it('should handle reserved context terms', async () => {
+      const input =
+{
+  "@context": {
+    "@RESERVED": "ex:test"
+  },
+  "@RESERVED": "test",
+  "ex:p": "v"
+}
+;
+      const expected =
+[
+  {
+    "ex:p": [
+      {
+        "@value": "v"
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 1,
+          unmappedProperty: {
+            '@RESERVED': 1
+          }
+        },
+        eventCounts: {
+          codes: {
+            'invalid property': 1,
+            'reserved term': 1
+          },
+          events: 2
+        },
+        testUnSafe: true
+      });
+    });
+
+    it('should handle reserved content terms', async () => {
+      const input =
+{
+  "@RESERVED": "test",
+  "ex:p": "v"
+}
+;
+      const expected =
+[
+  {
+    "ex:p": [
+      {
+        "@value": "v"
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 1,
+          unmappedProperty: {
+            '@RESERVED': 1
+          }
+        },
+        eventCounts: {
+          codes: {
+            'invalid property': 1,
+          },
+          events: 1
+        },
+        testUnSafe: true
+      });
+    });
+  });
+
   describe('values', () => {
     it('should have zero counts with empty list', async () => {
       const input = [];
@@ -1148,7 +1472,6 @@ describe('events', () => {
 ;
       const expected = [];
 
-      console.error('FIXME');
       await _test({
         type: 'expand',
         input,
@@ -1161,9 +1484,167 @@ describe('events', () => {
         },
         eventCounts: {
           codes: {
-            'dropping empty object': 1
+            'empty object': 1
           },
           events: 1
+        },
+        testNotSafe: true
+      });
+    });
+
+    it('should not emit for ok @set', async () => {
+      const input =
+{
+  "@set": [
+    {
+      "@id": "http://example.com/node",
+      "urn:property": "nodes with properties are not removed"
+    }
+  ]
+}
+;
+      const expected =
+[
+  {
+    "@id": "http://example.com/node",
+    "urn:property": [
+      {
+        "@value": "nodes with properties are not removed"
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {},
+        eventCounts: {},
+        testSafe: true
+      });
+    });
+
+    it('should emit for @set free-floating scaler', async () => {
+      const input =
+{
+  "@set": [
+    "free-floating strings in set objects are removed",
+    {
+      "@id": "http://example.com/free-floating-node"
+    },
+    {
+      "@id": "http://example.com/node",
+      "urn:property": "nodes with properties are not removed"
+    }
+  ]
+}
+;
+      const expected =
+[
+  {
+    "@id": "http://example.com/node",
+    "urn:property": [
+      {
+        "@value": "nodes with properties are not removed"
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 4,
+          unmappedValue: {
+            '__unknown__': 2,
+            'http://example.com/free-floating-node': 2
+          }
+        },
+        eventCounts: {
+          codes: {
+            'free-floating scalar': 1,
+            'object with only @id': 1
+          },
+          events: 2
+        },
+        testNotSafe: true
+      });
+    });
+
+    it('should emit for only @list', async () => {
+      const input =
+{
+  "@list": [
+    {
+      "@id": "http://example.com/node",
+      "urn:property": "nodes are removed with the @list"
+    }
+  ]
+}
+;
+      const expected = [];
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 1,
+          unmappedValue: {
+            '__unknown__': 1,
+          }
+        },
+        eventCounts: {
+          codes: {
+            'object with only @list': 1
+          },
+          events: 1
+        },
+        testNotSafe: true
+      });
+    });
+
+    it('should emit for @list free-floating scaler', async () => {
+      const input =
+{
+  "@list": [
+    "free-floating strings in list objects are removed",
+    {
+      "@id": "http://example.com/free-floating-node"
+    },
+    {
+      "@id": "http://example.com/node",
+      "urn:property": "nodes are removed with the @list"
+    }
+  ]
+}
+;
+      const expected = [];
+
+      console.error('FIXME');
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 5,
+          unmappedValue: {
+            '__unknown__': 3,
+            'http://example.com/free-floating-node': 2
+          }
+        },
+        eventCounts: {
+          codes: {
+            'free-floating scalar': 1,
+            'object with only @id': 1,
+            'object with only @list': 1
+          },
+          events: 3
         },
         testNotSafe: true
       });
@@ -1448,6 +1929,52 @@ describe('events', () => {
         testNotSafe: true
       });
     });
+
+    it('should emit for reserved @reverse value', async () => {
+      const input =
+{
+  "@context": {
+    "children": {
+      "@reverse": "@RESERVED"
+    }
+  },
+  "@id": "ex:parent",
+  "children": [
+    {
+      "@id": "ex:child"
+    }
+  ]
+}
+;
+      const expected = [];
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 4,
+          relativeIri: {
+            children: 2
+          },
+          unmappedProperty: {
+            children: 1
+          },
+          unmappedValue: {
+            'ex:parent': 1
+          }
+        },
+        eventCounts: {
+          codes: {
+            'invalid property': 1,
+            'object with only @id': 1,
+            'reserved @reverse value': 1
+          },
+          events: 3
+        },
+        testNotSafe: true
+      });
+    });
   });
 
   describe('properties', () => {
@@ -1558,6 +2085,85 @@ describe('events', () => {
             }
           }
         ],
+        testNotSafe: true
+      });
+    });
+
+    it('should be called only on top unmapped term', async () => {
+      // value of undefined property is dropped and not checked
+      const input =
+{
+  "testUndefined": {
+    "subUndefined": "undefined"
+  }
+}
+;
+      const expected = [];
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 4,
+          relativeIri: {
+            testUndefined: 2
+          },
+          unmappedProperty: {
+            testUndefined: 1
+          },
+          unmappedValue: {
+            '__unknown__': 1
+          }
+        },
+        eventCounts: {
+          codes: {
+            'empty object': 1,
+            'invalid property': 1
+          },
+          events: 2
+        },
+        testNotSafe: true
+      });
+    });
+
+    it('should be called on sub unmapped term', async () => {
+      const input =
+{
+  "ex:defined": {
+    "testundefined": "undefined"
+  }
+}
+;
+      const expected =
+[
+  {
+    "ex:defined": [
+      {}
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        mapCounts: {
+          expansionMap: 3,
+          relativeIri: {
+            testundefined: 2
+          },
+          unmappedProperty: {
+            testundefined: 1
+          }
+        },
+        eventCounts: {
+          codes: {
+            'invalid property': 1
+          },
+          events: 1
+        },
         testNotSafe: true
       });
     });
@@ -2579,6 +3185,47 @@ describe('events', () => {
             relativeIri: 2
           }
         },
+        eventCounts: {},
+        testSafe: true
+      });
+    });
+
+    it('should handle scoped relative `@vocab`', async () => {
+      const input =
+{
+  "@context": {
+    "@vocab": "urn:abs/"
+  },
+  "@type": "ta",
+  "e:a": {
+    "@context": {
+      "@vocab": "rel/"
+    },
+    "@type": "tb"
+  }
+}
+;
+      const expected =
+[
+  {
+    "@type": [
+      "urn:abs/ta"
+    ],
+    "e:a": [
+      {
+        "@type": [
+          "urn:abs/rel/tb"
+        ]
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
         eventCounts: {},
         testSafe: true
       });
