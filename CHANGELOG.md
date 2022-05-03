@@ -1,5 +1,13 @@
 # jsonld ChangeLog
 
+## 5.3.0 - 2022-xx-xx
+
+### Changed
+- Update to `@digitalbazaar/http-client@3`:
+  - Pulls in newer `ky` and `ky-universal` that should address security alerts
+    and provide other improvements.
+  - Use global `URL` interface to handle relative redirects.
+
 ## 5.2.0 - 2021-04-07
 
 ### Changed
