@@ -1,8 +1,15 @@
 # jsonld ChangeLog
 
-## 5.3.0 - 2022-xx-xx
+## 6.0.0 - 2022-xx-xx
 
 ### Changed
+- **BREAKING**: Drop testing and support for Node.js 12.x. The majority of the
+  code will still run on Node.js 12.x. However, the
+  `@digitalbazaar/http-client@3` update uses a newer `ky-universal` which uses
+  a top-level `await` that is unsupported in older Node.js versions. That
+  causes the included `node` `documentLoader` to not function and tests to
+  fail. If you wish to still use earlier Node.js versions, you may still be
+  able to do so with your own custom `documentLoader`.
 - Update to `@digitalbazaar/http-client@3`:
   - Pulls in newer `ky` and `ky-universal` that should address security alerts
     and provide other improvements.
