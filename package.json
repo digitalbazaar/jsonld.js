@@ -104,7 +104,7 @@
     "coverage": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text-summary npm test",
     "coverage-ci": "cross-env NODE_ENV=test nyc --reporter=lcovonly npm run test",
     "coverage-report": "nyc report",
-    "lint": "eslint *.js lib/**.js tests/**.js"
+    "lint": "eslint ."
   },
   "nyc": {
     "exclude": [

@@ -6,5 +6,11 @@ module.exports = {
     es2020: true
   },
   extends: 'eslint-config-digitalbazaar',
-  root: true
+  root: true,
+  ignorePatterns: [
+    'dist/',
+    'tests/webidl/WebIDLParser.js',
+    'tests/webidl/idlharness.js',
+    'tests/webidl/testharness.js'
+  ]
 };
