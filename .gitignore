@@ -16,3 +16,4 @@ node_modules
 npm-debug.log
 tests/webidl/*-new
 v8.log
+test-suites
