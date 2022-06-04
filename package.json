@@ -89,7 +89,7 @@
     "jsonld"
   ],
   "scripts": {
-    "prepublish": "npm run build",
+    "prepack": "npm run build",
     "build": "npm run build-webpack",
     "build-webpack": "webpack",
     "fetch-test-suites": "npm run fetch-json-ld-wg-test-suite && npm run fetch-json-ld-org-test-suite && npm run fetch-normalization-test-suite",
