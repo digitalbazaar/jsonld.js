@@ -1,6 +1,6 @@
 # jsonld ChangeLog
 
-## 6.0.0 - 2022-xx-xx
+## 6.0.0 - 2022-06-06
 
 ### Changed
 - **BREAKING**: Drop testing and support for Node.js 12.x. The majority of the
