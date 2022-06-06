@@ -26,12 +26,13 @@
   "main": "compare.js",
   "dependencies": {
     "common-path-prefix": "^3.0.0",
+    "eslint-plugin-unicorn": "^42.0.0",
     "markdown-table": "^3.0.2",
-    "yargs": "^17.4.0"
+    "yargs": "^17.5.1"
   },
   "devDependencies": {
-    "eslint": "^8.11.0",
-    "eslint-config-digitalbazaar": "^2.8.0"
+    "eslint": "^8.17.0",
+    "eslint-config-digitalbazaar": "^3.0.0"
   },
   "engines": {
     "node": ">=12"
@@ -46,6 +47,6 @@
     "benchmark"
   ],
   "scripts": {
-    "lint": "eslint *.js"
+    "lint": "eslint ."
   }
 }
