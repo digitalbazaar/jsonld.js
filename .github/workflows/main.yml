@@ -3,12 +3,27 @@ name: Node.js CI
 on: [push]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm install
+    - name: Run eslint
+      run: npm run lint
   test-node:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [12.x, 14.x, 16.x]
+        node-version: [14.x, 16.x, 18.x]
     steps:
     - uses: actions/checkout@v2
     - name: Use Node.js ${{ matrix.node-version }}
@@ -26,7 +41,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [14.x]
+        node-version: [16.x]
         bundler: [webpack, browserify]
     steps:
     - uses: actions/checkout@v2
@@ -42,12 +57,12 @@ jobs:
       run: npm run test-karma
       env:
         BUNDLER: ${{ matrix.bundler }}
-  lint:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [14.x]
+        node-version: [16.x]
     steps:
     - uses: actions/checkout@v2
     - name: Use Node.js ${{ matrix.node-version }}
@@ -55,15 +70,15 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm install
-    - name: Run eslint
-      run: npm run lint
+    - name: Run build
+      run: npm run build
   coverage:
     needs: [test-node, test-karma]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [14.x]
+        node-version: [16.x]
     steps:
     - uses: actions/checkout@v2
     - name: Use Node.js ${{ matrix.node-version }}

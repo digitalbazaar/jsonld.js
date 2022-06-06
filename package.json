@@ -1,6 +1,6 @@
 {
   "name": "jsonld",
-  "version": "5.2.1-0",
+  "version": "6.0.1-0",
   "description": "A JSON-LD Processor and API implementation in JavaScript.",
   "homepage": "https://github.com/digitalbazaar/jsonld.js",
   "author": {
@@ -29,7 +29,7 @@
     "lib/**/*.js"
   ],
   "dependencies": {
-    "@digitalbazaar/http-client": "^1.1.0",
+    "@digitalbazaar/http-client": "^3.2.0",
     "canonicalize": "^1.0.1",
     "lru-cache": "^6.0.0",
     "rdf-canonize": "^3.0.0"
@@ -78,7 +78,7 @@
     "webpack-merge": "^5.7.3"
   },
   "engines": {
-    "node": ">=12"
+    "node": ">=14"
   },
   "keywords": [
     "JSON",
@@ -89,7 +89,7 @@
     "jsonld"
   ],
   "scripts": {
-    "prepublish": "npm run build",
+    "prepack": "npm run build",
     "build": "npm run build-webpack",
     "build-webpack": "webpack",
     "fetch-test-suites": "npm run fetch-json-ld-wg-test-suite && npm run fetch-json-ld-org-test-suite && npm run fetch-normalization-test-suite",
@@ -104,7 +104,7 @@
     "coverage": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text-summary npm test",
     "coverage-ci": "cross-env NODE_ENV=test nyc --reporter=lcovonly npm run test",
     "coverage-report": "nyc report",
-    "lint": "eslint *.js lib/**.js tests/**.js"
+    "lint": "eslint ."
   },
   "nyc": {
     "exclude": [
