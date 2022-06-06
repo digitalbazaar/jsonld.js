@@ -3,7 +3,6 @@
 import yargs from 'yargs';
 import {hideBin} from 'yargs/helpers';
 import {promises as fs} from 'node:fs';
-import {table} from 'table';
 import {markdownTable} from 'markdown-table';
 import commonPathPrefix from 'common-path-prefix';
 
@@ -35,7 +34,7 @@ yargs(hideBin(process.argv))
   .command(
     '$0 <file...>',
     'compare JSON-LD benchmark files', () => {},
-    async (argv) => {
+    async argv => {
       return compare(argv);
     })
   .parse();
@@ -43,9 +42,9 @@ yargs(hideBin(process.argv))
 async function compare({
   env,
   file,
-  format,
+  //format,
   relative,
-  verbose
+  //verbose
 }) {
   const contents = await Promise.all(file.map(async f => ({
     fn: f,
@@ -86,7 +85,7 @@ async function compare({
     return a['jldb:result']['jldb:hz'];
   }
   function rfmt(base, a) {
-    return relative ? (100*(a-base)/base) : a;
+    return relative ? (100 * (a - base) / base) : a;
   }
   const compared = ordered.map(t => [
     t.slice(tprefixlen),
@@ -110,7 +109,7 @@ async function compare({
   ], {
     align: [
       'l',
-      ...results.map(r => 'r')
+      ...results.map(() => 'r')
     ]
   }));
   console.log();

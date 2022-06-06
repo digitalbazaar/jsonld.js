@@ -8,6 +8,7 @@
 
 ### Changed
 - Change EARL Assertor to Digital Bazaar, Inc.
+- Update eslint dependencies.
 
 ## 6.0.0 - 2022-06-06
 
