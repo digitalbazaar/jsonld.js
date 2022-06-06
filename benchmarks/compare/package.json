@@ -26,16 +26,11 @@
   "main": "compare.js",
   "dependencies": {
     "common-path-prefix": "^3.0.0",
-    "eslint-plugin-unicorn": "^42.0.0",
     "markdown-table": "^3.0.2",
     "yargs": "^17.5.1"
   },
-  "devDependencies": {
-    "eslint": "^8.17.0",
-    "eslint-config-digitalbazaar": "^3.0.0"
-  },
   "engines": {
-    "node": ">=12"
+    "node": ">=14"
   },
   "keywords": [
     "JSON",
@@ -45,8 +40,5 @@
     "Semantic Web",
     "jsonld",
     "benchmark"
-  ],
-  "scripts": {
-    "lint": "eslint ."
-  }
+  ]
 }
