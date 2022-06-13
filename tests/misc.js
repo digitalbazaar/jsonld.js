@@ -250,6 +250,156 @@ describe('other fromRDF tests', () => {
       done();
     });
   });
+
+  it('should preserve object and property order when specified', done => {
+    const nq = `
+      <http://example.com/Subject3/Property3> <http://example.com/value> "3" <http://example.com/Subject3> .\n
+      <http://example.com/Subject3/Property1> <http://example.com/value> "1" <http://example.com/Subject3> .\n
+      <http://example.com/Subject3/Property2> <http://example.com/value> "2" <http://example.com/Subject3> .\n
+
+      <http://example.com/Subject1/Property3> <http://example.com/value> "3" <http://example.com/Subject1> .\n
+      <http://example.com/Subject1/Property1> <http://example.com/value> "1" <http://example.com/Subject1> .\n
+      <http://example.com/Subject1/Property2> <http://example.com/value> "2" <http://example.com/Subject1> .\n
+
+      <http://example.com/Subject2/Property3> <http://example.com/value> "3" <http://example.com/Subject2> .\n
+      <http://example.com/Subject2/Property1> <http://example.com/value> "1" <http://example.com/Subject2> .\n
+      <http://example.com/Subject2/Property2> <http://example.com/value> "2" <http://example.com/Subject2> .\n
+    `;
+    const p = jsonld.fromRDF(nq, {preserveOrder: true});
+    assert(p instanceof Promise);
+    p.catch(e => {
+      assert.ifError(e);
+    }).then(output => {
+      assert.deepEqual(
+        output,
+        [
+          {"@id": "http://example.com/Subject3",
+          "@graph": [
+            {
+            "@id": "http://example.com/Subject3/Property3",
+            "http://example.com/value": [{"@value": "3"}]
+            },
+            {
+              "@id": "http://example.com/Subject3/Property1",
+              "http://example.com/value": [{"@value": "1"}]
+            },
+            {
+              "@id": "http://example.com/Subject3/Property2",
+              "http://example.com/value": [{"@value": "2"}]
+            }
+          ]
+        },
+        {"@id": "http://example.com/Subject1",
+          "@graph": [
+            {
+            "@id": "http://example.com/Subject1/Property3",
+            "http://example.com/value": [{"@value": "3"}]
+            },
+            {
+              "@id": "http://example.com/Subject1/Property1",
+              "http://example.com/value": [{"@value": "1"}]
+            },
+            {
+              "@id": "http://example.com/Subject1/Property2",
+              "http://example.com/value": [{"@value": "2"}]
+            }
+          ]
+        },
+        {"@id": "http://example.com/Subject2",
+          "@graph": [
+            {
+            "@id": "http://example.com/Subject2/Property3",
+            "http://example.com/value": [{"@value": "3"}]
+            },
+            {
+              "@id": "http://example.com/Subject2/Property1",
+              "http://example.com/value": [{"@value": "1"}]
+            },
+            {
+              "@id": "http://example.com/Subject2/Property2",
+              "http://example.com/value": [{"@value": "2"}]
+            }
+          ]
+        }
+      ]);
+      done();
+    });
+  });
+
+  it('orders objects and properties by default or when specified', done => {
+    const nq = `
+      <http://example.com/Subject3/Property3> <http://example.com/value> "3" <http://example.com/Subject3> .\n
+      <http://example.com/Subject3/Property1> <http://example.com/value> "1" <http://example.com/Subject3> .\n
+      <http://example.com/Subject3/Property2> <http://example.com/value> "2" <http://example.com/Subject3> .\n
+
+      <http://example.com/Subject1/Property3> <http://example.com/value> "3" <http://example.com/Subject1> .\n
+      <http://example.com/Subject1/Property1> <http://example.com/value> "1" <http://example.com/Subject1> .\n
+      <http://example.com/Subject1/Property2> <http://example.com/value> "2" <http://example.com/Subject1> .\n
+
+      <http://example.com/Subject2/Property3> <http://example.com/value> "3" <http://example.com/Subject2> .\n
+      <http://example.com/Subject2/Property1> <http://example.com/value> "1" <http://example.com/Subject2> .\n
+      <http://example.com/Subject2/Property2> <http://example.com/value> "2" <http://example.com/Subject2> .\n
+    `;
+    const p = jsonld.fromRDF(nq);
+    assert(p instanceof Promise);
+    p.catch(e => {
+      assert.ifError(e);
+    }).then(output => {
+      assert.deepEqual(
+        output,
+        [
+          {"@id": "http://example.com/Subject1",
+          "@graph": [
+            {
+            "@id": "http://example.com/Subject1/Property1",
+            "http://example.com/value": [{"@value": "1"}]
+            },
+            {
+              "@id": "http://example.com/Subject1/Property2",
+              "http://example.com/value": [{"@value": "2"}]
+            },
+            {
+              "@id": "http://example.com/Subject1/Property3",
+              "http://example.com/value": [{"@value": "3"}]
+            }
+          ]
+        },
+        {"@id": "http://example.com/Subject2",
+          "@graph": [
+            {
+            "@id": "http://example.com/Subject2/Property1",
+            "http://example.com/value": [{"@value": "1"}]
+            },
+            {
+              "@id": "http://example.com/Subject2/Property2",
+              "http://example.com/value": [{"@value": "2"}]
+            },
+            {
+              "@id": "http://example.com/Subject2/Property3",
+              "http://example.com/value": [{"@value": "3"}]
+            }
+          ]
+        },
+        {"@id": "http://example.com/Subject3",
+          "@graph": [
+            {
+            "@id": "http://example.com/Subject3/Property1",
+            "http://example.com/value": [{"@value": "1"}]
+            },
+            {
+              "@id": "http://example.com/Subject3/Property2",
+              "http://example.com/value": [{"@value": "2"}]
+            },
+            {
+              "@id": "http://example.com/Subject3/Property3",
+              "http://example.com/value": [{"@value": "3"}]
+            }
+          ]
+        }
+      ]);
+      done();
+    });
+  });
 });
 
 describe('loading multiple levels of contexts', () => {
