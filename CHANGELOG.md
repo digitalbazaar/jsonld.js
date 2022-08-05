@@ -9,9 +9,6 @@
 - Support test environment in EARL output.
 - Support benchmark output in EARL output.
 - Benchmark comparison tool.
-- Event handler option `"eventHandler"` to allow custom handling of warnings
-  and potentially other events in the future. Handles event replay for cached
-  contexts.
 
 ## 6.0.0 - 2022-06-06
 
