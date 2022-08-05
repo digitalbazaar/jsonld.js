@@ -569,7 +569,7 @@ describe('events', () => {
   // test different apis
   // use appropriate options
   async function _test({
-    // expand, compact, frame, fromRdf, toRdf, etc
+    // expand, compact, frame, fromRDF, toRDF, normalize, etc
     type,
     input,
     options,
@@ -602,7 +602,7 @@ describe('events', () => {
     if(eventCounts || eventLog || eventCodeLog) {
       opts.eventHandler = eventHandler;
     }
-    if(!['expand', 'fromRDF'].includes(type)) {
+    if(!['expand', 'fromRDF', 'toRDF', 'canonize'].includes(type)) {
       throw new Error(`Unknown test type: "${type}"`);
     }
     try {
@@ -611,6 +611,16 @@ describe('events', () => {
       }
       if(type === 'fromRDF') {
         result = await jsonld.fromRDF(input, opts);
+      }
+      if(type === 'toRDF') {
+        result = await jsonld.toRDF(input, {
+          // default to n-quads
+          format: 'application/n-quads',
+          ...opts
+        });
+      }
+      if(type === 'canonize') {
+        result = await jsonld.canonize(input, opts);
       }
     } catch(e) {
       error = e;
@@ -1123,6 +1133,9 @@ describe('events', () => {
   }
 ]
 ;
+      const nq = `\
+<ex:id> <ex:p> "v" .
+`;
 
       await _test({
         type: 'expand',
@@ -1142,6 +1155,15 @@ describe('events', () => {
           'invalid property'
         ],
         testNotSafe: true
+      });
+
+      await _test({
+        type: 'toRDF',
+        input: expected,
+        options: {skipExpansion: true},
+        expected: nq,
+        eventCodeLog: [],
+        testSafe: true
       });
     });
 
@@ -1168,6 +1190,9 @@ describe('events', () => {
   }
 ]
 ;
+      const nq = `\
+<ex:id> <ex:p> "v" .
+`;
 
       await _test({
         type: 'expand',
@@ -1191,6 +1216,15 @@ describe('events', () => {
         },
         testNotSafe: true
       });
+
+      await _test({
+        type: 'toRDF',
+        input: expected,
+        options: {skipExpansion: true},
+        expected: nq,
+        eventCodeLog: [],
+        testSafe: true
+      });
     });
 
     it('should handle reserved content @id values', async () => {
@@ -1212,6 +1246,9 @@ describe('events', () => {
   }
 ]
 ;
+      const nq = `\
+_:b0 <ex:p> "v" .
+`;
 
       await _test({
         type: 'expand',
@@ -1225,6 +1262,15 @@ describe('events', () => {
           events: 1
         },
         testNotSafe: true
+      });
+
+      await _test({
+        type: 'toRDF',
+        input: expected,
+        options: {skipExpansion: true},
+        expected: nq,
+        eventCodeLog: [],
+        testSafe: true
       });
     });
 
@@ -1254,6 +1300,9 @@ describe('events', () => {
   }
 ]
 ;
+      const nq = `\
+_:b0 <ex:p> "v" .
+`;
 
       await _test({
         type: 'expand',
@@ -1267,6 +1316,15 @@ describe('events', () => {
           events: 1
         },
         testNotSafe: true
+      });
+
+      await _test({
+        type: 'toRDF',
+        input: expected,
+        options: {skipExpansion: true},
+        expected: nq,
+        eventCodeLog: [],
+        testSafe: true
       });
     });
 
@@ -1292,6 +1350,9 @@ describe('events', () => {
   }
 ]
 ;
+      const nq = `\
+_:b0 <ex:p> "v" .
+`;
 
       await _test({
         type: 'expand',
@@ -1305,6 +1366,15 @@ describe('events', () => {
           events: 1
         },
         testNotSafe: true
+      });
+
+      await _test({
+        type: 'toRDF',
+        input: expected,
+        options: {skipExpansion: true},
+        expected: nq,
+        eventCodeLog: [],
+        testSafe: true
       });
     });
 
@@ -1334,6 +1404,9 @@ describe('events', () => {
   }
 ]
 ;
+      const nq = `\
+_:b0 <ex:p> "v" .
+`;
 
       await _test({
         type: 'expand',
@@ -1347,6 +1420,15 @@ describe('events', () => {
           events: 1
         },
         testNotSafe: true
+      });
+
+      await _test({
+        type: 'toRDF',
+        input: expected,
+        options: {skipExpansion: true},
+        expected: nq,
+        eventCodeLog: [],
+        testSafe: true
       });
     });
 
@@ -1371,6 +1453,9 @@ describe('events', () => {
   }
 ]
 ;
+      const nq = `\
+_:b0 <ex:p> "v" .
+`;
 
       await _test({
         type: 'expand',
@@ -1390,6 +1475,15 @@ describe('events', () => {
           events: 2
         },
         testNotSafe: true
+      });
+
+      await _test({
+        type: 'toRDF',
+        input: expected,
+        options: {skipExpansion: true},
+        expected: nq,
+        eventCodeLog: [],
+        testSafe: true
       });
     });
 
@@ -1411,6 +1505,9 @@ describe('events', () => {
   }
 ]
 ;
+      const nq = `\
+_:b0 <ex:p> "v" .
+`;
 
       await _test({
         type: 'expand',
@@ -1429,6 +1526,15 @@ describe('events', () => {
           events: 1
         },
         testNotSafe: true
+      });
+
+      await _test({
+        type: 'toRDF',
+        input: expected,
+        options: {skipExpansion: true},
+        expected: nq,
+        eventCodeLog: [],
+        testSafe: true
       });
     });
   });
@@ -3496,6 +3602,210 @@ describe('events', () => {
           events: 1
         },
         testNotSafe: true
+      });
+    });
+  });
+
+  describe('toRDF', () => {
+    it('should handle relative graph reference', async () => {
+      const input =
+[
+  {
+    "@id": "rel",
+    "@graph": [
+      {
+        "@id": "s:1",
+        "ex:p": [
+          {
+            "@value": "v1"
+          }
+        ]
+      }
+    ]
+  }
+]
+;
+      const nq = `\
+`;
+
+      await _test({
+        type: 'toRDF',
+        input,
+        options: {skipExpansion: true},
+        expected: nq,
+        eventCodeLog: [
+          'relative graph reference'
+        ],
+        testNotSafe: true
+      });
+    });
+
+    it('should handle relative subject reference', async () => {
+      const input =
+[
+  {
+    "@id": "rel",
+    "ex:p": [
+      {
+        "@value": "v"
+      }
+    ]
+  }
+]
+;
+      const nq = `\
+`;
+
+      await _test({
+        type: 'toRDF',
+        input,
+        options: {skipExpansion: true},
+        expected: nq,
+        eventCodeLog: [
+          'relative subject reference'
+        ],
+        testNotSafe: true
+      });
+    });
+
+    it('should handle relative property reference', async () => {
+      const input =
+[
+  {
+    "rel": [
+      {
+        "@value": "v"
+      }
+    ]
+  }
+]
+;
+      const nq = `\
+`;
+
+      await _test({
+        type: 'toRDF',
+        input,
+        options: {skipExpansion: true},
+        expected: nq,
+        eventCodeLog: [
+          'relative property reference'
+        ],
+        testNotSafe: true
+      });
+    });
+
+    it('should handle relative property reference', async () => {
+      const input =
+[
+  {
+    "@type": [
+      "rel"
+    ],
+    "ex:p": [
+      {
+        "@value": "v"
+      }
+    ]
+  }
+]
+;
+      const nq = `\
+_:b0 <ex:p> "v" .
+`;
+
+      await _test({
+        type: 'toRDF',
+        input,
+        options: {skipExpansion: true},
+        expected: nq,
+        eventCodeLog: [
+          'relative type reference'
+        ],
+        testNotSafe: true
+      });
+    });
+
+    it('should handle blank node predicates', async () => {
+      const input =
+[
+  {
+    "_:p": [
+      {
+        "@value": "v"
+      }
+    ]
+  }
+]
+;
+      const nq = `\
+`;
+
+      await _test({
+        type: 'toRDF',
+        input,
+        options: {skipExpansion: true},
+        expected: nq,
+        eventCodeLog: [
+          'blank node predicate'
+        ],
+        testNotSafe: true
+      });
+    });
+
+    it('should handle generlized RDf blank node predicates', async () => {
+      const input =
+[
+  {
+    "_:p": [
+      {
+        "@value": "v"
+      }
+    ]
+  }
+]
+;
+      const nq = `\
+_:b0 <_:b1> "v" .
+`;
+
+      await _test({
+        type: 'toRDF',
+        input,
+        options: {
+          skipExpansion: true,
+          produceGeneralizedRdf: true
+        },
+        expected: nq,
+        eventCodeLog: [],
+        testSafe: true
+      });
+    });
+
+    it.skip('should handle null @id', async () => {
+      const input =
+[
+  {
+    "@id": null,
+    "ex:p": [
+      {
+        "@value": "v"
+      }
+    ]
+  }
+]
+;
+      const nq = `\
+_:b0 <ex:p> "v" .
+`;
+
+      await _test({
+        type: 'toRDF',
+        input,
+        options: {skipExpansion: true},
+        expected: nq,
+        eventCodeLog: [],
+        testSafe: true
       });
     });
   });
