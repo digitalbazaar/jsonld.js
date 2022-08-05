@@ -3,20 +3,6 @@
 ### Changed
 - Change EARL Assertor to Digital Bazaar, Inc.
 - Update eslint dependencies.
-- **BREAKING**: Handle spec edge case where value for `@id` can expand into
-  null. Behavior is changing to *not* output invalid JSON-LD and *potentially*
-  outputing an extra blank node. The input in question is something like
-  `{"@id":"@RESERVED", ...}` where `@RESERVED` will expand into `null`. Rather
-  than outputing invalid `{"@id": null, ...}`, the new behavior will drop
-  `@id`. When going to RDF this can cause slightly different output.
-  Specifically, a `{}` value may exist and create a blank node. Please file an
-  issue if this behavior causes issues. It is expected to be better addressed
-  in a future spec.
-  - Related [issue](https://github.com/w3c/json-ld-api/issues/480).
-  - Normative [toRdf test case](https://w3c.github.io/json-ld-api/tests/toRdf-manifest.html#te122)
-    *that now fails*.
-  - Non-normative [expand test case](https://w3c.github.io/json-ld-api/tests/expand-manifest.html#t0122)
-    that now fails.
 
 ### Added
 - Support benchmarks in Karma tests.
