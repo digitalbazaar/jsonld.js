@@ -62,6 +62,12 @@ const TEST_TYPES = {
       // NOTE: idRegex format:
       //MMM-manifest#tNNN$/,
       idRegex: [
+        // spec issues
+        // Unclear how to handle {"@id": null} edge case
+        // See https://github.com/w3c/json-ld-api/issues/480
+        // non-normative test, also see toRdf-manifest#te122
+        ///expand-manifest#t0122$/,
+
         // misc
         /expand-manifest#tc037$/,
         /expand-manifest#tc038$/,
@@ -187,6 +193,12 @@ const TEST_TYPES = {
       // NOTE: idRegex format:
       //MMM-manifest#tNNN$/,
       idRegex: [
+        // spec issues
+        // Unclear how to handle {"@id": null} edge case
+        // See https://github.com/w3c/json-ld-api/issues/480
+        // normative test, also see expand-manifest#t0122
+        ///toRdf-manifest#te122$/,
+
         // misc
         /toRdf-manifest#tc037$/,
         /toRdf-manifest#tc038$/,
