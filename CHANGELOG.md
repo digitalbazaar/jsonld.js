@@ -9,6 +9,10 @@
 - Support test environment in EARL output.
 - Support benchmark output in EARL output.
 - Benchmark comparison tool.
+- Add "safe mode" to all APIs. Enable by adding `{safe: true}` to API options.
+  This mode causes processing to fail when data constructs are encountered that
+  result in lossy behavior or other data warnings. This is intended to be the
+  common way that digital signing and similar applications use this libraray.
 
 ## 6.0.0 - 2022-06-06
 
@@ -34,6 +38,8 @@
 
 ### Removed
 - Experimental non-standard `protectedMode` option.
+- **BREAKING**: Various console warnings were removed. The newly added "safe
+  mode" can stop processing where these warnings were.
 
 ## 5.2.0 - 2021-04-07
 
