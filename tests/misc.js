@@ -1203,6 +1203,7 @@ describe('events', () => {
       const expected =
 [
   {
+    "@id": null,
     "ex:p": [
       {
         "@value": "v"
@@ -1240,7 +1241,11 @@ describe('events', () => {
       const expected =
 [
   {
-    "ex:idp": [{}],
+    "ex:idp": [
+      {
+        "@id": null
+      }
+    ],
     "ex:p": [
       {
         "@value": "v"
@@ -1278,6 +1283,7 @@ describe('events', () => {
       const expected =
 [
   {
+    "@id": null,
     "ex:p": [
       {
         "@value": "v"
@@ -1315,7 +1321,11 @@ describe('events', () => {
       const expected =
 [
   {
-    "ex:idp": [{}],
+    "ex:idp": [
+      {
+        "@id": null
+      }
+    ],
     "ex:p": [
       {
         "@value": "v"
