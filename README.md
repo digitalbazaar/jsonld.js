@@ -346,6 +346,24 @@ It is recommended to set a default `user-agent` header for Node.js
 applications. The default for the default Node.js document loader is
 `jsonld.js`.
 
+### Safe Mode
+
+A common use case is to avoid JSON-LD constructs that will result in lossy
+behavior. The JSON-LD specifications have notes about when data is dropped.
+This can be especially important when calling [`canonize`][] in order to
+digitally sign data. A special "safe mode" is available that will detect these
+situations and cause processing to fail.
+
+**Note**: This mode is designed to be the common way that digital signing and
+similar applications use this library.
+
+The `safe` options flag set to `true` enables this behavior:
+
+```js
+// expand a document in safe mode
+const expanded = await jsonld.expand(data, {safe: true});
+```
+
 Related Modules
 ---------------
 
