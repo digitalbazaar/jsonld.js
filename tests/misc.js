@@ -634,7 +634,7 @@ describe('events', () => {
     if(!exception && error) {
       throw error;
     }
-    if(expected) {
+    if(expected !== undefined) {
       assert.deepStrictEqual(result, expected);
     }
     if(mapCounts) {
@@ -1141,7 +1141,7 @@ describe('events', () => {
           'reserved @id value',
           'invalid property'
         ],
-        testUnSafe: true
+        testNotSafe: true
       });
     });
 
@@ -1189,7 +1189,7 @@ describe('events', () => {
           },
           events: 2
         },
-        testUnSafe: true
+        testNotSafe: true
       });
     });
 
@@ -1224,7 +1224,7 @@ describe('events', () => {
           },
           events: 1
         },
-        testUnSafe: true
+        testNotSafe: true
       });
     });
 
@@ -1266,7 +1266,7 @@ describe('events', () => {
           },
           events: 1
         },
-        testUnSafe: true
+        testNotSafe: true
       });
     });
 
@@ -1304,7 +1304,7 @@ describe('events', () => {
           },
           events: 1
         },
-        testUnSafe: true
+        testNotSafe: true
       });
     });
 
@@ -1346,7 +1346,7 @@ describe('events', () => {
           },
           events: 1
         },
-        testUnSafe: true
+        testNotSafe: true
       });
     });
 
@@ -1389,7 +1389,7 @@ describe('events', () => {
           },
           events: 2
         },
-        testUnSafe: true
+        testNotSafe: true
       });
     });
 
@@ -1428,7 +1428,7 @@ describe('events', () => {
           },
           events: 1
         },
-        testUnSafe: true
+        testNotSafe: true
       });
     });
   });
