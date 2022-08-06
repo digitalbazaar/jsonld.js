@@ -2248,8 +2248,8 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @base during expansion',
-          // .. 'relativeiri'
+          //'prepending @base during expansion',
+          //// .. 'relativeiri'
           'relative @id reference',
           // .. 'relativeiri'
           'object with only @id'
@@ -2283,8 +2283,8 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @base during expansion',
-          // .. 'relativeiri'
+          ////'prepending @base during expansion',
+          //// .. 'relativeiri'
           'relative @id reference'
           // .. 'relativeiri'
         ],
@@ -2320,8 +2320,8 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @base during expansion',
-          // .. 'relativeiri'
+          //'prepending @base during expansion',
+          //// .. 'relativeiri'
           'relative @id reference'
           // .. 'relativeiri'
         ],
@@ -2359,8 +2359,8 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @base during expansion',
-          // .. 'relativeiri'
+          //'prepending @base during expansion',
+          //// .. 'relativeiri'
           'relative @id reference'
           // .. 'relativeiri'
         ],
@@ -2397,8 +2397,8 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @base during expansion',
-          // .. 'relativeiri'
+          //'prepending @base during expansion',
+          //// .. 'relativeiri'
           'relative @id reference'
           // .. 'relativeiri'
         ],
@@ -2437,8 +2437,8 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @base during expansion',
-          // .. 'relativeiri'
+          //'prepending @base during expansion',
+          //// .. 'relativeiri'
           'relative @type reference',
           // .. 'relativeiri'
           'invalid property'
@@ -2490,8 +2490,8 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @base during expansion',
-          // .. 'relativeiri'
+          //'prepending @base during expansion',
+          //// .. 'relativeiri'
           'relative @type reference',
           // .. 'relativeiri'
           'invalid property'
@@ -2534,12 +2534,12 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @base during expansion',
-          // .. 'relativeiri'
+          //'prepending @base during expansion',
+          //// .. 'relativeiri'
           'relative @type reference',
           // .. 'relativeiri'
-          'prepending @base during expansion',
-          // .. 'anotherRelativeiri'
+          //'prepending @base during expansion',
+          //// .. 'anotherRelativeiri'
           'relative @type reference',
           // .. 'anotherRelativeiri'
           'invalid property'
@@ -2592,12 +2592,12 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @base during expansion',
-          // .. 'relativeiri'
+          //'prepending @base during expansion',
+          //// .. 'relativeiri'
           'relative @type reference',
           // .. 'relativeiri'
-          'prepending @base during expansion',
-          // .. 'anotherRelativeiri'
+          //'prepending @base during expansion',
+          //// .. 'anotherRelativeiri'
           'relative @type reference',
           // .. 'anotherRelativeiri'
           'invalid property'
@@ -2640,8 +2640,8 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @base during expansion',
-          // .. 'relativeiri'
+          //'prepending @base during expansion',
+          //// .. 'relativeiri'
           'relative @type reference',
           // .. 'relativeiri'
           'invalid property'
@@ -2684,8 +2684,8 @@ _:b0 <ex:p> "v" .
         eventCodeLog: [
           'invalid property',
           // .. 'relativeiri'
-          'prepending @base during expansion',
-          // .. 'relativeiri'
+          //'prepending @base during expansion',
+          //// .. 'relativeiri'
           'relative @type reference'
           // .. 'id'
         ],
@@ -2713,8 +2713,8 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @base during expansion',
-          // .. 'relativeiri'
+          //'prepending @base during expansion',
+          //// .. 'relativeiri'
           'relative @id reference',
           // .. 'relativeiri'
           'object with only @id'
@@ -2743,8 +2743,8 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @base during expansion',
-          // .. 'relativeiri'
+          //'prepending @base during expansion',
+          //// .. 'relativeiri'
           'relative @id reference',
           // .. 'relativeiri'
           'object with only @id'
@@ -2778,8 +2778,8 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @base during expansion',
-          // .. 'relativeiri'
+          //'prepending @base during expansion',
+          //// .. 'relativeiri'
           'relative @type reference',
           // .. 'relativeiri'
         ],
@@ -2812,14 +2812,14 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @base during expansion',
-          // .. './'
+          //'prepending @base during expansion',
+          //// .. './'
           'relative @vocab reference',
           // .. './'
-          'prepending @vocab during expansion',
-          // .. 'relativeiri'
-          'prepending @vocab during expansion',
-          // .. 'relativeiri'
+          //'prepending @vocab during expansion',
+          //// .. 'relativeiri'
+          //'prepending @vocab during expansion',
+          //// .. 'relativeiri'
           'relative @type reference'
           // .. 'relativeiri'
         ],
@@ -2855,14 +2855,14 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @vocab during expansion',
-          // .. 'term'
-          'prepending @vocab during expansion',
-          // .. 'term'
-          'prepending @vocab during expansion',
-          // .. 'term'
-          'prepending @vocab during expansion'
-          // .. 'term'
+          //'prepending @vocab during expansion',
+          //// .. 'term'
+          //'prepending @vocab during expansion',
+          //// .. 'term'
+          //'prepending @vocab during expansion',
+          //// .. 'term'
+          //'prepending @vocab during expansion'
+          //// .. 'term'
         ],
         testSafe: true
       });
@@ -2893,10 +2893,10 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @vocab during expansion',
-          // .. 'relativeIri'
-          'prepending @vocab during expansion'
-          // .. 'relativeIri'
+          //'prepending @vocab during expansion',
+          //// .. 'relativeIri'
+          //'prepending @vocab during expansion'
+          //// .. 'relativeIri'
         ],
         testSafe: true
       });
@@ -2928,10 +2928,10 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @vocab during expansion',
-          // .. 'relativeIri'
-          'prepending @vocab during expansion'
-          // .. 'relativeIri'
+          //'prepending @vocab during expansion',
+          //// .. 'relativeIri'
+          //'prepending @vocab during expansion'
+          //// .. 'relativeIri'
         ],
         testSafe: true
       });
@@ -2974,16 +2974,16 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @vocab during expansion',
-          // .. 'ta'
-          'prepending @vocab during expansion',
-          // .. 'ta'
-          'prepending @vocab during expansion',
-          // .. 'rel/'
-          'prepending @vocab during expansion',
-          // .. 'tb'
-          'prepending @vocab during expansion'
-          // .. 'tb'
+          //'prepending @vocab during expansion',
+          //// .. 'ta'
+          //'prepending @vocab during expansion',
+          //// .. 'ta'
+          //'prepending @vocab during expansion',
+          //// .. 'rel/'
+          //'prepending @vocab during expansion',
+          //// .. 'tb'
+          //'prepending @vocab during expansion'
+          //// .. 'tb'
         ],
         testSafe: true
       });
@@ -3009,8 +3009,8 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @base during expansion',
-          // .. 'relativeIri'
+          //'prepending @base during expansion',
+          //// .. 'relativeIri'
           'object with only @id'
         ],
         testNotSafe: true
@@ -3038,8 +3038,8 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @base during expansion',
-          // .. 'relativeIri'
+          //'prepending @base during expansion',
+          //// .. 'relativeIri'
           'object with only @id'
         ],
         testNotSafe: true
@@ -3071,8 +3071,8 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @base during expansion'
-          // .. 'relativeIri'
+          //'prepending @base during expansion'
+          //// .. 'relativeIri'
         ],
         // FIXME
         testSafe: true
@@ -3105,8 +3105,8 @@ _:b0 <ex:p> "v" .
         input,
         expected,
         eventCodeLog: [
-          'prepending @base during expansion'
-          // .. 'relativeIri'
+          //'prepending @base during expansion'
+          //// .. 'relativeIri'
         ],
         testSafe: true
       });
