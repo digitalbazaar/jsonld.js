@@ -40,6 +40,8 @@
 - Experimental non-standard `protectedMode` option.
 - **BREAKING**: Various console warnings were removed. The newly added "safe
   mode" can stop processing where these warnings were.
+- **BREAKING**: Remove `compactionMap` and `expansionMap`. Their known use
+  cases are addressed with "safe mode" and future planned features.
 
 ## 5.2.0 - 2021-04-07
 
