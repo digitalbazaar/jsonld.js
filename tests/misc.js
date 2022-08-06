@@ -479,7 +479,7 @@ describe('literal JSON', () => {
   });
 });
 
-// test both events and expansionMaps
+// test events
 describe('events', () => {
   // track all the event counts
   // use simple count object (don't use tricky test keys!)
@@ -492,6 +492,11 @@ describe('events', () => {
 
     counts.events++;
     counts.codes[event.code]++;
+  }
+
+  // create event structure
+  function makeEvents() {
+    return {counts: {}, log: []};
   }
 
   // track event and counts
@@ -509,61 +514,33 @@ describe('events', () => {
     });
   }
 
-  // track all the map counts
-  // use simple count object (don't use tricky test keys!)
-  function addMapCounts(counts, info) {
-    // overall call count
-    counts.expansionMap = counts.expansionMap || 0;
-    counts.expansionMap++;
-
-    if(info.unmappedProperty) {
-      const c = counts.unmappedProperty = counts.unmappedProperty || {};
-      const k = info.unmappedProperty;
-      c[k] = c[k] || 0;
-      c[k]++;
-    }
-
-    if(info.unmappedValue) {
-      const c = counts.unmappedValue = counts.unmappedValue || {};
-      const v = info.unmappedValue;
-      let k;
-      if(Object.keys(v).length === 1 && '@id' in v) {
-        k = v['@id'];
-      } else {
-        k = '__unknown__';
-      }
-      c[k] = c[k] || 0;
-      c[k]++;
-    }
-
-    if(info.relativeIri) {
-      const c = counts.relativeIri = counts.relativeIri || {};
-      const k = info.relativeIri;
-      c[k] = c[k] || 0;
-      c[k]++;
-    }
-
-    if(info.prependedIri) {
-      const c = counts.prependedIri = counts.prependedIri || {};
-      const k = info.prependedIri.value;
-      c[k] = c[k] || 0;
-      c[k]++;
-    }
+  function isObject(v) {
+    return Object.prototype.toString.call(v) === '[object Object]';
   }
 
-  // track map and counts
-  // use simple count object (don't use tricky test keys!)
-  function trackMap({maps, info}) {
-    maps.counts = maps.counts || {};
-    maps.log = maps.log || [];
-
-    addMapCounts(maps.counts, info);
-    // just log useful comparison details
-    // FIXME
-    maps.log.push(info);
-    //maps.log.push({
-    //  xxx: info.xxx
-    //});
+  // compare partial event array structures
+  // for each source, only check fields present in target
+  // allows easier checking of just a few key fields
+  function comparePartialEvents(source, target, path = []) {
+    if(Array.isArray(source)) {
+      assert(Array.isArray(target),
+        `target not an array, path: ${JSON.stringify(path)}`);
+      assert.equal(source.length, target.length,
+        `event arrays size mismatch: ${JSON.stringify(path)}`);
+      for(let i = 0; i < source.length; ++i) {
+        comparePartialEvents(source[i], target[i], [...path, i]);
+      }
+    } else if(isObject(target)) {
+      // check all target keys recursively
+      for(const key of Object.keys(target)) {
+        assert(key in source,
+          `missing expected key: "${key}", path: ${JSON.stringify(path)}`);
+        comparePartialEvents(source[key], target[key], [...path, key]);
+      }
+    } else {
+      assert.deepStrictEqual(source, target,
+        `not equal, path: ${JSON.stringify(path)}`);
+    }
   }
 
   // test different apis
@@ -575,20 +552,18 @@ describe('events', () => {
     options,
     expected,
     exception,
-    mapCounts,
-    mapLog,
     eventCounts,
+    // event array
     eventLog,
+    // parial event array
+    eventPartialLog,
+    // event code array
     eventCodeLog,
     testSafe,
     testNotSafe,
     verbose
   }) {
-    const maps = {counts: {}, log: []};
-    const expansionMap = info => {
-      trackMap({maps, info});
-    };
-    const events = {counts: {}, log: []};
+    const events = makeEvents();
     const eventHandler = ({event}) => {
       trackEvent({events, event});
     };
@@ -596,10 +571,7 @@ describe('events', () => {
     let result;
     let error;
     const opts = {...options};
-    if(mapCounts || mapLog) {
-      opts.expansionMap = expansionMap;
-    }
-    if(eventCounts || eventLog || eventCodeLog) {
+    if(eventCounts || eventLog || eventPartialLog || eventCodeLog) {
       opts.eventHandler = eventHandler;
     }
     if(!['expand', 'fromRDF', 'toRDF', 'canonize'].includes(type)) {
@@ -633,7 +605,6 @@ describe('events', () => {
         options,
         expected,
         result,
-        maps,
         events
       }, null, 2));
     }
@@ -647,20 +618,20 @@ describe('events', () => {
     if(expected !== undefined) {
       assert.deepStrictEqual(result, expected);
     }
-    if(mapCounts) {
-      assert.deepStrictEqual(maps.counts, mapCounts);
-    }
-    if(mapLog) {
-      assert.deepStrictEqual(maps.log, mapLog);
-    }
     if(eventCounts) {
       assert.deepStrictEqual(events.counts, eventCounts);
     }
     if(eventLog) {
       assert.deepStrictEqual(events.log, eventLog);
     }
+    if(eventPartialLog) {
+      comparePartialEvents(events.log, eventPartialLog);
+    }
     if(eventCodeLog) {
       assert.deepStrictEqual(events.log.map(e => e.code), eventCodeLog);
+    }
+    if(eventLog) {
+      assert.deepStrictEqual(events.log, eventLog);
     }
     // test passes with safe=true
     if(testSafe) {
@@ -688,9 +659,9 @@ describe('events', () => {
 ;
       const ex = [];
 
-      const counts = {};
+      const events = makeEvents();
       const eventHandler = ({event}) => {
-        addEventCounts(counts, event);
+        trackEvent({events, event});
       };
 
       jsonld.setDefaultEventHandler({eventHandler});
@@ -698,13 +669,25 @@ describe('events', () => {
       const e = await jsonld.expand(d);
 
       assert.deepStrictEqual(e, ex);
-      assert.deepStrictEqual(counts, {
+      assert.deepStrictEqual(events.counts, {
         codes: {
           'empty object': 1,
           'invalid property': 1
         },
         events: 2
       });
+      comparePartialEvents(events.log, [
+        {
+          code: 'invalid property',
+          details: {
+            property: 'relative',
+            expandedProperty: 'relative'
+          }
+        },
+        {
+          code: 'empty object'
+        }
+      ]);
 
       // reset default
       jsonld.setDefaultEventHandler();
@@ -1141,18 +1124,20 @@ describe('events', () => {
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 3,
-          relativeIri: {
-            resId: 2
+        eventPartialLog: [
+          {
+            code: 'reserved @id value',
+            details: {
+              id: '@RESERVED'
+            }
           },
-          unmappedProperty: {
-            resId: 1
+          {
+            code: 'invalid property',
+            details: {
+              property: 'resId',
+              expandedProperty: 'resId'
+            }
           }
-        },
-        eventCodeLog: [
-          'reserved @id value',
-          'invalid property'
         ],
         testNotSafe: true
       });
@@ -1198,22 +1183,11 @@ describe('events', () => {
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 3,
-          relativeIri: {
-            resId: 2
-          },
-          unmappedProperty: {
-            resId: 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'invalid property': 1,
-            'reserved @id value': 1
-          },
-          events: 2
-        },
+        eventCodeLog: [
+          'reserved @id value',
+          'invalid property'
+          // .. resId
+        ],
         testNotSafe: true
       });
 
@@ -1254,13 +1228,9 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {},
-        eventCounts: {
-          codes: {
-            'reserved @id value': 1
-          },
-          events: 1
-        },
+        eventCodeLog: [
+          'reserved @id value'
+        ],
         testNotSafe: true
       });
 
@@ -1308,13 +1278,9 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {},
-        eventCounts: {
-          codes: {
-            'reserved @id value': 1
-          },
-          events: 1
-        },
+        eventCodeLog: [
+          'reserved @id value'
+        ],
         testNotSafe: true
       });
 
@@ -1358,10 +1324,10 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {},
         eventCounts: {
           codes: {
             'reserved @id value': 1
+            // .. '@RESERVED'
           },
           events: 1
         },
@@ -1412,10 +1378,10 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {},
         eventCounts: {
           codes: {
             'reserved @id value': 1
+            // .. '@RESERVED'
           },
           events: 1
         },
@@ -1461,19 +1427,12 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 1,
-          unmappedProperty: {
-            '@RESERVED': 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'invalid property': 1,
-            'reserved term': 1
-          },
-          events: 2
-        },
+        eventCodeLog: [
+          'reserved term',
+          // .. @RESERVED
+          'invalid property'
+          // .. @RESERVED
+        ],
         testNotSafe: true
       });
 
@@ -1513,15 +1472,10 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 1,
-          unmappedProperty: {
-            '@RESERVED': 1
-          }
-        },
         eventCounts: {
           codes: {
             'invalid property': 1,
+            // .. '@RESERVED'
           },
           events: 1
         },
@@ -1548,7 +1502,6 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {},
         eventCounts: {},
         testSafe: true
       });
@@ -1562,12 +1515,6 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 1,
-          unmappedValue: {
-            '__unknown__': 1
-          }
-        },
         eventCounts: {
           codes: {
             'empty object': 1
@@ -1592,12 +1539,6 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 1,
-          unmappedValue: {
-            '__unknown__': 1
-          }
-        },
         eventCounts: {
           codes: {
             'empty object': 1
@@ -1636,7 +1577,6 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {},
         eventCounts: {},
         testSafe: true
       });
@@ -1674,16 +1614,10 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 4,
-          unmappedValue: {
-            '__unknown__': 2,
-            'http://example.com/free-floating-node': 2
-          }
-        },
         eventCounts: {
           codes: {
             'free-floating scalar': 1,
+            // .. 'http://example.com/free-floating-node'
             'object with only @id': 1
           },
           events: 2
@@ -1709,12 +1643,6 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 1,
-          unmappedValue: {
-            '__unknown__': 1,
-          }
-        },
         eventCounts: {
           codes: {
             'object with only @list': 1
@@ -1747,16 +1675,10 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 5,
-          unmappedValue: {
-            '__unknown__': 3,
-            'http://example.com/free-floating-node': 2
-          }
-        },
         eventCounts: {
           codes: {
             'free-floating scalar': 1,
+            // .. 'http://example.com/free-floating-node'
             'object with only @id': 1,
             'object with only @list': 1
           },
@@ -1794,7 +1716,6 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {},
         eventCounts: {},
         testSafe: true
       });
@@ -1838,16 +1759,11 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 8,
-          unmappedValue: {
-            '__unknown__': 8
-          }
-        },
         eventCounts: {
           codes: {
             'empty object': 1,
             'free-floating scalar': 1,
+            // .. 'free-floating strings in set objects are removed'
             'object with only @list': 1,
             'object with only @value': 1
           },
@@ -1872,12 +1788,6 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 3,
-          unmappedValue: {
-            '__unknown__': 3
-          }
-        },
         eventCounts: {
           codes: {
             'empty object': 1,
@@ -1903,12 +1813,6 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 3,
-          unmappedValue: {
-            '__unknown__': 2
-          }
-        },
         eventCounts: {
           codes: {
             'empty object': 1,
@@ -1946,7 +1850,6 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {},
         eventCounts: {
           codes: {
             'invalid @language value': 1
@@ -1983,13 +1886,9 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {},
-        eventCounts: {
-          codes: {
-            'invalid @language value': 1
-          },
-          events: 1
-        },
+        eventCodeLog: [
+          'invalid @language value'
+        ],
         testNotSafe: true
       });
     });
@@ -2029,19 +1928,10 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 2,
-          relativeIri: {
-            de: 1,
-            en_bad: 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'invalid @language value': 1
-          },
-          events: 1
-        },
+        eventCodeLog: [
+          'invalid @language value'
+          // .. en_bad
+        ],
         testNotSafe: true
       });
     });
@@ -2068,33 +1958,20 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 4,
-          relativeIri: {
-            children: 2
-          },
-          unmappedProperty: {
-            children: 1
-          },
-          unmappedValue: {
-            'ex:parent': 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'invalid property': 1,
-            'object with only @id': 1,
-            'reserved @reverse value': 1
-          },
-          events: 3
-        },
+        eventCodeLog: [
+          'reserved @reverse value',
+          // .. '@RESERVED'
+          'invalid property',
+          // .. children
+          'object with only @id'
+        ],
         testNotSafe: true
       });
     });
   });
 
   describe('properties', () => {
-    it('should have zero counts with absolute term', async () => {
+    it('should have zero events with absolute term', async () => {
       const input =
 {
   "urn:definedTerm": "is defined"
@@ -2116,13 +1993,12 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {},
-        eventCounts: {},
+        eventCodeLog: [],
         testSafe: true
       });
     });
 
-    it('should have zero counts with mapped term', async () => {
+    it('should have zero events with mapped term', async () => {
       const input =
 {
   "@context": {
@@ -2147,8 +2023,7 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {},
-        eventCounts: {},
+        eventCodeLog: [],
         testSafe: true
       });
     });
@@ -2165,25 +2040,6 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 4,
-          relativeIri: {
-            testUndefined: 2
-          },
-          unmappedProperty: {
-            testUndefined: 1
-          },
-          unmappedValue: {
-            '__unknown__': 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'empty object': 1,
-            'invalid property': 1
-          },
-          events: 2
-        },
         eventLog: [
           {
             code: 'invalid property',
@@ -2220,25 +2076,11 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 4,
-          relativeIri: {
-            testUndefined: 2
-          },
-          unmappedProperty: {
-            testUndefined: 1
-          },
-          unmappedValue: {
-            '__unknown__': 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'empty object': 1,
-            'invalid property': 1
-          },
-          events: 2
-        },
+        eventCodeLog: [
+          'invalid property',
+          // .. 'testUndefined'
+          'empty object'
+        ],
         testNotSafe: true
       });
     });
@@ -2265,21 +2107,10 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 3,
-          relativeIri: {
-            testundefined: 2
-          },
-          unmappedProperty: {
-            testundefined: 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'invalid property': 1
-          },
-          events: 1
-        },
+        eventCodeLog: [
+          'invalid property'
+          // .. 'testUndefined'
+        ],
         testNotSafe: true
       });
     });
@@ -2299,25 +2130,11 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 4,
-          relativeIri: {
-            testUndefined: 2
-          },
-          unmappedProperty: {
-            testUndefined: 1
-          },
-          unmappedValue: {
-            '__unknown__': 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'empty object': 1,
-            'invalid property': 1
-          },
-          events: 2
-        },
+        eventCodeLog: [
+          'invalid property',
+          // .. 'testUndefined'
+          'empty object'
+        ],
         testNotSafe: true
       });
     });
@@ -2348,21 +2165,10 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 3,
-          relativeIri: {
-            testUndefined: 2
-          },
-          unmappedProperty: {
-            testUndefined: 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'invalid property': 1
-          },
-          events: 1
-        },
+        eventCodeLog: [
+          'invalid property'
+          // .. 'testUndefined'
+        ],
         testNotSafe: true
       });
     });
@@ -2392,21 +2198,10 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 3,
-          relativeIri: {
-            testUndefined: 2
-          },
-          unmappedProperty: {
-            testUndefined: 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'invalid property': 1
-          },
-          events: 1
-        },
+        eventCodeLog: [
+          'invalid property'
+          // .. 'testUndefined'
+        ],
         testNotSafe: true
       });
     });
@@ -2426,23 +2221,13 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 2,
-          unmappedProperty: {
-            '@RESERVED': 1
-          },
-          unmappedValue: {
-            '__unknown__': 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'empty object': 1,
-            'invalid property': 1,
-            'reserved term': 1
-          },
-          events: 3
-        },
+        eventCodeLog: [
+          'reserved term',
+          // .. '@RESERVED'
+          'invalid property',
+          // .. '@RESERVED'
+          'empty object'
+        ],
         testNotSafe: true
       });
     });
@@ -2462,25 +2247,13 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 3,
-          prependedIri: {
-            relativeiri: 1
-          },
-          relativeIri: {
-            relativeiri: 1
-          },
-          unmappedValue: {
-            relativeiri: 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'object with only @id': 1,
-            'relative @id reference': 1
-          },
-          events: 2
-        },
+        eventCodeLog: [
+          'prepending @base during expansion',
+          // .. 'relativeiri'
+          'relative @id reference',
+          // .. 'relativeiri'
+          'object with only @id'
+        ],
         testNotSafe: true
       });
     });
@@ -2509,21 +2282,12 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 2,
-          prependedIri: {
-            relativeiri: 1
-          },
-          relativeIri: {
-            relativeiri: 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'relative @id reference': 1
-          },
-          events: 1
-        },
+        eventCodeLog: [
+          'prepending @base during expansion',
+          // .. 'relativeiri'
+          'relative @id reference'
+          // .. 'relativeiri'
+        ],
         testNotSafe: true
       });
     });
@@ -2555,21 +2319,12 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 2,
-          prependedIri: {
-            relativeiri: 1
-          },
-          relativeIri: {
-            relativeiri: 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'relative @id reference': 1
-          },
-          events: 1
-        },
+        eventCodeLog: [
+          'prepending @base during expansion',
+          // .. 'relativeiri'
+          'relative @id reference'
+          // .. 'relativeiri'
+        ],
         testNotSafe: true
       });
     });
@@ -2603,21 +2358,12 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 2,
-          prependedIri: {
-            relativeiri: 1
-          },
-          relativeIri: {
-            relativeiri: 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'relative @id reference': 1
-          },
-          events: 1
-        },
+        eventCodeLog: [
+          'prepending @base during expansion',
+          // .. 'relativeiri'
+          'relative @id reference'
+          // .. 'relativeiri'
+        ],
         testNotSafe: true
       });
     });
@@ -2650,21 +2396,12 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 2,
-          prependedIri: {
-            relativeiri: 1
-          },
-          relativeIri: {
-            relativeiri: 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'relative @id reference': 1
-          },
-          events: 1
-        },
+        eventCodeLog: [
+          'prepending @base during expansion',
+          // .. 'relativeiri'
+          'relative @id reference'
+          // .. 'relativeiri'
+        ],
         testNotSafe: true
       });
     });
@@ -2699,26 +2436,14 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 6,
-          prependedIri: {
-            relativeiri: 1
-          },
-          relativeIri: {
-            id: 2,
-            relativeiri: 2
-          },
-          unmappedProperty: {
-            id: 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'invalid property': 1,
-            'relative @type reference': 1
-          },
-          events: 2
-        },
+        eventCodeLog: [
+          'prepending @base during expansion',
+          // .. 'relativeiri'
+          'relative @type reference',
+          // .. 'relativeiri'
+          'invalid property'
+          // .. 'id'
+        ],
         testNotSafe: true
       });
     });
@@ -2764,26 +2489,14 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 6,
-          prependedIri: {
-            relativeiri: 1
-          },
-          relativeIri: {
-            id: 2,
-            relativeiri: 2
-          },
-          unmappedProperty: {
-            id: 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'invalid property': 1,
-            'relative @type reference': 1
-          },
-          events: 2
-        },
+        eventCodeLog: [
+          'prepending @base during expansion',
+          // .. 'relativeiri'
+          'relative @type reference',
+          // .. 'relativeiri'
+          'invalid property'
+          // .. 'id'
+        ],
         testNotSafe: true
       });
     });
@@ -2820,28 +2533,18 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 8,
-          prependedIri: {
-            anotherRelativeiri: 1,
-            relativeiri: 1
-          },
-          relativeIri: {
-            anotherRelativeiri: 1,
-            id: 2,
-            relativeiri: 2
-          },
-          unmappedProperty: {
-            id: 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'invalid property': 1,
-            'relative @type reference': 2
-          },
-          events: 3
-        },
+        eventCodeLog: [
+          'prepending @base during expansion',
+          // .. 'relativeiri'
+          'relative @type reference',
+          // .. 'relativeiri'
+          'prepending @base during expansion',
+          // .. 'anotherRelativeiri'
+          'relative @type reference',
+          // .. 'anotherRelativeiri'
+          'invalid property'
+          // 'id'
+        ],
         testNotSafe: true
       });
     });
@@ -2888,28 +2591,18 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 8,
-          prependedIri: {
-            anotherRelativeiri: 1,
-            relativeiri: 1
-          },
-          relativeIri: {
-            anotherRelativeiri: 1,
-            id: 2,
-            relativeiri: 2
-          },
-          unmappedProperty: {
-            id: 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'invalid property': 1,
-            'relative @type reference': 2
-          },
-          events: 3
-        },
+        eventCodeLog: [
+          'prepending @base during expansion',
+          // .. 'relativeiri'
+          'relative @type reference',
+          // .. 'relativeiri'
+          'prepending @base during expansion',
+          // .. 'anotherRelativeiri'
+          'relative @type reference',
+          // .. 'anotherRelativeiri'
+          'invalid property'
+          // .. 'id'
+        ],
         testNotSafe: true
       });
     });
@@ -2946,26 +2639,14 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 6,
-          prependedIri: {
-            relativeiri: 1
-          },
-          relativeIri: {
-            id: 2,
-            relativeiri: 2
-          },
-          unmappedProperty: {
-            id: 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'invalid property': 1,
-            'relative @type reference': 1
-          },
-          events: 2
-        },
+        eventCodeLog: [
+          'prepending @base during expansion',
+          // .. 'relativeiri'
+          'relative @type reference',
+          // .. 'relativeiri'
+          'invalid property'
+          // .. 'id'
+        ],
         testNotSafe: true
       });
     });
@@ -3000,26 +2681,14 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 6,
-          prependedIri: {
-            relativeiri: 1
-          },
-          relativeIri: {
-            id: 2,
-            relativeiri: 2
-          },
-          unmappedProperty: {
-            id: 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'invalid property': 1,
-            'relative @type reference': 1
-          },
-          events: 2
-        },
+        eventCodeLog: [
+          'invalid property',
+          // .. 'relativeiri'
+          'prepending @base during expansion',
+          // .. 'relativeiri'
+          'relative @type reference'
+          // .. 'id'
+        ],
         testNotSafe: true
       });
     });
@@ -3043,25 +2712,13 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 3,
-          prependedIri: {
-            'relativeiri': 1
-          },
-          relativeIri: {
-            'relativeiri': 1
-          },
-          unmappedValue: {
-            'relativeiri': 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'object with only @id': 1,
-            'relative @id reference': 1
-          },
-          events: 2
-        },
+        eventCodeLog: [
+          'prepending @base during expansion',
+          // .. 'relativeiri'
+          'relative @id reference',
+          // .. 'relativeiri'
+          'object with only @id'
+        ],
         testNotSafe: true
       });
     });
@@ -3085,25 +2742,13 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 3,
-          prependedIri: {
-            relativeiri: 1
-          },
-          relativeIri: {
-            '/relativeiri': 1
-          },
-          unmappedValue: {
-            '/relativeiri': 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'object with only @id': 1,
-            'relative @id reference': 1
-          },
-          events: 2
-        },
+        eventCodeLog: [
+          'prepending @base during expansion',
+          // .. 'relativeiri'
+          'relative @id reference',
+          // .. 'relativeiri'
+          'object with only @id'
+        ],
         testNotSafe: true
       });
     });
@@ -3132,21 +2777,12 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 3,
-          prependedIri: {
-            relativeiri: 1
-          },
-          relativeIri: {
-            'relativeiri': 2
-          }
-        },
-        eventCounts: {
-          codes: {
-            'relative @type reference': 1
-          },
-          events: 1
-        },
+        eventCodeLog: [
+          'prepending @base during expansion',
+          // .. 'relativeiri'
+          'relative @type reference',
+          // .. 'relativeiri'
+        ],
         testNotSafe: true
       });
     });
@@ -3175,24 +2811,18 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 6,
-          prependedIri: {
-            './': 1,
-            relativeiri: 2
-          },
-          relativeIri: {
-            '/': 1,
-            '/relativeiri': 2
-          }
-        },
-        eventCounts: {
-          codes: {
-            'relative @type reference': 1,
-            'relative @vocab reference': 1
-          },
-          events: 2
-        },
+        eventCodeLog: [
+          'prepending @base during expansion',
+          // .. './'
+          'relative @vocab reference',
+          // .. './'
+          'prepending @vocab during expansion',
+          // .. 'relativeiri'
+          'prepending @vocab during expansion',
+          // .. 'relativeiri'
+          'relative @type reference'
+          // .. 'relativeiri'
+        ],
         testNotSafe: true
       });
     });
@@ -3224,13 +2854,16 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 4,
-          prependedIri: {
-            term: 4
-          }
-        },
-        eventCounts: {},
+        eventCodeLog: [
+          'prepending @vocab during expansion',
+          // .. 'term'
+          'prepending @vocab during expansion',
+          // .. 'term'
+          'prepending @vocab during expansion',
+          // .. 'term'
+          'prepending @vocab during expansion'
+          // .. 'term'
+        ],
         testSafe: true
       });
     });
@@ -3259,13 +2892,12 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 2,
-          prependedIri: {
-            relativeIri: 2
-          }
-        },
-        eventCounts: {},
+        eventCodeLog: [
+          'prepending @vocab during expansion',
+          // .. 'relativeIri'
+          'prepending @vocab during expansion'
+          // .. 'relativeIri'
+        ],
         testSafe: true
       });
     });
@@ -3295,13 +2927,12 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 2,
-          prependedIri: {
-            relativeIri: 2
-          }
-        },
-        eventCounts: {},
+        eventCodeLog: [
+          'prepending @vocab during expansion',
+          // .. 'relativeIri'
+          'prepending @vocab during expansion'
+          // .. 'relativeIri'
+        ],
         testSafe: true
       });
     });
@@ -3342,7 +2973,18 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        eventCounts: {},
+        eventCodeLog: [
+          'prepending @vocab during expansion',
+          // .. 'ta'
+          'prepending @vocab during expansion',
+          // .. 'ta'
+          'prepending @vocab during expansion',
+          // .. 'rel/'
+          'prepending @vocab during expansion',
+          // .. 'tb'
+          'prepending @vocab during expansion'
+          // .. 'tb'
+        ],
         testSafe: true
       });
     });
@@ -3366,21 +3008,11 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 2,
-          prependedIri: {
-            relativeIri: 1
-          },
-          unmappedValue: {
-            'http://example.com/relativeIri': 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'object with only @id': 1
-          },
-          events: 1
-        },
+        eventCodeLog: [
+          'prepending @base during expansion',
+          // .. 'relativeIri'
+          'object with only @id'
+        ],
         testNotSafe: true
       });
     });
@@ -3405,21 +3037,11 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 2,
-          prependedIri: {
-            relativeIri: 1
-          },
-          unmappedValue: {
-            'http://example.com/relativeIri': 1
-          }
-        },
-        eventCounts: {
-          codes: {
-            'object with only @id': 1
-          },
-          events: 1
-        },
+        eventCodeLog: [
+          'prepending @base during expansion',
+          // .. 'relativeIri'
+          'object with only @id'
+        ],
         testNotSafe: true
       });
     });
@@ -3448,16 +3070,10 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 2,
-          prependedIri: {
-            relativeIri: 1
-          },
-          relativeIri: {
-            relativeIri: 1
-          }
-        },
-        eventCounts: {},
+        eventCodeLog: [
+          'prepending @base during expansion'
+          // .. 'relativeIri'
+        ],
         // FIXME
         testSafe: true
       });
@@ -3488,17 +3104,10 @@ _:b0 <ex:p> "v" .
         type: 'expand',
         input,
         expected,
-        mapCounts: {
-          expansionMap: 2,
-          prependedIri: {
-            relativeIri: 1
-          },
-          relativeIri: {
-            relativeIri: 1
-          }
-        },
-        eventCounts: {},
-        eventLog: [],
+        eventCodeLog: [
+          'prepending @base during expansion'
+          // .. 'relativeIri'
+        ],
         testSafe: true
       });
     });
@@ -3530,13 +3139,10 @@ _:b0 <ex:p> "v" .
         type: 'fromRDF',
         input,
         expected,
-        mapCounts: {},
-        eventCounts: {
-          codes: {
-            'invalid @language value': 1
-          },
-          events: 1
-        },
+        eventCodeLog: [
+          'invalid @language value'
+          // .. 'abcdefghi'
+        ],
         testNotSafe: true
       });
     });
@@ -3594,13 +3200,9 @@ _:b0 <ex:p> "v" .
           rdfDirection: 'i18n-datatype',
         },
         expected,
-        mapCounts: {},
-        eventCounts: {
-          codes: {
-            'invalid @language value': 1
-          },
-          events: 1
-        },
+        eventCodeLog: [
+          'invalid @language value'
+        ],
         testNotSafe: true
       });
     });
@@ -3635,6 +3237,7 @@ _:b0 <ex:p> "v" .
         expected: nq,
         eventCodeLog: [
           'relative graph reference'
+          // .. 'rel'
         ],
         testNotSafe: true
       });
@@ -3663,6 +3266,7 @@ _:b0 <ex:p> "v" .
         expected: nq,
         eventCodeLog: [
           'relative subject reference'
+          // .. 'rel'
         ],
         testNotSafe: true
       });
@@ -3690,6 +3294,7 @@ _:b0 <ex:p> "v" .
         expected: nq,
         eventCodeLog: [
           'relative property reference'
+          // .. 'rel'
         ],
         testNotSafe: true
       });
@@ -3721,6 +3326,7 @@ _:b0 <ex:p> "v" .
         expected: nq,
         eventCodeLog: [
           'relative type reference'
+          // .. 'rel'
         ],
         testNotSafe: true
       });
@@ -3748,12 +3354,13 @@ _:b0 <ex:p> "v" .
         expected: nq,
         eventCodeLog: [
           'blank node predicate'
+          // .. '_:p'
         ],
         testNotSafe: true
       });
     });
 
-    it('should handle generlized RDf blank node predicates', async () => {
+    it('should handle generlized RDF blank node predicates', async () => {
       const input =
 [
   {
@@ -3782,7 +3389,7 @@ _:b0 <_:b1> "v" .
       });
     });
 
-    it.skip('should handle null @id', async () => {
+    it('should handle null @id', async () => {
       const input =
 [
   {
