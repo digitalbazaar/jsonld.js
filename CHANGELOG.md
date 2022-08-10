@@ -12,7 +12,7 @@
 - Add "safe mode" to all APIs. Enable by adding `{safe: true}` to API options.
   This mode causes processing to fail when data constructs are encountered that
   result in lossy behavior or other data warnings. This is intended to be the
-  common way that digital signing and similar applications use this libraray.
+  common way that digital signing and similar applications use this library.
 
 ## 6.0.0 - 2022-06-06
 
