@@ -1,5 +1,7 @@
 # jsonld ChangeLog
 
+## 7.0.0 - 2022-08-16
+
 ### Fixed
 - compact t0111 test: "Keyword-like relative IRIs"
 
