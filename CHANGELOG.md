@@ -1,5 +1,11 @@
 # jsonld ChangeLog
 
+## 8.0.0 - 2022-08-xx
+
+### Changed
+- **BREAKING**: By default, set safe mode to `true` and `base` to
+  `null` in `canonize`.
+
 ## 7.0.0 - 2022-08-16
 
 ### Fixed
