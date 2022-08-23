@@ -4,7 +4,12 @@
 
 ### Changed
 - **BREAKING**: By default, set safe mode to `true` and `base` to
-  `null` in `canonize`.
+  `null` in `canonize`. Applications that were previously
+  canonizing data may see new errors if their data did not fully
+  define terms or used relative URLs that would be dropped when
+  converting to canonized RDF. Now these situations are caught
+  via `safe` mode by default, informing the developer that they
+  need to fix their data.
 
 ## 7.0.0 - 2022-08-16
 
