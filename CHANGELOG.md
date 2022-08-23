@@ -1,6 +1,6 @@
 # jsonld ChangeLog
 
-## 8.0.0 - 2022-08-xx
+## 8.0.0 - 2022-08-23
 
 ### Changed
 - **BREAKING**: By default, set safe mode to `true` and `base` to
