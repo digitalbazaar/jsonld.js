@@ -72,18 +72,15 @@ outputs.forEach(info => {
       rules: [
         {
           test: /\.js$/,
-          include: [{
-            // exclude node_modules by default
-            exclude: /(node_modules)/
-          }, {
-            // include specific packages
-            include: [
-              /(node_modules\/canonicalize)/,
-              /(node_modules\/lru-cache)/,
-              /(node_modules\/rdf-canonize)/,
-              /(node_modules\/yallist)/
-            ]
-          }],
+          // exclude node_modules by default
+          exclude: /(node_modules)/,
+          // include specific packages
+          include: [
+            /(node_modules\/canonicalize)/,
+            /(node_modules\/lru-cache)/,
+            /(node_modules\/rdf-canonize)/,
+            /(node_modules\/yallist)/
+          ],
           use: {
             loader: 'babel-loader',
             options: {
@@ -116,14 +113,7 @@ outputs.forEach(info => {
     plugins: [
       //new webpack.DefinePlugin({
       //})
-    ],
-    // disable various node shims as jsonld handles this manually
-    node: {
-      Buffer: false,
-      crypto: false,
-      process: false,
-      setImmediate: false
-    }
+    ]
   };
 
   // plain unoptimized unminified bundle
