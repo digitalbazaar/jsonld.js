@@ -3417,3 +3417,53 @@ _:b0 <ex:p> "v" .
     });
   });
 });
+
+describe('safe canonize defaults', () => {
+  it('does not throw on safe input', async () => {
+    const input =
+{
+  "@id": "ex:id",
+  "ex:p": "v"
+}
+;
+    const expected =
+'<ex:id> <ex:p> "v" .\n'
+;
+    const result = await jsonld.canonize(input);
+    assert.deepStrictEqual(result, expected);
+  });
+
+  it('throws on unsafe input', async () => {
+    const input =
+{
+  "@id": "ex:id",
+  "ex:p": "v",
+  "unknown": "error"
+}
+;
+    let error;
+    try {
+      await jsonld.canonize(input);
+    } catch(e) {
+      error = e;
+    }
+    assert(error, 'missing safe validation error');
+  });
+
+  it('allows override of safe mode', async () => {
+    const input =
+{
+  "@id": "ex:id",
+  "ex:p": "v",
+  "unknown": "error"
+}
+;
+    const expected =
+'<ex:id> <ex:p> "v" .\n'
+;
+    const result = await jsonld.canonize(input, {
+      safe: false
+    });
+    assert.deepStrictEqual(result, expected);
+  });
+});
