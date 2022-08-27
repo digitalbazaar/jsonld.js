@@ -1,5 +1,12 @@
 # jsonld ChangeLog
 
+## 8.1.0 - 2022-xx-xx
+
+### Fixed
+- `relative property reference` event renamed to `relative predicate
+  reference`.
+- `relative type reference` event renamed to `relative object reference`.
+
 ## 8.0.0 - 2022-08-23
 
 ### Changed
