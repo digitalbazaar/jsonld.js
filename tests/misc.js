@@ -3272,7 +3272,7 @@ _:b0 <ex:p> "v" .
       });
     });
 
-    it('should handle relative property reference', async () => {
+    it('should handle relative predicate reference', async () => {
       const input =
 [
   {
@@ -3293,14 +3293,14 @@ _:b0 <ex:p> "v" .
         options: {skipExpansion: true},
         expected: nq,
         eventCodeLog: [
-          'relative property reference'
+          'relative predicate reference'
           // .. 'rel'
         ],
         testNotSafe: true
       });
     });
 
-    it('should handle relative property reference', async () => {
+    it('should handle relative object reference', async () => {
       const input =
 [
   {
@@ -3325,7 +3325,7 @@ _:b0 <ex:p> "v" .
         options: {skipExpansion: true},
         expected: nq,
         eventCodeLog: [
-          'relative type reference'
+          'relative object reference'
           // .. 'rel'
         ],
         testNotSafe: true
