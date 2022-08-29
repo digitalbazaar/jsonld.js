@@ -3416,6 +3416,61 @@ _:b0 <ex:p> "v" .
       });
     });
   });
+
+  describe('various', () => {
+    it('expand and toRDF for non-IRI', async () => {
+      const input =
+{
+  "@context": {
+    "ex": "urn:ex#",
+    "ex:prop": {
+      "@type": "@id"
+    }
+  },
+  "@id": "urn:id",
+  "@type": "ex:type",
+  "ex:prop": "value"
+}
+;
+      const expanded =
+[
+  {
+    "@id": "urn:id",
+    "@type": [
+      "urn:ex#type"
+    ],
+    "urn:ex#prop": [
+      {
+        "@id": "value"
+      }
+    ]
+  }
+]
+;
+      const nq = `\
+<urn:id> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <urn:ex#type> .
+`;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected: expanded,
+        eventCodeLog: [],
+        testSafe: true
+      });
+      await _test({
+        type: 'toRDF',
+        input: expanded,
+        options: {skipExpansion: true},
+        expected: nq,
+        eventCodeLog: [
+          'relative object reference'
+          // .. 'value'
+        ],
+        testNotSafe: true
+      });
+    });
+  });
 });
 
 describe('safe canonize defaults', () => {
