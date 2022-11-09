@@ -266,7 +266,7 @@ const framed = await jsonld.frame(doc, frame);
 // (URDNA2015), see:
 const canonized = await jsonld.canonize(doc, {
   algorithm: 'URDNA2015',
-  format: 'application/n-quads'
+  inputFormat: 'application/n-quads'
 });
 // canonized is a string that is a canonical representation of the document
 // that can be used for hashing, comparison, etc.
