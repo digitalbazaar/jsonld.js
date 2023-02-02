@@ -6,6 +6,7 @@
 - Improved `types.isObject` internal API performance.
 - Improved `graphTypes.*` internal API performance.
 - Improved `util.addValue` performance.
+- Improved `util.compareValues` performance.
 
 ## 8.1.0 - 2022-08-29
 
