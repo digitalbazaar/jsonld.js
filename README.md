@@ -476,7 +476,7 @@ Use a command line with a test suite and a benchmark flag:
 EARL reports with benchmark data can be generated with an optional environment
 details:
 
-    JSONLD_TESTS=`pwd`/../json-ld.org/benchmarks/b001-manifiest.jsonld JSONLD_BENCHMARK=1 EARL=earl-test.jsonld TEST_ENV=1 npm test
+    JSONLD_TESTS=`pwd`/../json-ld.org/benchmarks/b001-manifest.jsonld JSONLD_BENCHMARK=1 EARL=earl-test.jsonld TEST_ENV=1 npm test
 
 See `tests/test.js` for more `TEST_ENV` control and options.
 
