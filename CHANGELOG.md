@@ -4,6 +4,7 @@
 
 ### Fixed
 - Improved `types.isObject` internal API performance.
+- Improved `graphTypes.isValue` internal API performance.
 
 ## 8.1.0 - 2022-08-29
 
