@@ -1,6 +1,6 @@
 # jsonld ChangeLog
 
-## 8.1.1 - 2023-02-xx
+## 8.1.1 - 2023-02-25
 
 ### Fixed
 - Don't fail in safe mode for a value object with `"@type": "@json"`.
