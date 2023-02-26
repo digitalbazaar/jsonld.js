@@ -1507,6 +1507,48 @@ _:b0 <ex:p> "v" .
       });
     });
 
+    it('should have zero counts with @json value', async () => {
+      const input =
+{
+  "ex:p": {
+    "@type": "@json",
+    "@value": [null]
+  }
+}
+;
+      const expected =
+[
+  {
+    "ex:p": [
+      {
+        "@type": "@json",
+        "@value": [null]
+      }
+    ]
+  }
+]
+;
+      const nq = `\
+_:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
+`
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        eventCounts: {},
+        testSafe: true
+      });
+      await _test({
+        type: 'toRDF',
+        input,
+        expected: nq,
+        eventCodeLog: [],
+        testSafe: true
+      });
+    });
+
     it('should count empty top-level object', async () => {
       const input = {};
       const expected = [];
