@@ -144,6 +144,7 @@ const TEST_TYPES = {
       // NOTE: idRegex format:
       //MMM-manifest#tNNN$/,
       idRegex: [
+        /frame-manifest#t0069$/,
       ]
     },
     fn: 'frame',
