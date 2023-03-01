@@ -518,6 +518,7 @@ Commercial support for this library is available upon request from
 [errata]: http://www.w3.org/2014/json-ld-errata
 [jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
 [jsonld-request]: https://github.com/digitalbazaar/jsonld-request
+[rdf]: https://rubygems.org/gems/rdf
 [rdf-canonize-native]: https://github.com/digitalbazaar/rdf-canonize-native
 [test runner]: https://github.com/digitalbazaar/jsonld.js/blob/master/tests/test-common.js
 [test suite]: https://github.com/json-ld/json-ld.org/tree/master/test-suite
