@@ -364,28 +364,6 @@ The `safe` options flag set to `true` enables this behavior:
 const expanded = await jsonld.expand(data, {safe: true});
 ```
 
-Related Modules
----------------
-
-* [jsonld-cli][]: A command line interface tool called `jsonld` that exposes
-  most of the basic jsonld.js API.
-* [jsonld-request][]: A module that can read data from stdin, URLs, and files
-  and in various formats and return JSON-LD.
-
-Commercial Support
-------------------
-
-Commercial support for this library is available upon request from
-[Digital Bazaar][]: support@digitalbazaar.com
-
-Source
-------
-
-The source code for the JavaScript implementation of the JSON-LD API
-is available at:
-
-https://github.com/digitalbazaar/jsonld.js
-
 Tests
 -----
 
@@ -482,6 +460,28 @@ See `tests/test.js` for more `TEST_ENV` control and options.
 
 These reports can be compared with the `benchmarks/compare/` tool and at the
 [JSON-LD Benchmarks][] site.
+
+Related Modules
+---------------
+
+* [jsonld-cli][]: A command line interface tool called `jsonld` that exposes
+  most of the basic jsonld.js API.
+* [jsonld-request][]: A module that can read data from stdin, URLs, and files
+  and in various formats and return JSON-LD.
+
+Source
+------
+
+The source code for the JavaScript implementation of the JSON-LD API
+is available at:
+
+https://github.com/digitalbazaar/jsonld.js
+
+Commercial Support
+------------------
+
+Commercial support for this library is available upon request from
+[Digital Bazaar][]: support@digitalbazaar.com
 
 [Digital Bazaar]: https://digitalbazaar.com/
 
