@@ -89,13 +89,13 @@ if(process.env.JSONLD_TESTS) {
   }
   */
 
-  // json-ld.org normalization test suite
-  const normPath = path.resolve(_top, 'test-suites/normalization/tests');
-  if(fs.existsSync(normPath)) {
-    entries.push(normPath);
+  // W3C RDF Dataset Canonicalization "rdf-canon" test suite
+  const rdfCanonPath = path.resolve(_top, 'test-suites/rdf-canon/tests');
+  if(fs.existsSync(rdfCanonPath)) {
+    entries.push(rdfCanonPath);
   } else {
     // default up to sibling dir
-    entries.push(path.resolve(_top, '../normalization/tests'));
+    entries.push(path.resolve(_top, '../rdf-canon/tests'));
   }
 
   // other tests

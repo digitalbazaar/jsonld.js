@@ -1,5 +1,11 @@
 # jsonld ChangeLog
 
+## 8.1.2 - 2023-03-xx
+
+### Changed
+- Update for latest [rdf-canon][] changes: test suite location, README,
+  links, and identifiers.
+
 ## 8.1.1 - 2023-02-25
 
 ### Fixed
@@ -831,5 +837,6 @@
 
 [jsonld-cli]: https://github.com/digitalbazaar/jsonld-cli
 [jsonld-request]: https://github.com/digitalbazaar/jsonld-request
+[rdf-canon]: https://w3c.github.io/rdf-canon/
 [rdf-canonize]: https://github.com/digitalbazaar/rdf-canonize
 [rdf-canonize-native]: https://github.com/digitalbazaar/rdf-canonize-native

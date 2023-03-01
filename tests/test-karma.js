@@ -88,10 +88,10 @@ if(process.env.JSONLD_TESTS) {
     _top, '../json-ld.org/test-suite/tests/frame-manifests.jsonld'));
   */
 
-  // json-ld.org normalization test suite
+  // W3C RDF Dataset Canonicalization "rdf-canon" test suite
   // FIXME: add path detection
-  entries.push(join(_top, 'test-suites/normalization/tests'));
-  entries.push(join(_top, '../normalization/tests'));
+  entries.push(join(_top, 'test-suites/rdf-canon/tests'));
+  entries.push(join(_top, '../rdf-canon/tests'));
 
   // other tests
   entries.push(join(_top, 'tests/misc.js'));
