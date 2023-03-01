@@ -259,11 +259,11 @@ const framed = await jsonld.frame(doc, frame);
 // output transformed into a particular tree structure per the given frame
 ```
 
-### <a name="canonize"></a>[canonize](http://json-ld.github.io/normalization/spec/) (normalize)
+### <a name="canonize"></a>[canonize](https://w3c.github.io/rdf-canon/spec/) (normalize)
 
 ```js
-// canonize (normalize) a document using the RDF Dataset Normalization Algorithm
-// (URDNA2015), see:
+// canonize (normalize) a document using the RDF Dataset Canonicalization Algorithm
+// (URDNA2015):
 const canonized = await jsonld.canonize(doc, {
   algorithm: 'URDNA2015',
   format: 'application/n-quads'
@@ -398,7 +398,7 @@ the following:
     https://github.com/w3c/json-ld-api
     https://github.com/w3c/json-ld-framing
     https://github.com/json-ld/json-ld.org
-    https://github.com/json-ld/normalization
+    https://github.com/w3c/rdf-canon
 
 They should be sibling directories of the jsonld.js directory or in a
 `test-suites` dir. To clone shallow copies into the `test-suites` dir you can

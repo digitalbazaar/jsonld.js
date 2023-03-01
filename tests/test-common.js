@@ -246,7 +246,7 @@ const TEST_TYPES = {
     ],
     compare: compareCanonizedExpectedNQuads
   },
-  'rdfn:Urgna2012EvalTest': {
+  'rdfc:Urgna2012EvalTest': {
     fn: 'normalize',
     params: [
       readTestNQuads('action'),
@@ -258,7 +258,7 @@ const TEST_TYPES = {
     ],
     compare: compareExpectedNQuads
   },
-  'rdfn:Urdna2015EvalTest': {
+  'rdfc:Urdna2015EvalTest': {
     fn: 'normalize',
     params: [
       readTestNQuads('action'),
@@ -593,8 +593,8 @@ function addTest(manifest, test, tests) {
         if(isJsonLdType(test, 'jld:NegativeEvaluationTest')) {
           await compareExpectedError(test, err);
         } else if(isJsonLdType(test, 'jld:PositiveEvaluationTest') ||
-          isJsonLdType(test, 'rdfn:Urgna2012EvalTest') ||
-          isJsonLdType(test, 'rdfn:Urdna2015EvalTest')) {
+          isJsonLdType(test, 'rdfc:Urgna2012EvalTest') ||
+          isJsonLdType(test, 'rdfc:Urdna2015EvalTest')) {
           if(err) {
             throw err;
           }
