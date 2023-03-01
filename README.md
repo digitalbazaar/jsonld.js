@@ -206,7 +206,7 @@ const context = {
 };
 ```
 
-### [compact](http://json-ld.org/spec/latest/json-ld/#compacted-document-form)
+### [compact](https://json-ld.org/spec/latest/json-ld/#compacted-document-form)
 
 ```js
 // compact a document according to a particular context
@@ -226,7 +226,7 @@ const compacted = await jsonld.compact(
   'http://example.org/doc', 'http://example.org/context', ...);
 ```
 
-### [expand](http://json-ld.org/spec/latest/json-ld/#expanded-document-form)
+### [expand](https://json-ld.org/spec/latest/json-ld/#expanded-document-form)
 
 ```js
 // expand a document, removing its context
@@ -243,7 +243,7 @@ const expanded = await jsonld.expand(compacted);
 const expanded = await jsonld.expand('http://example.org/doc', ...);
 ```
 
-### [flatten](http://json-ld.org/spec/latest/json-ld/#flattened-document-form)
+### [flatten](https://json-ld.org/spec/latest/json-ld/#flattened-document-form)
 
 ```js
 // flatten a document
@@ -251,7 +251,7 @@ const flattened = await jsonld.flatten(doc);
 // output has all deep-level trees flattened to the top-level
 ```
 
-### [frame](http://json-ld.org/spec/latest/json-ld-framing/#introduction)
+### [frame](https://json-ld.org/spec/latest/json-ld-framing/#introduction)
 
 ```js
 // frame a document
@@ -384,7 +384,7 @@ Source
 The source code for the JavaScript implementation of the JSON-LD API
 is available at:
 
-http://github.com/digitalbazaar/jsonld.js
+https://github.com/digitalbazaar/jsonld.js
 
 Tests
 -----
