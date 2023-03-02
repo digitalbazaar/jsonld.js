@@ -6,6 +6,7 @@ const EarlReport = require('./earl-report');
 const join = require('join-path-js');
 const rdfCanonize = require('rdf-canonize');
 const {prependBase} = require('../lib/url');
+const {klona} = require('klona');
 
 module.exports = function(options) {
 
@@ -285,7 +286,6 @@ const SKIP_TESTS = [];
 // create earl report
 if(options.earl && options.earl.filename) {
   options.earl.report = new EarlReport({
-    id: options.earl.id,
     env: options.testEnv
   });
   if(options.benchmarkOptions) {
@@ -429,16 +429,16 @@ function addManifest(manifest, parent) {
  * Adds a test.
  *
  * @param manifest {Object} the manifest.
- * @param parent {Object} the test.
+ * @param test {Object} the test.
  * @param tests {Array} the list of tests to add to.
  * @return {Promise}
  */
-function addTest(manifest, test, tests) {
+async function addTest(manifest, test, tests) {
   // expand @id and input base
   const test_id = test['@id'] || test.id;
   //var number = test_id.substr(2);
   test['@id'] =
-    manifest.baseIri +
+    (manifest.baseIri || '') +
     basename(manifest.filename).replace('.jsonld', '') +
     test_id;
   test.base = manifest.baseIri + test.input;
@@ -447,223 +447,242 @@ function addTest(manifest, test, tests) {
 
   const _test = {
     title: description,
-    f: makeFn()
+    f: makeFn({
+      test,
+      run: ({test, testInfo, params}) => {
+        return jsonld[testInfo.fn](...params);
+      }
+    })
   };
-  // only based on test manifest
-  // skip handled via skip()
+  // 'only' based on test manifest
+  // 'skip' handled via skip()
   if('only' in test) {
     _test.only = test.only;
   }
   tests.push(_test);
-
-  function makeFn() {
-    return async function() {
-      const self = this;
-      self.timeout(5000);
-      const testInfo = TEST_TYPES[getJsonLdTestType(test)];
-
-      // skip based on test manifest
-      if('skip' in test && test.skip) {
-        if(options.verboseSkip) {
-          console.log('Skipping test due to manifest:',
-            {id: test['@id'], name: test.name});
-        }
-        self.skip();
-      }
-
-      // skip based on unknown test type
-      const testTypes = Object.keys(TEST_TYPES);
-      if(!isJsonLdType(test, testTypes)) {
-        if(options.verboseSkip) {
-          const type = [].concat(
-            getJsonLdValues(test, '@type'),
-            getJsonLdValues(test, 'type')
-          );
-          console.log('Skipping test due to unknown type:',
-            {id: test['@id'], name: test.name, type});
-        }
-        self.skip();
-      }
-
-      // skip based on test type
-      if(isJsonLdType(test, SKIP_TESTS)) {
-        if(options.verboseSkip) {
-          const type = [].concat(
-            getJsonLdValues(test, '@type'),
-            getJsonLdValues(test, 'type')
-          );
-          console.log('Skipping test due to test type:',
-            {id: test['@id'], name: test.name, type});
-        }
-        self.skip();
-      }
-
-      // skip based on type info
-      if(testInfo.skip && testInfo.skip.type) {
-        if(options.verboseSkip) {
-          console.log('Skipping test due to type info:',
-            {id: test['@id'], name: test.name});
-        }
-        self.skip();
-      }
-
-      // skip based on id regex
-      if(testInfo.skip && testInfo.skip.idRegex) {
-        testInfo.skip.idRegex.forEach(function(re) {
-          if(re.test(test['@id'])) {
-            if(options.verboseSkip) {
-              console.log('Skipping test due to id:',
-                {id: test['@id']});
-            }
-            self.skip();
-          }
-        });
-      }
-
-      // skip based on description regex
-      if(testInfo.skip && testInfo.skip.descriptionRegex) {
-        testInfo.skip.descriptionRegex.forEach(function(re) {
-          if(re.test(description)) {
-            if(options.verboseSkip) {
-              console.log('Skipping test due to description:',
-                {id: test['@id'], name: test.name, description});
-            }
-            self.skip();
-          }
-        });
-      }
-
-      // Make expandContext absolute to the manifest
-      if(test.hasOwnProperty('option') && test.option.expandContext) {
-        test.option.expandContext =
-          prependBase(test.manifest.baseIri, test.option.expandContext);
-      }
-
-      const testOptions = getJsonLdValues(test, 'option');
-      // allow special handling in case of normative test failures
-      let normativeTest = true;
-
-      testOptions.forEach(function(opt) {
-        const processingModes = getJsonLdValues(opt, 'processingMode');
-        processingModes.forEach(function(pm) {
-          let skipModes = [];
-          if(testInfo.skip && testInfo.skip.processingMode) {
-            skipModes = testInfo.skip.processingMode;
-          }
-          if(skipModes.indexOf(pm) !== -1) {
-            if(options.verboseSkip) {
-              console.log('Skipping test due to processingMode:',
-                {id: test['@id'], name: test.name, processingMode: pm});
-            }
-            self.skip();
-          }
-        });
-      });
-
-      testOptions.forEach(function(opt) {
-        const specVersions = getJsonLdValues(opt, 'specVersion');
-        specVersions.forEach(function(sv) {
-          let skipVersions = [];
-          if(testInfo.skip && testInfo.skip.specVersion) {
-            skipVersions = testInfo.skip.specVersion;
-          }
-          if(skipVersions.indexOf(sv) !== -1) {
-            if(options.verboseSkip) {
-              console.log('Skipping test due to specVersion:',
-                {id: test['@id'], name: test.name, specVersion: sv});
-            }
-            self.skip();
-          }
-        });
-      });
-
-      testOptions.forEach(function(opt) {
-        const normative = getJsonLdValues(opt, 'normative');
-        normative.forEach(function(n) {
-          normativeTest = normativeTest && n;
-        });
-      });
-
-      const fn = testInfo.fn;
-      const params = testInfo.params.map(param => param(test));
-      // resolve test data
-      const values = await Promise.all(params);
-      let err;
-      let result;
-      // run and capture errors and results
-      try {
-        result = await jsonld[fn].apply(null, values);
-      } catch(e) {
-        err = e;
-      }
-
-      try {
-        if(isJsonLdType(test, 'jld:NegativeEvaluationTest')) {
-          await compareExpectedError(test, err);
-        } else if(isJsonLdType(test, 'jld:PositiveEvaluationTest') ||
-          isJsonLdType(test, 'rdfc:Urgna2012EvalTest') ||
-          isJsonLdType(test, 'rdfc:Urdna2015EvalTest')) {
-          if(err) {
-            throw err;
-          }
-          await testInfo.compare(test, result);
-        } else if(isJsonLdType(test, 'jld:PositiveSyntaxTest')) {
-          // no checks
-        } else {
-          throw Error('Unknown test type: ' + test.type);
-        }
-
-        let benchmarkResult = null;
-        if(options.benchmarkOptions) {
-          const result = await runBenchmark({
-            test,
-            fn,
-            params: testInfo.params.map(param => param(test, {
-              // pre-load params to avoid doc loader and parser timing
-              load: true
-            })),
-            mochaTest: self
-          });
-          benchmarkResult = {
-            '@type': 'jldb:BenchmarkResult',
-            'jldb:hz': result.target.hz,
-            'jldb:rme': result.target.stats.rme
-          };
-        }
-
-        if(options.earl.report) {
-          options.earl.report.addAssertion(test, true, {
-            benchmarkResult
-          });
-        }
-      } catch(err) {
-        // FIXME: improve handling of non-normative errors
-        // FIXME: for now, explicitly disabling tests.
-        //if(!normativeTest) {
-        //  // failure ok
-        //  if(options.verboseSkip) {
-        //    console.log('Skipping non-normative test due to failure:',
-        //      {id: test['@id'], name: test.name});
-        //  }
-        //  self.skip();
-        //}
-        if(options.bailOnError) {
-          if(err.name !== 'AssertionError') {
-            console.error('\nError: ', JSON.stringify(err, null, 2));
-          }
-          options.exit();
-        }
-        if(options.earl.report) {
-          options.earl.report.addAssertion(test, false);
-        }
-        console.error('Error: ', JSON.stringify(err, null, 2));
-        throw err;
-      }
-    };
-  }
 }
 
-async function runBenchmark({test, fn, params, mochaTest}) {
+function makeFn({
+  test,
+  adjustParams = p => p,
+  run,
+  ignoreResult = false
+}) {
+  return async function() {
+    const self = this;
+    self.timeout(5000);
+    const testInfo = TEST_TYPES[getJsonLdTestType(test)];
+
+    // skip based on test manifest
+    if('skip' in test && test.skip) {
+      if(options.verboseSkip) {
+        console.log('Skipping test due to manifest:',
+          {id: test['@id'], name: test.name});
+      }
+      self.skip();
+    }
+
+    // skip based on unknown test type
+    const testTypes = Object.keys(TEST_TYPES);
+    if(!isJsonLdType(test, testTypes)) {
+      if(options.verboseSkip) {
+        const type = [].concat(
+          getJsonLdValues(test, '@type'),
+          getJsonLdValues(test, 'type')
+        );
+        console.log('Skipping test due to unknown type:',
+          {id: test['@id'], name: test.name, type});
+      }
+      self.skip();
+    }
+
+    // skip based on test type
+    if(isJsonLdType(test, SKIP_TESTS)) {
+      if(options.verboseSkip) {
+        const type = [].concat(
+          getJsonLdValues(test, '@type'),
+          getJsonLdValues(test, 'type')
+        );
+        console.log('Skipping test due to test type:',
+          {id: test['@id'], name: test.name, type});
+      }
+      self.skip();
+    }
+
+    // skip based on type info
+    if(testInfo.skip && testInfo.skip.type) {
+      if(options.verboseSkip) {
+        console.log('Skipping test due to type info:',
+          {id: test['@id'], name: test.name});
+      }
+      self.skip();
+    }
+
+    // skip based on id regex
+    if(testInfo.skip && testInfo.skip.idRegex) {
+      testInfo.skip.idRegex.forEach(function(re) {
+        if(re.test(test['@id'])) {
+          if(options.verboseSkip) {
+            console.log('Skipping test due to id:',
+              {id: test['@id']});
+          }
+          self.skip();
+        }
+      });
+    }
+
+    // skip based on description regex
+    if(testInfo.skip && testInfo.skip.descriptionRegex) {
+      testInfo.skip.descriptionRegex.forEach(function(re) {
+        if(re.test(description)) {
+          if(options.verboseSkip) {
+            console.log('Skipping test due to description:',
+              {id: test['@id'], name: test.name, description});
+          }
+          self.skip();
+        }
+      });
+    }
+
+    // Make expandContext absolute to the manifest
+    if(test.hasOwnProperty('option') && test.option.expandContext) {
+      test.option.expandContext =
+        prependBase(test.manifest.baseIri, test.option.expandContext);
+    }
+
+    const testOptions = getJsonLdValues(test, 'option');
+    // allow special handling in case of normative test failures
+    let normativeTest = true;
+
+    testOptions.forEach(function(opt) {
+      const processingModes = getJsonLdValues(opt, 'processingMode');
+      processingModes.forEach(function(pm) {
+        let skipModes = [];
+        if(testInfo.skip && testInfo.skip.processingMode) {
+          skipModes = testInfo.skip.processingMode;
+        }
+        if(skipModes.indexOf(pm) !== -1) {
+          if(options.verboseSkip) {
+            console.log('Skipping test due to processingMode:',
+              {id: test['@id'], name: test.name, processingMode: pm});
+          }
+          self.skip();
+        }
+      });
+    });
+
+    testOptions.forEach(function(opt) {
+      const specVersions = getJsonLdValues(opt, 'specVersion');
+      specVersions.forEach(function(sv) {
+        let skipVersions = [];
+        if(testInfo.skip && testInfo.skip.specVersion) {
+          skipVersions = testInfo.skip.specVersion;
+        }
+        if(skipVersions.indexOf(sv) !== -1) {
+          if(options.verboseSkip) {
+            console.log('Skipping test due to specVersion:',
+              {id: test['@id'], name: test.name, specVersion: sv});
+          }
+          self.skip();
+        }
+      });
+    });
+
+    testOptions.forEach(function(opt) {
+      const normative = getJsonLdValues(opt, 'normative');
+      normative.forEach(function(n) {
+        normativeTest = normativeTest && n;
+      });
+    });
+
+    const params = adjustParams(testInfo.params.map(param => param(test)));
+    // resolve test data
+    const values = await Promise.all(params);
+    // copy used to check inputs do not change
+    const valuesOrig = klona(values);
+    let err;
+    let result;
+    // run and capture errors and results
+    try {
+      result = await run({test, testInfo, params: values});
+      // check input not changed
+      assert.deepStrictEqual(valuesOrig, values);
+    } catch(e) {
+      err = e;
+    }
+
+    try {
+      if(isJsonLdType(test, 'jld:NegativeEvaluationTest')) {
+        if(!ignoreResult) {
+          await compareExpectedError(test, err);
+        }
+      } else if(isJsonLdType(test, 'jld:PositiveEvaluationTest') ||
+        isJsonLdType(test, 'rdfc:Urgna2012EvalTest') ||
+        isJsonLdType(test, 'rdfc:Urdna2015EvalTest')) {
+        if(err) {
+          throw err;
+        }
+        if(!ignoreResult) {
+          await testInfo.compare(test, result);
+        }
+      } else if(isJsonLdType(test, 'jld:PositiveSyntaxTest')) {
+        // no checks
+      } else {
+        throw Error('Unknown test type: ' + test.type);
+      }
+
+      let benchmarkResult = null;
+      if(options.benchmarkOptions) {
+        const result = await runBenchmark({
+          test,
+          testInfo,
+          run,
+          params: testInfo.params.map(param => param(test, {
+            // pre-load params to avoid doc loader and parser timing
+            load: true
+          })),
+          mochaTest: self
+        });
+        benchmarkResult = {
+          // FIXME use generic prefix
+          '@type': 'jldb:BenchmarkResult',
+          'jldb:hz': result.target.hz,
+          'jldb:rme': result.target.stats.rme
+        };
+      }
+
+      if(options.earl.report) {
+        options.earl.report.addAssertion(test, true, {
+          benchmarkResult
+        });
+      }
+    } catch(err) {
+      // FIXME: improve handling of non-normative errors
+      // FIXME: for now, explicitly disabling tests.
+      //if(!normativeTest) {
+      //  // failure ok
+      //  if(options.verboseSkip) {
+      //    console.log('Skipping non-normative test due to failure:',
+      //      {id: test['@id'], name: test.name});
+      //  }
+      //  self.skip();
+      //}
+      if(options.bailOnError) {
+        if(err.name !== 'AssertionError') {
+          console.error('\nError: ', JSON.stringify(err, null, 2));
+        }
+        options.exit();
+      }
+      if(options.earl.report) {
+        options.earl.report.addAssertion(test, false);
+      }
+      console.error('Error: ', JSON.stringify(err, null, 2));
+      throw err;
+    }
+  };
+}
+
+async function runBenchmark({test, testInfo, params, run, mochaTest}) {
   const values = await Promise.all(params);
 
   return new Promise((resolve, reject) => {
@@ -672,7 +691,7 @@ async function runBenchmark({test, fn, params, mochaTest}) {
       name: test.name,
       defer: true,
       fn: deferred => {
-        jsonld[fn].apply(null, values).then(() => {
+        run({test, testInfo, params: values}).then(() => {
           deferred.resolve();
         });
       }
