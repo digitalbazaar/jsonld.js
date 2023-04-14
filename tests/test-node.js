@@ -1,7 +1,7 @@
 /**
- * Karma test runner for jsonld.js.
+ * Node.js test runner for jsonld.js.
  *
- * Use environment vars to control, set via karma.conf.js/webpack:
+ * Use environment vars to control:
  *
  * Set dirs, manifests, or js to run:
  *   JSONLD_TESTS="r1 r2 ..."
@@ -18,6 +18,7 @@
  *   TEST_ENV=cpu,runtime # only cpu and runtime
  *   TEST_ENV=auto,comment='special test' # all auto with override
  *   Available fields:
+ *   - label - ex: 'Setup 1' (short label for reports)
  *   - arch - ex: 'x64'
  *   - cpu - ex: 'Intel(R) Core(TM) i7-4790K CPU @ 4.00GHz'
  *   - cpuCount - ex: 8
@@ -41,65 +42,66 @@
  *
  * Copyright (c) 2011-2022 Digital Bazaar, Inc. All rights reserved.
  */
-/* global serverRequire */
-// FIXME: hack to ensure delay is set first
-mocha.setup({delay: true, ui: 'bdd'});
-
 const assert = require('chai').assert;
-const common = require('./test');
-const jsonld = require('..');
-const server = require('karma-server-side');
-const webidl = require('./test-webidl');
-const join = require('join-path-js');
-
-// special benchmark setup
-const _ = require('lodash');
-//const _process = require('process');
 const benchmark = require('benchmark');
-//const Benchmark = benchmark.runInContext({_, _process});
-const Benchmark = benchmark.runInContext({_});
-window.Benchmark = Benchmark;
+const common = require('./test');
+const fs = require('fs-extra');
+const jsonld = require('..');
+const os = require('os');
+const path = require('path');
 
 const entries = [];
 
 if(process.env.JSONLD_TESTS) {
   entries.push(...process.env.JSONLD_TESTS.split(' '));
 } else {
-  const _top = process.env.TEST_ROOT_DIR;
-  // TODO: support just adding certain entries in EARL mode?
+  const _top = path.resolve(__dirname, '..');
 
   // json-ld-api main test suite
-  // FIXME: add path detection
-  entries.push(join(_top, 'test-suites/json-ld-api/tests'));
-  entries.push(join(_top, '../json-ld-api/tests'));
+  const apiPath = path.resolve(_top, 'test-suites/json-ld-api/tests');
+  if(fs.existsSync(apiPath)) {
+    entries.push(apiPath);
+  } else {
+    // default to sibling dir
+    entries.push(path.resolve(_top, '../json-ld-api/tests'));
+  }
 
   // json-ld-framing main test suite
-  // FIXME: add path detection
-  entries.push(join(_top, 'test-suites/json-ld-framing/tests'));
-  entries.push(join(_top, '../json-ld-framing/tests'));
+  const framingPath = path.resolve(_top, 'test-suites/json-ld-framing/tests');
+  if(fs.existsSync(framingPath)) {
+    entries.push(framingPath);
+  } else {
+    // default to sibling dir
+    entries.push(path.resolve(_top, '../json-ld-framing/tests'));
+  }
 
   /*
   // TODO: use json-ld-framing once tests are moved
   // json-ld.org framing test suite
-  // FIXME: add path detection
-  entries.push(join(
-    _top, 'test-suites/json-ld.org/test-suite/tests/frame-manifest.jsonld'));
-  entries.push(join(
-    _top, '../json-ld.org/test-suite/tests/frame-manifests.jsonld'));
+  const framingPath = path.resolve(
+    _top, 'test-suites/json-ld.org/test-suite/tests/frame-manifest.jsonld');
+  if(fs.existsSync(framingPath)) {
+    entries.push(framingPath);
+  } else {
+    // default to sibling dir
+    entries.push(path.resolve(
+      _top, '../json-ld.org/test-suite/tests/frame-manifest.jsonld'));
+  }
   */
 
   // W3C RDF Dataset Canonicalization "rdf-canon" test suite
-  // FIXME: add path detection
-  entries.push(join(_top, 'test-suites/rdf-canon/tests'));
-  entries.push(join(_top, '../rdf-canon/tests'));
+  const rdfCanonPath = path.resolve(_top, 'test-suites/rdf-canon/tests');
+  if(fs.existsSync(rdfCanonPath)) {
+    entries.push(rdfCanonPath);
+  } else {
+    // default up to sibling dir
+    entries.push(path.resolve(_top, '../rdf-canon/tests'));
+  }
 
   // other tests
-  entries.push(join(_top, 'tests/misc.js'));
-  entries.push(join(_top, 'tests/graph-container.js'));
-  entries.push(join(_top, 'tests/new-embed-api'));
-
-  // WebIDL tests
-  entries.push(webidl);
+  entries.push(path.resolve(_top, 'tests/misc.js'));
+  entries.push(path.resolve(_top, 'tests/graph-container.js'));
+  entries.push(path.resolve(_top, 'tests/node-document-loader-tests.js'));
 }
 
 // test environment
@@ -113,6 +115,7 @@ if(process.env.TEST_ENV) {
     }
     _test_env.split(',').forEach(pair => {
       if(pair === 'auto') {
+        testEnv.name = 'auto';
         testEnv.arch = 'auto';
         testEnv.cpu = 'auto';
         testEnv.cpuCount = 'auto';
@@ -130,23 +133,26 @@ if(process.env.TEST_ENV) {
         }
       }
     });
+    if(testEnv.label === 'auto') {
+      testEnv.label = '';
+    }
     if(testEnv.arch === 'auto') {
-      testEnv.arch = process.env._TEST_ENV_ARCH;
+      testEnv.arch = process.arch;
     }
     if(testEnv.cpu === 'auto') {
-      testEnv.cpu = process.env._TEST_ENV_CPU;
+      testEnv.cpu = os.cpus()[0].model;
     }
     if(testEnv.cpuCount === 'auto') {
-      testEnv.cpuCount = process.env._TEST_ENV_CPU_COUNT;
+      testEnv.cpuCount = os.cpus().length;
     }
     if(testEnv.platform === 'auto') {
-      testEnv.platform = process.env._TEST_ENV_PLATFORM;
+      testEnv.platform = process.platform;
     }
     if(testEnv.runtime === 'auto') {
-      testEnv.runtime = 'browser';
+      testEnv.runtime = 'Node.js';
     }
     if(testEnv.runtimeVersion === 'auto') {
-      testEnv.runtimeVersion = '(unknown)';
+      testEnv.runtimeVersion = process.version;
     }
     if(testEnv.comment === 'auto') {
       testEnv.comment = '';
@@ -171,15 +177,13 @@ if(process.env.JSONLD_BENCHMARK) {
 }
 
 const options = {
-  nodejs: false,
+  nodejs: {
+    path
+  },
   assert,
   benchmark,
   jsonld,
-  /* eslint-disable-next-line no-unused-vars */
-  exit: code => {
-    console.error('exit not implemented');
-    throw new Error('exit not implemented');
-  },
+  exit: code => process.exit(code),
   earl: {
     filename: process.env.EARL
   },
@@ -189,23 +193,12 @@ const options = {
   testEnv,
   benchmarkOptions,
   readFile: filename => {
-    return server.run(filename, function(filename) {
-      const fs = serverRequire('fs-extra');
-      return fs.readFile(filename, 'utf8').then(data => {
-        return data;
-      });
-    });
+    return fs.readFile(filename, 'utf8');
   },
   writeFile: (filename, data) => {
-    return server.run(filename, data, function(filename, data) {
-      const fs = serverRequire('fs-extra');
-      return fs.outputFile(filename, data);
-    });
+    return fs.outputFile(filename, data);
   },
-  /* eslint-disable-next-line no-unused-vars */
-  import: f => {
-    console.error('import not implemented');
-  }
+  import: f => require(f)
 };
 
 // wait for setup of all tests then run mocha
@@ -213,4 +206,8 @@ common(options).then(() => {
   run();
 }).catch(err => {
   console.error(err);
+});
+
+process.on('unhandledRejection', (reason, p) => {
+  console.error('Unhandled Rejection at:', p, 'reason:', reason);
 });

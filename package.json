@@ -100,7 +100,7 @@
     "fetch-json-ld-org-test-suite": "if [ ! -e test-suites/json-ld.org ]; then git clone --depth 1 https://github.com/json-ld/json-ld.org.git test-suites/json-ld.org; fi",
     "fetch-rdf-canon-test-suite": "if [ ! -e test-suites/rdf-canon ]; then git clone --depth 1 https://github.com/w3c/rdf-canon.git test-suites/rdf-canon; fi",
     "test": "npm run test-node",
-    "test-node": "cross-env NODE_ENV=test mocha --delay -t 30000 -A -R ${REPORTER:-spec} tests/test.js",
+    "test-node": "cross-env NODE_ENV=test mocha --delay -t 30000 -A -R ${REPORTER:-spec} tests/test-node.js",
     "test-karma": "cross-env NODE_ENV=test karma start",
     "coverage": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text-summary npm test",
     "coverage-ci": "cross-env NODE_ENV=test nyc --reporter=lcovonly npm run test",
