@@ -1,6 +1,6 @@
 # jsonld ChangeLog
 
-## 8.1.2 - 2023-03-xx
+## 8.2.0 - 2023-03-xx
 
 ### Changed
 - Update for latest [rdf-canon][] changes: test suite location, README, links,
@@ -8,6 +8,14 @@
   - Skip test with 'U' escapes. Will enable when [rdf-canonize][] dependency is
     updated.
 - Test on Node.js 20.x.
+- Align test and benchmark code with [rdf-canonize][].
+  - **NOTE**: This changes various testing and benchmark runner features and
+    options.
+  - Update env var usage.
+  - Use more common code between Node.js and karma tests.
+  - Conditionally load test suites.
+  - Fix various minor bugs.
+  - Add multiple jobs benchmarking support.
 
 ### Fixed
 - Improve safe mode for `@graph` use cases.

@@ -1,17 +1,12 @@
 /**
- * Karam configuration for jsonld.js.
+ * Karma configuration for jsonld.js.
  *
- * Set dirs, manifests, or js to run:
- *   JSONLD_TESTS="f1 f2 ..."
- * Output an EARL report:
- *   EARL=filename
- * Bail with tests fail:
- *   BAIL=true
+ * See ./test/test.js for env options.
  *
  * @author Dave Longley
  * @author David I. Lehn
  *
- * Copyright (c) 2011-2017 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2011-2023 Digital Bazaar, Inc. All rights reserved.
  */
 const os = require('os');
 const webpack = require('webpack');
@@ -67,11 +62,10 @@ module.exports = function(config) {
       plugins: [
         new webpack.DefinePlugin({
           'process.env.BAIL': JSON.stringify(process.env.BAIL),
+          'process.env.BENCHMARK': JSON.stringify(process.env.BENCHMARK),
           'process.env.EARL': JSON.stringify(process.env.EARL),
+          'process.env.TESTS': JSON.stringify(process.env.TESTS),
           'process.env.TEST_ENV': JSON.stringify(process.env.TEST_ENV),
-          'process.env.JSONLD_BENCHMARK':
-            JSON.stringify(process.env.JSONLD_BENCHMARK),
-          'process.env.JSONLD_TESTS': JSON.stringify(process.env.JSONLD_TESTS),
           'process.env.TEST_ROOT_DIR': JSON.stringify(__dirname),
           'process.env.VERBOSE_SKIP': JSON.stringify(process.env.VERBOSE_SKIP),
           // for 'auto' test env
@@ -149,10 +143,10 @@ module.exports = function(config) {
         [
           'envify', {
             BAIL: process.env.BAIL,
+            BENCHMARK: process.env.BENCHMARK,
             EARL: process.env.EARL,
+            TESTS: process.env.TESTS,
             TEST_ENV: process.env.TEST_ENV,
-            JSONLD_BENCHMARK: process.env.JSONLD_BENCHMARK,
-            JSONLD_TESTS: process.env.JSONLD_TESTS,
             TEST_ROOT_DIR: __dirname,
             VERBOSE_SKIP: process.env.VERBOSE_SKIP,
             // for 'auto' test env
