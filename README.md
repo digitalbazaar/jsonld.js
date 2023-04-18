@@ -389,13 +389,13 @@ Node.js tests can be run with a simple command:
     npm test
 
 If you installed the test suites elsewhere, or wish to run other tests, use
-the `JSONLD_TESTS` environment var:
+the `TESTS` environment var:
 
-    JSONLD_TESTS="/tmp/org/test-suites /tmp/norm/tests" npm test
+    TESTS="/tmp/org/test-suites /tmp/norm/tests" npm test
 
 This feature can be used to run the older json-ld.org test suite:
 
-    JSONLD_TESTS=/tmp/json-ld.org/test-suite npm test
+    TESTS=/tmp/json-ld.org/test-suite npm test
 
 Browser testing can be done with Karma:
 
@@ -419,7 +419,7 @@ Remote context tests are also available:
     # run the context server in the background or another terminal
     node tests/remote-context-server.js
 
-    JSONLD_TESTS=`pwd`/tests npm test
+    TESTS=`pwd`/tests npm test
 
 To generate EARL reports:
 
@@ -432,7 +432,7 @@ To generate EARL reports:
 To generate an EARL report with the `json-ld-api` and `json-ld-framing` tests
 as used on the official [JSON-LD Processor Conformance][] page
 
-    JSONLD_TESTS="`pwd`/../json-ld-api/tests `pwd`/../json-ld-framing/tests" EARL="jsonld-js-earl.jsonld" npm test
+    TESTS="`pwd`/../json-ld-api/tests `pwd`/../json-ld-framing/tests" EARL="jsonld-js-earl.jsonld" npm test
 
 The EARL `.jsonld` output can be converted to `.ttl` using the [rdf][] tool:
 
@@ -449,14 +449,14 @@ Benchmarks
 Benchmarks can be created from any manifest that the test system supports.
 Use a command line with a test suite and a benchmark flag:
 
-    JSONLD_TESTS=/tmp/benchmark-manifest.jsonld JSONLD_BENCHMARK=1 npm test
+    TESTS=/tmp/benchmark-manifest.jsonld BENCHMARK=1 npm test
 
 EARL reports with benchmark data can be generated with an optional environment
 details:
 
-    JSONLD_TESTS=`pwd`/../json-ld.org/benchmarks/b001-manifiest.jsonld JSONLD_BENCHMARK=1 EARL=earl-test.jsonld TEST_ENV=1 npm test
+    TESTS=`pwd`/../json-ld.org/benchmarks/b001-manifiest.jsonld BENCHMARK=1 EARL=earl-test.jsonld TEST_ENV=1 npm test
 
-See `tests/test.js` for more `TEST_ENV` control and options.
+See `tests/test.js` for more `TEST_ENV` and `BENCHMARK` control and options.
 
 These reports can be compared with the `benchmarks/compare/` tool and at the
 [JSON-LD Benchmarks][] site.

@@ -1,20 +1,120 @@
 /**
- * Copyright (c) 2011-2019 Digital Bazaar, Inc. All rights reserved.
+ * Test and benchmark runner for jsonld.js.
+ *
+ * Use environment vars to control:
+ *
+ * General:
+ *   Boolean env options enabled with case insensitve values:
+ *     'true', 't', 'yes', 'y', 'on', '1', similar for false
+ * Set dirs, manifests, or js to run:
+ *   TESTS="r1 r2 ..."
+ * Output an EARL report:
+ *   EARL=filename
+ * Test environment details for EARL report:
+ *   This is useful for benchmark comparison.
+ *   By default no details are added for privacy reasons.
+ *   Automatic details can be added for all fields with '1', 'true', or 'auto':
+ *   TEST_ENV=1
+ *   To include only certain fields, set them, or use 'auto':
+ *   TEST_ENV=cpu='Intel i7-4790K @ 4.00GHz',runtime='Node.js',...
+ *   TEST_ENV=cpu=auto # only cpu
+ *   TEST_ENV=cpu,runtime # only cpu and runtime
+ *   TEST_ENV=auto,comment='special test' # all auto with override
+ *   Available fields:
+ *   - label - ex: 'Setup 1' (short label for reports)
+ *   - arch - ex: 'x64'
+ *   - cpu - ex: 'Intel(R) Core(TM) i7-4790K CPU @ 4.00GHz'
+ *   - cpuCount - ex: 8
+ *   - platform - ex: 'linux'
+ *   - runtime - ex: 'Node.js'
+ *   - runtimeVersion - ex: 'v14.19.0'
+ *   - comment: any text
+ *   - version: jsonld.js version
+ * Bail with tests fail:
+ *   BAIL=<boolean> (default: false)
+ * Verbose skip reasons:
+ *   VERBOSE_SKIP=<boolean> (default: false)
+ * Benchmark mode:
+ *   Basic:
+ *   BENCHMARK=1
+ *   With options:
+ *   BENCHMARK=key1=value1,key2=value2,...
+ * Benchmark options:
+ *   jobs=N1[+N2[...]] (default: 1)
+ *     Run each test with jobs size of N1, N2, ...
+ *     Recommend 1+10 to get simple and parallel data.
+ *     Note the N>1 tests use custom reporter to show time per job.
+ *   fast1=<boolean> (default: false)
+ *     Run single job faster by omitting Promise.all wrapper.
+ *
+ * @author Dave Longley
+ * @author David I. Lehn
+ *
+ * Copyright (c) 2011-2023 Digital Bazaar, Inc. All rights reserved.
  */
 /* eslint-disable indent */
 const EarlReport = require('./earl-report');
 const join = require('join-path-js');
-const rdfCanonize = require('rdf-canonize');
-const {prependBase} = require('../lib/url');
+const jsonld = require('..');
 const {klona} = require('klona');
+const {prependBase} = require('../lib/url');
+const rdfCanonize = require('rdf-canonize');
 
-module.exports = function(options) {
+// helper functions, inspired by 'boolean' package
+function isTrue(value) {
+  return value && [
+    'true', 't', 'yes', 'y', 'on', '1'
+  ].includes(value.trim().toLowerCase());
+}
+
+function isFalse(value) {
+  return !value || [
+    'false', 'f', 'no', 'n', 'off', '0'
+  ].includes(value.trim().toLowerCase());
+}
+
+module.exports = async function(options) {
 
 'use strict';
 
 const assert = options.assert;
 const benchmark = options.benchmark;
-const jsonld = options.jsonld;
+
+const bailOnError = isTrue(options.env.BAIL || 'false');
+const verboseSkip = isTrue(options.env.VERBOSE_SKIP || 'false');
+
+const benchmarkOptions = {
+  enabled: false,
+  jobs: [1],
+  fast1: false
+};
+
+if(options.env.BENCHMARK) {
+  if(!isFalse(options.env.BENCHMARK)) {
+    benchmarkOptions.enabled = true;
+    if(!isTrue(options.env.BENCHMARK)) {
+      options.env.BENCHMARK.split(',').forEach(pair => {
+        const kv = pair.split('=');
+        switch(kv[0]) {
+          case 'jobs':
+            benchmarkOptions.jobs = kv[1].split('+').map(n => parseInt(n, 10));
+            break;
+          case 'fast1':
+            benchmarkOptions.fast1 = isTrue(kv[1]);
+            break;
+          default:
+            throw new Error(`Unknown benchmark option: "${pair}"`);
+        }
+      });
+    }
+  }
+}
+
+// Only support one job size for EARL output to simplify reporting and avoid
+// multi-variable issues. Can compare multiple runs with different job sizes.
+if(options.earl.filename && benchmarkOptions.jobs.length > 1) {
+  throw new Error('Only one job size allowed when outputting EARL.');
+}
 
 const manifest = options.manifest || {
   '@context': 'https://json-ld.org/test-suite/context.jsonld',
@@ -22,7 +122,9 @@ const manifest = options.manifest || {
   '@type': 'mf:Manifest',
   description: 'Top level jsonld.js manifest',
   name: 'jsonld.js',
-  sequence: options.entries || [],
+  // allow for async generated entries
+  // used for karma tests to allow async server exist check
+  sequence: (await Promise.all(options.entries || [])).flat().filter(e => e),
   filename: '/'
 };
 
@@ -268,7 +370,7 @@ const TEST_TYPES = {
         /manifest-urdna2015#test060/
       ]
     },
-    fn: 'normalize',
+    fn: 'canonize',
     params: [
       readTestNQuads('action'),
       createTestOptions({
@@ -283,13 +385,46 @@ const TEST_TYPES = {
 
 const SKIP_TESTS = [];
 
+// build test env from defaults
+const testEnvFields = [
+  'label', 'arch', 'cpu', 'cpuCount', 'platform', 'runtime', 'runtimeVersion',
+  'comment', 'version'
+];
+let testEnv = null;
+if(options.env.TEST_ENV) {
+  let _test_env = options.env.TEST_ENV;
+  if(!isFalse(_test_env)) {
+    testEnv = {};
+    if(isTrue(_test_env)) {
+      _test_env = 'auto';
+    }
+    _test_env.split(',').forEach(pair => {
+      if(pair === 'auto') {
+        testEnvFields.forEach(f => testEnv[f] = 'auto');
+      } else {
+        const kv = pair.split('=');
+        if(kv.length === 1) {
+          testEnv[kv[0]] = 'auto';
+        } else {
+          testEnv[kv[0]] = kv.slice(1).join('=');
+        }
+      }
+    });
+    testEnvFields.forEach(f => {
+      if(testEnv[f] === 'auto') {
+        testEnv[f] = options.testEnvDefaults[f];
+      }
+    });
+  }
+}
+
 // create earl report
 if(options.earl && options.earl.filename) {
   options.earl.report = new EarlReport({
-    env: options.testEnv
+    env: testEnv
   });
-  if(options.benchmarkOptions) {
-    options.earl.report.setupForBenchmarks({testEnv: options.testEnv});
+  if(benchmarkOptions.enabled) {
+    options.earl.report.setupForBenchmarks({testEnv});
   }
 }
 
@@ -445,37 +580,69 @@ async function addTest(manifest, test, tests) {
   test.manifest = manifest;
   const description = test_id + ' ' + (test.purpose || test.name);
 
-  const _test = {
-    title: description,
-    f: makeFn({
-      test,
-      run: ({test, testInfo, params}) => {
-        return jsonld[testInfo.fn](...params);
-      }
-    })
-  };
-  // 'only' based on test manifest
-  // 'skip' handled via skip()
-  if('only' in test) {
-    _test.only = test.only;
-  }
-  tests.push(_test);
+  // build test options for omit checks
+  const testInfo = TEST_TYPES[getJsonLdTestType(test)];
+  const params = testInfo.params.map(param => param(test));
+  const testOptions = params[1];
+
+  // number of parallel jobs for benchmarks
+  const jobTests = benchmarkOptions.enabled ? benchmarkOptions.jobs : [1];
+  const fast1 = benchmarkOptions.enabled ? benchmarkOptions.fast1 : true;
+
+  jobTests.forEach(jobs => {
+    const _test = {
+      title: description + ` (jobs=${jobs})`,
+      f: makeFn({
+        test,
+        run: ({test, testInfo, params}) => {
+          // skip Promise.all
+          if(jobs === 1 && fast1) {
+            return jsonld[testInfo.fn](...params);
+          }
+          const all = [];
+          for(let j = 0; j < jobs; j++) {
+            all.push(jsonld[testInfo.fn](...params));
+          }
+          return Promise.all(all);
+        },
+        jobs,
+        isBenchmark: benchmarkOptions.enabled
+      })
+    };
+    // 'only' based on test manifest
+    // 'skip' handled via skip()
+    if('only' in test) {
+      _test.only = test.only;
+    }
+    tests.push(_test);
+  });
 }
 
 function makeFn({
   test,
   adjustParams = p => p,
   run,
-  ignoreResult = false
+  jobs,
+  isBenchmark = false,
+  unsupportedInBrowser = false
 }) {
   return async function() {
     const self = this;
-    self.timeout(5000);
+    self.timeout(10000);
     const testInfo = TEST_TYPES[getJsonLdTestType(test)];
+
+    // skip if unsupported in browser
+    if(unsupportedInBrowser) {
+      if(verboseSkip) {
+        console.log('Skipping test due no browser support:',
+          {id: test['@id'], name: test.name});
+      }
+      self.skip();
+    }
 
     // skip based on test manifest
     if('skip' in test && test.skip) {
-      if(options.verboseSkip) {
+      if(verboseSkip) {
         console.log('Skipping test due to manifest:',
           {id: test['@id'], name: test.name});
       }
@@ -485,7 +652,7 @@ function makeFn({
     // skip based on unknown test type
     const testTypes = Object.keys(TEST_TYPES);
     if(!isJsonLdType(test, testTypes)) {
-      if(options.verboseSkip) {
+      if(verboseSkip) {
         const type = [].concat(
           getJsonLdValues(test, '@type'),
           getJsonLdValues(test, 'type')
@@ -498,7 +665,7 @@ function makeFn({
 
     // skip based on test type
     if(isJsonLdType(test, SKIP_TESTS)) {
-      if(options.verboseSkip) {
+      if(verboseSkip) {
         const type = [].concat(
           getJsonLdValues(test, '@type'),
           getJsonLdValues(test, 'type')
@@ -511,7 +678,7 @@ function makeFn({
 
     // skip based on type info
     if(testInfo.skip && testInfo.skip.type) {
-      if(options.verboseSkip) {
+      if(verboseSkip) {
         console.log('Skipping test due to type info:',
           {id: test['@id'], name: test.name});
       }
@@ -522,7 +689,7 @@ function makeFn({
     if(testInfo.skip && testInfo.skip.idRegex) {
       testInfo.skip.idRegex.forEach(function(re) {
         if(re.test(test['@id'])) {
-          if(options.verboseSkip) {
+          if(verboseSkip) {
             console.log('Skipping test due to id:',
               {id: test['@id']});
           }
@@ -536,8 +703,11 @@ function makeFn({
       testInfo.skip.descriptionRegex.forEach(function(re) {
         if(re.test(description)) {
           if(options.verboseSkip) {
-            console.log('Skipping test due to description:',
-              {id: test['@id'], name: test.name, description});
+            console.log('Skipping test due to description:', {
+              id: test['@id'],
+              name: test.name,
+              description
+            });
           }
           self.skip();
         }
@@ -613,7 +783,7 @@ function makeFn({
 
     try {
       if(isJsonLdType(test, 'jld:NegativeEvaluationTest')) {
-        if(!ignoreResult) {
+        if(!isBenchmark) {
           await compareExpectedError(test, err);
         }
       } else if(isJsonLdType(test, 'jld:PositiveEvaluationTest') ||
@@ -622,7 +792,7 @@ function makeFn({
         if(err) {
           throw err;
         }
-        if(!ignoreResult) {
+        if(!isBenchmark) {
           await testInfo.compare(test, result);
         }
       } else if(isJsonLdType(test, 'jld:PositiveSyntaxTest')) {
@@ -632,21 +802,27 @@ function makeFn({
       }
 
       let benchmarkResult = null;
-      if(options.benchmarkOptions) {
+      if(benchmarkOptions.enabled) {
+        const bparams = adjustParams(testInfo.params.map(param => param(test, {
+          // pre-load params to avoid doc loader and parser timing
+          load: true
+        })));
+        // resolve test data
+        const bvalues = await Promise.all(bparams);
+
         const result = await runBenchmark({
           test,
           testInfo,
+          jobs,
           run,
-          params: testInfo.params.map(param => param(test, {
-            // pre-load params to avoid doc loader and parser timing
-            load: true
-          })),
+          params: bvalues,
           mochaTest: self
         });
         benchmarkResult = {
           // FIXME use generic prefix
           '@type': 'jldb:BenchmarkResult',
-          'jldb:hz': result.target.hz,
+          // normalize to jobs/sec from overall ops/sec
+          'jldb:hz': result.target.hz * jobs,
           'jldb:rme': result.target.stats.rme
         };
       }
@@ -661,13 +837,13 @@ function makeFn({
       // FIXME: for now, explicitly disabling tests.
       //if(!normativeTest) {
       //  // failure ok
-      //  if(options.verboseSkip) {
+      //  if(verboseSkip) {
       //    console.log('Skipping non-normative test due to failure:',
       //      {id: test['@id'], name: test.name});
       //  }
       //  self.skip();
       //}
-      if(options.bailOnError) {
+      if(bailOnError) {
         if(err.name !== 'AssertionError') {
           console.error('\nError: ', JSON.stringify(err, null, 2));
         }
@@ -682,16 +858,14 @@ function makeFn({
   };
 }
 
-async function runBenchmark({test, testInfo, params, run, mochaTest}) {
-  const values = await Promise.all(params);
-
+async function runBenchmark({test, testInfo, jobs, params, run, mochaTest}) {
   return new Promise((resolve, reject) => {
     const suite = new benchmark.Suite();
     suite.add({
       name: test.name,
       defer: true,
       fn: deferred => {
-        run({test, testInfo, params: values}).then(() => {
+        run({test, testInfo, params}).then(() => {
           deferred.resolve();
         });
       }
@@ -699,10 +873,13 @@ async function runBenchmark({test, testInfo, params, run, mochaTest}) {
     suite
       .on('start', e => {
         // set timeout to a bit more than max benchmark time
-        mochaTest.timeout((e.target.maxTime + 2) * 1000);
+        mochaTest.timeout((e.target.maxTime + 10) * 1000 * jobs);
       })
       .on('cycle', e => {
-        console.log(String(e.target));
+        const jobsHz = e.target.hz * jobs;
+        const jobsPerSec = jobsHz.toFixed(jobsHz < 100 ? 2 : 0);
+        const msg = `${String(e.target)} (${jobsPerSec} jobs/sec)`;
+        console.log(msg);
       })
       .on('error', err => {
         reject(new Error(err));
@@ -808,6 +985,7 @@ function createTestOptions(opts) {
     };
     const httpOptions = ['contentType', 'httpLink', 'httpStatus', 'redirectTo'];
     const testOptions = test.option || {};
+    Object.assign(options, testOptions);
     for(const key in testOptions) {
       if(httpOptions.indexOf(key) === -1) {
         options[key] = testOptions[key];
@@ -815,9 +993,7 @@ function createTestOptions(opts) {
     }
     if(opts) {
       // extend options
-      for(const key in opts) {
-        options[key] = opts[key];
-      }
+      Object.assign(options, opts);
     }
     return options;
   };
@@ -857,7 +1033,7 @@ async function compareExpectedNQuads(test, result) {
     expect = await readTestNQuads(_getExpectProperty(test))(test);
     assert.strictEqual(result, expect);
   } catch(ex) {
-    if(options.bailOnError) {
+    if(bailOnError) {
       console.log('\nTEST FAILED\n');
       console.log('EXPECTED:\n' + expect);
       console.log('ACTUAL:\n' + result);
