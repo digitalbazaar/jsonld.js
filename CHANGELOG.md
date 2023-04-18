@@ -16,6 +16,7 @@
   - Conditionally load test suites.
   - Fix various minor bugs.
   - Add multiple jobs benchmarking support.
+- Update benchmark compare script.
 
 ### Fixed
 - Improve safe mode for `@graph` use cases.
