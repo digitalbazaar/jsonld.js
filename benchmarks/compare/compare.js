@@ -27,7 +27,7 @@ yargs(hideBin(process.argv))
   })
   .option('env', {
     alias: 'e',
-    choices: ['none', 'all', 'combined'],
+    choices: ['none', 'all', 'present', 'combined'],
     default: 'none',
     description: 'Output environment format'
   })
@@ -50,6 +50,7 @@ async function compare({
     fn: f,
     content: await fs.readFile(f, 'utf8')
   })));
+  //console.log(contents);
   const results = contents
     .map(c => ({
       fn: c.fn,
@@ -57,11 +58,14 @@ async function compare({
       // map of test id => assertion
       testMap: new Map()
     }))
+    .map(c => {
+      //console.log('C', c);
+      return c;
+    })
     .map(c => ({
       ...c,
-      // FIXME process properly
-      env: c.content['@included'][0],
-      label: c.content['@included'][0]['jldb:label']
+      env: c.content['@included']?.[0] || {},
+      label: c.content['@included']?.[0]?.['jldb:label']
     }));
   //console.log(JSON.stringify(results, null, 2));
   // order of tests found in each result set
@@ -96,14 +100,17 @@ async function compare({
         hz(r.testMap.get(t))))
       .map(d => relative ? d.toFixed(2) + '%' : d.toFixed(2))
   ]);
-  //console.log(compared);
-  //console.log(results);
+  //console.log('COMPARED', compared);
+  //console.log('RESULTS', results);
   const fnprefixlen = commonPathPrefix(file).length;
+  function label(res) {
+    return res.label || res.fn.slice(fnprefixlen);
+  }
   console.log('## Comparison');
   console.log(markdownTable([
     [
       'Test',
-      ...results.map(r => r.label || r.fn.slice(fnprefixlen))
+      ...results.map(label)
     ],
     ...compared
   ], {
@@ -130,15 +137,58 @@ async function compare({
     ['Comment', 'jldb:comment']
   ];
 
+  // show all properites
   if(env === 'all') {
     console.log();
     console.log('## Environment');
-    console.log(markdownTable([
-      envProps.map(p => p[0]),
-      ...results.map(r => envProps.map(p => r.env[p[1]] || ''))
-    ]));
+    //const data = results.map(r => envProps.map(p => {
+    //  return (p[1] === 'jldb:label') ? label(r) : r.env[p[1]] || '';
+    //}));
+    const data = results.map(r => [
+      label(r),
+      ...envProps.slice(1).map(p => r.env[p[1]] || '')
+    ]);
+    if(data.length > 0) {
+      console.log(markdownTable([
+        envProps.map(p => p[0]),
+        ...data
+      ]));
+    } else {
+      console.log('*not specified*');
+    }
   }
 
+  // show present properites
+  if(env === 'present') {
+    console.log();
+    console.log('## Environment');
+    // get all data
+    const data = results.map(r => [
+      label(r),
+      ...envProps.slice(1).map(p => r.env[p[1]] || '')
+    ]);
+    // count present truthy fields per col
+    const propCounts = envProps.slice(1)
+      .map(p => results.reduce((c, r) => r.env[p[1]] ? ++c : c, 0));
+    const presentProps = [
+      envProps[0],
+      ...envProps.slice(1).filter((v, i) => propCounts[i] > 0)
+    ];
+    const presentData = data.map(d => ([
+      d[0],
+      ...d.slice(1).filter((v, i) => propCounts[i] > 0)
+    ]));
+    if(data.length > 0) {
+      console.log(markdownTable([
+        presentProps.map(p => p[0]),
+        ...presentData
+      ]));
+    } else {
+      console.log('*not specified*');
+    }
+  }
+
+  // show combined grouping of properties
   if(env === 'combined') {
     console.log();
     console.log('## Environment');
@@ -149,11 +199,16 @@ async function compare({
       );
       return [key, values.size ? [...values].join(', ') : []];
     }
-    console.log(markdownTable([
-      ['Key', 'Values'],
-      ...envProps
-        .map(p => envline(p[0], p[1]))
-        .filter(p => p[1].length)
-    ]));
+    const data = envProps
+      .map(p => envline(p[0], p[1]))
+      .filter(p => p[1].length);
+    if(data.length > 0) {
+      console.log(markdownTable([
+        ['Key', 'Values'],
+        ...data
+      ]));
+    } else {
+      console.log('*not specified*');
+    }
   }
 }
