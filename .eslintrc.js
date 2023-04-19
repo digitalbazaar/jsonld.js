@@ -10,7 +10,9 @@ module.exports = {
     'digitalbazaar'
   ],
   ignorePatterns: [
+    'coverage/',
     'dist/',
+    'test-suites',
     'tests/webidl/WebIDLParser.js',
     'tests/webidl/idlharness.js',
     'tests/webidl/testharness.js'
