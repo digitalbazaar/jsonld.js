@@ -146,7 +146,7 @@ const options = {
   },
   /* eslint-disable-next-line no-unused-vars */
   import: f => {
-    console.error('import not implemented');
+    console.error('import not implemented for "' + f + '"');
   }
 };
 
