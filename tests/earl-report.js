@@ -6,6 +6,52 @@
  * Copyright (c) 2011-2022 Digital Bazaar, Inc. All rights reserved.
  */
 
+/* eslint-disable quote-props */
+const _benchmarkContext = {
+  'jldb': 'http://json-ld.org/benchmarks/vocab#',
+  'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
+  'xsd': 'http://www.w3.org/2001/XMLSchema#',
+
+  // environment description
+  'jldb:Environment': {'@type': '@id'},
+
+  // per environment
+  // label
+  // ex: 'Setup 1' (for reports)
+  'jldb:label': {'@type': 'xsd:string'},
+  // architecture type
+  // ex: x86
+  'jldb:arch': {'@type': 'xsd:string'},
+  // cpu model description (may show multiple cpus)
+  // ex: 'Intel(R) Core(TM) i7-4790K CPU @ 4.00GHz'
+  'jldb:cpu': {'@type': 'xsd:string'},
+  // count of cpus, may not be uniform, just informative
+  'jldb:cpuCount': {'@type': 'xsd:integer'},
+  // platform name
+  // ex: linux
+  'jldb:platform': {'@type': 'xsd:string'},
+  // runtime name
+  // ex: Node.js, Chromium, Ruby
+  'jldb:runtime': {'@type': 'xsd:string'},
+  // runtime version
+  // ex: v14.19.0
+  'jldb:runtimeVersion': {'@type': 'xsd:string'},
+  // arbitrary comment
+  'jldb:comment': 'rdfs:comment',
+
+  // benchmark result
+  'jldb:BenchmarkResult': {'@type': '@id'},
+
+  // use in earl:Assertion, type jldb:BenchmarkResult
+  'jldb:result': {'@type': '@id'},
+
+  // per BenchmarkResult
+  'jldb:environment': {'@type': '@id'},
+  'jldb:hz': {'@type': 'xsd:float'},
+  'jldb:rme': {'@type': 'xsd:float'}
+};
+/* eslint-enable quote-props */
+
 /**
  * EARL Reporter
  */
@@ -153,51 +199,5 @@ class EarlReport {
     }
   }
 }
-
-/* eslint-disable quote-props */
-const _benchmarkContext = {
-  'jldb': 'http://json-ld.org/benchmarks/vocab#',
-  'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
-  'xsd': 'http://www.w3.org/2001/XMLSchema#',
-
-  // environment description
-  'jldb:Environment': {'@type': '@id'},
-
-  // per environment
-  // label
-  // ex: 'Setup 1' (for reports)
-  'jldb:label': {'@type': 'xsd:string'},
-  // architecture type
-  // ex: x86
-  'jldb:arch': {'@type': 'xsd:string'},
-  // cpu model description (may show multiple cpus)
-  // ex: 'Intel(R) Core(TM) i7-4790K CPU @ 4.00GHz'
-  'jldb:cpu': {'@type': 'xsd:string'},
-  // count of cpus, may not be uniform, just informative
-  'jldb:cpuCount': {'@type': 'xsd:integer'},
-  // platform name
-  // ex: linux
-  'jldb:platform': {'@type': 'xsd:string'},
-  // runtime name
-  // ex: Node.js, Chromium, Ruby
-  'jldb:runtime': {'@type': 'xsd:string'},
-  // runtime version
-  // ex: v14.19.0
-  'jldb:runtimeVersion': {'@type': 'xsd:string'},
-  // arbitrary comment
-  'jldb:comment': 'rdfs:comment',
-
-  // benchmark result
-  'jldb:BenchmarkResult': {'@type': '@id'},
-
-  // use in earl:Assertion, type jldb:BenchmarkResult
-  'jldb:result': {'@type': '@id'},
-
-  // per BenchmarkResult
-  'jldb:environment': {'@type': '@id'},
-  'jldb:hz': {'@type': 'xsd:float'},
-  'jldb:rme': {'@type': 'xsd:float'}
-};
-/* eslint-enable quote-props */
 
 module.exports = EarlReport;
