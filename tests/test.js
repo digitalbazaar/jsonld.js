@@ -580,10 +580,12 @@ async function addTest(manifest, test, tests) {
   test.manifest = manifest;
   const description = test_id + ' ' + (test.purpose || test.name);
 
+  /*
   // build test options for omit checks
   const testInfo = TEST_TYPES[getJsonLdTestType(test)];
   const params = testInfo.params.map(param => param(test));
   const testOptions = params[1];
+  */
 
   // number of parallel jobs for benchmarks
   const jobTests = benchmarkOptions.enabled ? benchmarkOptions.jobs : [1];
@@ -594,7 +596,7 @@ async function addTest(manifest, test, tests) {
       title: description + ` (jobs=${jobs})`,
       f: makeFn({
         test,
-        run: ({test, testInfo, params}) => {
+        run: ({/*test, */testInfo, params}) => {
           // skip Promise.all
           if(jobs === 1 && fast1) {
             return jsonld[testInfo.fn](...params);
@@ -699,10 +701,11 @@ function makeFn({
     }
 
     // skip based on description regex
+    /*
     if(testInfo.skip && testInfo.skip.descriptionRegex) {
       testInfo.skip.descriptionRegex.forEach(function(re) {
         if(re.test(description)) {
-          if(options.verboseSkip) {
+          if(verboseSkip) {
             console.log('Skipping test due to description:', {
               id: test['@id'],
               name: test.name,
@@ -713,6 +716,7 @@ function makeFn({
         }
       });
     }
+    */
 
     // Make expandContext absolute to the manifest
     if(test.hasOwnProperty('option') && test.option.expandContext) {
