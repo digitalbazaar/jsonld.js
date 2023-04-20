@@ -9,6 +9,9 @@
     updated.
 - Test on Node.js 20.x.
 
+### Fixed
+- Improve safe mode for `@graph` use cases.
+
 ## 8.1.1 - 2023-02-25
 
 ### Fixed

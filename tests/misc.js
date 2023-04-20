@@ -1815,6 +1815,247 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
       });
     });
 
+    it('should emit for @graph with empty object (1)', async () => {
+      const input =
+{
+  "@context": {
+    "p": {
+      "@id": "urn:p",
+      "@type": "@id",
+      "@container": "@graph"
+    }
+  },
+  "@id": "urn:id",
+  "p": {}
+}
+;
+      const expected = [];
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        eventCodeLog: [
+          'empty object',
+          'object with only @id'
+        ],
+        testNotSafe: true
+      });
+    });
+
+    it('should emit for ok @graph with empty object (2)', async () => {
+      const input =
+{
+  "@context": {
+    "p": {
+      "@id": "urn:p",
+      "@type": "@id",
+      "@container": "@graph"
+    },
+    "urn:t": {
+      "@type": "@id"
+    }
+  },
+  "@id": "urn:id",
+  "urn:t": "urn:id",
+  "p": {}
+}
+;
+      const expected =
+[
+  {
+    "@id": "urn:id",
+    "urn:t": [
+      {
+        "@id": "urn:id"
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        eventCodeLog: [
+          'empty object'
+        ],
+        testNotSafe: true
+      });
+    });
+
+    it('should emit for @graph with relative @id (1)', async () => {
+      const input =
+{
+  "@context": {
+    "p": {
+      "@id": "urn:p",
+      "@type": "@id",
+      "@container": "@graph"
+    }
+  },
+  "@id": "urn:id",
+  "p": ["rel"]
+}
+;
+      const expected = [];
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        eventCodeLog: [
+          'object with only @id',
+          'object with only @id'
+        ],
+        testNotSafe: true
+      });
+    });
+
+    it('should emit for @graph with relative @id (2)', async () => {
+      const input =
+{
+  "@context": {
+    "p": {
+      "@id": "urn:p",
+      "@type": "@id",
+      "@container": "@graph"
+    },
+    "urn:t": {
+      "@type": "@id"
+    }
+  },
+  "@id": "urn:id",
+  "urn:t": "urn:id",
+  "p": ["rel"]
+}
+;
+      const expected =
+[
+  {
+    "@id": "urn:id",
+    "urn:t": [
+      {
+        "@id": "urn:id"
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        eventCodeLog: [
+          'object with only @id',
+        ],
+        testNotSafe: true
+      });
+    });
+
+    it('should emit for @graph with relative @id (3)', async () => {
+      const input =
+{
+  "@context": {
+    "p": {
+      "@id": "urn:p",
+      "@type": "@id",
+      "@container": "@graph"
+    },
+    "urn:t": {
+      "@type": "@id"
+    }
+  },
+  "@id": "urn:id",
+  "urn:t": "urn:id",
+  "p": "rel"
+}
+;
+      const expected =
+[
+  {
+    "@id": "urn:id",
+    "urn:t": [
+      {
+        "@id": "urn:id"
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        eventCodeLog: [
+          'object with only @id',
+        ],
+        testNotSafe: true
+      });
+    });
+
+    it('should emit for @graph with relative @id (4)', async () => {
+      const input =
+{
+  "@context": {
+    "p": {
+      "@id": "urn:p",
+      "@type": "@id",
+      "@container": "@graph"
+    },
+    "urn:t": {
+      "@type": "@id"
+    }
+  },
+  "@id": "urn:id",
+  "urn:t": "urn:id",
+  "p": {
+    "@id": "rel",
+    "urn:t": "urn:id2"
+  }
+}
+;
+      const expected =
+[
+  {
+    "@id": "urn:id",
+    "urn:t": [
+      {
+        "@id": "urn:id"
+      }
+    ],
+    "urn:p": [
+      {
+        "@graph": [
+          {
+            "@id": "rel",
+            "urn:t": [
+              {
+                "@id": "urn:id2"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        eventCodeLog: [
+          'relative @id reference',
+        ],
+        testNotSafe: true
+      });
+    });
+
     it('should emit for null @value', async () => {
       const input =
 {
