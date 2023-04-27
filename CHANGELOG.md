@@ -7,6 +7,7 @@
   and identifiers.
   - Skip test with 'U' escapes. Will enable when [rdf-canonize][] dependency is
     updated.
+- Test on Node.js 20.x.
 
 ## 8.1.1 - 2023-02-25
 
