@@ -259,6 +259,14 @@ const TEST_TYPES = {
     compare: compareExpectedNQuads
   },
   'rdfc:Urdna2015EvalTest': {
+    skip: {
+      // NOTE: idRegex format:
+      //manifest-urdna2015#testNNN$/,
+      idRegex: [
+        // Unsupported U escape
+        /manifest-urdna2015#test060/
+      ]
+    },
     fn: 'normalize',
     params: [
       readTestNQuads('action'),
