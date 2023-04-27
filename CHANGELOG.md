@@ -3,8 +3,10 @@
 ## 8.1.2 - 2023-03-xx
 
 ### Changed
-- Update for latest [rdf-canon][] changes: test suite location, README,
-  links, and identifiers.
+- Update for latest [rdf-canon][] changes: test suite location, README, links,
+  and identifiers.
+  - Skip test with 'U' escapes. Will enable when [rdf-canonize][] dependency is
+    updated.
 
 ## 8.1.1 - 2023-02-25
 
