@@ -20,6 +20,7 @@
 
 ### Fixed
 - Improve safe mode for `@graph` use cases.
+- Fix `@json` frame test 0069.
 
 ## 8.1.1 - 2023-02-25
 
