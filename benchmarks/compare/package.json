@@ -26,8 +26,8 @@
   "main": "compare.js",
   "dependencies": {
     "common-path-prefix": "^3.0.0",
-    "markdown-table": "^3.0.2",
-    "yargs": "^17.5.1"
+    "markdown-table": "^3.0.3",
+    "yargs": "^17.7.2"
   },
   "engines": {
     "node": ">=14"
