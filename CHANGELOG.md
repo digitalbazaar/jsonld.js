@@ -1,6 +1,6 @@
 # jsonld ChangeLog
 
-## 8.2.0 - 2023-03-xx
+## 8.2.0 - 2023-05-19
 
 ### Changed
 - Update for latest [rdf-canon][] changes: test suite location, README, links,
