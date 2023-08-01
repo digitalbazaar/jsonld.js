@@ -1491,6 +1491,7 @@ _:b0 <ex:p> "v" .
         testSafe: true
       });
     });
+
   });
 
   describe('values', () => {
@@ -2607,6 +2608,37 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
           //// .. 'relativeiri'
           'relative @id reference'
           // .. 'relativeiri'
+        ],
+        testNotSafe: true
+      });
+    });
+
+    it('should be called on relative IRI for id term [4]', async () => {
+      const input =
+{
+  "@id": "34:relativeiri",
+  "urn:test": "value"
+}
+;
+      const expected =
+[
+  {
+    "@id": "34:relativeiri",
+    "urn:test": [
+      {
+        "@value": "value"
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        eventCodeLog: [
+          'relative @id reference'
         ],
         testNotSafe: true
       });
