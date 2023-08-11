@@ -1,5 +1,11 @@
 # jsonld ChangeLog
 
+## 8.3.3 -
+
+### Added
+- Add `"react-native"` section to `package.json` and instructions on using
+  React Native in the README.
+
 ## 8.3.2 - 2023-12-06
 
 ### Fixed

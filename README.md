@@ -364,6 +364,17 @@ The `safe` options flag set to `true` enables this behavior:
 const expanded = await jsonld.expand(data, {safe: true});
 ```
 
+### Using with React Native
+
+Using this library with React Native requires the
+[`data-integrity-rn`](https://github.com/digitalcredentials/data-integrity-rn)
+polyfill to be imported before this library:
+
+```js
+import '@digitalcredentials/data-integrity-rn';
+import * as jsonld from 'jsonld';
+```
+
 Tests
 -----
 
