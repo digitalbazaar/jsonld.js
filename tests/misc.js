@@ -1951,7 +1951,7 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
       });
     });
 
-    it('should emit for @graph with relative @id (1)', async () => {
+    it('should emit for @graph with only @id (1)', async () => {
       const input =
 {
   "@context": {
@@ -1962,7 +1962,7 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
     }
   },
   "@id": "urn:id",
-  "p": ["rel"]
+  "p": ["urn:id0"]
 }
 ;
       const expected = [];
@@ -1979,7 +1979,7 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
       });
     });
 
-    it('should emit for @graph with relative @id (2)', async () => {
+    it('should emit for @graph with only @id (2)', async () => {
       const input =
 {
   "@context": {
@@ -1991,8 +1991,8 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
   },
   "@id": "urn:id",
   "p": [
-    "rel0",
-    "rel1"
+    "urn:id0",
+    "urn:id1"
   ]
 }
 ;
@@ -2011,7 +2011,7 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
       });
     });
 
-    it('should emit for @graph with relative @id (3)', async () => {
+    it('should emit for @graph with only @id (3)', async () => {
       const input =
 {
   "@context": {
@@ -2024,10 +2024,10 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
   "@id": "urn:g0",
   "p": [
     {
-      "@id": "urn:g1",
-      "urn:p1": "v1"
+      "@id": "urn:id0",
+      "urn:p0": "v0"
     },
-    "rel"
+    "urn:id1"
   ]
 }
 ;
@@ -2039,10 +2039,10 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
       {
         "@graph": [
           {
-            "@id": "urn:g1",
-            "urn:p1": [
+            "@id": "urn:id0",
+            "urn:p0": [
               {
-                "@value": "v1"
+                "@value": "v0"
               }
             ]
           }
@@ -2064,7 +2064,7 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
       });
     });
 
-    it('should emit for @graph with relative @id (4)', async () => {
+    it('should emit for @graph with only @id (4)', async () => {
       const input =
 {
   "@context": {
@@ -2076,9 +2076,9 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
   },
   "@id": "urn:g0",
   "p": [
-    "rel",
+    "urn:id0",
     {
-      "@id": "urn:g1",
+      "@id": "urn:id1",
       "urn:p1": "v1"
     }
   ]
@@ -2092,7 +2092,7 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
       {
         "@graph": [
           {
-            "@id": "urn:g1",
+            "@id": "urn:id1",
             "urn:p1": [
               {
                 "@value": "v1"
@@ -2117,7 +2117,7 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
       });
     });
 
-    it('should emit for @graph with relative @id (5)', async () => {
+    it('should emit for @graph with only @id (5)', async () => {
       const input =
 {
   "@context": {
@@ -2132,7 +2132,7 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
   },
   "@id": "urn:id",
   "urn:t": "urn:id",
-  "p": ["rel"]
+  "p": ["urn:id0"]
 }
 ;
       const expected =
@@ -2159,7 +2159,7 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
       });
     });
 
-    it('should emit for @graph with relative @id (6)', async () => {
+    it('should emit for @graph with only @id (6)', async () => {
       const input =
 {
   "@context": {
@@ -2174,7 +2174,7 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
   },
   "@id": "urn:id",
   "urn:t": "urn:id",
-  "p": "rel"
+  "p": "urn:id0"
 }
 ;
       const expected =
@@ -2218,7 +2218,7 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
   "urn:t": "urn:id",
   "p": {
     "@id": "rel",
-    "urn:t": "urn:id2"
+    "urn:t": "urn:id0"
   }
 }
 ;
@@ -2238,7 +2238,7 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
             "@id": "rel",
             "urn:t": [
               {
-                "@id": "urn:id2"
+                "@id": "urn:id0"
               }
             ]
           }
