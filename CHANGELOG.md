@@ -7,6 +7,7 @@
 - Fix safe mode for `@graph` use cases.
   - Check all elements of graph property with array.
 - Fix test `pr41` of protected redefinition of equivalent id terms.
+- Fix relative IRI parsing.
 
 ## 8.2.0 - 2023-05-19
 
