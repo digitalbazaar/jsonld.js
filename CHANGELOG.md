@@ -1,5 +1,12 @@
 # jsonld ChangeLog
 
+## 8.2.1 - 2023-xx-xx
+
+### Fixed
+- Fix handling of graph property with empty array.
+- Fix safe mode for `@graph` use cases.
+  - Check all elements of graph property with array.
+
 ## 8.2.0 - 2023-05-19
 
 ### Changed
