@@ -1491,7 +1491,6 @@ _:b0 <ex:p> "v" .
         testSafe: true
       });
     });
-
   });
 
   describe('values', () => {
