@@ -1885,6 +1885,72 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
       });
     });
 
+    it('should emit for @graph with empty array (1)', async () => {
+      const input =
+{
+  "@context": {
+    "p": {
+      "@id": "urn:p",
+      "@type": "@id",
+      "@container": "@graph"
+    }
+  },
+  "@id": "urn:id",
+  "p": []
+}
+;
+      const expected = [];
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        eventCodeLog: [
+          'object with only @id'
+        ],
+        testNotSafe: true
+      });
+    });
+
+    it('should not emit for @graph with empty array (2)', async () => {
+      const input =
+{
+  "@context": {
+    "p": {
+      "@id": "urn:p",
+      "@type": "@id",
+      "@container": "@graph"
+    },
+    "urn:t": {
+      "@type": "@id"
+    }
+  },
+  "@id": "urn:id",
+  "urn:t": "urn:id",
+  "p": []
+}
+;
+      const expected =
+[
+  {
+    "@id": "urn:id",
+    "urn:t": [
+      {
+        "@id": "urn:id"
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        eventCodeLog: []
+      });
+    });
+
     it('should emit for @graph with relative @id (1)', async () => {
       const input =
 {
@@ -1914,6 +1980,144 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
     });
 
     it('should emit for @graph with relative @id (2)', async () => {
+      const input =
+{
+  "@context": {
+    "p": {
+      "@id": "urn:p",
+      "@type": "@id",
+      "@container": "@graph"
+    }
+  },
+  "@id": "urn:id",
+  "p": [
+    "rel0",
+    "rel1"
+  ]
+}
+;
+      const expected = [];
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        eventCodeLog: [
+          'object with only @id',
+          'object with only @id',
+          'object with only @id'
+        ],
+        testNotSafe: true
+      });
+    });
+
+    it('should emit for @graph with relative @id (3)', async () => {
+      const input =
+{
+  "@context": {
+    "p": {
+      "@id": "urn:p",
+      "@type": "@id",
+      "@container": "@graph"
+    }
+  },
+  "@id": "urn:g0",
+  "p": [
+    {
+      "@id": "urn:g1",
+      "urn:p1": "v1"
+    },
+    "rel"
+  ]
+}
+;
+      const expected =
+[
+  {
+    "@id": "urn:g0",
+    "urn:p": [
+      {
+        "@graph": [
+          {
+            "@id": "urn:g1",
+            "urn:p1": [
+              {
+                "@value": "v1"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        eventCodeLog: [
+          'object with only @id'
+        ],
+        testNotSafe: true
+      });
+    });
+
+    it('should emit for @graph with relative @id (4)', async () => {
+      const input =
+{
+  "@context": {
+    "p": {
+      "@id": "urn:p",
+      "@type": "@id",
+      "@container": "@graph"
+    }
+  },
+  "@id": "urn:g0",
+  "p": [
+    "rel",
+    {
+      "@id": "urn:g1",
+      "urn:p1": "v1"
+    }
+  ]
+}
+;
+      const expected =
+[
+  {
+    "@id": "urn:g0",
+    "urn:p": [
+      {
+        "@graph": [
+          {
+            "@id": "urn:g1",
+            "urn:p1": [
+              {
+                "@value": "v1"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
+;
+
+      await _test({
+        type: 'expand',
+        input,
+        expected,
+        eventCodeLog: [
+          'object with only @id'
+        ],
+        testNotSafe: true
+      });
+    });
+
+    it('should emit for @graph with relative @id (5)', async () => {
       const input =
 {
   "@context": {
@@ -1955,7 +2159,7 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
       });
     });
 
-    it('should emit for @graph with relative @id (3)', async () => {
+    it('should emit for @graph with relative @id (6)', async () => {
       const input =
 {
   "@context": {
@@ -1997,7 +2201,7 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
       });
     });
 
-    it('should emit for @graph with relative @id (4)', async () => {
+    it('should emit for @graph with relative @id (7)', async () => {
       const input =
 {
   "@context": {
