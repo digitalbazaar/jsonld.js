@@ -1885,7 +1885,7 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
       });
     });
 
-    it('should emit for @graph with empty array (1)', async () => {
+    it('should emit with only @id and @graph with empty array', async () => {
       const input =
 {
   "@context": {
@@ -1912,7 +1912,7 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
       });
     });
 
-    it('should not emit for @graph with empty array (2)', async () => {
+    it('should not emit for @graph with empty array', async () => {
       const input =
 {
   "@context": {
