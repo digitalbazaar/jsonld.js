@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-import yargs from 'yargs';
-import {hideBin} from 'yargs/helpers';
-import {promises as fs} from 'node:fs';
-import {markdownTable} from 'markdown-table';
 import commonPathPrefix from 'common-path-prefix';
+import {promises as fs} from 'node:fs';
+import {hideBin} from 'yargs/helpers';
+import {markdownTable} from 'markdown-table';
+import yargs from 'yargs';
 
 yargs(hideBin(process.argv))
   .alias('h', 'help')
