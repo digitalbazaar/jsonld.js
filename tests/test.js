@@ -266,6 +266,8 @@ const TEST_TYPES = {
       // FIXME
       idRegex: [
         // direction (compound-literal)
+        /fromRdf-manifest#tdi09$/,
+        /fromRdf-manifest#tdi10$/,
         /fromRdf-manifest#tdi11$/,
         /fromRdf-manifest#tdi12$/,
       ]

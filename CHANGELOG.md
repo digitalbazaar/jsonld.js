@@ -1,5 +1,14 @@
 # jsonld ChangeLog
 
+## 8.3.0 - 2023-09-xx
+
+### Added
+- Emit `toRdf` warning if `@direction` is used and `rdfDirection` is not set.
+
+### Fixed
+- Add safe mode support for `@direction`. Using `@direction` without
+  `rdfDirection` set will cause a safe mode failure.
+
 ## 8.2.1 - 2023-08-31
 
 ### Fixed
