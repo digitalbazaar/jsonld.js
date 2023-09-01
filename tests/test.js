@@ -134,9 +134,9 @@ const TEST_TYPES = {
       // skip tests where behavior changed for a 1.1 processor
       // see JSON-LD 1.0 Errata
       specVersion: ['json-ld-1.0'],
-      // FIXME
       // NOTE: idRegex format:
-      //MMM-manifest#tNNN$/,
+      // /MMM-manifest#tNNN$/,
+      // FIXME
       idRegex: [
         /compact-manifest#t0112$/,
         /compact-manifest#t0113$/,
@@ -160,9 +160,9 @@ const TEST_TYPES = {
       // skip tests where behavior changed for a 1.1 processor
       // see JSON-LD 1.0 Errata
       specVersion: ['json-ld-1.0'],
-      // FIXME
       // NOTE: idRegex format:
-      //MMM-manifest#tNNN$/,
+      // /MMM-manifest#tNNN$/,
+      // FIXME
       idRegex: [
         // spec issues
         // Unclear how to handle {"@id": null} edge case
@@ -219,9 +219,9 @@ const TEST_TYPES = {
       // skip tests where behavior changed for a 1.1 processor
       // see JSON-LD 1.0 Errata
       specVersion: ['json-ld-1.0'],
-      // FIXME
       // NOTE: idRegex format:
-      //MMM-manifest#tNNN$/,
+      // /MMM-manifest#tNNN$/,
+      // FIXME
       idRegex: [
         // html
         /html-manifest#tf001$/,
@@ -243,11 +243,10 @@ const TEST_TYPES = {
       // skip tests where behavior changed for a 1.1 processor
       // see JSON-LD 1.0 Errata
       specVersion: ['json-ld-1.0'],
-      // FIXME
       // NOTE: idRegex format:
-      //MMM-manifest#tNNN$/,
-      idRegex: [
-      ]
+      // /MMM-manifest#tNNN$/,
+      // FIXME
+      idRegex: []
     },
     fn: 'frame',
     params: [
@@ -262,9 +261,9 @@ const TEST_TYPES = {
       // skip tests where behavior changed for a 1.1 processor
       // see JSON-LD 1.0 Errata
       specVersion: ['json-ld-1.0'],
-      // FIXME
       // NOTE: idRegex format:
-      //MMM-manifest#tNNN$/,
+      // /MMM-manifest#tNNN$/,
+      // FIXME
       idRegex: [
         // direction (compound-literal)
         /fromRdf-manifest#tdi11$/,
@@ -291,9 +290,9 @@ const TEST_TYPES = {
       // skip tests where behavior changed for a 1.1 processor
       // see JSON-LD 1.0 Errata
       specVersion: ['json-ld-1.0'],
-      // FIXME
       // NOTE: idRegex format:
-      //MMM-manifest#tNNN$/,
+      // /MMM-manifest#tNNN$/,
+      // FIXME
       idRegex: [
         // spec issues
         // Unclear how to handle {"@id": null} edge case
@@ -363,7 +362,8 @@ const TEST_TYPES = {
   'rdfc:Urdna2015EvalTest': {
     skip: {
       // NOTE: idRegex format:
-      //manifest-urdna2015#testNNN$/,
+      // /manifest-urdna2015#testNNN$/,
+      // FIXME
       idRegex: [
         // Unsupported U escape
         /manifest-urdna2015#test060/
