@@ -264,13 +264,7 @@ const TEST_TYPES = {
       // NOTE: idRegex format:
       // /MMM-manifest#tNNN$/,
       // FIXME
-      idRegex: [
-        // direction (compound-literal)
-        /fromRdf-manifest#tdi09$/,
-        /fromRdf-manifest#tdi10$/,
-        /fromRdf-manifest#tdi11$/,
-        /fromRdf-manifest#tdi12$/,
-      ]
+      idRegex: []
     },
     fn: 'fromRDF',
     params: [
@@ -337,9 +331,6 @@ const TEST_TYPES = {
         /toRdf-manifest#te075$/,
         /toRdf-manifest#te111$/,
         /toRdf-manifest#te112$/,
-        // direction (compound-literal)
-        /toRdf-manifest#tdi11$/,
-        /toRdf-manifest#tdi12$/,
       ]
     },
     fn: 'toRDF',

@@ -3696,6 +3696,17 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
   const _nq_dir_l_d_i18n = `\
 <urn:id> <ex:p> "v"^^<https://www.w3.org/ns/i18n#en-us_ltr> .
 `;
+  const _nq_dir_nl_d_cl = `\
+<urn:id> <ex:p> _:b0 .
+_:b0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#direction> "ltr" .
+_:b0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#value> "v" .
+`;
+  const _nq_dir_l_d_cl = `\
+<urn:id> <ex:p> _:b0 .
+_:b0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#direction> "ltr" .
+_:b0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#language> "en-us" .
+_:b0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#value> "v" .
+`;
 
   describe('fromRDF', () => {
     it('should emit for invalid N-Quads @language value', async () => {
@@ -3811,6 +3822,20 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
       });
     });
 
+    it('should handle no @lang, no @dir, rdfDirection=c-l', async () => {
+      const input = _nq_dir_nl_nd;
+      const expected = _json_dir_nl_nd;
+
+      await _test({
+        type: 'fromRDF',
+        input,
+        options: {skipExpansion: true, rdfDirection: 'compound-literal'},
+        expected,
+        eventCodeLog: [],
+        testSafe: true
+      });
+    });
+
     it('should handle no @lang, @dir, rdfDirection=i18n', async () => {
       const input = _nq_dir_nl_d_i18n;
       const expected = _json_dir_nl_d;
@@ -3819,6 +3844,20 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
         type: 'fromRDF',
         input,
         options: {skipExpansion: true, rdfDirection: 'i18n-datatype'},
+        expected,
+        eventCodeLog: [],
+        testSafe: true
+      });
+    });
+
+    it('should handle no @lang, @dir, rdfDirection=c-l', async () => {
+      const input = _nq_dir_nl_d_cl;
+      const expected = _json_dir_nl_d;
+
+      await _test({
+        type: 'fromRDF',
+        input,
+        options: {skipExpansion: true, rdfDirection: 'compound-literal'},
         expected,
         eventCodeLog: [],
         testSafe: true
@@ -3839,6 +3878,20 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
       });
     });
 
+    it('should handle @lang, no @dir, rdfDirection=c-l', async () => {
+      const input = _nq_dir_l_nd_ls;
+      const expected = _json_dir_l_nd;
+
+      await _test({
+        type: 'fromRDF',
+        input,
+        options: {skipExpansion: true, rdfDirection: 'compound-literal'},
+        expected,
+        eventCodeLog: [],
+        testSafe: true
+      });
+    });
+
     it('should handle @lang, @dir, rdfDirection=i18n', async () => {
       const input = _nq_dir_l_d_i18n;
       const expected = _json_dir_l_d;
@@ -3847,6 +3900,20 @@ _:b0 <ex:p> "[null]"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> .
         type: 'fromRDF',
         input,
         options: {skipExpansion: true, rdfDirection: 'i18n-datatype'},
+        expected,
+        eventCodeLog: [],
+        testSafe: true
+      });
+    });
+
+    it('should handle @lang, @dir, rdfDirection=c-l', async () => {
+      const input = _nq_dir_l_d_cl;
+      const expected = _json_dir_l_d;
+
+      await _test({
+        type: 'fromRDF',
+        input,
+        options: {skipExpansion: true, rdfDirection: 'compound-literal'},
         expected,
         eventCodeLog: [],
         testSafe: true
@@ -4101,6 +4168,20 @@ _:b0 <ex:p> "v" .
       });
     });
 
+    it('should handle no @lang, no @dir, rdfDirection=c-l', async () => {
+      const input = _json_dir_nl_nd;
+      const nq = _nq_dir_nl_nd;
+
+      await _test({
+        type: 'toRDF',
+        input,
+        options: {skipExpansion: true, rdfDirection: 'compound-literal'},
+        expected: nq,
+        eventCodeLog: [],
+        testSafe: true
+      });
+    });
+
     it('should handle no @lang, @dir, rdfDirection=null', async () => {
       const input = _json_dir_nl_d;
       const nq = _nq_dir_nl_nd;
@@ -4125,6 +4206,20 @@ _:b0 <ex:p> "v" .
         type: 'toRDF',
         input,
         options: {skipExpansion: true, rdfDirection: 'i18n-datatype'},
+        expected: nq,
+        eventCodeLog: [],
+        testSafe: true
+      });
+    });
+
+    it('should handle no @lang, @dir, rdfDirection=c-l', async () => {
+      const input = _json_dir_nl_d;
+      const nq = _nq_dir_nl_d_cl;
+
+      await _test({
+        type: 'toRDF',
+        input,
+        options: {skipExpansion: true, rdfDirection: 'compound-literal'},
         expected: nq,
         eventCodeLog: [],
         testSafe: true
@@ -4159,6 +4254,20 @@ _:b0 <ex:p> "v" .
       });
     });
 
+    it('should handle @lang, no @dir, rdfDirection=c-l', async () => {
+      const input = _json_dir_l_nd;
+      const nq = _nq_dir_l_nd_ls;
+
+      await _test({
+        type: 'toRDF',
+        input,
+        options: {skipExpansion: true, rdfDirection: 'compound-literal'},
+        expected: nq,
+        eventCodeLog: [],
+        testSafe: true
+      });
+    });
+
     it('should handle @lang, @dir, rdfDirection=null', async () => {
       const input = _json_dir_l_d;
       const nq = _nq_dir_l_nd_ls;
@@ -4183,6 +4292,20 @@ _:b0 <ex:p> "v" .
         type: 'toRDF',
         input,
         options: {skipExpansion: true, rdfDirection: 'i18n-datatype'},
+        expected: nq,
+        eventCodeLog: [],
+        testSafe: true
+      });
+    });
+
+    it('should handle @lang, @dir, rdfDirection=c-l', async () => {
+      const input = _json_dir_l_d;
+      const nq = _nq_dir_l_d_cl;
+
+      await _test({
+        type: 'toRDF',
+        input,
+        options: {skipExpansion: true, rdfDirection: 'compound-literal'},
         expected: nq,
         eventCodeLog: [],
         testSafe: true
@@ -4253,6 +4376,30 @@ _:b0 <urn:ex:title> "RTL"^^<https://www.w3.org/ns/i18n#ar-eg_rtl> .
         type: 'toRDF',
         input,
         options: {skipExpansion: false, rdfDirection: 'i18n-datatype'},
+        expected: nq,
+        eventCodeLog: [],
+        testSafe: true
+      });
+    });
+
+    it('should handle ctx @lang/@dir/rdfDirection=c-l', async () => {
+      const input = _ctx_dir_input;
+      const nq = `\
+_:b0 <urn:ex:publisher> "NULL"@ar-eg .
+_:b0 <urn:ex:title> _:b1 .
+_:b0 <urn:ex:title> _:b2 .
+_:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#direction> "rtl" .
+_:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#language> "ar-eg" .
+_:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#value> "RTL" .
+_:b2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#direction> "ltr" .
+_:b2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#language> "en" .
+_:b2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#value> "LTR" .
+`;
+
+      await _test({
+        type: 'toRDF',
+        input,
+        options: {skipExpansion: false, rdfDirection: 'compound-literal'},
         expected: nq,
         eventCodeLog: [],
         testSafe: true

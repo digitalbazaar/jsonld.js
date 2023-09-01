@@ -1,5 +1,10 @@
 # jsonld ChangeLog
 
+## 8.x.x - 2023-xx-xx
+
+### Added
+- Support `compound-literal` `rdfDirection` option.
+
 ## 8.3.0 - 2023-09-06
 
 ### Added
