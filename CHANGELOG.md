@@ -1,6 +1,6 @@
 # jsonld ChangeLog
 
-## 8.2.1 - 2023-xx-xx
+## 8.2.1 - 2023-08-31
 
 ### Fixed
 - Fix handling of graph property with empty array.
