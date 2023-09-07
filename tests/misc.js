@@ -4101,6 +4101,22 @@ _:b0 <ex:p> "v" .
       });
     });
 
+    it('should handle no @lang, @dir, no rdfDirection', async () => {
+      const input = _json_dir_nl_d;
+      const nq = _nq_dir_nl_nd;
+
+      await _test({
+        type: 'toRDF',
+        input,
+        options: {skipExpansion: true},
+        expected: nq,
+        eventCodeLog: [
+          'rdfDirection not set'
+        ],
+        testNotSafe: true
+      });
+    });
+
     it('should handle no @lang, @dir, rdfDirection=null', async () => {
       const input = _json_dir_nl_d;
       const nq = _nq_dir_nl_nd;
