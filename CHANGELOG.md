@@ -1,6 +1,6 @@
 # jsonld ChangeLog
 
-## 8.3.0 - 2023-09-xx
+## 8.3.0 - 2023-09-06
 
 ### Added
 - Emit `toRdf` warning if `@direction` is used and `rdfDirection` is not set.
