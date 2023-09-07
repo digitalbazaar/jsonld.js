@@ -1,5 +1,10 @@
 # jsonld ChangeLog
 
+## 8.3.1 - 2023-09-xx
+
+### Fixed
+- Handle unset `rdfDirection` the same as `null`.
+
 ## 8.3.0 - 2023-09-06
 
 ### Added
