@@ -1,5 +1,10 @@
 # jsonld ChangeLog
 
+## 8.3.3 - xxxx-xx-xx
+
+### Added
+- Added URL to context resolution error message.
+
 ## 8.3.2 - 2023-12-06
 
 ### Fixed
