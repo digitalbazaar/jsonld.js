@@ -143,19 +143,18 @@ describe('other toRDF tests', () => {
     });
   });
 
-  it('should handle deprecated N-Quads format', done => {
+  it('should fail for deprecated N-Quads format', done => {
     const doc = {
       "@id": "https://example.com/",
       "https://example.com/test": "test"
     };
     const p = jsonld.toRDF(doc, {format: 'application/nquads'});
     assert(p instanceof Promise);
-    p.catch(e => {
-      assert.ifError(e);
-    }).then(output => {
-      assert.equal(
-        output,
-        '<https://example.com/> <https://example.com/test> "test" .\n');
+    p.then(() => {
+      assert.fail();
+    }).catch(e => {
+      assert(e);
+      assert.equal(e.name, 'jsonld.UnknownFormat');
       done();
     });
   });
@@ -232,21 +231,15 @@ describe('other fromRDF tests', () => {
     });
   });
 
-  it('should handle deprecated N-Quads format', done => {
+  it('should fail for deprecated N-Quads format', done => {
     const nq = '<https://example.com/> <https://example.com/test> "test" .\n';
     const p = jsonld.fromRDF(nq, {format: 'application/nquads'});
     assert(p instanceof Promise);
-    p.catch(e => {
-      assert.ifError(e);
-    }).then(output => {
-      assert.deepEqual(
-        output,
-        [{
-          "@id": "https://example.com/",
-          "https://example.com/test": [{
-            "@value": "test"
-          }]
-        }]);
+    p.then(() => {
+      assert.fail();
+    }).catch(e => {
+      assert(e);
+      assert.equal(e.name, 'jsonld.UnknownFormat');
       done();
     });
   });
