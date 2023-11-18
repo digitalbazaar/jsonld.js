@@ -1,5 +1,10 @@
 # jsonld ChangeLog
 
+## 9.0.0 - 2023-xx-xx
+
+### Changed
+- **BREAKING**: Drop support for Node.js < 18.
+
 ## 8.3.3 - 2024-12-21
 
 ### Added
