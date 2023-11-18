@@ -32,7 +32,7 @@
     "@digitalbazaar/http-client": "^3.4.1",
     "canonicalize": "^1.0.1",
     "lru-cache": "^6.0.0",
-    "rdf-canonize": "^3.4.0"
+    "rdf-canonize": "^4.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.21.8",
