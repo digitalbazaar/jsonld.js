@@ -5,6 +5,8 @@
 ### Changed
 - **BREAKING**: Drop support for Node.js < 18.
 - **BREAKING**: Upgrade dependencies.
+  - `@digitalbazaar/http-client@4`.
+  - `canonicalize@2`.
   - `rdf-canonize@4`: See the [rdf-canonize][] 4.0.0 changelog for
     **important** changes and upgrade notes. Of note:
     - The `URDNA2015` default algorithm has been changed to `RDFC-1.0` from

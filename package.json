@@ -29,8 +29,8 @@
     "lib/**/*.js"
   ],
   "dependencies": {
-    "@digitalbazaar/http-client": "^3.4.1",
-    "canonicalize": "^1.0.1",
+    "@digitalbazaar/http-client": "^4.0.0",
+    "canonicalize": "^2.0.0",
     "lru-cache": "^6.0.0",
     "rdf-canonize": "^4.0.1"
   },
