@@ -4,6 +4,16 @@
 
 ### Changed
 - **BREAKING**: Drop support for Node.js < 18.
+- **BREAKING**: Upgrade dependencies.
+  - `rdf-canonize@4`: See the [rdf-canonize][] 4.0.0 changelog for
+    **important** changes and upgrade notes. Of note:
+    - The `URDNA2015` default algorithm has been changed to `RDFC-1.0` from
+      [rdf-canon][].
+    - Complexity control defaults `maxWorkFactor` or `maxDeepIterations` may
+      need to be adjusted to process graphs with certain blank node constructs.
+    - A `signal` option is available to use an `AbortSignal` to limit resource
+      usage.
+    - The internal digest algorithm can be changed.
 
 ## 8.3.3 - 2024-12-21
 

@@ -4030,7 +4030,7 @@ _:b0 <ex:p> "v" .
 ]
 ;
       const nq = `\
-_:b0 <_:b1> "v" .
+_:b0 _:b1 "v" .
 `;
 
       await _test({
