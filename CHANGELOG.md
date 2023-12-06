@@ -1,5 +1,10 @@
 # jsonld ChangeLog
 
+## 8.3.2 - 2023-xx-xx
+
+### Fixed
+- Fix handling of a `@graph` `@container` term that has a `null` `@context`.
+
 ## 8.3.1 - 2023-09-06
 
 ### Fixed
