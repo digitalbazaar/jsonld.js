@@ -33,7 +33,7 @@
     "@digitalbazaar/http-client": "digitalcredentials/http-client#react-native",
     "canonicalize": "^1.0.1",
     "lru-cache": "^6.0.0",
-    "rdf-canonize": "digitalcredentials/rdf-canonize#react-native"
+    "rdf-canonize": "^4.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.21.8",
