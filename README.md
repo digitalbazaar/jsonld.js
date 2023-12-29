@@ -366,9 +366,9 @@ const expanded = await jsonld.expand(data, {safe: true});
 
 ### Using with React Native
 
-Using this library with React Native requires the
+Using this library with React Native requires a polyfill such as
 [`data-integrity-rn`](https://github.com/digitalcredentials/data-integrity-rn)
-polyfill to be imported before this library:
+to be imported before this library:
 
 ```js
 import '@digitalcredentials/data-integrity-rn';
