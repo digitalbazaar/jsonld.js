@@ -22,6 +22,7 @@
   },
   "license": "BSD-3-Clause",
   "main": "lib/index.js",
+  "types": "types/index.d.ts",
   "files": [
     "dist/*.js",
     "dist/*.js.map",
@@ -29,10 +30,10 @@
     "lib/**/*.js"
   ],
   "dependencies": {
-    "@digitalbazaar/http-client": "^3.4.1",
+    "@digitalbazaar/http-client": "^4.1.0",
     "canonicalize": "^1.0.1",
     "lru-cache": "^6.0.0",
-    "rdf-canonize": "^3.4.0"
+    "rdf-canonize": "^4.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.21.8",
@@ -114,6 +115,16 @@
     ]
   },
   "browser": {
+    "./lib/index.js": "./lib/jsonld.js",
+    "./lib/platform.js": "./lib/platform-browser.js",
+    "crypto": false,
+    "http": false,
+    "jsonld-request": false,
+    "request": false,
+    "url": false,
+    "util": false
+  },
+  "react-native": {
     "./lib/index.js": "./lib/jsonld.js",
     "./lib/platform.js": "./lib/platform-browser.js",
     "crypto": false,
