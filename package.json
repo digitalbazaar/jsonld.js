@@ -30,7 +30,7 @@
     "lib/**/*.js"
   ],
   "dependencies": {
-    "@digitalbazaar/http-client": "digitalcredentials/http-client#react-native",
+    "@digitalbazaar/http-client": "^4.1.0",
     "canonicalize": "^1.0.1",
     "lru-cache": "^6.0.0",
     "rdf-canonize": "^4.0.1"
