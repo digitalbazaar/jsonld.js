@@ -349,38 +349,73 @@ const TEST_TYPES = {
     ],
     compare: compareCanonizedExpectedNQuads
   },
-  'rdfc:Urgna2012EvalTest': {
-    fn: 'normalize',
-    params: [
-      readTestNQuads('action'),
-      createTestOptions({
-        algorithm: 'URGNA2012',
-        inputFormat: 'application/n-quads',
-        format: 'application/n-quads'
-      })
-    ],
-    compare: compareExpectedNQuads
-  },
-  'rdfc:Urdna2015EvalTest': {
+  'rdfc:RDFC10EvalTest': {
     skip: {
       // NOTE: idRegex format:
       // /manifest-urdna2015#testNNN$/,
       // FIXME
       idRegex: [
         // Unsupported U escape
-        /manifest-urdna2015#test060/
+        // /manifest-urdna2015#test060/
       ]
     },
     fn: 'canonize',
     params: [
       readTestNQuads('action'),
       createTestOptions({
-        algorithm: 'URDNA2015',
+        algorithm: 'RDFC-1.0',
         inputFormat: 'application/n-quads',
         format: 'application/n-quads'
       })
     ],
     compare: compareExpectedNQuads
+  },
+  'rdfc:RDFC10NegativeEvalTest': {
+    skip: {
+      // NOTE: idRegex format:
+      // /manifest-rdfc10#testNNN$/,
+      idRegex: []
+    },
+    fn: 'canonize',
+    params: [
+      readTestNQuads('action'),
+      createTestOptions({
+        algorithm: 'RDFC-1.0',
+        inputFormat: 'application/n-quads',
+        format: 'application/n-quads'
+      })
+    ]
+  },
+  'rdfc:RDFC10MapTest': {
+    skip: {
+      // NOTE: idRegex format:
+      // /manifest-rdfc10#testNNN$/,
+      idRegex: []
+    },
+    fn: 'canonize',
+    params: [
+      readTestNQuads('action'),
+      createTestOptions({
+        algorithm: 'RDFC-1.0',
+        inputFormat: 'application/n-quads',
+        format: 'application/n-quads'
+      })
+    ],
+    preRunAdjustParams: ({params, extra}) => {
+      // add canonicalIdMap
+      const m = new Map();
+      extra.canonicalIdMap = m;
+      params[1].canonizeOptions = params[1].canonizeOptions || {};
+      params[1].canonizeOptions.canonicalIdMap = m;
+      return params;
+    },
+    postRunAdjustParams: ({params}) => {
+      // restore output param to empty map
+      const m = new Map();
+      params[1].canonizeOptions = params[1].canonizeOptions || {};
+      params[1].canonizeOptions.canonicalIdMap = m;
+    },
+    compare: compareExpectedCanonicalIdMap
   }
 };
 
@@ -429,8 +464,6 @@ if(options.earl && options.earl.filename) {
   }
 }
 
-return new Promise(resolve => {
-
 // async generated tests
 // _tests => [{suite}, ...]
 // suite => {
@@ -440,21 +473,20 @@ return new Promise(resolve => {
 // }
 const _tests = [];
 
-return addManifest(manifest, _tests)
-  .then(() => {
-    return _testsToMocha(_tests);
-  }).then(result => {
-    if(options.earl.report) {
-      describe('Writing EARL report to: ' + options.earl.filename, function() {
-        // print out EARL even if .only was used
-        const _it = result.hadOnly ? it.only : it;
-        _it('should print the earl report', function() {
-          return options.writeFile(
-            options.earl.filename, options.earl.report.reportJson());
-        });
-      });
-    }
-  }).then(() => resolve());
+await addManifest(manifest, _tests);
+const result = _testsToMocha(_tests);
+if(options.earl.report) {
+  describe('Writing EARL report to: ' + options.earl.filename, function() {
+    // print out EARL even if .only was used
+    const _it = result.hadOnly ? it.only : it;
+    _it('should print the earl report', function() {
+      return options.writeFile(
+        options.earl.filename, options.earl.report.reportJson());
+    });
+  });
+}
+
+return;
 
 // build mocha tests from local test structure
 function _testsToMocha(tests) {
@@ -485,89 +517,102 @@ function _testsToMocha(tests) {
   };
 }
 
-});
-
 /**
  * Adds the tests for all entries in the given manifest.
  *
- * @param manifest {Object} the manifest.
- * @param parent {Object} the parent test structure
- * @return {Promise}
+ * @param {object} manifest - The manifest.
+ * @param {object} parent - The parent test structure.
+ * @returns {Promise} - A promise with no value.
  */
-function addManifest(manifest, parent) {
-  return new Promise((resolve, reject) => {
-    // create test structure
-    const suite = {
-      title: manifest.name || manifest.label,
-      tests: [],
-      suites: [],
-      imports: []
-    };
-    parent.push(suite);
+async function addManifest(manifest, parent) {
+  // create test structure
+  const suite = {
+    title: manifest.name || manifest.label,
+    tests: [],
+    suites: [],
+    imports: []
+  };
+  parent.push(suite);
 
-    // get entries and sequence (alias for entries)
-    const entries = [].concat(
-      getJsonLdValues(manifest, 'entries'),
-      getJsonLdValues(manifest, 'sequence')
-    );
+  // get entries and sequence (alias for entries)
+  const entries = [].concat(
+    getJsonLdValues(manifest, 'entries'),
+    getJsonLdValues(manifest, 'sequence')
+  );
 
-    const includes = getJsonLdValues(manifest, 'include');
-    // add includes to sequence as jsonld files
-    for(let i = 0; i < includes.length; ++i) {
-      entries.push(includes[i] + '.jsonld');
+  const includes = getJsonLdValues(manifest, 'include');
+  // add includes to sequence as jsonld files
+  for(let i = 0; i < includes.length; ++i) {
+    entries.push(includes[i] + '.jsonld');
+  }
+
+  // resolve all entry promises and process
+  for await (const entry of await Promise.all(entries)) {
+    if(typeof entry === 'string' && entry.endsWith('js')) {
+      // process later as a plain JavaScript file
+      suite.imports.push(entry);
+      continue;
+    } else if(typeof entry === 'function') {
+      // process as a function that returns a promise
+      const childSuite = await entry(options);
+      if(suite) {
+        suite.suites.push(childSuite);
+      }
+      continue;
     }
+    const manifestEntry = await readManifestEntry(manifest, entry);
+    if(isJsonLdType(manifestEntry, '__SKIP__')) {
+      // special local skip logic
+      suite.tests.push(manifestEntry);
+    } else if(isJsonLdType(manifestEntry, 'mf:Manifest')) {
+      // entry is another manifest
+      await addManifest(manifestEntry, suite.suites);
+    } else {
+      // assume entry is a test
+      await addTest(manifest, manifestEntry, suite.tests);
+    }
+  }
+}
 
-    // resolve all entry promises and process
-    Promise.all(entries).then(entries => {
-      let p = Promise.resolve();
-      entries.forEach(entry => {
-        if(typeof entry === 'string' && entry.endsWith('js')) {
-          // process later as a plain JavaScript file
-          suite.imports.push(entry);
-          return;
-        } else if(typeof entry === 'function') {
-          // process as a function that returns a promise
-          p = p.then(() => {
-            return entry(options);
-          }).then(childSuite => {
-            if(suite) {
-              suite.suites.push(childSuite);
-            }
-          });
-          return;
-        }
-        p = p.then(() => {
-          return readManifestEntry(manifest, entry);
-        }).then(entry => {
-          if(isJsonLdType(entry, '__SKIP__')) {
-            // special local skip logic
-            suite.tests.push(entry);
-          } else if(isJsonLdType(entry, 'mf:Manifest')) {
-            // entry is another manifest
-            return addManifest(entry, suite.suites);
-          } else {
-            // assume entry is a test
-            return addTest(manifest, entry, suite.tests);
-          }
-        });
-      });
-      return p;
-    }).then(() => {
-      resolve();
-    }).catch(err => {
-      console.error(err);
-      reject(err);
-    });
-  });
+/**
+ * Common adjust params helper.
+ *
+ * @param {object} params - The param to adjust.
+ * @param {object} test - The test.
+ */
+function _commonAdjustParams(params, test) {
+  if(isJsonLdType(test, 'rdfc:RDFC10EvalTest') ||
+    isJsonLdType(test, 'rdfc:RDFC10MapTest') ||
+    isJsonLdType(test, 'rdfc:RDFC10NegativeEvalTest')) {
+    if(test.hashAlgorithm) {
+      params.canonizeOptions = params.canonizeOptions || {};
+      params.canonizeOptions.messageDigestAlgorithm = test.hashAlgorithm;
+    }
+    if(test.computationalComplexity === 'low') {
+      // simple test cases
+      params.canonizeOptions = params.canonizeOptions || {};
+      params.canonizeOptions.maxWorkFactor = 0;
+    }
+    if(test.computationalComplexity === 'medium') {
+      // tests between O(n) and O(n^2)
+      params.canonizeOptions = params.canonizeOptions || {};
+      params.canonizeOptions.maxWorkFactor = 2;
+    }
+    if(test.computationalComplexity === 'high') {
+      // poison tests between O(n^2) and O(n^3)
+      params.canonizeOptions = params.canonizeOptions || {};
+      params.canonizeOptions.maxWorkFactor = 3;
+    }
+  }
 }
 
 /**
  * Adds a test.
  *
- * @param manifest {Object} the manifest.
- * @param test {Object} the test.
- * @param tests {Array} the list of tests to add to.
- * @return {Promise}
+ * @param {object} manifest - The manifest.
+ * @param {object} test - The test.
+ * @param {Array} tests - The list of tests to add to.
+ * @returns {Promise} - A promise with no value.
  */
 async function addTest(manifest, test, tests) {
   // expand @id and input base
@@ -597,6 +642,10 @@ async function addTest(manifest, test, tests) {
       title: description + ` (jobs=${jobs})`,
       f: makeFn({
         test,
+        adjustParams: params => {
+          _commonAdjustParams(params[1], test);
+          return params;
+        },
         run: ({/*test, */testInfo, params}) => {
           // skip Promise.all
           if(jobs === 1 && fast1) {
@@ -770,7 +819,14 @@ function makeFn({
       });
     });
 
-    const params = adjustParams(testInfo.params.map(param => param(test)));
+    let params = testInfo.params.map(param => param(test));
+    const extra = {};
+    // type specific pre run adjustments
+    if(testInfo.preRunAdjustParams) {
+      params = testInfo.preRunAdjustParams({params, extra});
+    }
+    // general adjustments
+    params = adjustParams(params);
     // resolve test data
     const values = await Promise.all(params);
     // copy used to check inputs do not change
@@ -780,6 +836,10 @@ function makeFn({
     // run and capture errors and results
     try {
       result = await run({test, testInfo, params: values});
+      // type specific post run adjustments
+      if(testInfo.postRunAdjustParams) {
+        testInfo.postRunAdjustParams({params: values, extra});
+      }
       // check input not changed
       assert.deepStrictEqual(valuesOrig, values);
     } catch(e) {
@@ -789,21 +849,25 @@ function makeFn({
     try {
       if(isJsonLdType(test, 'jld:NegativeEvaluationTest')) {
         if(!isBenchmark) {
-          await compareExpectedError(test, err);
+          await compareExpectedError({test, err});
+        }
+      } else if(isJsonLdType(test, 'rdfc:RDFC10NegativeEvalTest')) {
+        if(!isBenchmark) {
+          await checkError({test, err});
         }
       } else if(isJsonLdType(test, 'jld:PositiveEvaluationTest') ||
-        isJsonLdType(test, 'rdfc:Urgna2012EvalTest') ||
-        isJsonLdType(test, 'rdfc:Urdna2015EvalTest')) {
+        isJsonLdType(test, 'rdfc:RDFC10EvalTest') ||
+        isJsonLdType(test, 'rdfc:RDFC10MapTest')) {
         if(err) {
           throw err;
         }
         if(!isBenchmark) {
-          await testInfo.compare(test, result);
+          await testInfo.compare({test, result, extra});
         }
       } else if(isJsonLdType(test, 'jld:PositiveSyntaxTest')) {
         // no checks
       } else {
-        throw Error('Unknown test type: ' + test.type);
+        throw new Error(`Unknown test type: "${test.type}"`);
       }
 
       let benchmarkResult = null;
@@ -1013,11 +1077,11 @@ function _getExpectProperty(test) {
   } else if('result' in test) {
     return 'result';
   } else {
-    throw Error('No expected output property found');
+    throw new Error('No expected output property found');
   }
 }
 
-async function compareExpectedJson(test, result) {
+async function compareExpectedJson({test, result}) {
   let expect;
   try {
     expect = await readTestJson(_getExpectProperty(test))(test);
@@ -1032,7 +1096,7 @@ async function compareExpectedJson(test, result) {
   }
 }
 
-async function compareExpectedNQuads(test, result) {
+async function compareExpectedNQuads({test, result}) {
   let expect;
   try {
     expect = await readTestNQuads(_getExpectProperty(test))(test);
@@ -1047,11 +1111,15 @@ async function compareExpectedNQuads(test, result) {
   }
 }
 
-async function compareCanonizedExpectedNQuads(test, result) {
+async function compareCanonizedExpectedNQuads({test, result}) {
   let expect;
   try {
     expect = await readTestNQuads(_getExpectProperty(test))(test);
-    const opts = {algorithm: 'URDNA2015'};
+    const opts = {
+      algorithm: 'RDFC-1.0',
+      // some tests need this: expand 0027 and 0062
+      maxWorkFactor: 2
+    };
     const expectDataset = rdfCanonize.NQuads.parse(expect);
     const expectCmp = await rdfCanonize.canonize(expectDataset, opts);
     const resultDataset = rdfCanonize.NQuads.parse(result);
@@ -1067,7 +1135,35 @@ async function compareCanonizedExpectedNQuads(test, result) {
   }
 }
 
-async function compareExpectedError(test, err) {
+async function compareExpectedCanonicalIdMap({test, result, extra}) {
+  let expect;
+  try {
+    expect = await readTestJson(_getExpectProperty(test))(test);
+    const expectMap = new Map(Object.entries(expect));
+    assert.deepStrictEqual(extra.canonicalIdMap, expectMap);
+  } catch(err) {
+    if(options.bailOnError) {
+      console.log('\nTEST FAILED\n');
+      console.log('EXPECTED:\n ' + JSON.stringify(expect, null, 2));
+      console.log('ACTUAL:\n' + JSON.stringify(result, null, 2));
+    }
+    throw err;
+  }
+}
+
+async function checkError({/*test,*/ err}) {
+  try {
+    assert.ok(err, 'no error present');
+  } catch(_err) {
+    if(options.bailOnError) {
+      console.log('\nTEST FAILED\n');
+      console.log('EXPECTED ERROR');
+    }
+    throw _err;
+  }
+}
+
+async function compareExpectedError({test, err}) {
   let expect;
   let result;
   try {
@@ -1088,10 +1184,7 @@ async function compareExpectedError(test, err) {
 }
 
 function isJsonLdType(node, type) {
-  const nodeType = [].concat(
-    getJsonLdValues(node, '@type'),
-    getJsonLdValues(node, 'type')
-  );
+  const nodeType = getJsonLdType(node);
   type = Array.isArray(type) ? type : [type];
   for(let i = 0; i < type.length; ++i) {
     if(nodeType.indexOf(type[i]) !== -1) {
@@ -1101,13 +1194,17 @@ function isJsonLdType(node, type) {
   return false;
 }
 
+function getJsonLdType(node) {
+  return [].concat(
+    getJsonLdValues(node, '@type'),
+    getJsonLdValues(node, 'type')
+  );
+}
+
 function getJsonLdValues(node, property) {
   let rval = [];
   if(property in node) {
-    rval = node[property];
-    if(!Array.isArray(rval)) {
-      rval = [rval];
-    }
+    rval = [].concat(node[property]);
   }
   return rval;
 }
