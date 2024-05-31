@@ -299,6 +299,63 @@ describe('loading multiple levels of contexts', () => {
   });
 });
 
+// check that internal caching is unique for each document loader
+describe('unique document loaders caching', () => {
+  const documentLoader0 = url => {
+    if(url === 'https://example.com/context') {
+      return {
+        document: {
+          "@context": {
+            "ex": "https://example.com/0#"
+          }
+        },
+        // must be marked static to get into the shared cache
+        tag: 'static',
+        contextUrl: null,
+        documentUrl: url
+      };
+    }
+  };
+  const documentLoader1 = url => {
+    if(url === 'https://example.com/context') {
+      return {
+        document: {
+          "@context": {
+            "ex": "https://example.com/1#"
+          }
+        },
+        contextUrl: null,
+        documentUrl: url
+      };
+    }
+  };
+  const doc = {
+    "@context": "https://example.com/context",
+    "ex:test": "test"
+  };
+  const expected0 = [{
+    "https://example.com/0#test": [{
+      "@value": "test"
+    }]
+  }];
+  const expected1 = [{
+    "https://example.com/1#test": [{
+      "@value": "test"
+    }]
+  }];
+
+  it('unique document loader caches', async () => {
+    const expanded0 = await jsonld.expand(doc, {
+      documentLoader: documentLoader0
+    });
+    assert.deepEqual(expanded0, expected0);
+    const expanded1 = await jsonld.expand(doc, {
+      documentLoader: documentLoader1
+    });
+    assert.deepEqual(expanded1, expected1);
+  });
+});
+
 describe('url tests', () => {
   it('should detect absolute IRIs', done => {
     // absolute IRIs

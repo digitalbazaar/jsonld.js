@@ -1,5 +1,12 @@
 # jsonld ChangeLog
 
+## 8.4.0 - 2024-xx-xx
+
+### Fixed
+- Use a per-`documentLoader` resolved context cache. Fixes an issue where
+  multiple document loaders are used which each have different values for
+  static contexts.
+
 ## 8.3.2 - 2023-12-06
 
 ### Fixed
