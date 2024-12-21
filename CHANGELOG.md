@@ -1,6 +1,6 @@
 # jsonld ChangeLog
 
-## 8.3.3 - xxxx-xx-xx
+## 8.3.3 - 2024-12-21
 
 ### Added
 - Added URL to context resolution error message.
