@@ -1,7 +1,7 @@
 jsonld.js
 =========
 
-[![Build status](https://img.shields.io/github/actions/workflow/status/digitalbazaar/jsonld.js/main.yml)](https://github.com/digitalbazaar/jsonld.js/actions/workflows/main.yml)
+[![Build status](https://img.shields.io/github/actions/workflow/status/digitalbazaar/jsonld.js/main.yaml)](https://github.com/digitalbazaar/jsonld.js/actions/workflows/main.yaml)
 [![Coverage status](https://img.shields.io/codecov/c/github/digitalbazaar/jsonld.js)](https://codecov.io/gh/digitalbazaar/jsonld.js)
 [![npm](https://img.shields.io/npm/v/jsonld)](https://npm.im/jsonld)
 
