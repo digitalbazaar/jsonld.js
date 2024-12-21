@@ -174,6 +174,7 @@ const TEST_TYPES = {
         /expand-manifest#tc037$/,
         /expand-manifest#tc038$/,
         /expand-manifest#ter54$/,
+        /expand-manifest#ter56$/,
 
         // html
         /html-manifest#te001$/,
@@ -228,6 +229,7 @@ const TEST_TYPES = {
         /html-manifest#tf002$/,
         /html-manifest#tf003$/,
         /html-manifest#tf004$/,
+        /html-manifest#tf005$/,
       ]
     },
     fn: 'flatten',
@@ -306,6 +308,7 @@ const TEST_TYPES = {
         /toRdf-manifest#tc037$/,
         /toRdf-manifest#tc038$/,
         /toRdf-manifest#ter54$/,
+        /toRdf-manifest#ter56$/,
         /toRdf-manifest#tli12$/,
         /toRdf-manifest#tli14$/,
 
