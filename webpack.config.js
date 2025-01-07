@@ -26,7 +26,7 @@ const outputs = [
     filenameBase: 'jsonld',
     targets: {
       // use slightly looser browserslist defaults
-      browsers: 'defaults, > 0.25%'
+      browsers: 'defaults, > 0.25%, not IE 11'
     }
   },
   // core jsonld library (esm)
@@ -38,7 +38,7 @@ const outputs = [
     ],
     filenameBase: 'jsonld.esm',
     targets: {
-      esmodules: true
+      browsers: 'defaults and fully supports es6-module'
     }
   },
   // - custom builds can be created by specifying the high level files you need
@@ -72,18 +72,11 @@ outputs.forEach(info => {
       rules: [
         {
           test: /\.js$/,
-          include: [{
-            // exclude node_modules by default
-            exclude: /(node_modules)/
-          }, {
-            // include specific packages
-            include: [
-              /(node_modules\/canonicalize)/,
-              /(node_modules\/lru-cache)/,
-              /(node_modules\/rdf-canonize)/,
-              /(node_modules\/yallist)/
-            ]
-          }],
+          // avoid processing core-js
+          include: {
+            and: [/node_modules/],
+            not: [/core-js/]
+          },
           use: {
             loader: 'babel-loader',
             options: {
@@ -92,7 +85,7 @@ outputs.forEach(info => {
                   '@babel/preset-env',
                   {
                     useBuiltIns: 'usage',
-                    corejs: '3.9',
+                    corejs: '3.39',
                     // TODO: remove for babel 8
                     bugfixes: true,
                     //debug: true,
@@ -101,10 +94,6 @@ outputs.forEach(info => {
                 ]
               ],
               plugins: [
-                [
-                  '@babel/plugin-proposal-object-rest-spread',
-                  {useBuiltIns: true}
-                ],
                 '@babel/plugin-transform-modules-commonjs',
                 '@babel/plugin-transform-runtime'
               ]
@@ -112,17 +101,6 @@ outputs.forEach(info => {
           }
         }
       ]
-    },
-    plugins: [
-      //new webpack.DefinePlugin({
-      //})
-    ],
-    // disable various node shims as jsonld handles this manually
-    node: {
-      Buffer: false,
-      crypto: false,
-      process: false,
-      setImmediate: false
     }
   };
 
@@ -133,8 +111,11 @@ outputs.forEach(info => {
       path: path.join(__dirname, 'dist'),
       filename: info.filenameBase + '.js',
       library: info.library || '[name]',
-      libraryTarget: info.libraryTarget || 'umd'
-    }
+      libraryTarget: info.libraryTarget || 'umd',
+      globalObject: 'this'
+    },
+    // shut off to debug bundles
+    devtool: false
   });
   if(info.library === null) {
     delete bundle.output.library;
@@ -150,7 +131,8 @@ outputs.forEach(info => {
       path: path.join(__dirname, 'dist'),
       filename: info.filenameBase + '.min.js',
       library: info.library || '[name]',
-      libraryTarget: info.libraryTarget || 'umd'
+      libraryTarget: info.libraryTarget || 'umd',
+      globalObject: 'this'
     },
     devtool: 'cheap-module-source-map'
   });

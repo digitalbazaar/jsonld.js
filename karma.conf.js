@@ -81,18 +81,11 @@ module.exports = function(config) {
         rules: [
           {
             test: /\.js$/,
-            include: [{
-              // exclude node_modules by default
-              exclude: /(node_modules)/
-            }, {
-              // include specific packages
-              include: [
-                /(node_modules\/canonicalize)/,
-                /(node_modules\/lru-cache)/,
-                /(node_modules\/rdf-canonize)/,
-                /(node_modules\/yallist)/
-              ]
-            }],
+            // avoid processing core-js
+            include: {
+              and: [/node_modules/],
+              not: [/core-js/]
+            },
             use: {
               loader: 'babel-loader',
               options: {
@@ -101,21 +94,17 @@ module.exports = function(config) {
                     '@babel/preset-env',
                     {
                       useBuiltIns: 'usage',
-                      corejs: '3.9',
+                      corejs: '3.39',
                       bugfixes: true,
                       //debug: true,
                       targets: {
                         // test with slightly looser browserslist defaults
-                        browsers: 'defaults, > 0.25%'
+                        browsers: 'defaults, > 0.25%, not IE 11'
                       }
                     }
                   ]
                 ],
                 plugins: [
-                  [
-                    '@babel/plugin-proposal-object-rest-spread',
-                    {useBuiltIns: true}
-                  ],
                   '@babel/plugin-transform-modules-commonjs',
                   '@babel/plugin-transform-runtime'
                 ]
@@ -123,16 +112,13 @@ module.exports = function(config) {
             }
           }
         ],
-        noParse: [
-          // avoid munging internal benchmark script magic
-          /benchmark/
-        ]
+        //noParse: [
+        //  // avoid munging internal benchmark script magic
+        //  /benchmark/
+        //]
       },
-      node: {
-        Buffer: false,
-        process: false,
-        crypto: false,
-        setImmediate: false
+      output: {
+        globalObject: 'this'
       }
     },
 
@@ -191,17 +177,6 @@ module.exports = function(config) {
     // https://npmjs.org/browse/keyword/karma-launcher
     //browsers: ['ChromeHeadless', 'Chrome', 'Firefox', 'Safari'],
     browsers: ['ChromeHeadless'],
-
-    customLaunchers: {
-      IE9: {
-        base: 'IE',
-        'x-ua-compatible': 'IE=EmulateIE9'
-      },
-      IE8: {
-        base: 'IE',
-        'x-ua-compatible': 'IE=EmulateIE8'
-      }
-    },
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits

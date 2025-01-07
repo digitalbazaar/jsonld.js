@@ -16,6 +16,13 @@
     - A `signal` option is available to use an `AbortSignal` to limit resource
       usage.
     - The internal digest algorithm can be changed.
+- Update development dependencies.
+- Update karma testing.
+  - Remove older fixes in favor of more default behavior.
+- Update bundle build.
+  - Use newer corejs version.
+  - Build with modern browserslist defaults and no IE support.
+  - Support for older browsers requires a custom build.
 
 ### Removed
 - **BREAKING**: Remove `application/nquads` alias for `application/n-quads`.
