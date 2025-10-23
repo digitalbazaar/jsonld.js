@@ -85,7 +85,7 @@ outputs.forEach(info => {
                   '@babel/preset-env',
                   {
                     useBuiltIns: 'usage',
-                    corejs: '3.39',
+                    corejs: '3.46',
                     // TODO: remove for babel 8
                     bugfixes: true,
                     //debug: true,

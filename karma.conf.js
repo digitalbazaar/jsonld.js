@@ -94,7 +94,7 @@ module.exports = function(config) {
                     '@babel/preset-env',
                     {
                       useBuiltIns: 'usage',
-                      corejs: '3.39',
+                      corejs: '3.46',
                       bugfixes: true,
                       //debug: true,
                       targets: {
