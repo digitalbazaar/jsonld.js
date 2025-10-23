@@ -8,7 +8,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [24.x]
     steps:
     - uses: actions/checkout@v4
     - name: Use Node.js ${{ matrix.node-version }}
@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [18.x, 20.x, 22.x, 24.x]
     steps:
     - uses: actions/checkout@v4
     - name: Use Node.js ${{ matrix.node-version }}
@@ -41,7 +41,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [24.x]
         bundler: [webpack, browserify]
     steps:
     - uses: actions/checkout@v4
@@ -62,7 +62,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [24.x]
     steps:
     - uses: actions/checkout@v4
     - name: Use Node.js ${{ matrix.node-version }}
@@ -78,7 +78,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [24.x]
     steps:
     - uses: actions/checkout@v4
     - name: Use Node.js ${{ matrix.node-version }}
