@@ -10,12 +10,40 @@
  */
 const os = require('os');
 const webpack = require('webpack');
+const {TestServer} = require('./tests/test-server.js');
 
-module.exports = function(config) {
+// karma test server proxy details
+const _proxyTestsPrefix = '/tests';
+
+let testServer;
+
+// shutdown test server "reporter" hook
+function ShutdownTestServer(baseReporterDecorator) {
+  baseReporterDecorator(this);
+
+  this.onRunComplete = async function() {
+    await testServer.close();
+  };
+}
+
+// Inject the base reporter
+ShutdownTestServer.$inject = ['baseReporterDecorator', 'config'];
+
+// local "reporter" plugin
+const shutdownTestServer = {
+  'reporter:shutdown-test-server': ['type', ShutdownTestServer]
+};
+
+module.exports = async function(config) {
+  testServer = new TestServer({
+    earlFilename: process.env.EARL
+  });
+  await testServer.start();
+
   // bundler to test: webpack, browserify
   const bundler = process.env.BUNDLER || 'webpack';
 
-  const frameworks = ['mocha', 'server-side'];
+  const frameworks = ['mocha'];
   // main bundle preprocessors
   const preprocessors = ['babel'];
 
@@ -66,7 +94,8 @@ module.exports = function(config) {
           'process.env.EARL': JSON.stringify(process.env.EARL),
           'process.env.TESTS': JSON.stringify(process.env.TESTS),
           'process.env.TEST_ENV': JSON.stringify(process.env.TEST_ENV),
-          'process.env.TEST_ROOT_DIR': JSON.stringify(__dirname),
+          'process.env.TEST_SERVER_URL': JSON.stringify(_proxyTestsPrefix),
+          'process.env.AUTH_TOKEN': JSON.stringify(testServer.authToken),
           'process.env.VERBOSE_SKIP': JSON.stringify(process.env.VERBOSE_SKIP),
           // for 'auto' test env
           'process.env._TEST_ENV_ARCH': JSON.stringify(process.arch),
@@ -151,11 +180,20 @@ module.exports = function(config) {
       ]
     },
 
+    // local server shutdown plugin
+    plugins: [
+      'karma-*',
+      shutdownTestServer
+    ],
+
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
     //reporters: ['progress'],
-    reporters: ['mocha'],
+    reporters: [
+      'mocha',
+      'shutdown-test-server'
+    ],
 
     // web server port
     port: 9876,
@@ -197,6 +235,8 @@ module.exports = function(config) {
     },
 
     // Proxied paths
-    proxies: {}
+    proxies: {
+      '/tests': testServer.url
+    }
   });
 };

@@ -1,6 +1,6 @@
 # jsonld ChangeLog
 
-## 9.0.0 - 2023-xx-xx
+## 9.0.0 - 2025-xx-xx
 
 ### Changed
 - **BREAKING**: Drop support for Node.js < 18.
@@ -23,6 +23,11 @@
   - Use newer corejs version.
   - Build with modern browserslist defaults and no IE support.
   - Support for older browsers requires a custom build.
+- Refactor test framework.
+  - Test runtime loads test files from a web server.
+  - Allows testing of manifests on remote web servers.
+  - Trading off some performance to align node and browser testing.
+  - Moves some test setup code into config data and manifest.
 
 ### Removed
 - **BREAKING**: Remove `application/nquads` alias for `application/n-quads`.
