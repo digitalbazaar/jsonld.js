@@ -6,18 +6,15 @@
  * @author Dave Longley
  * @author David I. Lehn
  *
- * Copyright (c) 2011-2023 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2011-2025 Digital Bazaar, Inc. All rights reserved.
  */
-/* global serverRequire */
 // FIXME: hack to ensure delay is set first
 mocha.setup({delay: true, ui: 'bdd'});
 
 const assert = require('chai').assert;
 const benchmark = require('benchmark');
 const common = require('./test.js');
-const server = require('karma-server-side');
 const webidl = require('./test-webidl');
-const join = require('join-path-js');
 
 // special benchmark setup
 const _ = require('lodash');
@@ -26,70 +23,25 @@ window.Benchmark = Benchmark;
 
 const entries = [];
 
+// setup test server url, add localhost if needed
+let testServerUrl = process.env.TEST_SERVER_URL;
+if(!testServerUrl.endsWith('/')) {
+  testServerUrl += '/';
+}
+if(!(testServerUrl.startsWith('http:') || testServerUrl.startsWith('https:'))) {
+  const pathname = testServerUrl;
+  testServerUrl = new URL(window.location);
+  testServerUrl.pathname = pathname;
+}
+
 if(process.env.TESTS) {
   entries.push(...process.env.TESTS.split(' '));
 } else {
-  const _top = process.env.TEST_ROOT_DIR;
+  entries.push(new URL('tests/default/', testServerUrl));
+
   // TODO: support just adding certain entries in EARL mode?
 
-  // json-ld-api main test suite
-  entries.push((async () => {
-    const testPath = join(_top, 'test-suites/json-ld-api/tests');
-    const siblingPath = join(_top, '../json-ld-api/tests');
-    return server.run(testPath, siblingPath, function(testPath, siblingPath) {
-      const fs = serverRequire('fs-extra');
-      // use local tests if setup
-      if(fs.existsSync(testPath)) {
-        return testPath;
-      }
-      // default to sibling dir
-      return siblingPath;
-    });
-  })());
-
-  // json-ld-framing main test suite
-  entries.push((async () => {
-    const testPath = join(_top, 'test-suites/json-ld-framing/tests');
-    const siblingPath = join(_top, '../json-ld-framing/tests');
-    return server.run(testPath, siblingPath, function(testPath, siblingPath) {
-      const fs = serverRequire('fs-extra');
-      // use local tests if setup
-      if(fs.existsSync(testPath)) {
-        return testPath;
-      }
-      // default to sibling dir
-      return siblingPath;
-    });
-  })());
-
-  /*
-  // TODO: use json-ld-framing once tests are moved
-  // json-ld.org framing test suite
-  // FIXME: add path detection
-  entries.push(join(
-    _top, 'test-suites/json-ld.org/test-suite/tests/frame-manifest.jsonld'));
-  entries.push(join(
-    _top, '../json-ld.org/test-suite/tests/frame-manifests.jsonld'));
-  */
-
-  // W3C RDF Dataset Canonicalization "rdf-canon" test suite
-  entries.push((async () => {
-    const testPath = join(_top, 'test-suites/rdf-canon/tests');
-    const siblingPath = join(_top, '../rdf-canon/tests');
-    return server.run(testPath, siblingPath, function(testPath, siblingPath) {
-      const fs = serverRequire('fs-extra');
-      // use local tests if setup
-      if(fs.existsSync(testPath)) {
-        return testPath;
-      }
-      // default to sibling dir
-      return siblingPath;
-    });
-  })());
-
-  // other tests
-  entries.push(join(_top, 'tests/misc.js'));
-  entries.push(join(_top, 'tests/graph-container.js'));
+  // other tests (including js ones) added with options.addExtraTests
 
   // WebIDL tests
   entries.push(webidl);
@@ -126,33 +78,35 @@ const options = {
     throw new Error('exit not implemented');
   },
   earl: {
+    enabled: !!process.env.EARL,
     filename: process.env.EARL
   },
   entries,
+  addExtraTests: async () => {
+    // direct load for bundling
+    // called after handling other entry loading
+    require('./misc.js');
+    require('./graph-container.js');
+  },
   testEnvDefaults,
-  readFile: filename => {
-    return server.run(filename, function(filename) {
-      const fs = serverRequire('fs-extra');
-      return fs.readFile(filename, 'utf8').then(data => {
-        return data;
-      });
-    });
+  get testServerUrl() {
+    return testServerUrl;
   },
-  writeFile: (filename, data) => {
-    return server.run(filename, data, function(filename, data) {
-      const fs = serverRequire('fs-extra');
-      return fs.outputFile(filename, data);
-    });
+  get authToken() {
+    return process.env.AUTH_TOKEN;
   },
-  /* eslint-disable-next-line no-unused-vars */
   import: f => {
     console.error('import not implemented for "' + f + '"');
-  }
+  },
+  cleanup: async () => {}
 };
 
-// wait for setup of all tests then run mocha
-common(options).then(() => {
+async function main() {
+  // wait for setup of all tests then run mocha
+  await common.setup(options);
   run();
-}).catch(err => {
+}
+
+main().catch(err => {
   console.error(err);
 });

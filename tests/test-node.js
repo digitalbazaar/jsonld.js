@@ -6,67 +6,36 @@
  * @author Dave Longley
  * @author David I. Lehn
  *
- * Copyright (c) 2011-2023 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2011-2025 Digital Bazaar, Inc. All rights reserved.
  */
 const assert = require('chai').assert;
 const benchmark = require('benchmark');
 const common = require('./test.js');
-const fs = require('fs-extra');
 const os = require('os');
 const path = require('path');
+const {TestServer} = require('./test-server.js');
+
+// local HTTP test server
+let testServer;
 
 const entries = [];
+const allowedImports = [];
 
-if(process.env.TESTS) {
-  entries.push(...process.env.TESTS.split(' '));
-} else {
-  const _top = path.resolve(__dirname, '..');
-
-  // json-ld-api main test suite
-  const apiPath = path.resolve(_top, 'test-suites/json-ld-api/tests');
-  if(fs.existsSync(apiPath)) {
-    entries.push(apiPath);
-  } else {
-    // default to sibling dir
-    entries.push(path.resolve(_top, '../json-ld-api/tests'));
+async function init({testServer}) {
+  if(process.env.TESTS) {
+    entries.push(...process.env.TESTS.split(' '));
+    return;
   }
-
-  // json-ld-framing main test suite
-  const framingPath = path.resolve(_top, 'test-suites/json-ld-framing/tests');
-  if(fs.existsSync(framingPath)) {
-    entries.push(framingPath);
-  } else {
-    // default to sibling dir
-    entries.push(path.resolve(_top, '../json-ld-framing/tests'));
-  }
-
-  /*
-  // TODO: use json-ld-framing once tests are moved
-  // json-ld.org framing test suite
-  const framingPath = path.resolve(
-    _top, 'test-suites/json-ld.org/test-suite/tests/frame-manifest.jsonld');
-  if(fs.existsSync(framingPath)) {
-    entries.push(framingPath);
-  } else {
-    // default to sibling dir
-    entries.push(path.resolve(
-      _top, '../json-ld.org/test-suite/tests/frame-manifest.jsonld'));
-  }
-  */
-
-  // W3C RDF Dataset Canonicalization "rdf-canon" test suite
-  const rdfCanonPath = path.resolve(_top, 'test-suites/rdf-canon/tests');
-  if(fs.existsSync(rdfCanonPath)) {
-    entries.push(rdfCanonPath);
-  } else {
-    // default to sibling dir
-    entries.push(path.resolve(_top, '../rdf-canon/tests'));
-  }
+  entries.push(new URL('/tests/default/', testServer.url));
 
   // other tests
-  entries.push(path.resolve(_top, 'tests/misc.js'));
-  entries.push(path.resolve(_top, 'tests/graph-container.js'));
-  entries.push(path.resolve(_top, 'tests/node-document-loader-tests.js'));
+  // setup allow list
+  const _tests = path.resolve(__dirname);
+  allowedImports.push(path.resolve(_tests, 'misc.js'));
+  allowedImports.push(path.resolve(_tests, 'graph-container.js'));
+  allowedImports.push(path.resolve(_tests, 'node-document-loader-tests.js'));
+  // add all allow list entries
+  entries.push(...allowedImports);
 }
 
 // test environment defaults
@@ -98,26 +67,54 @@ const options = {
   benchmark,
   exit: code => process.exit(code),
   earl: {
+    enabled: !!process.env.EARL,
     filename: process.env.EARL
   },
   entries,
+  addExtraTests: async () => {},
   testEnvDefaults,
-  readFile: filename => {
-    return fs.readFile(filename, 'utf8');
+  get testServerUrl() {
+    return testServer.url;
   },
-  writeFile: (filename, data) => {
-    return fs.outputFile(filename, data);
+  get authToken() {
+    return testServer.authToken;
   },
-  import: f => require(f)
+  import: f => {
+    if(!allowedImports.includes(f)) {
+      throw new Error(`Import not allowed: "${f}"`);
+    }
+    return require(f);
+  },
+  cleanup: async () => {
+    await testServer.close();
+  }
 };
-
-// wait for setup of all tests then run mocha
-common(options).then(() => {
-  run();
-}).catch(err => {
-  console.error(err);
-});
 
 process.on('unhandledRejection', (reason, p) => {
   console.error('Unhandled Rejection at:', p, 'reason:', reason);
+});
+
+async function main() {
+  // start test server
+  testServer = new TestServer({
+    earlFilename: process.env.EARL
+  });
+  await testServer.start();
+
+  await init({
+    testServer
+  });
+
+  // wait for setup of all tests then run mocha
+  await common.setup(options);
+  run();
+
+  // FIXME: run returns before tests are complete
+  //await testServer.close();
+}
+
+main().catch(async err => {
+  console.error(err);
+  // close server so mocha can cleanly shutdown
+  await options.cleanup();
 });

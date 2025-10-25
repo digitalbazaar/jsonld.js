@@ -98,7 +98,19 @@ return new Promise((resolve, reject) => {
     return toString.apply(this, arguments);
   };
 
-  options.readFile('./tests/webidl/JsonLdProcessor.idl').then(idl => {
+  const idlUrl =
+    new URL('tests/webidl/JsonLdProcessor.idl', options.testServerUrl);
+  fetch(idlUrl, {
+    headers: {
+      Authorization: `Bearer ${options.authToken}`
+    }
+  }).then(response => {
+    if(!response.ok) {
+      throw new Error(`IDL fetch failed: URL="${idlUrl}"`);
+    }
+    const idl = response.text();
+    return idl;
+  }).then(idl => {
     setup({explicit_done: true});
     var idl_array = new IdlArray();
     idl_array.add_idls(idl);

@@ -50,7 +50,7 @@
  * @author Dave Longley
  * @author David I. Lehn
  *
- * Copyright (c) 2011-2023 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2011-2025 Digital Bazaar, Inc. All rights reserved.
  */
 /* eslint-disable indent */
 const EarlReport = require('./earl-report');
@@ -60,7 +60,14 @@ const {klona} = require('klona');
 const {prependBase} = require('../lib/url');
 const rdfCanonize = require('rdf-canonize');
 
-// helper functions, inspired by 'boolean' package
+const stats = {
+  getJson: 0,
+  getData: 0,
+  postJson: 0,
+  postData: 0
+};
+
+// boolean helper functions, inspired by 'boolean' package
 function isTrue(value) {
   return value && [
     'true', 't', 'yes', 'y', 'on', '1'
@@ -73,7 +80,8 @@ function isFalse(value) {
   ].includes(value.trim().toLowerCase());
 }
 
-module.exports = async function(options) {
+// main setup
+async function setup(options) {
 
 'use strict';
 
@@ -112,7 +120,7 @@ if(options.env.BENCHMARK) {
 
 // Only support one job size for EARL output to simplify reporting and avoid
 // multi-variable issues. Can compare multiple runs with different job sizes.
-if(options.earl.filename && benchmarkOptions.jobs.length > 1) {
+if(options.earl.enabled && benchmarkOptions.jobs.length > 1) {
   throw new Error('Only one job size allowed when outputting EARL.');
 }
 
@@ -458,7 +466,7 @@ if(options.env.TEST_ENV) {
 }
 
 // create earl report
-if(options.earl && options.earl.filename) {
+if(options.earl.enabled) {
   options.earl.report = new EarlReport({
     env: testEnv
   });
@@ -478,16 +486,33 @@ const _tests = [];
 
 await addManifest(manifest, _tests);
 const result = _testsToMocha(_tests);
-if(options.earl.report) {
+// add extra tests
+// useful for karma to load js tests in proper order
+await options.addExtraTests();
+
+// add pseudo test to output EARL results
+if(options.earl.enabled) {
   describe('Writing EARL report to: ' + options.earl.filename, function() {
     // print out EARL even if .only was used
     const _it = result.hadOnly ? it.only : it;
-    _it('should print the earl report', function() {
-      return options.writeFile(
-        options.earl.filename, options.earl.report.reportJson());
+    _it('should print the earl report', async function() {
+      await postJson({
+        url: new URL('earl', options.testServerUrl),
+        data: options.earl.report.report()
+      });
     });
   });
 }
+
+// add pseudo test to do cleanup
+// NOTE: This is a hack to get around issues with dynamic test setup, running
+// a HTTP test server, and problems using mocha root hooks or global fixtures.
+describe('cleanup', function() {
+  const _it = result.hadOnly ? it.only : it;
+  _it('cleanup', async function() {
+    await options.cleanup();
+  });
+});
 
 return;
 
@@ -537,6 +562,14 @@ async function addManifest(manifest, parent) {
   };
   parent.push(suite);
 
+  if(manifest.skip === true) {
+    if(verboseSkip) {
+      console.log('Skipping manifest due to manifest:',
+        {id: manifest['@id'], name: manifest.name});
+    }
+    return;
+  }
+
   // get entries and sequence (alias for entries)
   const entries = [].concat(
     getJsonLdValues(manifest, 'entries'),
@@ -549,6 +582,12 @@ async function addManifest(manifest, parent) {
     entries.push(includes[i] + '.jsonld');
   }
 
+  // custom manifest sequence options
+  const seqAllowMissing = manifest['urn:test:sequence:allowMissing'] || false;
+  const seqMin = manifest['urn:test:sequence:min'] || 0;
+  const seqMax = manifest['urn:test:sequence:max'] || Infinity;
+  let seqCount = 0;
+
   // resolve all entry promises and process
   for await (const entry of await Promise.all(entries)) {
     if(typeof entry === 'string' && entry.endsWith('js')) {
@@ -558,22 +597,41 @@ async function addManifest(manifest, parent) {
     } else if(typeof entry === 'function') {
       // process as a function that returns a promise
       const childSuite = await entry(options);
-      if(suite) {
-        suite.suites.push(childSuite);
-      }
+      suite.suites.push(childSuite);
       continue;
     }
-    const manifestEntry = await readManifestEntry(manifest, entry);
-    if(isJsonLdType(manifestEntry, '__SKIP__')) {
-      // special local skip logic
-      suite.tests.push(manifestEntry);
-    } else if(isJsonLdType(manifestEntry, 'mf:Manifest')) {
+
+    let manifestEntry;
+    try {
+      manifestEntry = await readManifestEntry(manifest, entry);
+    } catch(e) {
+      // TODO: check error
+      if(seqAllowMissing) {
+        continue;
+      }
+      // TODO: add details
+      throw new Error('Invalid sequence entry.', {cause: e});
+    }
+
+    if(isJsonLdType(manifestEntry, 'mf:Manifest')) {
       // entry is another manifest
       await addManifest(manifestEntry, suite.suites);
     } else {
       // assume entry is a test
       await addTest(manifest, manifestEntry, suite.tests);
     }
+
+    seqCount++;
+    // short circuit if max entries found
+    if(seqCount === seqMax) {
+      // TODO: debug logging
+      break;
+    }
+  }
+  // check if minimum required entries found
+  if(seqCount < seqMin) {
+    // TODO: add details
+    throw new Error('Too few sequence entries.');
   }
 }
 
@@ -623,7 +681,7 @@ async function addTest(manifest, test, tests) {
   //var number = test_id.substr(2);
   test['@id'] =
     (manifest.baseIri || '') +
-    basename(manifest.filename).replace('.jsonld', '') +
+    basename(manifest._url.pathname).replace('.jsonld', '') +
     test_id;
   test.base = manifest.baseIri + test.input;
   test.manifest = manifest;
@@ -899,7 +957,7 @@ function makeFn({
         };
       }
 
-      if(options.earl.report) {
+      if(options.earl.enabled) {
         options.earl.report.addAssertion(test, true, {
           benchmarkResult
         });
@@ -921,7 +979,7 @@ function makeFn({
         }
         options.exit();
       }
-      if(options.earl.report) {
+      if(options.earl.enabled) {
         options.earl.report.addAssertion(test, false);
       }
       console.error('Error: ', JSON.stringify(err, null, 2));
@@ -973,47 +1031,28 @@ function getJsonLdTestType(test) {
   return null;
 }
 
-function readManifestEntry(manifest, entry) {
-  let p = Promise.resolve();
-  let _entry = entry;
-  if(typeof entry === 'string') {
-    let _filename;
-    p = p.then(() => {
-      if(entry.endsWith('json') || entry.endsWith('jsonld')) {
-        // load as file
-        return entry;
-      }
-      // load as dir with manifest.jsonld
-      return joinPath(entry, 'manifest.jsonld');
-    }).then(entry => {
-      const dir = dirname(manifest.filename);
-      return joinPath(dir, entry);
-    }).then(filename => {
-      _filename = filename;
-      return readJson(filename);
-    }).then(entry => {
-      _entry = entry;
-      _entry.filename = _filename;
-      return _entry;
-    }).catch(err => {
-      if(err.code === 'ENOENT') {
-        //console.log('File does not exist, skipping: ' + _filename);
-        // return a "skip" entry
-        _entry = {
-          type: '__SKIP__',
-          title: 'Not found, skipping: ' + _filename,
-          filename: _filename,
-          skip: true
-        };
-        return;
-      }
-      throw err;
-    });
+async function readManifestEntry(manifest, entry) {
+  let _entry;
+  if(typeof entry === 'string' || entry instanceof URL) {
+    let url;
+    if(typeof entry === 'string') {
+      url = new URL(entry, manifest._url);
+    } else {
+      url = new URL(entry);
+    }
+    const pathname = url.pathname;
+    // load as dir with manifest.jsonld if not file-like
+    if(!pathname.endsWith('.json') && !pathname.endsWith('.jsonld')) {
+      const pathname = await joinPath(url.pathname, 'manifest.jsonld');
+      url.pathname = pathname;
+    }
+    _entry = await getJson({url});
+    _entry._url = url;
+  } else {
+    _entry = structuredClone(entry);
+    _entry._url = manifest._url;
   }
-  return p.then(() => {
-    _entry.dirname = dirname(_entry.filename || manifest.filename);
-    return _entry;
-  });
+  return _entry;
 }
 
 function readTestUrl(property) {
@@ -1024,7 +1063,7 @@ function readTestUrl(property) {
     if(options && options.load) {
       // always load
       const filename = await joinPath(test.dirname, test[property]);
-      return readJson(filename);
+      return getJson({url: filename});
     }
     return test.manifest.baseIri + test[property];
   };
@@ -1035,8 +1074,8 @@ function readTestJson(property) {
     if(!test[property]) {
       return null;
     }
-    const filename = await joinPath(test.dirname, test[property]);
-    return readJson(filename);
+    const url = new URL(test[property], test._url);
+    return getJson({url});
   };
 }
 
@@ -1045,8 +1084,9 @@ function readTestNQuads(property) {
     if(!test[property]) {
       return null;
     }
-    const filename = await joinPath(test.dirname, test[property]);
-    return readFile(filename);
+    const url = new URL(test[property], test._url);
+    const response = await getData({url});
+    return response.text();
   };
 }
 
@@ -1227,29 +1267,78 @@ function getJsonLdErrorCode(err) {
   return err.name;
 }
 
-async function readJson(filename) {
-  const data = await readFile(filename);
-  return JSON.parse(data);
+async function getJson({url, headers = {}}) {
+  stats.getJson++;
+  const response = await getData({url, headers: {
+    accept: 'application/ld+json,application/json',
+    ...headers
+  }});
+  return response.json();
 }
 
-async function readFile(filename) {
-  return options.readFile(filename);
+async function getData({url, headers = {}}) {
+  stats.getData++;
+  if(url.protocol === 'http:' || url.protocol === 'https:') {
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${options.authToken}`,
+        ...headers
+      }
+    });
+    if(!response.ok) {
+      throw new Error(`getData: bad response: URL="${url}"`);
+    }
+    return response;
+  }
+  throw new Error(`getData: unsupported protocol: URL="${url}"`);
+}
+
+async function postJson({url, data, headers = {}}) {
+  stats.postJson++;
+  const response = await postData({
+    url,
+    data: JSON.stringify(data),
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers
+    }
+  });
+  return response;
+}
+
+async function postData({url, data, headers = {}}) {
+  stats.postData++;
+  if(url.protocol === 'http:' || url.protocol === 'https:') {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${options.authToken}`,
+        ...headers
+      },
+      body: data
+    });
+    if(!response.ok) {
+      throw new Error(`postData: bad response: URL="${url}"`);
+    }
+    return response;
+  }
+  throw new Error(`postData: unsupported protocol: URL="${url}"`);
 }
 
 async function joinPath() {
   return join.apply(null, Array.prototype.slice.call(arguments));
 }
 
-function dirname(filename) {
-  if(options.nodejs) {
-    return options.nodejs.path.dirname(filename);
-  }
-  const idx = filename.lastIndexOf('/');
-  if(idx === -1) {
-    return filename;
-  }
-  return filename.substr(0, idx);
-}
+//function dirname(filename) {
+//  if(options.nodejs) {
+//    return options.nodejs.path.dirname(filename);
+//  }
+//  const idx = filename.lastIndexOf('/');
+//  if(idx === -1) {
+//    return filename;
+//  }
+//  return filename.substr(0, idx);
+//}
 
 function basename(filename) {
   if(options.nodejs) {
@@ -1327,7 +1416,7 @@ function createDocumentLoader(test) {
 
   return localLoader;
 
-  function loadLocally(url) {
+  async function loadLocally(url) {
     const doc = {contextUrl: null, documentUrl: url, document: null};
     const options = test.option;
     if(options && url === test.base) {
@@ -1364,31 +1453,31 @@ function createDocumentLoader(test) {
       }
     }
 
-    let p = Promise.resolve();
+    let filename;
     if(doc.documentUrl.indexOf(':') === -1) {
-      p = p.then(() => {
-        return joinPath(test.manifest.dirname, doc.documentUrl);
-      }).then(filename => {
-        doc.documentUrl = 'file://' + filename;
-        return filename;
-      });
+      // FIXME: needed? improve or remove?
+      throw new Error(`Non-URL="${doc.documentUrl}"`);
+      //filename = await joinPath(test.manifest.dirname, doc.documentUrl);
+      //doc.documentUrl = 'file://' + filename;
     } else {
-      p = p.then(() => {
-        return joinPath(
-          test.manifest.dirname,
-          doc.documentUrl.substr(test.manifest.baseIri.length));
-      }).then(fn => {
-        return fn;
-      });
+      filename = new URL(
+        doc.documentUrl.substr(test.manifest.baseIri.length),
+        test.manifest._url);
     }
 
-    return p.then(readJson).then(json => {
+    try {
+      const json = await getJson({url: filename});
       doc.document = json;
       return doc;
-    }).catch(() => {
-      throw {name: 'loading document failed', url};
-    });
+    } catch(err) {
+      throw {name: 'loading document failed', url, cause: err};
+    }
   }
 }
 
+}
+
+module.exports = {
+  setup,
+  stats
 };
