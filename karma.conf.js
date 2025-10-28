@@ -162,7 +162,8 @@ module.exports = async function(config) {
             EARL: process.env.EARL,
             TESTS: process.env.TESTS,
             TEST_ENV: process.env.TEST_ENV,
-            TEST_ROOT_DIR: __dirname,
+            TEST_SERVER_URL: _proxyTestsPrefix,
+            AUTH_TOKEN: testServer.authToken,
             VERBOSE_SKIP: process.env.VERBOSE_SKIP,
             // for 'auto' test env
             _TEST_ENV_ARCH: process.arch,
