@@ -7,7 +7,7 @@
 - **BREAKING**: Upgrade dependencies.
   - `@digitalbazaar/http-client@4`.
   - `canonicalize@2`.
-  - `rdf-canonize@4`: See the [rdf-canonize][] 4.0.0 changelog for
+  - `rdf-canonize@5`: See the [rdf-canonize][] 4.x and 5.x changelog for
     **important** changes and upgrade notes. Of note:
     - The `URDNA2015` default algorithm has been changed to `RDFC-1.0` from
       [rdf-canon][].
@@ -16,6 +16,11 @@
     - A `signal` option is available to use an `AbortSignal` to limit resource
       usage.
     - The internal digest algorithm can be changed.
+    - Support for [rdf-canonize-native][] was removed.
+- **BREAKING**: Only the JavaScript implementation of [rdf-canon][] from
+  [rdf-canonize][] is supported. The API here can be updated to allow
+  implementation switching if support for native or other [rdf-canon][]
+  implementations is needed.
 - Update development dependencies.
 - Update karma testing.
   - Remove older fixes in favor of more default behavior.
