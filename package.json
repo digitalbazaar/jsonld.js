@@ -119,5 +119,15 @@
     "request": false,
     "url": false,
     "util": false
+  },
+  "react-native": {
+    "./lib/index.js": "./lib/jsonld.js",
+    "./lib/platform.js": "./lib/platform-browser.js",
+    "crypto": false,
+    "http": false,
+    "jsonld-request": false,
+    "request": false,
+    "url": false,
+    "util": false
   }
 }
