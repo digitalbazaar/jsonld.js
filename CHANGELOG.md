@@ -2,6 +2,11 @@
 
 ## 9.0.0 - 2025-xx-xx
 
+### Added
+- Add minimal support for React Native.
+  - Add `react-native` section to `package.json`.
+  - Add instructions to `README.md`.
+
 ### Changed
 - **BREAKING**: Drop support for Node.js < 18.
 - **BREAKING**: Upgrade dependencies.
