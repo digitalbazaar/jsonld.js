@@ -111,7 +111,7 @@
     ]
   },
   "browser": {
-    "./lib/index.js": "./lib/jsonld.js",
+    "./lib/index.js": "./lib/index.js",
     "./lib/platform.js": "./lib/platform-browser.js",
     "crypto": false,
     "http": false,
