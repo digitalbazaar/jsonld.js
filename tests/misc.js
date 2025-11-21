@@ -158,6 +158,150 @@ describe('other toRDF tests', () => {
       done();
     });
   });
+
+  it.only('should handle list good @context @base', async () => {
+    const doc = {
+      "@context": {
+        "@base": "ex:",
+        "list": {
+          "@id": "foo:bar",
+          "@container": "@list",
+          "@type": "@id"
+        }
+      },
+      "list": [
+        "test"
+      ]
+    };
+    const rdf = await jsonld.toRDF(doc, {
+      format: 'application/n-quads'
+    });
+    assert.equal(
+      rdf,
+      '_:b0 <foo:bar> _:b1 .\n' +
+      '_:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <ex:test> .\n' +
+      '_:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .\n');
+  });
+
+  it.only('should handle list bad @context @base', async () => {
+    const doc = {
+      "@context": {
+        "@base": "::",
+        "list": {
+          "@id": "foo:bar",
+          "@container": "@list",
+          "@type": "@id"
+        }
+      },
+      "list": [
+        "test"
+      ]
+    };
+    const rdf = await jsonld.toRDF(doc, {
+      format: 'application/n-quads'
+    });
+    assert.equal(
+      rdf,
+      '_:b0 <foo:bar> _:b1 .\n' +
+      //'_:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <test> .\n' +
+      '_:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .\n');
+  });
+
+  it.only('should handle list empty base option', async () => {
+    const doc = {
+      "@context": {
+        "list": {
+          "@id": "foo:bar",
+          "@container": "@list",
+          "@type": "@id"
+        }
+      },
+      "list": [
+        "test"
+      ]
+    };
+    const rdf = await jsonld.toRDF(doc, {
+      base: '',
+      format: 'application/n-quads'
+    });
+    assert.equal(
+      rdf,
+      '_:b0 <foo:bar> _:b1 .\n' +
+      //'_:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <test> .\n' +
+      '_:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .\n');
+  });
+
+  it.only('should handle list null base option', async () => {
+    const doc = {
+      "@context": {
+        "list": {
+          "@id": "foo:bar",
+          "@container": "@list",
+          "@type": "@id"
+        }
+      },
+      "list": [
+        "test"
+      ]
+    };
+    const rdf = await jsonld.toRDF(doc, {
+      base: null,
+      format: 'application/n-quads'
+    });
+    assert.equal(
+      rdf,
+      '_:b0 <foo:bar> _:b1 .\n' +
+      //'_:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <test> .\n' +
+      '_:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .\n');
+  });
+
+  it.only('should handle list empty @context @base', async () => {
+    const doc = {
+      "@context": {
+        "@base": "",
+        "list": {
+          "@id": "foo:bar",
+          "@container": "@list",
+          "@type": "@id"
+        }
+      },
+      "list": [
+        "test"
+      ]
+    };
+    const rdf = await jsonld.toRDF(doc, {
+      format: 'application/n-quads'
+    });
+    assert.equal(
+      rdf,
+      '_:b0 <foo:bar> _:b1 .\n' +
+      //'_:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <test> .\n' +
+      '_:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .\n');
+  });
+
+  it.only('should handle list null @context @base', async () => {
+    const doc = {
+      "@context": {
+        "@base": null,
+        "list": {
+          "@id": "foo:bar",
+          "@container": "@list",
+          "@type": "@id"
+        }
+      },
+      "list": [
+        "test"
+      ]
+    };
+    const rdf = await jsonld.toRDF(doc, {
+      format: 'application/n-quads'
+    });
+    assert.equal(
+      rdf,
+      '_:b0 <foo:bar> _:b1 .\n' +
+      //'_:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <test> .\n' +
+      '_:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .\n');
+  });
 });
 
 describe('other fromRDF tests', () => {
