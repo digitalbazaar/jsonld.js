@@ -14,7 +14,7 @@ JavaScript.
 JSON, as specified in [RFC7159][], is a simple language for representing
 objects on the Web. Linked Data is a way of describing content across
 different documents or Web sites. Web resources are described using
-IRIs, and typically are dereferencable entities that may be used to find
+IRIs, and typically are dereferenceable entities that may be used to find
 more information, creating a "Web of Knowledge". [JSON-LD][] is intended
 to be a simple publishing method for expressing not only Linked Data in
 JSON, but for adding semantics to existing JSON.

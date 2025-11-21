@@ -17,7 +17,7 @@ module.exports = [];
 // all built files will export the "jsonld" library but with different content
 const outputs = [
   // core jsonld library (standard)
-  // larger version for wide compatibilty
+  // larger version for wide compatibility
   {
     entry: [
       // main lib

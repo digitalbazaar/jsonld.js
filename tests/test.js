@@ -4,7 +4,7 @@
  * Use environment vars to control:
  *
  * General:
- *   Boolean env options enabled with case insensitve values:
+ *   Boolean env options enabled with case insensitive values:
  *     'true', 't', 'yes', 'y', 'on', '1', similar for false
  * Set dirs, manifests, or js to run:
  *   TESTS="r1 r2 ..."

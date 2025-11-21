@@ -137,7 +137,7 @@ async function compare({
     ['Comment', 'jldb:comment']
   ];
 
-  // show all properites
+  // show all properties
   if(env === 'all') {
     console.log();
     console.log('## Environment');
@@ -158,7 +158,7 @@ async function compare({
     }
   }
 
-  // show present properites
+  // show present properties
   if(env === 'present') {
     console.log();
     console.log('## Environment');
