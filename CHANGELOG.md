@@ -1,6 +1,6 @@
 # jsonld ChangeLog
 
-## 9.0.0 - 2025-xx-xx
+## 9.0.0 - 2025-11-20
 
 ### Added
 - Add minimal support for React Native.
