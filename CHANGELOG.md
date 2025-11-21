@@ -39,6 +39,10 @@
   - Trading off some performance to align node and browser testing.
   - Moves some test setup code into config data and manifest.
 
+### Fixed
+- Fix [fromRdf#t0027](https://w3c.github.io/json-ld-api/tests/fromRdf-manifest.html#t0027)
+  and `useNativeTypes` handling.
+
 ### Removed
 - **BREAKING**: Remove `application/nquads` alias for `application/n-quads`.
 
