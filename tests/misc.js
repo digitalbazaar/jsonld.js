@@ -548,7 +548,7 @@ describe('events', () => {
     eventCounts,
     // event array
     eventLog,
-    // parial event array
+    // partial event array
     eventPartialLog,
     // event code array
     eventCodeLog,
@@ -4010,7 +4010,7 @@ _:b0 <ex:p> "v" .
       });
     });
 
-    it('should handle generlized RDF blank node predicates', async () => {
+    it('should handle generalized RDF blank node predicates', async () => {
       const input =
 [
   {

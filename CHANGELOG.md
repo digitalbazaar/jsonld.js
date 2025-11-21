@@ -277,7 +277,7 @@
 ## 3.1.0 - 2020-04-15
 
 ### Fixed
-- Support recusrive scoped contexts.
+- Support recursive scoped contexts.
 - Various EARL report updates.
 - Fixed `prependBase` to start path with a '/' for a zero length path
   if there is an authority in base.
@@ -499,17 +499,17 @@
 ### Changed
 - [rdf-canonize][] updated:
   - **BREAKING**: A fix was applied that makes the canonical output format
-    properly match the N-Triples canoncial format. This fixes the format to no
+    properly match the N-Triples canonical format. This fixes the format to no
     longer escape tabs in literals. This may cause canonical output from
     `jsonld.normalize()`/`jsonld.canonize()` to differ from previous versions
     depending on your literal data. If a backwards compatibility mode is
     needed please use 1.4.x and file an issue.
   - **BREAKING**: [rdf-canonize-native][] was removed as an indirect optional
-    dependency and the JavaScript implemenation is now the default. The former
+    dependency and the JavaScript implementation is now the default. The former
     `usePureJavaScript` flag was removed and a new `useNative` flag was added
     to force use of the native bindings. Higher level applications must
     explicitly install `rdf-canonize-native` to use this mode. Note that in
-    many cases the JavaScript implemenation will be *faster*. Apps should be
+    many cases the JavaScript implementation will be *faster*. Apps should be
     benchmarked before using the specialized native mode.
   - **NOTE**: The Travis-CI C++11 compiler update fixes are no longer needed
     when using jsonld.js! [rdf-canonize-native][] was updated to not use C++11
