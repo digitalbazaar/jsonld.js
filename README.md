@@ -94,6 +94,10 @@ npm install jsonld
 const jsonld = require('jsonld');
 ```
 
+```js
+import jsonld from 'jsonld';
+```
+
 ### Browser (bundler) + npm
 
 ```
