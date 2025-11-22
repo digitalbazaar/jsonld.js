@@ -168,11 +168,11 @@ jspm install npm:jsonld
 ```
 
 ``` js
-import * as jsonld from 'jsonld';
+import jsonld from 'jsonld';
 // or
-import {promises} from 'jsonld';
+const {promises} = jsonld;
 // or
-import {JsonLdProcessor} from 'jsonld';
+const {JsonLdProcessor} = jsonld;
 ```
 
 Examples
