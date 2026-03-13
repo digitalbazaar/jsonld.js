@@ -22,6 +22,7 @@
   },
   "license": "BSD-3-Clause",
   "main": "lib/index.js",
+  "module": "dist/jsonld.min.js",
   "files": [
     "dist/*.js",
     "dist/*.js.map",
