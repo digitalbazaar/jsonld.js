@@ -4374,3 +4374,72 @@ describe('safe canonize defaults', () => {
     assert.deepStrictEqual(result, expected);
   });
 });
+
+describe('@direction inheritance', () => {
+  // The default base direction is part of the active context and must
+  // survive cloning like the default language does (JSON-LD 1.1 API §4.1,
+  // Context Processing step 1). See issue #586.
+  it('should keep the default @direction across context layers', async () => {
+    const output = await jsonld.expand({
+      "@context": [
+        {"@language": "en", "@direction": "rtl"},
+        {"dummy": "http://example.com/dummy"}
+      ],
+      "http://example.com/p": "v"
+    });
+    assert.deepStrictEqual(output, [{
+      "http://example.com/p": [
+        {"@language": "en", "@direction": "rtl", "@value": "v"}
+      ]
+    }]);
+  });
+
+  it('should inherit the default @direction into a property-scoped context',
+    async () => {
+      const output = await jsonld.expand({
+        "@context": {
+          "@language": "en",
+          "@direction": "rtl",
+          "thing": {
+            "@id": "http://example.com/thing",
+            "@context": {"other": "http://example.com/other"}
+          }
+        },
+        "thing": {"http://example.com/label": "hello"}
+      });
+      assert.deepStrictEqual(output, [{
+        "http://example.com/thing": [{
+          "http://example.com/label": [
+            {"@language": "en", "@direction": "rtl", "@value": "hello"}
+          ]
+        }]
+      }]);
+    });
+
+  it('should still allow a scoped context to override or clear @direction',
+    async () => {
+      const output = await jsonld.expand({
+        "@context": {
+          "@direction": "rtl",
+          "ltr": {
+            "@id": "http://example.com/ltr",
+            "@context": {"@direction": "ltr"}
+          },
+          "none": {
+            "@id": "http://example.com/none",
+            "@context": {"@direction": null}
+          }
+        },
+        "ltr": {"http://example.com/label": "a"},
+        "none": {"http://example.com/label": "b"}
+      });
+      assert.deepStrictEqual(output, [{
+        "http://example.com/ltr": [{
+          "http://example.com/label": [{"@direction": "ltr", "@value": "a"}]
+        }],
+        "http://example.com/none": [{
+          "http://example.com/label": [{"@value": "b"}]
+        }]
+      }]);
+    });
+});
