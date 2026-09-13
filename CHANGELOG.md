@@ -1,5 +1,17 @@
 # jsonld ChangeLog
 
+## Unreleased
+
+### Fixed
+- Copy the default base direction (`@direction`) when cloning the active
+  context, matching the existing handling of the default language. Previously
+  any context layer processed on top of an existing active context — a second
+  document-level layer, a property-/type-scoped context, an embedded node
+  `@context`, or a remote context — silently dropped the inherited
+  `@direction` (while `@language` survived), changing expanded output and,
+  under `rdfDirection`, the emitted N-Quads.
+  ([#586](https://github.com/digitalbazaar/jsonld.js/issues/586))
+
 ## 9.0.0 - 2025-11-20
 
 ### Added
