@@ -8,6 +8,71 @@ const assert = require('assert');
 
 // TODO: need more tests for jsonld.link and jsonld.merge
 
+describe('inline context `@context` keyword redefinition (issue #588)', () => {
+  const REMOTE = 'https://example.org/remote-context.jsonld';
+  const held = {
+    [REMOTE]: {'@context': {name: 'http://example.org/name'}}
+  };
+  const documentLoader = async url => {
+    if(!(url in held)) {
+      throw new Error(`not held: ${url}`);
+    }
+    return {contextUrl: null, documentUrl: url, document: held[url]};
+  };
+
+  it('refuses an inline context map that carries an \'@context\' entry', async () => {
+    const doc = {
+      '@context': {'@context': {name: 'http://example.org/name'}},
+      name: 'x'
+    };
+    let error;
+    try {
+      await jsonld.expand(doc, {documentLoader});
+    } catch(e) {
+      error = e;
+    }
+    assert(error, 'expected a keyword redefinition error');
+    assert.equal(error.details.code, 'keyword redefinition');
+  });
+
+  it('refuses the same map as an element of a context array', async () => {
+    const doc = {
+      '@context': [{'@context': {name: 'http://example.org/name'}}],
+      name: 'x'
+    };
+    let error;
+    try {
+      await jsonld.expand(doc, {documentLoader});
+    } catch(e) {
+      error = e;
+    }
+    assert(error, 'expected a keyword redefinition error');
+    assert.equal(error.details.code, 'keyword redefinition');
+  });
+
+  it('still refuses other keywords as terms of an inline context', async () => {
+    const doc = {
+      '@context': {'@id': 'http://example.org/id'},
+      name: 'x'
+    };
+    let error;
+    try {
+      await jsonld.expand(doc, {documentLoader});
+    } catch(e) {
+      error = e;
+    }
+    assert(error, 'expected a keyword redefinition error');
+    assert.equal(error.details.code, 'keyword redefinition');
+  });
+
+  it('still unwraps a dereferenced remote context (control)', async () => {
+    const doc = {'@context': REMOTE, name: 'x'};
+    const expanded = await jsonld.expand(doc, {documentLoader});
+    assert.deepEqual(expanded,
+      [{'http://example.org/name': [{'@value': 'x'}]}]);
+  });
+});
+
 describe('link tests', () => {
   const doc = {
     "@id": "ex:1",
