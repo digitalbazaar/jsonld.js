@@ -4374,3 +4374,47 @@ describe('safe canonize defaults', () => {
     assert.deepStrictEqual(result, expected);
   });
 });
+
+describe('__proto__ node id tests', () => {
+  it('should not pollute Object.prototype when flattening a node with @id "__proto__"',
+    async () => {
+      const doc = {
+        '@context': {polluted: 'http://example.com/polluted'},
+        '@id': '__proto__',
+        polluted: 'yes'
+      };
+      const output = await jsonld.flatten(doc);
+      assert.deepStrictEqual(Object.prototype['@id'], undefined);
+      assert.deepStrictEqual(
+        Object.prototype['http://example.com/polluted'], undefined);
+      // the node is a real flattened subject, not silently lost
+      assert.deepStrictEqual(output, [{
+        '@id': '__proto__',
+        'http://example.com/polluted': [{'@value': 'yes'}]
+      }]);
+    });
+
+  it('should not pollute Object.prototype when flattening a named graph named "__proto__"',
+    async () => {
+      const doc = [{
+        '@id': '__proto__',
+        '@graph': [{
+          '@id': 'http://example.com/s',
+          'http://example.com/p': [{'@value': 'v'}]
+        }]
+      }];
+      const output = await jsonld.flatten(doc);
+      assert.deepStrictEqual(Object.prototype['@id'], undefined);
+      assert.ok(output.some(node => node['@id'] === '__proto__' &&
+        Array.isArray(node['@graph'])));
+    });
+
+  it('should keep a node named "__proto__" in the node map', async () => {
+    const doc = {'@id': '__proto__', 'http://example.com/p': [{'@value': 'v'}]};
+    const nodeMap = await jsonld.createNodeMap(doc);
+    assert.deepStrictEqual(nodeMap['__proto__'], {
+      '@id': '__proto__',
+      'http://example.com/p': [{'@value': 'v'}]
+    });
+  });
+});
