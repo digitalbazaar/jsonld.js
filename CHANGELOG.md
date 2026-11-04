@@ -1,5 +1,16 @@
 # jsonld ChangeLog
 
+## 9.0.1 - xxxx-xx-xx
+
+### Fixed
+- Write a number with a fractional part as an `xsd:double` in `toRDF`, as
+  JSON-LD 1.1 API Object to RDF Conversion step 10 does. A number that
+  JavaScript writes without a decimal point, such as `1e-7`, however the JSON
+  spells it, was written as the `xsd:integer` `0` or `-0`, and a `NaN` number
+  as the `xsd:integer` `NaN`.
+  - **NOTE**: This changes the output of `toRDF` and `canonize` for these
+    values, and so any hash or signature computed from it.
+
 ## 9.0.0 - 2025-11-20
 
 ### Added
