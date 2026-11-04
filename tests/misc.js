@@ -143,6 +143,32 @@ describe('other toRDF tests', () => {
     });
   });
 
+  it('should write special doubles in their XSD canonical forms', async () => {
+    const XSD_DOUBLE = 'http://www.w3.org/2001/XMLSchema#double';
+    const cases = [
+      [JSON.parse('1e309'), 'INF'],
+      [JSON.parse('-1e309'), '-INF'],
+      [{'@value': 'INF', '@type': XSD_DOUBLE}, 'INF'],
+      [{'@value': '+INF', '@type': XSD_DOUBLE}, 'INF'],
+      [{'@value': '-INF', '@type': XSD_DOUBLE}, '-INF'],
+      [{'@value': ' INF ', '@type': XSD_DOUBLE}, 'INF'],
+      [{'@value': 'NaN', '@type': XSD_DOUBLE}, 'NaN'],
+      [{'@value': '-0', '@type': XSD_DOUBLE}, '-0.0E0'],
+      [{'@value': JSON.parse('-0'), '@type': XSD_DOUBLE}, '-0.0E0'],
+      [{'@value': '0', '@type': XSD_DOUBLE}, '0.0E0']
+    ];
+    const output = [];
+    for(const [value] of cases) {
+      output.push(await jsonld.toRDF({
+        '@id': 'https://example.com/s',
+        'https://example.com/p': value
+      }, {format: 'application/n-quads'}));
+    }
+    assert.deepStrictEqual(output, cases.map(([, lexical]) =>
+      '<https://example.com/s> <https://example.com/p> ' +
+      `"${lexical}"^^<${XSD_DOUBLE}> .\n`));
+  });
+
   it('should fail for deprecated N-Quads format', done => {
     const doc = {
       "@id": "https://example.com/",

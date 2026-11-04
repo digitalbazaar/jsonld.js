@@ -1,5 +1,17 @@
 # jsonld ChangeLog
 
+## 9.0.1 - xxxx-xx-xx
+
+### Fixed
+- Write the special `xsd:double` values in their XML Schema canonical forms
+  in `toRDF`: `INF`, `-INF`, `NaN` and `-0.0E0`. A number too large for a
+  double was written as `Infinity`, which is not a valid `xsd:double`. The
+  typed strings `INF`, `+INF` and `-INF` were read with `parseFloat()` and
+  written as `NaN`, and a negative zero was written as `0.0E0`. Whitespace
+  around a typed special value is ignored, as it already was around a number.
+  - **NOTE**: This changes the output of `toRDF` and `canonize` for these
+    values, and so any hash or signature computed from it.
+
 ## 9.0.0 - 2025-11-20
 
 ### Added
