@@ -1,5 +1,18 @@
 # jsonld ChangeLog
 
+## 9.0.1 - xxxx-xx-xx
+
+### Fixed
+- Use a term as the prefix of a compact IRI only if its name contains neither
+  `:` nor `/`, as JSON-LD 1.1 API Create Term Definition step 14.2.5 does.
+  With a term such as `/a/`, `expand` read `/a/:b` as a compact IRI instead of
+  as a relative IRI, and `compact` wrote such compact IRIs. With a term such as
+  `:a/`, `compact` wrote `:a/:b`, which does not expand back to the IRI.
+  - **NOTE**: This changes the output of `expand`, `compact`, `toRDF` and
+    `canonize` for contexts with such terms. A context with a term such as
+    `/a/:b` can now fail, or newly pass, the check that the term expands to
+    its own IRI.
+
 ## 9.0.0 - 2025-11-20
 
 ### Added
