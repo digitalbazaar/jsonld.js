@@ -314,6 +314,69 @@ describe('url tests', () => {
   });
 });
 
+// Create Term Definition, step 14.2.5: only a simple term without ':' or '/'
+// may be a prefix
+describe('terms with a colon or slash', () => {
+  it('should not expand a value with a term with a slash as prefix',
+    async () => {
+      const output = await jsonld.expand({
+        '@context': {
+          '@base': 'http://example.org/ns/doc',
+          '@vocab': 'http://other.org',
+          '/a/': 'http://other.org/a/'
+        },
+        '@id': '/a/:b',
+        '/a/:b': {'@id': '/a/:b'}
+      });
+      assert.deepStrictEqual(output, [{
+        '@id': 'http://example.org/a/:b',
+        'http://other.org/a/:b': [{'@id': 'http://example.org/a/:b'}]
+      }]);
+    });
+
+  it('should give a term name with a slash the IRI of its prefix term',
+    async () => {
+      // step 15 doesn't depend on the prefix flag
+      const output = await jsonld.expand({
+        '@context': {
+          '@vocab': 'http://other.org',
+          '/a/': 'http://other.org/a/',
+          '/a/:b': {'@type': '@id'}
+        },
+        '/a/:b': 'http://example.org/o'
+      });
+      assert.deepStrictEqual(output, [{
+        'http://other.org/a/b': [{'@id': 'http://example.org/o'}]
+      }]);
+    });
+
+  it('should not compact to a term with a colon or slash as prefix',
+    async () => {
+      const cases = [
+        [{
+          '@vocab': 'http://example.org/x',
+          ':a/': 'http://example.org/x:a/'
+        }, 'http://example.org/x:a/b', 'http://example.org/p'],
+        [{
+          '@vocab': 'http://example.org',
+          '/a/': 'http://example.org/a/'
+        }, 'http://example.org/a/b', '/p']
+      ];
+      for(const [context, iri, property] of cases) {
+        const output = await jsonld.compact({
+          '@id': 'http://example.org/s',
+          'http://example.org/p': {'@id': iri}
+        }, context);
+        assert.deepStrictEqual(output[property], {'@id': iri});
+        const expanded = await jsonld.expand(output);
+        assert.deepStrictEqual(expanded, [{
+          '@id': 'http://example.org/s',
+          'http://example.org/p': [{'@id': iri}]
+        }]);
+      }
+    });
+});
+
 describe('js keywords', () => {
   it('expand js valueOf/toString keywords (top ctx)', async () => {
     const d =
